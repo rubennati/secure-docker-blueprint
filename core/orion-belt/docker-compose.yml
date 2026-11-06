@@ -113,6 +113,8 @@ services:
       ORION_WEBAUTHN_ENABLED: ${ORION_WEBAUTHN_ENABLED}
       ORION_PUBLIC_HOST: ${ORION_PUBLIC_HOST}
       ORION_PUBLIC_URL: ${ORION_PUBLIC_URL}
+      # Read by the image's entrypoint into server.trusted_proxies (1.4.0+).
+      ORION_TRUSTED_PROXIES: ${ORION_TRUSTED_PROXIES}
       ORION_RECORDING_ENCRYPTION_KEY: ${ORION_RECORDING_ENCRYPTION_KEY}
       ORION_RECORDING_RETENTION_DAYS: ${ORION_RECORDING_RETENTION_DAYS}
       TZ: ${TZ}
@@ -131,7 +133,7 @@ services:
       # Where agents (deployed separately, on the hosts you want to
       # protect) dial in, and where your own SSH client connects out. A
       # raw TCP listener: Traefik's HTTP router cannot carry SSH.
-      - "${ORION_SSH_PORT}:2222"
+      - "${ORION_BIND:?Set ORION_BIND in .env}:${ORION_SSH_PORT}:2222"
 
     # --- Traefik ---
     labels:
@@ -141,7 +143,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 
     # --- Health & Observability ---
@@ -160,6 +162,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

@@ -10,8 +10,8 @@
 - **Origin:** New Zealand · Ralph Slooten (axllent) · non-EU
 - **Domain:** Developer tools
 - **Role:** SMTP sink that catches every outgoing message and shows it, delivering nothing
-- **Based on version:** `v1.31.1`
-- **Last verified:** 2026-09-07 (v1.31.1)
+- **Based on version:** `v1.33.0`
+- **Last verified:** 2026-11-02 (v1.31.1) — step 8 lab host: the SMTP sink for `apps/vaultwarden` on `proxy-public` (its verification mail delivered and read back), the API refused without credentials and answering with them only under the host name in `MP_ALLOWED_HOSTS` (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 
@@ -38,6 +38,21 @@ any stack on proxy-public ────────→ mailpit :1025  (SMTP)
 | Traefik labels, `access-vpn`, `limit-standard` | The UI shows every message the stacks send, including password-reset links; a first load is about ten requests |
 | Healthcheck repeated in the compose file | The image declares `/mailpit readyz` itself; repeating it makes "healthy" visible |
 | `memory: 128m` | Idles at 13 MB with a thousand messages stored; the store is on disk |
+
+## Version notes
+
+- Moved to `v1.33.0` on 2026-11-05 (released 2026-10-31), not run on a host at
+  this tag; `Last verified` stays at v1.31.1. No breaking change, removed option
+  or migration in v1.31.2 to v1.33.0. Security: v1.31.2 limits thumbnail
+  decoding to one frame (GHSA-2vgv-6hcp-mf43, memory exhaustion through animated
+  images); v1.32.0 replaces the EXIF library whose crafted images could hang the
+  thumbnail generator (GHSA-379p-g4f4-hq5h), strips `<base>` and meta-refresh
+  tags from the HTML view, and caps SMTP, POP3 and HTTP at 1000 concurrent
+  connections each. v1.31.5 tightens SMTP parsing (AUTH in `MAIL FROM`,
+  parameter spacing), which a sender with a malformed command now sees refused.
+  New in v1.33.0 and off unless set: a Subject prefix for relay and forward, and
+  an Rspamd spam check. `MP_ALLOWED_HOSTS` and the other `MP_*` settings here
+  are unchanged. https://github.com/axllent/mailpit/releases
 
 ## Upgrade checklist
 

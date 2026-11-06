@@ -2,6 +2,19 @@
 
 Self-hosted file sync + team collaboration server. This setup runs Seafile Community Edition 13 as a **multi-container stack**, split across five compose files so optional components can be toggled on or off without touching the core.
 
+## Open findings
+
+SeaDoc 2.0.11 and the thumbnail server 13.0.29, the newest images for Seafile 13,
+bundle PyJWT 2.10.1 (CVE-2026-102268); SeaDoc also bundles `proxy-addr` 2.0.7
+(CVE-2026-90711). MariaDB 10.11 carries one finding in its `gosu` start-up helper
+(CVE-2025-68121, Go TLS), as does every newer MariaDB line.
+
+**Risk:** the PyJWT flaw concerns tokens signed with a public key, while Seafile
+signs with a shared secret, so it is most likely not reached (not verified in
+code). `proxy-addr` can let a client spoof the IP address that is logged. `gosu`
+only drops privileges at start and opens no TLS connection. The fixes arrive
+with newer Seafile component images.
+
 ## Architecture
 
 Seafile 13 is a collection of cooperating services, not a single container. The main server (`seafile`) is mandatory; everything else is optional and picked via the `COMPOSE_FILE` variable in `.env`.
@@ -72,14 +85,23 @@ openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
 # value without escaping it, and a "/" would terminate the URL early.
 openssl rand -hex 32 | tr -d '\n' > .secrets/redis_pwd.txt
 
+# 2b. thumbnail-server reads two of them from .env, not as Docker secrets
+#     (thumbnail-server.yml). Left empty, every thumbnail in the browser fails
+#     while the container reports healthy.
+sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(cat .secrets/jwt_key.txt)|" .env
+sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(cat .secrets/seafile_db_pwd.txt)|" .env
+
 # 3. SMTP secret file — always required (mounted unconditionally by compose)
 # SMTP disabled:
 touch .secrets/smtp_pwd.txt
 # SMTP enabled (run instead of touch):
 # printf '%s' '<smtp-password-or-api-key>' > .secrets/smtp_pwd.txt
 
-# 4. (Optional) If you use OnlyOffice, reuse its JWT secret
+# 4. OnlyOffice JWT secret file — always required (mounted unconditionally by compose).
+#    With OnlyOffice, reuse its secret; the integration is on when the file is not empty:
 cp ../onlyoffice/.secrets/jwt_secret.txt .secrets/onlyoffice_jwt_secret.txt
+#    Without OnlyOffice (run instead): an empty file keeps the integration off
+# touch .secrets/onlyoffice_jwt_secret.txt
 
 # 5. Start
 docker compose up -d
@@ -397,27 +419,55 @@ older database means files exist that no library references.
 
 **Restore order:** databases first, then the block store, then the app.
 
-## Access policy — OnlyOffice + SeaDoc require `access-lan-vpn`
+A dump holds the databases, not the account Seafile connects with. Restored into a
+fresh `db` container, the app starts and every request fails with `Access denied
+for user 'seafile'`. Create the account before starting the app:
 
-`access-vpn` blocks server-to-server callbacks from Docker containers (their IPs are RFC1918, not Tailscale). This breaks both OnlyOffice document editing and SeaDoc collaborative editing:
+```bash
+docker compose up -d db
+# restore the three dumps, then:
+docker compose exec -T db sh -c 'mariadb -uroot -p"$(cat /run/secrets/DB_ROOT_PWD)"' <<SQL
+CREATE USER IF NOT EXISTS 'seafile'@'%' IDENTIFIED BY '$(cat .secrets/seafile_db_pwd.txt)';
+GRANT ALL PRIVILEGES ON ccnet_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seafile_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
+SQL
+docker compose up -d
+```
+
+## Access policy — how OnlyOffice and SeaDoc call back into a closed instance
+
+Every closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — refuses a request from a Docker container: no closed policy admits a Docker network (DEC-076). The two integrations that call Seafile back are therefore wired past the policy, each by the mechanism the application offers:
+
+- **SeaDoc** calls Seafile over the internal network: `SEAHUB_SERVICE_URL=http://seafile` in `seadoc.yml`. Nothing of it passes Traefik; only the browser's own requests to `/sdoc-server` and `/socket.io` do, under the stack's access policy.
+- **OnlyOffice** talks to Seafile on two paths, both at Seafile's public name — the only address Seafile hands it (seahub builds the document URL from `FILE_SERVER_ROOT` and the callback URL from `SERVICE_URL`; neither has an internal variant). It fetches the document from `/seafhttp/files/<token>/<name>` when the editor opens and when a format is converted — the token is a fileserver access token Seafile issued for that file and user, valid for one hour — and it saves by calling `/onlyoffice/editor-callback/`, which Seafile acts on only for a document key it issued and still holds. seahub does not verify the JWT on the callback (`onlyoffice/views.py`, 13.0 and master); the JWT secret protects the browser's editor session and the convert API, not this path. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`. Add it to `COMPOSE_FILE` when you run OnlyOffice:
+
+```env
+COMPOSE_FILE=seafile-server.yml,seadoc.yml,thumbnail-server.yml,onlyoffice-callback.yml
+```
+
+The rest of the instance stays closed. The three ways the pieces talk, and what carries each:
+
+| Way | Carried by |
+|---|---|
+| Browser → OnlyOffice (editor, scripts, websocket) | the OnlyOffice stack's own route, `access-public` as shipped |
+| OnlyOffice → Seafile (document fetch, save callback) | the two routes above; or, for a Document Server on another host, its address in `TRUSTED_RANGES` or on the VPN, with this file left out |
+| Seafile → OnlyOffice (convert API, fetching the saved file) | the OnlyOffice stack's public route, with the shared JWT secret on the convert API |
+
+One Document Server serves several Seafile or Nextcloud instances this way, on the same host or on others; each instance decides for itself whether to open the two paths or to trust the server's address. Until v0.9.6 the shipped default admitted every RFC 1918 address, Docker containers included, which is how the callbacks passed a closed route; that admission was the bypass the ingress audit measured (`docs/audits/ingress-architecture-2026-10-31.md`) and is gone.
+
+What used to stand here, for the record:
 
 - **OnlyOffice**: fetches and saves files via callback to Seafile's URL. The OnlyOffice container IP is not a Tailscale IP → Traefik blocks it → documents fail to open/save.
 - **SeaDoc**: makes internal API calls back to Seafile for token validation and file content. Same issue.
 
-**`access-lan-vpn` is the shipped default for exactly this reason:**
+**The stack ships closed, `access-trusted-vpn`:**
 
 ```env
-APP_TRAEFIK_ACCESS=access-lan-vpn
+APP_TRAEFIK_ACCESS=access-trusted-vpn
 ```
 
-This section used to describe it as a fix to apply, which read as though the
-stack shipped `acc-tailscale` (today's `access-vpn`). It shipped `acc-public`,
-today's `access-public` — under which the callbacks work because nothing is
-filtered at all, and the file store answers the open internet from first boot. Opening it is now the deliberate step, not closing it.
-
-`access-lan-vpn` = Tailscale/VPN + LAN (RFC1918). Docker container IPs (172.x.x.x) fall into the LAN range and pass. External internet still blocked.
-
-> If you run Seafile without OnlyOffice and without SeaDoc, `access-vpn` works fine.
+> Without OnlyOffice, leave `onlyoffice-callback.yml` out: nothing of the instance answers an unknown client.
 
 ## Thumbnail server
 

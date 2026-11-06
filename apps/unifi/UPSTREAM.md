@@ -11,13 +11,13 @@
 - **Domain:** Infrastructure
 - **Role:** Controller for Ubiquiti UniFi network devices
 - **Note:** Proprietary software — not open source. LSIO wrapper scripts are GPL-3. Ubiquiti is a US company; CLOUD Act applies to cloud-managed deployments. Self-hosted (local controller) has no cloud dependency.
-- **Based on version:** `10.6.101` (LSIO build of UniFi Network Application)
+- **Based on version:** `10.6.109` (LSIO build of UniFi Network Application)
 - **Last checked:** 2026-04-17
 
 ## What we use
 
 - LSIO `lscr.io/linuxserver/unifi-network-application`
-- Official `mongo:8.0` — supported from UniFi 9.0 onward per the image documentation
+- Official `mongo:8.0.34` — supported from UniFi 9.0 onward per the image documentation
 - Docker Secrets for Mongo root + application user passwords
 - Bind-mount `./volumes/mongodb` and `./volumes/config`
 - Custom init script (`./init-mongo.sh`) to create the app user from secrets
@@ -40,6 +40,16 @@
 | **Optional ports commented out** — inbox had `1900`, `8843`, `8880`, `6789`, `5514` as inactive | Kept as comments; uncomment if using guest portal / mobile speedtest / syslog |
 | **`MEM_LIMIT` / `MEM_STARTUP` exposed as `.env`** | Blueprint pattern; includes sizing guidance in comments |
 | **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | UniFi manages your network; VPN-only for the admin UI is standard practice |
+
+## Version notes
+
+- Moved to `10.6.109` on 2026-11-05, not run on a host at this tag. Between the LSIO
+  builds `10.6.101-ls145` and `10.6.109-ls153` the Dockerfile and the init scripts
+  did not change; the builds only carry the newer UniFi Network Application
+  (10.6.106, then 10.6.109, both GA) and refreshed packages. The README dropped its
+  legacy migration section and gained a caveat about ports. Ubiquiti's own release
+  notes for 10.6.106 and 10.6.109 could not be read; no advisory is named here. The
+  move fixes CRITICAL findings in the image's packages reported by the Trivy scan.
 
 ## Upgrade checklist
 

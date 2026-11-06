@@ -4,15 +4,25 @@
 
 Self-hosted document archive: scan → OCR → searchable PDF archive. Optimised for paperless offices with a "consume folder" + mobile scan workflow.
 
+## Open findings
+
+The pinned Tika image, `apache/tika:3.3.3.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). The fix is only in Tika 4, which Paperless-ngx does not yet support, so Tika stays on the newest 3.x release.
+
+**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on. Move to Tika 4 once Paperless-ngx supports it.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Five services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
-| `db` | `postgres:16.14` | Primary data store (documents, tags, correspondents, users) |
-| `redis` | `redis:7.4-alpine` | Celery broker + worker heartbeat |
+| `paperless-app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
+| `db` | `postgres:18.6` | Primary data store (documents, tags, correspondents, users) |
+| `redis` | `redis:8.10.3-alpine` | Celery broker + worker heartbeat |
 | `gotenberg` | `gotenberg/gotenberg` | Converts HTML/Office documents to PDF |
 | `tika` | `apache/tika` | Text extraction from scanned PDFs, Office files, emails |
 
@@ -47,11 +57,15 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 # 1. Create .env
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, PAPERLESS_OCR_LANGUAGE, USERMAP_UID/GID, TZ
+# List the stack's edge network, paperless-edge, in core/traefik/.env EDGE_NETWORKS,
+# then render and restart Traefik (core/traefik/docs/edge-networks.md) — otherwise
+# step 4 stops on "network paperless-edge declared as external, but could not be found"
 
 # 2. Generate secrets
 mkdir -p .secrets
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 openssl rand -base64 48 | tr -d '\n' > .secrets/secret_key.txt
+: > .secrets/email_pwd.txt   # compose mounts it; empty while e-mail is off (SMTP below)
 
 # 3. Prepare volume ownership (Paperless drops to USERMAP_UID/GID)
 mkdir -p volumes/{data,media,consume,export,postgres,redis}
@@ -61,11 +75,13 @@ sudo chown -R 1000:1000 volumes/data volumes/media volumes/consume volumes/expor
 docker compose up -d
 
 # 5. Wait for migrations + healthcheck
-docker compose logs app --follow
-# Look for: "Listening at: http://0.0.0.0:8000"
+docker compose logs paperless-app --follow
+# Look for: "Listening at: http://:::8000"
 
-# 6. Create the first admin user
-docker compose exec app python manage.py createsuperuser
+# 6. Create the first admin user — the image's wrapper, which carries the
+#    secrets the container read at start; `python manage.py` under exec does not
+#    see them and stops on PAPERLESS_SECRET_KEY
+docker compose exec paperless-app createsuperuser
 
 # 7. Open the UI
 # https://<APP_TRAEFIK_HOST>
@@ -78,9 +94,16 @@ Two separate variables control OCR language support:
 | Variable | Purpose | Example |
 |----------|---------|---------|
 | `PAPERLESS_OCR_LANGUAGE` | Default language used when auto-detection fails | `deu` |
-| `PAPERLESS_OCR_LANGUAGES` | Language packs to install (comma-separated) | `deu,eng,ron` |
+| `PAPERLESS_OCR_LANGUAGES` | Language packs to install (**space-separated**) | `deu eng ron` |
 
-`PAPERLESS_OCR_LANGUAGES` must include every language you want to OCR — without the pack installed, Tesseract silently falls back to English. `PAPERLESS_OCR_LANGUAGE` sets which language Paperless picks first when the document has no language metadata.
+`PAPERLESS_OCR_LANGUAGES` must include every language you want to OCR. The image reads it as a
+space-separated list: a comma-separated one is a single package name — with `deu,eng` the start
+log said `Skipped tesseract-ocr-deu,eng: Package not found!`. German, English, French, Italian and Spanish
+ship in the image; any other pack is installed with apt **each time the container is created**,
+which needs outbound access from the stack's edge network — without it the pack is skipped, the
+container still turns healthy, and the language is missing (step 8 lab host). `PAPERLESS_OCR_LANGUAGE`
+sets which language Paperless picks first when the document has no language metadata; several are
+joined with `+` (`deu+eng`).
 
 Common three-letter codes (ISO 639-2):
 
@@ -99,7 +122,13 @@ The stack ships `access-vpn`, `limit-standard` and `headers-standard` — Paperl
 
 ### SMTP (optional)
 
-Used for: password reset emails, workflow notifications, document share links.
+Used for: password reset emails, workflow notifications, sending documents by mail.
+
+E-mail ships **off**: Paperless treats it as off only while `PAPERLESS_EMAIL_HOST=localhost` and
+`PAPERLESS_EMAIL_HOST_USER` is empty; it then reports `email_enabled: false` to the UI and the login
+page offers no password reset. An empty host does not turn it off — the password reset answers 500,
+as it does with a relay that cannot be reached; a reset posted directly with e-mail off answers 500
+too (step 8 lab host).
 
 ```bash
 echo -n 'your-smtp-password' > .secrets/email_pwd.txt
@@ -115,14 +144,19 @@ PAPERLESS_EMAIL_USE_TLS=true
 PAPERLESS_EMAIL_FROM=Paperless <paperless@example.com>
 ```
 
-For SSL on port 465: `PAPERLESS_EMAIL_USE_TLS=false` + `PAPERLESS_EMAIL_PORT=465`.
+For implicit TLS on port 465: `PAPERLESS_EMAIL_PORT=465`, `PAPERLESS_EMAIL_USE_TLS=false` and
+`PAPERLESS_EMAIL_USE_SSL=true` — with `USE_TLS=false` alone the connection to 465 is closed
+(measured with the image's SMTP backend).
 
-Leave `PAPERLESS_EMAIL_HOST` empty to disable outgoing email entirely.
+The application container reaches a relay on the internet through its edge network; Postgres,
+Redis, Gotenberg and Tika have no outbound route. A sink such as `apps/greenmail` or
+`apps/mailpit` sits on `proxy-public` and is reachable only with `TRAEFIK_NETWORK=proxy-public`
+(their READMEs).
 
 Then restart:
 
 ```bash
-docker compose up -d --force-recreate app
+docker compose up -d --force-recreate paperless-app
 ```
 
 ### Enabling SSO (optional)
@@ -148,11 +182,13 @@ Authentik must be running with an OAuth2/OIDC provider configured for Paperless.
 
 3. `docker compose up -d` — regular login is now disabled and the login page redirects to Authentik.
 
+`sso.yml` has not been run on a host: the step 8 lab run tested the regular login only.
+
 ## Verify
 
 ```bash
-docker compose ps                                  # All five services healthy
-docker compose exec app python manage.py check    # Django check passes
+docker compose ps        # four services healthy; tika has no healthcheck and shows "running"
+docker compose exec paperless-app /command/with-contenv python3 manage.py check   # no issues
 ```
 
 Drop a PDF into `./volumes/consume/` and watch the logs — it should be consumed, OCR'd, and appear in the UI within a few seconds.
@@ -165,6 +201,15 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 - Redis runs `read_only: true` with tmpfs — no writable root filesystem
 - `no-new-privileges:true` on every service
 - Default access is VPN-only (`access-vpn`)
+- **Documents from the consume folder have no owner**, and a document without an owner is visible to
+  every user holding the view permission; one uploaded through the UI or API belongs to the uploader
+  and stays hidden from other users until shared (step 8 lab host). Assign an owner with a workflow
+  if the consume folder feeds more than one person.
+- The token endpoint allows 5 requests a minute from one client address (`PAPERLESS_TOKEN_THROTTLE_RATE`);
+  beyond that it answers 429, the right password included.
+- Failed logins are logged with Traefik's address on the edge network, not the client's
+  (`PAPERLESS_TRUSTED_PROXIES` is not set). The lab's probe has a loopback address, so what a real
+  client's address would look like in the log was not measured (step 8 lab host).
 
 ## Backup
 
@@ -182,7 +227,27 @@ postgresql_databases:
       container: paperless-db
       username: paperless_user
       password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
+      # The client's major version must be the server's: postgres 18 (DB_TAG)
+      pg_dump_command: /usr/lib/postgresql/18/bin/pg_dump
+      pg_restore_command: /usr/lib/postgresql/18/bin/pg_restore
+      psql_command: /usr/lib/postgresql/18/bin/psql
 ```
+
+**The PostgreSQL client on the host has to be version 18, the server's.**
+borgmatic runs `pg_dump` and `pg_restore` on the host. A client newer than the
+server writes settings the server does not know: with Debian 13's
+`postgresql-client`, version 17, the backup of a `postgres:16` server ran, but
+its restore stopped on `SET transaction_timeout = 0`, a setting 16 does not
+know (step 8 lab host). Install 18 beside it from the PostgreSQL project's
+repository and name its programs in the entry, as above — `pg_dump` on the
+`PATH` stays the newest installed version:
+
+```bash
+sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh   # from Debian's postgresql-common
+sudo apt install postgresql-client-18
+```
+
+When `DB_TAG` moves to another major version, the three paths move with it.
 
 **`volumes/media` is the archive.** The database holds tags, correspondents and
 the text extracted from each document; the documents themselves are files. Losing
@@ -196,9 +261,12 @@ metadata into a single self-describing tree. That is the more portable restore
 path — and the one to use when moving between major versions rather than
 restoring in place.
 
-**Restore order:** database first, then media, then the app. Expect the search
-index to rebuild on first start; until it does, search returns nothing while the
-documents are all present.
+**Restore order:** database first, then media, then the app. Without
+`volumes/data/index` the app rebuilt the search index during its start, and search
+answered as soon as the container was healthy (step 8 lab host).
+
+The `document_exporter` writes mail-account passwords and other sensitive fields in
+plain text unless it is given `--passphrase`; it says so in its output.
 
 ## Known Issues
 
@@ -206,7 +274,9 @@ documents are all present.
 - **`user:` cannot be set on the app service.** Paperless uses s6-overlay which requires root for `/run` setup before dropping privileges. Adding `user:` breaks startup.
 - **`SSO_CLIENT_SECRET` lives in `.env`, not in `.secrets/`.** `sso.yml` builds a JSON configuration string (`PAPERLESS_SOCIALACCOUNT_PROVIDERS`) and Paperless doesn't support `_FILE` for values embedded inside a JSON env var. This is a Paperless limitation, not a blueprint choice.
 - **First OCR of a large document is slow.** Tesseract loads language data lazily; subsequent OCR on the same language is cached and fast.
-- **Trailing newlines in secret files break auth.** Use `tr -d '\n'` when generating — Paperless compares `"password\n"` vs `"password"` and rejects logins.
+- **A mail account's connection test answers 500** instead of a message when the IMAP server cannot be reached — unknown host, closed port, TLS on a plain port (3.1.3, step 8 lab host).
+- **Notes are not found by full-text search** — a note's text gave no hit, also after `document_index reindex` (3.1.3, step 8 lab host, two instances).
+- **Gotenberg's PID limit bounds Chromium.** At 100 PIDs Chromium could not start: every e-mail and HTML document failed with 503 while both health endpoints answered 200. 300 is the measured peak (149) with room (step 8 lab host).
 
 ## Details
 

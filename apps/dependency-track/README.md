@@ -5,6 +5,16 @@ every project in a portfolio over time, ingests SBOMs, and correlates them
 against vulnerability and license data as that data changes — not just at
 the moment a scan runs.
 
+## Open findings
+
+The frontend image, `dependencytrack/frontend:5.2.1`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497), and the API server image, `dependencytrack/apiserver:5.2.1`, ships FreeMarker 2.3.34 with one (CVE-2026-84939, path traversal through a malformed locale). Both are the newest release.
+
+**Risk:** the nginx that serves the static frontend does not use brotli, which is there for curl and freetype. FreeMarker is only used by the database layer to build SQL templates, and upstream has confirmed Dependency-Track is not affected. Move to the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## What this is not: a container/image scanner
 
 **Trivy** (already used elsewhere in this repository's CI) inspects a

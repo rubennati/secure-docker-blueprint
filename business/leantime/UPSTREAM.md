@@ -14,7 +14,7 @@
 - **Domain:** Business operations
 - **Role:** Project management for teams that do not have a project manager —
   projects, milestones, tasks, time tracking, retrospectives and goals
-- **Based on version:** `3.9.8`
+- **Based on version:** `3.13.2`
 
 ## Project maturity
 
@@ -23,12 +23,12 @@ regular patch cadence.
 
 ## What we use
 
-- `leantime/leantime:3.9.8`, one container. Inside it supervisord runs three
+- `leantime/leantime:3.13.2`, one container. Inside it supervisord runs three
   programs: nginx on 8080, php-fpm on 127.0.0.1:9000, and
   `bin/leantime schedule:work` — the scheduler that sends notifications and the
   daily digest. It is not optional.
-- `mysql:8.4.11`. Upstream's own compose example ships `mysql:8.4`, and the
-  schema builder is written against it; the MariaDB the other stacks here run
+- `mysql:9.7.4`, the current LTS line. Leantime requires MySQL 8.0 or newer;
+  upstream's own compose example ships `mysql:8.4.13`; the MariaDB the other stacks here run
   is not a tested substitute.
 
 **Single sign-on is in the AGPL core**, not behind the marketplace: OIDC
@@ -92,6 +92,43 @@ What a host run still has to establish: the route through `core/traefik`,
 `limit-standard` against the application's own pages, a mail path for the
 notifications the scheduler sends, and a restore from the volumes below.
 
+## Version notes
+
+- Moved to `3.13.2` on 2026-11-05, not run on a host at this tag. Database
+  migrations in 3.12 (db version 3.5.30, merges duplicate plugin rows) and 3.13 (db
+  version 3.5.33: a `metadata` column on projects for per-project modules, a separate
+  key and base role for roles, the new permissions granted to existing roles). The
+  image does not apply them by itself: run checklist step 4, or confirm the database
+  update screen as an admin. 3.13 runs on Laravel 12 and the image moves to PHP 8.4
+  with the `intl` extension; paths, ports and the `www-data` uid are unchanged.
+  Plugins live in `./volumes/plugins`, which hides the plugins bundled in the image:
+  installed ones must be updated by hand after the core — McpServer to 2.0 (core now
+  ships laravel/mcp 1.x), and CustomFields, Notes, PgmPro, StrategyPro and Whiteboards
+  to their 3.13 releases. 3.10.1 runs PHP in UTC; timestamps written before in a
+  non-UTC timezone may display shifted. 3.10.2 signs everyone out once and invalidates
+  earlier password-reset links, requires `LEAN_APP_URL` behind a proxy that rewrites
+  the Host header (set here), trusts only private-network proxies by default (Docker
+  networks qualify) and adds an origin check on state-changing requests
+  (`LEAN_CSRF_ORIGIN_CHECK`) and rate limits (`LEAN_RATELIMIT_PASSWORD_RESET`,
+  `LEAN_RATELIMIT_TWOFA`). 3.10.3 runs plugin scheduled jobs from cron, so expect a
+  catch-up on the first scheduler run, and adds `GET /health`. 3.13.2 reports
+  marketplace install results with the PHP, OpenSSL and OS versions to the
+  marketplace. Security fixes: 3.10.2 (password-reset tokens, session rotation, rate
+  limits, OIDC token validation, API role escalation, project-scoped authorization,
+  file module, outbound webhook and calendar requests, CSRF), 3.10.3 (email links from
+  a trusted app URL instead of the Host header, escaped theme CSS). No CVE or GHSA IDs
+  are listed in the notes.
+- Moved `mysql` from `8.4.11` to `9.7.4` (the newest LTS line) on 2026-11-05,
+  not run on a host at this tag. Leantime requires "MySQL 8.0+ or MariaDB 10.6+"
+  with no upper bound (https://github.com/Leantime/leantime); upstream's
+  docker-leantime compose still ships `mysql:8.4`. MySQL upgrades in place from
+  one LTS line to the next: the 9.7 server upgrades the data dictionary and
+  system tables in `./volumes/mysql` at its first start. 9.x no longer has
+  `mysql_native_password`; the accounts the 8.4 image created use
+  `caching_sha2_password`, which `SELECT user, plugin FROM mysql.user;` confirms
+  before the move. Take the `mysqldump` before the tag changes: going back to
+  8.4 is only a restore of that dump.
+
 ## Upgrade checklist
 
 1. Read the release notes — https://github.com/leantime/leantime/releases
@@ -110,5 +147,5 @@ notifications the scheduler sends, and a restore from the volumes below.
 curl -s https://raw.githubusercontent.com/leantime/leantime/master/.docker/docker-compose.yml
 
 # Every setting the application knows, with upstream's defaults and comments
-docker run --rm --entrypoint sh leantime/leantime:3.9.8 -c 'cat config/sample.env'
+docker run --rm --entrypoint sh leantime/leantime:3.13.2 -c 'cat config/sample.env'
 ```

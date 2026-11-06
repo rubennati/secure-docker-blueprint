@@ -10,7 +10,7 @@
 - **Origin:** Calnode · no country stated in its published terms · no country
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite
-- **Based on version:** `0.9.0`
+- **Based on version:** `0.13.0`
 - **Last verified:** 2026-09-22 (0.9.0) — behind Traefik with TLS: the setup, the API, the admin interface after `reset-admin`, a guest booking, a restart, and the README's restore
 
 ## Project maturity
@@ -22,7 +22,7 @@ project's longevity.
 
 ## What we use
 
-- `ghcr.io/calnode/calnode:0.9.0` — upstream's own registry. Its quick start pins
+- `ghcr.io/calnode/calnode:0.13.0` — upstream's own registry. Its quick start pins
   `:latest`; not used here.
 - One container. SQLite at `/data/calnode.db`; upstream ships no database service.
 
@@ -91,6 +91,18 @@ a throwaway `proxy-public` network without Traefik:
 a real calendar provider, and therefore availability, booking and rescheduling;
 SMTP; the built-in video, recording and notetaking features, which need a LiveKit
 server; the MCP server; Litestream replication and restore; backup and restore.
+
+## Version notes
+
+- Moved to `0.13.0` on 2026-11-05, not run on a host at this tag; `Last verified`
+  stays at `0.9.0`. Back up `volumes/data` first: `0.12.0` adds migration `00071`,
+  a table rewrite of `invite_delivery`, and the down migration is lossy. `0.12.0`
+  also writes `/data/calnode.key` when Calnode generates its own key; this stack
+  sets `CALNODE_ENCRYPTION_KEY` from a Docker Secret, which upstream states is
+  unchanged and writes no key file. `0.10.1` fixes a CalDAV app password sent to
+  another account's server on reschedule or cancel; `0.11.0` closes Go
+  standard-library vulnerabilities GO-2026-6599, 6600, 6603, 6605, 6607 to 6613
+  and 6617. No GHSA is published. https://github.com/Calnode/calnode/releases
 
 ## Upgrade checklist
 

@@ -73,6 +73,8 @@ services:
       DATABASE_URL: file:/app/database/hemmelig.db
       BETTER_AUTH_URL: https://${APP_TRAEFIK_HOST}
       HEMMELIG_BASE_URL: https://${APP_TRAEFIK_HOST}
+      # Forwarded client IP headers are trusted only from these (v7.5.0+).
+      HEMMELIG_TRUSTED_PROXIES: ${HEMMELIG_TRUSTED_PROXIES}
       NODE_ENV: production
       TZ: ${TZ}
     secrets:
@@ -97,7 +99,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
 
     # --- Health & Observability ---
@@ -114,6 +116,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
 # --------------------------------------------------------

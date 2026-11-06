@@ -23,7 +23,7 @@
   `worker` — same image, different command, matching upstream's own shape)
 - `ghcr.io/dfir-iris/iriswebapp_db:v2.4.29` — a Postgres image with IRIS's
   own init scripts layered on top (not vanilla `postgres`)
-- `rabbitmq:3-management-alpine` — the official image, matching upstream's
+- `rabbitmq:3.13.7-management-alpine` — the official image, matching upstream's
   own compose file exactly
 
 ## nginx is not included — verified, not assumed

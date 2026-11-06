@@ -43,18 +43,22 @@ non-empty API key string — the server ignores it.
 
 Ollama does not authenticate anyone. Two things follow:
 
-- **The Traefik access policy is the only gate on the route.**
-  `APP_TRAEFIK_ACCESS` defaults to `access-lan-vpn` (LAN plus VPN). Whoever it
+- **The route carries two gates, and neither is optional.** `APP_TRAEFIK_ACCESS`
+  defaults to `access-trusted-vpn` (the declared ranges plus VPN), and a basicAuth
+  middleware the stack defines from `APP_BASIC_AUTH_USERS` asks whoever the policy
+  admits for a password (DEC-077; `.env.example` has the command for the hash, API
+  clients send it as `-u user:password`). Without the gate, whoever the policy
   admits can run inference on your hardware, pull arbitrary models from the
   internet onto your disk, and delete the ones you have.
-- **Every container on `proxy-public` reaches the API directly**, past Traefik
-  and its policy. Verified: from a second container on that network,
+- **Every container on the network Ollama shares reaches the API directly**, past
+  Traefik and its policy — on its own edge network (the default) that is Traefik
+  alone; on the shared `proxy-public`, every member. Verified: from a second container on that network,
   `DELETE /api/delete` with no credentials returned `200` and the model was
   gone. Do not run stacks you do not trust on the shared network next to it.
 
-If you need per-user access, put an identity-aware layer in front of the route
-— [Authentik](../../core/authentik/) forward-auth is the reference
-implementation here — rather than widening the access policy.
+If you need per-user access, replace the basicAuth gate with an identity-aware
+layer — [Authentik](../../core/authentik/) forward-auth, `auth-authentik@file` in
+`APP_TRAEFIK_AUTH` — rather than widening the access policy.
 
 ## CPU and GPU
 

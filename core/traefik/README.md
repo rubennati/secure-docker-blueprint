@@ -25,6 +25,8 @@ Edit `.env` — at minimum change these:
 | `ACME_WILDCARD_DOMAIN` | Uncomment and set if you want a wildcard certificate (optional) |
 | `TAILSCALE_CIDR_V4` | Your Tailscale IPv4 CIDR (default: `100.64.0.0/10`) |
 | `TAILSCALE_CIDR_V6` | Your Tailscale IPv6 CIDR (default: `fd7a:115c:a1e0::/48`) |
+| `TRUSTED_RANGES` | The client networks `access-trusted` admits — your LAN's prefixes; empty admits nobody |
+| `EDGE_NETWORKS` | The edge network of every stack you install (`<project>-edge`, each stack's `TRAEFIK_NETWORK`); `COMPOSE_FILE` applies the rendered file — [`docs/edge-networks.md`](docs/edge-networks.md) |
 
 ```bash
 # 2. Validate environment variables
@@ -46,13 +48,23 @@ bash ops/scripts/validate.sh --strict   # published addresses, against the runni
 # (only from Tailscale/VPN by default)
 ```
 
+With Tailscale on this host, run `sudo tailscale set --snat-subnet-routes=false`
+unless the host routes subnets for the tailnet: by default `tailscaled` masquerades
+the requests it forwards to Docker, every VPN client reaches Traefik as the Docker
+gateway, and `access-vpn` answers 403 — [host-firewall.md](docs/host-firewall.md#reaching-the-routers-over-tailscale-on-the-host).
+
 ## Structure
 
 ```text
 .env.example                          # All configurable variables
 docker-compose.yml                    # Docker Socket Proxy + Traefik
 network-dual-stack.yml                # Optional overlay: IPv4+IPv6 on proxy-public
+config/edge-networks.yml              # Rendered from EDGE_NETWORKS: the edge network of every installed stack (gitignored)
+config/published-ports.yml            # Rendered from TRAEFIK_BIND_V4/_V6: the published ports, one block per family (gitignored)
+config/host/ingress.nft               # Rendered host firewall for the derived exposure profile — installed by hand (gitignored)
 docs/
+  edge-networks.md                    # One network per stack (default) or the shared network — the choice, the migration
+  host-firewall.md                    # The exposure profile, the rendered host firewall, the exposure test and its marker
   ipv6-dual-stack.md                  # IPv4-only vs. dual-stack — concepts, migration, troubleshooting
   middleware-model-migration.md       # The cut to the middleware model (v0.9.5): every router before and after, the migration, the rollback
 ops/
@@ -94,17 +106,21 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-`proxy-public` (the network Traefik and every routed app share) is **IPv4-only by default**, and Traefik is then published on IPv4 only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which `access-lan` and `access-lan-vpn` admit and CrowdSec's default whitelist skips. IPv6 is therefore published by `network-dual-stack.yml` alone, together with the IPv6 subnet. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+A new installation is **dual-stack**: the example `.env` applies `network-dual-stack.yml`, which gives `proxy-public` (the network Traefik and every routed app share) an IPv6 subnet, and publishes Traefik on both families (DEC-063, refined by DEC-075). Without the overlay `proxy-public` is IPv4-only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
-**Recommended for new deployments — dual-stack from day one:**
+**A new installation — dual-stack from day one, as the example ships it:**
 
 ```bash
-# .env: uncomment and set
+# .env as the example ships it — replace the documentation prefix, which
+# validate.sh refuses:
 #   PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
-#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
+#   TRAEFIK_BIND_V4=0.0.0.0 and TRAEFIK_BIND_V6=[::]   (IPv6 only: TRAEFIK_BIND_V4= empty)
+# IPv4 only: drop network-dual-stack.yml from COMPOSE_FILE, TRAEFIK_BIND_V6= empty
 # Docker daemon prerequisites first — see docs/ipv6-dual-stack.md
 
+bash ops/scripts/render.sh
 docker compose up -d
 
 # Verify it actually applied — EnableIPv6 must be true. This command
@@ -122,30 +138,53 @@ bash ops/scripts/validate.sh --strict
 
 **Setting `COMPOSE_FILE` in `.env` (above) is not optional convenience — set it.** Once the dual-stack network exists, any later `docker compose` command run *without* the overlay (e.g. someone runs `docker compose up -d --force-recreate traefik` and forgets the `-f` flag) makes Compose see only the IPv4-only network definition from `docker-compose.yml`. Compose then tries to remove and recreate the network to match — which fails loudly if other containers are still attached to it (`network proxy-public has active endpoints`, and Traefik ends up stopped until you redo the command correctly), or can silently revert the network to IPv4-only if nothing else happens to be attached. `COMPOSE_FILE` in `.env` means every future command in this directory includes the overlay automatically, with no flag to forget.
 
+### Exposure profile
+
+`validate.sh` derives what the configuration intends to expose — `direct`,
+`proxied` or `private` — from the two bindings and `TRAEFIK_FORWARDED_PROXY`,
+lists the protection layers present and absent for it, and renders the host
+firewall for it into `config/host/ingress.nft`. What the internet reaches is
+measured by `scripts/exposure-test.sh` from another machine; `--strict` requires
+its marker in `config/exposure-verified` for a public binding
+([`docs/host-firewall.md`](docs/host-firewall.md)).
+
 ### Published addresses
 
 | Variable | Holds | Default |
 |---|---|---|
 | `TRAEFIK_HTTP_PORT`, `TRAEFIK_HTTPS_PORT` | the host port, a number only | `80`, `443` |
-| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports | `0.0.0.0` |
-| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed — read by `network-dual-stack.yml` only | `[::]` |
+| `TRAEFIK_BIND_V4` | the IPv4 host address of both ports; empty publishes no IPv4 | none — the example sets `0.0.0.0`; `render.sh` refuses it unset |
+| `TRAEFIK_BIND_V6` | the IPv6 host address, bracketed; empty publishes no IPv6. Needs `network-dual-stack.yml` | none — the example sets `[::]` |
 
-`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container:
+`render.sh` writes the two into `config/published-ports.yml`, one block per family, and `COMPOSE_FILE` applies it — `docker-compose.yml` publishes no port itself. `render.sh` refuses `TRAEFIK_BIND_V4` unset, a `COMPOSE_FILE` without that file, an IPv6 binding without the overlay, and the overlay with `TRAEFIK_BIND_V6` unset; `validate.sh` refuses a rendered file that names other bindings than `.env`.
+
+| Shape | `TRAEFIK_BIND_V4` | `TRAEFIK_BIND_V6` | Overlay |
+|---|---|---|---|
+| dual-stack (shipped) | `0.0.0.0` | `[::]` | `network-dual-stack.yml` |
+| IPv4 only | `0.0.0.0` | empty | no |
+| IPv6 only — no public IPv4 ingress | empty | `[::]` | `network-dual-stack.yml` |
+
+IPv6 only concerns ingress. The public network still carries IPv4 behind Traefik, and what a host without IPv4 egress needs for its outbound connections is the prerequisite list in the ingress audit (§3.4); that shape is not verified on a host yet.
+
+`validate.sh` refuses `address:port` in a port variable and prints the lines that keep the binding — `TRAEFIK_HTTPS_PORT=0.0.0.0:443` becomes `TRAEFIK_HTTPS_PORT=443` and `TRAEFIK_BIND_V4=0.0.0.0`. It then compares the published address families with the network, the Docker daemon and the running container, and the static configuration the container started with — `config/traefik.yml` is read once, at the start — with the rendered file:
 
 | Result | Meaning | What to do |
 |---|---|---|
 | `ERROR` | IPv6 published while `proxy-public` has none; the overlay while the daemon keeps `docker-proxy` (`userland-proxy` not `false`), has `ip6tables` off or cannot be read; the overlay while the existing network is IPv4-only | correct `.env`, the daemon or the network — [`docs/ipv6-dual-stack.md`](docs/ipv6-dual-stack.md) |
 | `PENDING` | the running container is published differently from the configuration, or `docker-proxy` relays one of its IPv6 ports | `docker compose up -d` recreates Traefik |
-| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
+| `PENDING` | `config/traefik.yml` differs from the file the running container started with, or was changed after its start — the entrypoint bouncer, a timeout, the trusted ranges | `docker compose up -d --force-recreate traefik`; a plain `up -d` does not recreate it for a changed file |
+| `NOT VERIFIED` | a check could not run — no Docker CLI, Docker refused an inspect or an exec, Traefik is not running — or the running container was created from other compose files than the ones checked | run where Docker answers, with the deployment's compose files |
 
 With no `ERROR` but something pending or not verified, `validate.sh` prints `VALID, SECURITY NOT CONFIRMED` and exits 0, so it does not block the update that resolves it. After `docker compose up -d`, confirm the deployment:
 
 ```bash
 bash ops/scripts/validate.sh --strict      # fails on anything open; reads COMPOSE_FILE from .env
-bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml   # files passed by hand
+bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml -f config/published-ports.yml -f config/edge-networks.yml   # files passed by hand
 ```
 
 A Docker daemon on another host or in a VM cannot be read from here. Confirm `userland-proxy: false` and `ip6tables: true` there, then set `DOCKER_DAEMON_CHECK=manual` in `.env`.
+
+**Which network the ports arrive on.** Docker maps a container's published ports to its address on one network — the one that provides its default gateway. Without a priority Docker takes the first in Compose order, which is `crowdsec-security`, not `proxy-public` (measured 2026-10-31). `docker-compose.yml` therefore gives `proxy-public` `gw_priority: 100`: the ports are DNAT'd to Traefik's address there, where the address family is checked, and a connection from the host itself or from another container reaches Traefik as that network's gateway. `validate.sh` refuses a model in which `proxy-public` does not carry the highest priority, reports a running container created before the pin as `PENDING` until `docker compose up -d` recreates it, and reports `NOT VERIFIED` on a daemon that knows no gateway priority. Needs Docker Engine 28.0 and Compose 2.33.1; `validate.sh` refuses an older Compose by name. From Engine 29.4.1 a single-stack network with a higher priority would take its own family; with the priority on the dual-stack `proxy-public`, both families stay there.
 
 Under dual-stack, `https://[::1]` and IPv6 link-local addresses (`fe80::/10`) do not reach Traefik: with `userland-proxy: false` Docker forwards neither to a container. Check from the host over `127.0.0.1`, from elsewhere over a routed address.
 
@@ -169,12 +208,16 @@ nothing (a breaking change; [`CHANGELOG.md`](../../CHANGELOG.md) 0.9.5).
 after.
 
 ```yaml
-middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
+middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}
 ```
+
+The headers position stands first, so that a refusal by the access or limit
+position carries the HSTS base as well; the numbers below name the positions
+and are not their order ([`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md)).
 
 | Position | Variable | Values | Decided by |
 |---|---|---|---|
-| 1 access | `APP_TRAEFIK_ACCESS` | `access-public` · `access-lan` · `access-vpn` · `access-lan-vpn` · `access-blocked` | the operator |
+| 1 access | `APP_TRAEFIK_ACCESS` | `access-public` · `access-trusted` · `access-vpn` · `access-trusted-vpn` · `access-blocked` | the operator |
 | 2 limit | `APP_TRAEFIK_LIMIT` | `limit-standard` (125/s, burst 500) · `limit-strict` (20/s, 40) · `limit-sync` (1000/s, 1000) · `limit-extra-large` (125/s, 1000 — closed access only) · `limit-none` | the repository, from a measurement |
 | 3 headers | `APP_TRAEFIK_HEADERS` | `headers-standard` · `headers-application-owned` · `headers-none` — every profile starts with the HSTS base | the repository, from a measurement |
 | 4 auth | `APP_TRAEFIK_AUTH` | `auth-none@file` · `auth-authentik@file` · `${COMPOSE_PROJECT_NAME}-auth@docker` | the operator |
@@ -184,12 +227,12 @@ middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_H
 | Middleware | Who gets through |
 |-----------|-----------------|
 | `access-public` | Everyone (no restriction) |
-| `access-lan` | LAN only — `192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`, `fc00::/7` (hardcoded RFC1918 + ULA) |
+| `access-trusted` | the networks `TRUSTED_RANGES` declares in `.env` — nothing for being private; empty admits nobody |
 | `access-vpn` | VPN only — `TAILSCALE_CIDR_V4` + `TAILSCALE_CIDR_V6` from `.env` |
-| `access-lan-vpn` | LAN + VPN combined |
+| `access-trusted-vpn` | the declared networks + VPN |
 | `access-blocked` | Nobody (emergency kill switch) |
 
-> **Note:** `access-lan` and `access-lan-vpn` use hardcoded RFC1918 ranges (`192.168.0.0/16`, `10.0.0.0/8`, `172.16.0.0/12`) + IPv6 ULA (`fc00::/7`). These are universal constants and cannot be set via `.env` — `envsubst` would render a comma-separated string as a single YAML entry, which Traefik cannot parse. Only the VPN CIDRs are configurable via `.env`.
+> **Note:** `TRUSTED_RANGES` is quoted and space-separated (`.env` is read by the shell). `validate.sh` refuses a range that is not a network, overlaps the VPN range or overlaps a Docker network of this host; no closed policy admits a container, so a route a container has to reach is `access-public`. `access-lan` and `access-lan-vpn` are retired: `scripts/migrate-traefik-env.sh --all` adds the line to `.env` and renames every stack's value ([`docs/standards/traefik-security.md`](../../docs/standards/traefik-security.md), "Access Policies").
 
 ### Headers
 
@@ -226,7 +269,7 @@ changes last), a request header **after** `${APP_TRAEFIK_AUTH}`.
 | Traefik dashboard | `access-vpn`, `limit-strict`, `headers-standard`, `auth-none` | administration surface, VPN-only, strict counter (`dynamic/routers-system.yml`) |
 | Vaultwarden | `access-vpn`, `limit-standard`, `headers-application-owned` | sends its own `nosniff`, frame header per route, referrer policy, Permissions-Policy and CSP (measured 2026-10-18) |
 | Keycloak | `access-vpn`, `limit-standard`, `headers-application-owned` + `header-permissions` | sends everything but the Permissions-Policy; its frame headers vary per page |
-| Nextcloud | `access-lan-vpn`, `limit-sync`, `headers-standard` + `frame-self` | sync clients need the sustained rate; it frames its own pages |
+| Nextcloud | `access-trusted-vpn`, `limit-sync`, `headers-standard` + `frame-self` | sync clients need the sustained rate; it frames its own pages |
 | WordPress, Ghost | `access-public`, `limit-standard`, `headers-standard` | a CMS with inline scripts, the standard set |
 | listmonk | `access-public`, `limit-standard`, `headers-standard` + `frame-self` | frames its campaign preview; a different subdomain stays refused |
 | Paperless-ngx | `access-vpn`, `limit-standard`, `headers-standard`, then `forwarded-proto-https` | builds absolute URLs from the forwarded protocol; its `/admin` path can take `auth-authentik@file` on a second router |
@@ -435,7 +478,7 @@ CrowdSec detects threats (brute force, CVE probes, crawling), the bouncer enforc
 |---------|-------------|
 | **IP blocking** | Bans IPs flagged by CrowdSec scenarios (probing, brute force, sensitive files) |
 | **Community blocklist** | Shared threat intelligence from the CrowdSec network |
-| **AppSec / WAF** | Inspects request bodies for SQL injection, XSS, path traversal |
+| **AppSec / WAF** | Opt-in (`CROWDSEC_APPSEC_ENABLED`): virtual patches for known exploits and a small generic set; no Core Rule Set, so injection probes pass ([`appsec.md`](../crowdsec/docs/appsec.md)) |
 | **Stream mode** | Polls CrowdSec every 60s, caches decisions locally (no per-request latency) |
 
 ### How to enable
@@ -611,7 +654,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 |---------|-------|
 | Plugin not loading | `docker exec traefik-core cat /var/log/traefik/traefik.log` — look for plugin errors (Traefik logs to a file, not stdout). Is `CROWDSEC_BOUNCER_ENABLED=true` in `.env`, was `render.sh` run since, and was Traefik recreated afterwards? `grep -n experimental config/traefik.yml` shows whether the block was rendered |
 | 403 for legitimate IPs | `docker exec crowdsec cscli decisions list` — check if the IP is banned. Remove with `cscli decisions delete --ip X.X.X.X` |
-| WAF blocking valid requests | Set `crowdsecAppsecEnabled: false` temporarily. Check CrowdSec logs for false positives |
+| WAF blocking valid requests | Set `CROWDSEC_APPSEC_ENABLED=false` in `.env`, run `render.sh` and recreate Traefik (`--force-recreate`). Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
 
@@ -653,7 +696,7 @@ client. `cloudflare` is for a host whose public records Cloudflare proxies
 | Entrypoints | trust nobody | trust Cloudflare's published ranges — `ops/cloudflare-ips.txt`, compared with cloudflare.com weekly |
 | Access log, CrowdSec detection | `ClientHost` = connecting address | `ClientHost` = the whole `X-Forwarded-For` value Cloudflare sent: `client`, or `forged, client` when the client sent a header first, because Cloudflare appends the real one behind it. CrowdSec's Traefik parser takes the last element; anything else that reads the log sees the list |
 | CrowdSec bouncer | compares the connecting address — no header reaches it | compares the last `X-Forwarded-For` entry outside the ranges, the client Cloudflare appended. A direct client is compared by its connection, because the entrypoint deleted its header. The plugin keeps its default header: `CF-Connecting-IP` is not used, because the plugin reads whatever header it is given from any sender, and Traefik deletes only `X-Forwarded-*` and `X-Real-Ip` |
-| `access-lan`, `access-vpn`, `access-lan-vpn` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 as well; an IPv4-only `proxy-public` accepts no IPv6 connection — "IPv6 between Cloudflare and the origin" below |
+| `access-trusted`, `access-vpn`, `access-trusted-vpn` | connecting address | connecting address, unchanged — their clients connect directly; a request to such a host through Cloudflare arrives from an edge address and is refused. Over IPv6 as well; an IPv4-only `proxy-public` accepts no IPv6 connection — "IPv6 between Cloudflare and the origin" below |
 | Rate limits (`limit-*`) | per client | **per edge address** at the origin; per client at the edge, through a Cloudflare rate-limiting rule by IP on the public host names (one rule on the Free plan, two on Pro) |
 | The application | `X-Forwarded-For` and `X-Real-Ip` = client | from Cloudflare: `X-Forwarded-For` = `client, edge` (two hops), `X-Real-Ip` = edge, `CF-Connecting-IP` = client. From a direct client: `X-Forwarded-For` and `X-Real-Ip` = that client, `CF-Connecting-IP` = whatever it sent |
 
@@ -680,7 +723,21 @@ a measurement, not settled here (D2 in the core audit).
   level").
 - Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
-  (above, Path C).
+  (above, Path C). DNS-01 sets a TXT record and never contacts the host, so a
+  proxied record does not hinder it: on the step 8 lab host a router with
+  `tls.certresolver=cloudflare-dns` for a proxied name had its certificate 20 s
+  after it appeared. Every name Cloudflare forwards needs a
+  certificate here — the TLS options set `sniStrict`, so a name the stored
+  certificates do not cover fails the handshake and Cloudflare answers **525**
+  (measured: a proxied name beside a wildcard for another name). A valid
+  certificate for the exact name is what *Full (strict)* checks.
+- Edge certificate: Cloudflare's free Universal certificate covers the zone and
+  one level below it (`example.com`, `*.example.com`), so a proxied name can sit
+  one level deep. A proxied wildcard one level further (`*.lab.example.com`)
+  fails at the edge before the origin is asked — measured, a TLS handshake
+  failure for such a name — unless the zone has a certificate for that level
+  (Cloudflare's Advanced Certificate Manager). The origin side is no obstacle:
+  DNS-01 issues such a wildcard.
 
 **IPv6 between Cloudflare and the origin.** Cloudflare connects to the origin
 over IPv6 when only an `AAAA` record exists, and possibly when both exist —
@@ -688,8 +745,11 @@ Cloudflare documents a preference for IPv4 there, not a guarantee. On an
 IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
 Dual-Stack Networking" above), and such a connection is refused. So in
 `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Neither shape is verified
-with Cloudflare yet.
+overlay above), or the origin has `A` records only. Measured on the step 8 lab
+host in `none` mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
+clients over IPv4 and over IPv6 Cloudflare connected to the origin over IPv4
+(`X-Real-Ip` an edge IPv4 address, the client in `CF-Connecting-IP`). An origin
+with `AAAA` only is not verified.
 
 **Protect the origin.** Without this a client that connects to the host
 directly bypasses everything Cloudflare does — the edge rule, Cloudflare's own
@@ -735,7 +795,9 @@ VPN and LAN clients arrive on other interfaces and are not touched. A LAN that
 shares the public interface needs its ranges admitted in the same chain,
 before the drop. For boot, an `include` of this file from `/etc/nftables.conf`
 is enough — the flush there runs before Docker starts; on a running host never
-`systemctl restart nftables`, reload this file. After a change to
+`systemctl restart` or `stop` `nftables` without the drop-in
+`ops/systemd/nftables-no-flush.conf` (Debian's stop action flushes every table, also on
+a package upgrade — measured 2026-11-04, `docs/host-firewall.md`); reload this file. After a change to
 `ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
 `destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The table
 parses and loads (checked with `nft -c` and `nft -f` in a container during the
@@ -804,7 +866,10 @@ render again.
 1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
    `access-public`, the access log's `ClientHost` (last element), the bouncer's
    compared address (a manual decision answered `403`), Vaultwarden's lockout
-   address.
+   address. In `none` mode measured on the step 8 lab host: `whoami` behind
+   `access-public` through Cloudflare over IPv4 and IPv6 answered 200 with
+   `X-Real-Ip` the edge and `CF-Connecting-IP` the client; the `cloudflare` mode
+   is not.
 2. A closed route refusing a proxied request over IPv4 and over IPv6, with
    `proxy-public` dual-stack and with it IPv4-only.
 3. Forged `CF-Connecting-IP` and `X-Forwarded-For` from a direct client in both
@@ -950,6 +1015,13 @@ the lines `scripts/host-files.sh install-commands core/traefik` prints, then
 edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
 traefik-watchdog.timer`. They are optional in the manifest, so a host without
 the watchdog reports them as `not installed` and nothing else.
+
+Without it a hung Traefik stays hung. Measured on the step 8 lab host: with the
+process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
+did nothing further; every router was unanswered until the process resumed. A crash
+is different — the restart policy brought a killed process back within 8 s — and so
+is a `docker kill` or `docker stop`, which Docker counts as a manual stop and does
+not restart.
 
 ## Backup
 

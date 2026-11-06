@@ -550,9 +550,18 @@ class LocalPinDrift(unittest.TestCase):
         return app
 
     def _findings(self, app):
-        out: list[dict] = []
-        cs.check_local_pins(app, out)
-        return out
+        # Judged from inside the temporary tree, like the other classes: the
+        # checker's file list is Git's, and a temp stack is in no repository.
+        cwd = os.getcwd()
+        try:
+            os.chdir(app)
+            _reset_caches()
+            out: list[dict] = []
+            cs.check_local_pins(Path("."), out)
+            return out
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
 
     def test_same_image_different_version_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -703,3 +712,283 @@ class IntroducesService(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class PortsAndNetworkLabel(unittest.TestCase):
+    """`port-no-host-address` and `missing-network-label` — the two guards of
+    step 1 of the ingress programme (DEC-075). A published port names the host
+    address it binds to, or the host listens on every address it has; a routed
+    service names the network Traefik reaches it on, or Traefik picks one at
+    random (measured 2026-10-31: the internal network in two of six reloads)."""
+
+    def _findings_for(self, root: Path, path: str, compose_yaml: str, env: str = "") -> list[dict]:
+        app = root / path
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text(compose_yaml)
+        if env:
+            (app / ".env.example").write_text(env)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            # relative, as find_apps() yields them
+            cs.check_ports_and_labels(Path(path), findings)
+            return findings
+        finally:
+            os.chdir(cwd)
+
+    def _rules(self, found):
+        return {(f["rule"], f["level"]) for f in found}
+
+    def test_port_without_host_address_fails(self):
+        compose = "services:\n  app:\n    image: example/image:1.0\n    ports:\n      - \"8080:80\"\n      - \"3478:3478/udp\"\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose)
+        self.assertEqual([f["rule"] for f in found], ["port-no-host-address", "port-no-host-address"])
+        self.assertTrue(all(f["level"] == "FAIL" for f in found))
+
+    def test_port_variable_without_address_fails(self):
+        compose = "services:\n  app:\n    image: example/image:1.0\n    ports:\n      - \"${APP_PORT}:9000\"\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose, "APP_PORT=9000\n")
+        self.assertIn(("port-no-host-address", "FAIL"), self._rules(found))
+
+    def test_bound_ports_pass(self):
+        compose = ("services:\n  app:\n    image: example/image:1.0\n    ports:\n"
+                   "      - \"127.0.0.1:8080:80\"\n"
+                   "      - \"[::1]:8080:80\"\n"
+                   "      - \"${APP_MAIL_BIND}:25:25\"\n"
+                   "      - \"${APP_TRAPPER_BIND}:10051\"\n"
+                   "      - target: 80\n        published: 8080\n        host_ip: 10.0.0.1\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose,
+                                       "APP_MAIL_BIND=0.0.0.0\nAPP_TRAPPER_BIND=0.0.0.0:10051\n")
+        self.assertEqual(found, [])
+
+    def test_unset_or_empty_bind_variable_fails(self):
+        """A *_BIND variable the example does not set, or sets to nothing, leaves
+        the host part empty and Compose binds every address — the name of the
+        variable buys nothing."""
+        compose = ("services:\n  app:\n    image: example/image:1.0\n    ports:\n"
+                   "      - \"${UNSET_BIND}:443:443\"\n"
+                   "      - \"${EMPTY_BIND}:25:25\"\n"
+                   "      - target: 80\n        published: 8080\n        host_ip: ${UNSET_BIND}\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose, "EMPTY_BIND=\n")
+        self.assertEqual([f["rule"] for f in found], ["port-no-host-address"] * 3)
+        self.assertTrue(all(f["level"] == "FAIL" for f in found))
+
+    def test_no_stack_is_excepted_any_more(self):
+        # Step 7 bound the nine stacks the audit listed; the list is gone.
+        self.assertFalse(hasattr(cs, "KNOWN_UNBOUND_PORTS"))
+        compose = "services:\n  app:\n    image: example/image:1.0\n    ports:\n      - \"2222:2222\"\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/unifi", compose)
+        self.assertEqual(self._rules(found), {("port-no-host-address", "FAIL")})
+
+    def test_a_required_bind_variable_counts_as_an_address(self):
+        compose = ("services:\n  app:\n    image: example/image:1.0\n    ports:\n"
+                   "      - \"${APP_BIND:?Set APP_BIND in .env}:2222:2222\"\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose, "APP_BIND=0.0.0.0\n")
+            self.assertEqual(found, [])
+            found = self._findings_for(Path(tmp), "apps/widget2", compose, "")
+        self.assertEqual(self._rules(found), {("port-no-host-address", "FAIL")})
+
+    def test_routed_service_without_network_label_fails(self):
+        compose = ("services:\n  app:\n    image: example/image:1.0\n    labels:\n"
+                   "      - \"traefik.enable=true\"\n"
+                   "      - \"traefik.http.routers.widget.rule=Host(`widget.example.com`)\"\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose)
+        self.assertEqual(self._rules(found), {("missing-network-label", "FAIL")})
+
+    def test_routed_service_with_network_label_passes(self):
+        compose = ("services:\n  app:\n    image: example/image:1.0\n    labels:\n"
+                   "      - \"traefik.enable=true\"\n"
+                   "      - \"traefik.docker.network=${TRAEFIK_NETWORK}\"\n")
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose, "TRAEFIK_NETWORK=proxy-public\n")
+        self.assertEqual(found, [])
+
+    def test_unrouted_service_needs_no_label(self):
+        compose = "services:\n  db:\n    image: example/image:1.0\n    labels:\n      - \"traefik.enable=false\"\n"
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "apps/widget", compose)
+        self.assertEqual(found, [])
+
+    def test_catalogue_carries_no_new_unbound_port_and_every_route_names_its_network(self):
+        """The guard against regression on the real tree: the known stacks warn,
+        nothing fails."""
+        cwd = os.getcwd()
+        try:
+            os.chdir(HERE.parents[1])
+            _reset_caches()
+            fails = []
+            for app in cs.find_apps():
+                if str(app) in cs.EXCEPT_DIRS:
+                    continue
+                findings: list[dict] = []
+                cs.check_ports_and_labels(app, findings)
+                fails.extend((str(app), f["service"], f["detail"]) for f in findings if f["level"] == "FAIL")
+        finally:
+            os.chdir(cwd)
+            _reset_caches()  # the repository's file list must not leak into later temp-tree tests
+        self.assertEqual(fails, [])
+
+
+class AuthPosture(unittest.TestCase):
+    """DEC-077: the line above every auth variable states the posture; it has to
+    fit the value, and `none` needs a reason and a closed access policy."""
+
+    def _findings_for(self, root: Path, env_text: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text("services:\n  app:\n    image: example/image:1.0\n")
+        (app / ".env.example").write_text(env_text)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_env(Path("apps/widget"), findings)
+            return [f["detail"] for f in findings if f["rule"] == "auth-posture"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def _run(self, text: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            return self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\n" + text)
+
+    def test_the_postures_that_fit_their_values_pass(self):
+        for value, posture in (("auth-none@file", "app-login — the application's own login"),
+                               ("auth-none@file", "public — a website"),
+                               ("auth-authentik@file", "forward-auth — through core/authentik"),
+                               ("${COMPOSE_PROJECT_NAME}-auth@docker", "basic — the gate from APP_BASIC_AUTH_USERS")):
+            found = self._run(f"APP_TRAEFIK_ACCESS=access-public\n# a comment above\n# auth posture: {posture}\nAPP_TRAEFIK_AUTH={value}\n")
+            self.assertEqual(found, [], (value, posture))
+
+    def test_a_variable_without_the_line_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# WHO must be identified\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("no `# auth posture:` line", found[0])
+
+    def test_the_line_has_to_be_in_the_block_directly_above(self):
+        found = self._run("# auth posture: app-login — x\nAPP_TRAEFIK_ACCESS=access-vpn\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1, found)
+
+    def test_a_posture_that_does_not_fit_the_value_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: basic — x\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("that value means app-login or public or none", found[0])
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=${COMPOSE_PROJECT_NAME}-auth@docker\n")
+        self.assertIn("that value means basic", found[0])
+
+    def test_an_unknown_posture_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: sso — x\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("not one of", found[0])
+
+    def test_none_needs_a_reason_and_a_closed_policy(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: none\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("needs its reason", found[0])
+        found = self._run("APP_TRAEFIK_ACCESS=access-public\n# auth posture: none — a stateless echo\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("needs a closed access policy", found[0])
+        found = self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: none — a stateless echo\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(found, [])
+
+    def test_the_sibling_access_variable_is_matched_by_prefix(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-public\n# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=auth-none@file\n"
+                          "ADMIN_TRAEFIK_ACCESS=access-vpn\n# auth posture: none — a stateless path\nADMIN_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(found, [])
+
+    def test_every_catalogue_example_states_a_posture(self):
+        posture_of = {}
+        for env in sorted(Path(p) for root in cs.ROOTS for p in Path(root).rglob(".env.example")):
+            for key, value, posture, reason in cs.auth_postures(env):
+                self.assertIsNotNone(posture, f"{env}: {key}")
+                posture_of.setdefault(posture, []).append(str(env.parent))
+        self.assertEqual(set(posture_of) <= set(cs.POSTURES), True, posture_of.keys())
+        self.assertIn("apps/paperless-gpt", posture_of["basic"])
+        self.assertIn("apps/whoami", posture_of["none"])
+
+
+class NetworkName(unittest.TestCase):
+    """DEC-075: the proxy-public network of a stack is named through TRAEFIK_NETWORK."""
+
+    def _findings_for(self, root: Path, compose_yaml: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text(compose_yaml)
+        (app / ".env.example").write_text("COMPOSE_PROJECT_NAME=widget\nTRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge\n")
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_network_name(Path("apps/widget"), findings)
+            return [f for f in findings if f["rule"] == "network-name"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def test_a_proxy_network_without_the_name_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "services:\n  app:\n    image: example/image:1.0\n    networks: [proxy-public]\n"
+                                                  "networks:\n  proxy-public:\n    external: true\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("${TRAEFIK_NETWORK}", found[0]["detail"])
+
+    def test_the_named_network_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "services:\n  app:\n    image: example/image:1.0\n    networks: [proxy-public]\n"
+                                                  "networks:\n  proxy-public:\n    name: ${TRAEFIK_NETWORK}\n    external: true\n")
+        self.assertEqual(found, [])
+
+    def test_a_stack_without_the_proxy_network_is_not_judged(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "services:\n  app:\n    image: example/image:1.0\n")
+        self.assertEqual(found, [])
+
+    def test_the_edge_default_is_still_judged_as_the_shared_network(self):
+        # external_networks() resolves TRAEFIK_NETWORK to the repository's shared
+        # network, so the identity rules keep applying to a stack an operator
+        # puts on it.
+        self.assertEqual(cs.external_networks(Path("apps/_reference")).get("proxy-public"), cs.canonical_shared_network())
+
+
+class RetiredLanClass(unittest.TestCase):
+    """access-lan and access-lan-vpn are retired names since DEC-076: an example
+    that still sets one fails like any name from before the model."""
+
+    def _findings_for(self, root: Path, env_text: str) -> list[dict]:
+        app = root / "apps" / "widget"
+        app.mkdir(parents=True, exist_ok=True)
+        (app / "docker-compose.yml").write_text("services:\n  app:\n    image: example/image:1.0\n")
+        (app / ".env.example").write_text(env_text)
+        cwd = os.getcwd()
+        try:
+            os.chdir(root)
+            _reset_caches()
+            findings: list[dict] = []
+            cs.check_env(Path("apps/widget"), findings)
+            return [f for f in findings if f["rule"] == "retired-name"]
+        finally:
+            os.chdir(cwd)
+            _reset_caches()
+
+    def test_the_lan_class_in_an_example_is_a_retired_name(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\nAPP_TRAEFIK_ACCESS=access-lan-vpn\nAGW_UI_TRAEFIK_ACCESS=access-lan\n")
+        self.assertEqual(len(found), 2, found)
+        self.assertTrue(all(f["level"] == "FAIL" for f in found))
+        self.assertIn("migrate-traefik-env.sh", found[0]["detail"])
+
+    def test_the_trusted_and_vpn_policies_pass(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            found = self._findings_for(Path(tmp), "COMPOSE_PROJECT_NAME=widget\nAPP_TRAEFIK_ACCESS=access-trusted-vpn\nAPP_API_TRAEFIK_ACCESS=access-vpn\n")
+        self.assertEqual(found, [])

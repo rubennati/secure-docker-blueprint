@@ -4,14 +4,20 @@ Docker management UI with Git-based stack management. Deploy and update Compose 
 
 Works best for homelab / small-team setups where stacks are version-controlled in a Git repository instead of configured through a web UI.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Three services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `fnsys/dockhand` | Dockhand web UI + Git poller + Compose orchestrator |
-| `db` | `postgres:16-alpine` | Persistent state (stacks, users, Git repos config) |
+| `dockhand` | `fnsys/dockhand` | Dockhand web UI + Git poller + Compose orchestrator |
+| `db` | `postgres:16.15-alpine` | Persistent state (stacks, users, Git repos config) |
 | `socket-proxy` | `tecnativa/docker-socket-proxy` | Filtered Docker API access — Dockhand never talks to the Docker socket directly |
 
 Dockhand reaches the Docker daemon via `DOCKER_HOST=tcp://socket-proxy:2375`. The proxy enforces which API endpoints are allowed — see `.env.example` / `docker-compose.yml` for the permission set.
@@ -71,7 +77,7 @@ Click "Test connection" → should turn green → "Add". The environment appears
 
 ```bash
 docker compose ps                    # All three services should be healthy
-docker compose logs app --tail 50    # Check for startup errors
+docker compose logs dockhand --tail 50    # Check for startup errors
 docker compose logs socket-proxy     # Socket proxy access log
 ```
 

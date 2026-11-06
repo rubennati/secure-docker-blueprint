@@ -51,6 +51,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/shlink.
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
@@ -92,12 +96,17 @@ services:
     # on the data directory, then drops to the service user. With cap_drop: ALL alone
     # postgres exits on `chown: Operation not permitted` and redis on
     # `setpriv: setresuid failed` — neither server ever starts. Verified 2026-08-16.
+    # SETPCAP is redis-only: from Redis 8 the entrypoint's setpriv also empties the
+    # capability bounding set when it drops to the redis user, and without SETPCAP
+    # that fails with `setpriv: apply bounding set: Operation not permitted`. Read
+    # from the 8.10 entrypoint, not run on a host (2026-11-05).
     cap_add:
       - CHOWN
       - DAC_OVERRIDE
       - FOWNER
       - SETGID
       - SETUID
+      - SETPCAP
     read_only: true
     tmpfs:
       - /run
@@ -244,7 +253,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
 
@@ -261,6 +270,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

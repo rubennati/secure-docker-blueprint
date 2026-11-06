@@ -2,14 +2,25 @@
 
 Headless Node.js CMS focused on publishing, newsletters, and paid memberships. This setup runs Ghost with a dedicated MySQL 8 database and an external SMTP relay for member emails. ActivityPub (Fediverse/Mastodon integration) is optional via a separate overlay file.
 
+## Open findings
+
+The Ghost image and its MySQL 8.4 database both carry CVE-2025-68121 in the
+`gosu` start-up helper, built with Go 1.24.6. MySQL 8.4 also bundles certifi
+2026.2.25 in MySQL Shell (GHSA-6q48-6c7w-9gw2, distrusted emSign roots). Both
+are the newest builds of their lines, and MySQL 9.7 carries the same two.
+
+**Risk:** `gosu` only drops privileges when the container starts and opens no
+TLS connection, so the Go TLS flaw is not reached. The database server does not
+use MySQL Shell's Python. Both clear when upstream rebuilds with gosu 1.20.
+
 ## Architecture
 
 Base stack (two services):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghost:6.63.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
-| `db` | `mysql:8.4` | Ghost's content database (posts, members, settings) |
+| `ghost-app` | `ghost:6.75.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
+| `db` | `mysql:8.4.13` | Ghost's content database (posts, members, settings) |
 
 Optional ActivityPub stack (`activitypub.yml`):
 
@@ -62,11 +73,22 @@ printf '%s' 'YOUR-SMTP-PASSWORD' > .secrets/mail_pwd.txt
 # 3. Start
 docker compose up -d
 
-# 4. Open the admin UI and finish setup
+# 4. Over the VPN: open the admin UI and finish setup
 # https://<APP_TRAEFIK_HOST>/ghost/
+
+# 5. A public blog: open the route once the owner exists
+sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-public/' .env
+docker compose up -d
 ```
 
-Default access is `access-public`, with `limit-standard` and `headers-standard` — a public blog with the standard headers and rate limit.
+The setup page answers until the owner exists — there is no setup secret, whoever
+reaches it first becomes the owner. The stack therefore ships with `access-vpn`
+(final audit FA-01): the setup happens over the VPN, and the blog becomes public by
+the operator's decision in step 5.
+With mail configured, a staff login from a new browser waits for a six-digit code
+Ghost mails to the staff address (step 8 lab host, 6.63.0).
+
+Shipped access is `access-vpn` until setup; a public blog then runs `access-public`, with `limit-standard` and `headers-standard` — the standard headers and rate limit.
 
 ### Enabling ActivityPub on an existing deployment
 
@@ -82,7 +104,7 @@ Then set `COMPOSE_FILE=docker-compose.yml:activitypub.yml` in `.env` and run `do
 
 ```bash
 docker compose ps                       # All services healthy
-docker compose logs app --tail 50       # Ghost startup, DB migration messages
+docker compose logs ghost-app --tail 50       # Ghost startup, DB migration messages
 docker compose logs db --tail 20        # MySQL ready-for-connections
 
 # With ActivityPub:
@@ -117,6 +139,9 @@ mysql_databases:
       container: ghost-db
       username: ghost_user
       password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
+      # MySQL's self-signed certificate: the host's client refuses it and the
+      # dump fails (step 8 lab host). The connection stays on the host.
+      tls: false
 ```
 
 `volumes/content` is not just uploads: the active theme lives there too. A

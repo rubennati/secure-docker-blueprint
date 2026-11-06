@@ -125,14 +125,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/socket.io`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.priority=100"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-socketio.service=${COMPOSE_PROJECT_NAME}-socketio"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-socketio.loadbalancer.server.port=8081"
 
@@ -405,7 +405,7 @@ services:
         fc set-config -g redis_queue "redis://:$${pw}@redis-queue:6379";
         fc set-config -g redis_socketio "redis://:$${pw}@redis-queue:6379";
         fc set-config -gp socketio_port 9000;
-        fc set-config -g chromium_path /usr/bin/chromium-headless-shell;
+        fc set-config -g chromium_path /usr/lib/chromium/chromium-headless-shell;
     environment:
       TZ: ${TZ}
     secrets:
@@ -470,6 +470,9 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
+      # MariaDB 11.8 turns snapshot isolation on by default, which surfaces
+      # error 1020 in Frappe background jobs; frappe_docker turns it off too.
+      - --innodb-snapshot-isolation=OFF
     secrets:
       - DB_PWD
       - DB_ROOT_PWD
@@ -593,6 +596,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

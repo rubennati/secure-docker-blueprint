@@ -75,6 +75,7 @@ fi
 set -a
 source "${ROOT_DIR}/.env"
 set +a
+. "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
 
 REQUIRED=(
   TZ
@@ -147,9 +148,10 @@ if [ -n "${TRAEFIK_MEMORY:-}" ] && ! printf '%s' "${TRAEFIK_MEMORY}" | grep -qE 
   exit 1
 fi
 
-# Published ports: the port variables hold a number, the host address is
-# TRAEFIK_BIND_V4, and IPv6 is bound by network-dual-stack.yml alone
-# (TRAEFIK_BIND_V6). An .env from before the bind variables may carry
+# Published ports: the port variables hold a number, the host address is one
+# variable per family — TRAEFIK_BIND_V4, TRAEFIK_BIND_V6 (with
+# network-dual-stack.yml) — rendered into config/published-ports.yml. An .env
+# from before the bind variables may carry
 # address:port; the message names the lines that keep the same binding.
 port_error=0
 port_v4_addrs=""
@@ -160,9 +162,9 @@ for v in TRAEFIK_HTTP_PORT TRAEFIK_HTTPS_PORT; do
   fi
   port_error=1
   if printf '%s' "${val}" | grep -qE '^\[[0-9A-Fa-f:.]+\]:[0-9]{1,5}$'; then
-    echo "ERROR: ${v}=${val} — an IPv6 host address belongs to network-dual-stack.yml."
+    echo "ERROR: ${v}=${val} — an IPv6 host address belongs to TRAEFIK_BIND_V6."
     echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V6=${val%:*}"
-    echo "       and apply the overlay with its prerequisites (docs/ipv6-dual-stack.md)."
+    echo "       with network-dual-stack.yml and its prerequisites (docs/ipv6-dual-stack.md)."
   elif printf '%s' "${val}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}$'; then
     echo "ERROR: ${v}=${val} — the port variable holds the port number only."
     echo "       Keep the binding with:  ${v}=${val##*:}  and  TRAEFIK_BIND_V4=${val%:*}"
@@ -175,6 +177,217 @@ if [ "$(printf '%s' "${port_v4_addrs}" | wc -w)" -gt 1 ]; then
   echo "       The two ports name different addresses; TRAEFIK_BIND_V4 holds one for both."
 fi
 [ "${port_error}" -eq 0 ] || exit 1
+
+# The subnets of a dual-stack proxy-public. The IPv6 value in .env.example is
+# a placeholder: a prefix every reader of the file knows is the IPv6 shape of
+# everyone picking 192.168.1.0/24, so it is refused, and so is any prefix
+# outside the private ranges — proxy-public is an internal network and never
+# carries a global address. Only judged when set; an IPv4-only install sets
+# neither.
+if [ -n "${PUBLIC_NETWORK_SUBNET_V4:-}${PUBLIC_NETWORK_SUBNET_V6:-}" ]; then
+  command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 is needed to check PUBLIC_NETWORK_SUBNET_V4/_V6."; exit 1; }
+  python3 - "${PUBLIC_NETWORK_SUBNET_V4:-}" "${PUBLIC_NETWORK_SUBNET_V6:-}" <<'PYEOF' || exit 1
+import ipaddress, sys
+v4, v6 = sys.argv[1], sys.argv[2]
+EXAMPLE_V6 = ipaddress.ip_network("fd00:dead:beef:30::/64")
+RFC1918 = [ipaddress.ip_network(n) for n in ("10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16")]
+ok = True
+if v4:
+    try:
+        n4 = ipaddress.ip_network(v4, strict=True)
+        if n4.version != 4 or not any(n4.subnet_of(p) for p in RFC1918):
+            raise ValueError
+    except ValueError:
+        print(f"ERROR: PUBLIC_NETWORK_SUBNET_V4 must be a private IPv4 network (RFC 1918), got '{v4}'.")
+        ok = False
+if v6:
+    try:
+        n6 = ipaddress.ip_network(v6, strict=True)
+        if n6.version != 6 or not n6.subnet_of(ipaddress.ip_network("fc00::/7")):
+            raise ValueError
+    except ValueError:
+        print(f"ERROR: PUBLIC_NETWORK_SUBNET_V6 must be a unique local IPv6 network (fc00::/7), got '{v6}'.")
+        ok = False
+    else:
+        if n6 == EXAMPLE_V6:
+            print("ERROR: PUBLIC_NETWORK_SUBNET_V6 is the example prefix from .env.example. Generate your own:")
+            print("         h=$(openssl rand -hex 5); printf 'fd%s:%s:%s::/64\\n' \"${h:0:2}\" \"${h:2:4}\" \"${h:6:4}\"")
+            ok = False
+sys.exit(0 if ok else 1)
+PYEOF
+fi
+
+# TRUSTED_RANGES (DEC-076): the client networks access-trusted admits — set and
+# empty admits nobody, unset is an .env from before the variable and is refused
+# (render.sh says the same). Each entry is a network; none may contain or lie
+# inside the VPN range (that is access-trusted-vpn's job, and a LAN that
+# contains the VPN would admit every tailnet node as a LAN client) or a Docker
+# network of this daemon (every container on it would pass). The daemon's
+# networks are read when Docker answers; otherwise that part is reported as not
+# checked.
+if [ -z "${TRUSTED_RANGES+set}" ]; then
+  echo "ERROR: TRUSTED_RANGES is not set in .env — the client networks access-trusted admits, quoted"
+  echo "       and space-separated; empty admits nobody. scripts/migrate-traefik-env.sh --all adds the"
+  echo "       line and renames access-lan/access-lan-vpn in every stack (CHANGELOG, Migration)."
+  exit 1
+fi
+{
+  command -v python3 >/dev/null 2>&1 || { echo "ERROR: python3 is needed to check TRUSTED_RANGES."; exit 1; }
+  docker_nets="[]"
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    docker_nets="$(docker network ls -q | xargs -r docker network inspect -f '{{json .IPAM.Config}} {{.Name}}' 2>/dev/null \
+      | python3 -c '
+import json, sys
+out = []
+for line in sys.stdin:
+    line = line.strip()
+    if not line: continue
+    cfg, _, name = line.partition(" ")
+    for c in (json.loads(cfg) or []):
+        if c.get("Subnet"): out.append([c["Subnet"], name])
+print(json.dumps(out))' 2>/dev/null || echo "[]")"
+    docker_checked=yes
+  else
+    docker_checked=""
+  fi
+  python3 - "${TRUSTED_RANGES}" "${TAILSCALE_CIDR_V4:-}" "${TAILSCALE_CIDR_V6:-}" "${PUBLIC_NETWORK_SUBNET_V4:-}" "${PUBLIC_NETWORK_SUBNET_V6:-}" "${docker_nets}" <<'PYEOF2' || exit 1
+import ipaddress, json, sys
+ranges, ts4, ts6, pub4, pub6, docker_nets = sys.argv[1:7]
+ok = True
+def net(v):
+    return ipaddress.ip_network(v, strict=True)
+vpn = [net(x) for x in (ts4, ts6) if x]
+public = [(net(x), "PUBLIC_NETWORK_SUBNET") for x in (pub4, pub6) if x]
+docker = [(net(s), n) for s, n in json.loads(docker_nets)]
+for token in ranges.split():
+    try:
+        r = net(token)
+    except ValueError:
+        print(f"ERROR: TRUSTED_RANGES: '{token}' is not a network in CIDR form (192.168.10.0/24, 2001:db8:10::/64).")
+        ok = False; continue
+    for v in vpn:
+        if r.version == v.version and r.overlaps(v):
+            print(f"ERROR: TRUSTED_RANGES: '{token}' overlaps the VPN range {v} — a LAN range never contains the VPN;")
+            print("       the policy that admits both is access-trusted-vpn.")
+            ok = False
+    for d, name in public + docker:
+        if r.version == d.version and r.overlaps(d):
+            print(f"ERROR: TRUSTED_RANGES: '{token}' overlaps the Docker network {d} ({name}) — every container on it")
+            print("       would pass access-trusted. A trusted range is a network of clients, never one of containers.")
+            ok = False
+sys.exit(0 if ok else 1)
+PYEOF2
+  [ -n "${docker_checked}" ] || echo "NOTICE: TRUSTED_RANGES was not compared with the Docker daemon's networks (Docker did not answer here)."
+}
+
+# The published ports (DEC-075.3, step 7): render.sh writes them into
+# config/published-ports.yml, one block per family, from TRAEFIK_BIND_V4 and
+# TRAEFIK_BIND_V6. The compose files have to apply that file — docker-compose.yml
+# publishes nothing itself — and the rendered file has to name the bindings
+# .env names. An IPv6 binding without network-dual-stack.yml is the published-
+# family check's ERROR below.
+published_bindings
+if [ -z "${TRAEFIK_BIND_V4+set}" ]; then
+  echo "ERROR: TRAEFIK_BIND_V4 is not set. It has no default any more: TRAEFIK_BIND_V4=0.0.0.0 keeps"
+  echo "       IPv4 ingress on every address, an empty TRAEFIK_BIND_V4= publishes no IPv4."
+  echo "       scripts/migrate-traefik-env.sh --all adds 0.0.0.0 (CHANGELOG, Migration)."
+  exit 1
+fi
+compose_list=":${COMPOSE_FILE:-}:"
+for f in ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"}; do [ "${f}" = "--compose-file" ] || compose_list="${compose_list}${f##*/}:"; done
+if [ -n "${COMPOSE_FILE:-}" ] || [ "${#COMPOSE_ARGS[@]}" -gt 0 ]; then
+  case "${compose_list}" in
+    *published-ports.yml:*) ;;
+    *)
+      echo "ERROR: the compose files do not apply config/published-ports.yml — docker-compose.yml publishes"
+      echo "       no port itself, so Traefik would answer nothing. Add it to COMPOSE_FILE (or -f);"
+      echo "       scripts/migrate-traefik-env.sh --all does (CHANGELOG, Migration)."
+      exit 1 ;;
+  esac
+fi
+if [ -z "${BIND_V4_EFFECTIVE}" ] && [ -z "${BIND_V6_EFFECTIVE}" ]; then
+  echo "NOTICE: TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6 are both empty — Traefik publishes no port."
+fi
+if [ -f "${ROOT_DIR}/config/published-ports.yml" ]; then
+  rendered_ports="$(grep -E '^      - "' "${ROOT_DIR}/config/published-ports.yml" | sed -E 's/^      - "(.*):[0-9]+:[0-9]+\/(tcp|udp)"$/\1/' | sort -u | tr '\n' ' ' || true)"
+  wanted_ports="$(printf '%s\n' "${BIND_V4_EFFECTIVE}" "${BIND_V6_EFFECTIVE}" | grep . | sort -u | tr '\n' ' ' || true)"
+  if [ "${rendered_ports}" != "${wanted_ports}" ]; then
+    echo "ERROR: config/published-ports.yml binds [${rendered_ports}] but .env says [${wanted_ports}] — run render.sh."
+    exit 1
+  fi
+fi
+
+# Edge networks (DEC-075). EDGE_NETWORKS names the network of every installed
+# stack; render.sh writes config/edge-networks.yml from it. The rendered file has
+# to match the list, and — when Docker answers — every running container that
+# Traefik routes (traefik.enable=true) has to label a network Traefik joined: a
+# stack on a network Traefik is not on is unreachable, and the log says nothing.
+# A listed network Traefik has not joined yet is PENDING until the next
+# `docker compose up -d`; a labelled network that is not listed is an ERROR.
+if [ -z "${EDGE_NETWORKS+set}" ]; then
+  echo "ERROR: EDGE_NETWORKS is not set in .env — the edge network of every installed stack, quoted"
+  echo "       and space-separated; empty means every stack is on the shared network."
+  echo "       scripts/migrate-traefik-env.sh --all adds the line (docs/edge-networks.md)."
+  exit 1
+fi
+edge_pending=0
+{
+  for edge in ${EDGE_NETWORKS}; do
+    printf '%s' "${edge}" | grep -qE '^[A-Za-z0-9][A-Za-z0-9_.-]*$' \
+      || { echo "ERROR: EDGE_NETWORKS: '${edge}' is not a Docker network name."; exit 1; }
+    case "${edge}" in "${PUBLIC_NETWORK}"|"${SOCKET_PROXY_NETWORK}"|"${CROWDSEC_SECURITY_NETWORK}")
+      echo "ERROR: EDGE_NETWORKS: '${edge}' is a network this stack already defines; the shared network is not listed."; exit 1 ;;
+    esac
+  done
+  if [ -f "${ROOT_DIR}/config/edge-networks.yml" ]; then
+    # an empty list renders no network line: grep then exits 1, which set -e must not see
+    rendered_edges="$(grep -E '^  [A-Za-z0-9][A-Za-z0-9_.-]*:$' "${ROOT_DIR}/config/edge-networks.yml" | grep -v '^  traefik:$' | sed 's/^  //; s/:$//' | sort | tr '\n' ' ' || true)"
+    wanted_edges="$(printf '%s\n' ${EDGE_NETWORKS} | grep . | sort | tr '\n' ' ' || true)"
+    if [ "${rendered_edges}" != "${wanted_edges}" ]; then
+      echo "ERROR: config/edge-networks.yml lists [${rendered_edges}] but EDGE_NETWORKS says [${wanted_edges}] — run render.sh."
+      exit 1
+    fi
+  fi
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    traefik_nets=" $(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null || true)"
+    if [ "${traefik_nets}" != " " ]; then
+      while IFS=' ' read -r cname labelled; do
+        [ -n "${cname}" ] || continue
+        [ "${cname}" = "${TRAEFIK_CONTAINER_NAME}" ] && continue
+        # Listed first: a network Traefik still joins but the list no longer
+        # names leaves it at the next 'docker compose up -d' here.
+        case " ${PUBLIC_NETWORK} ${EDGE_NETWORKS} " in
+          *" ${labelled} "*)
+            case "${traefik_nets}" in *" ${labelled} "*) continue ;; esac
+            echo "PENDING: ${cname} labels traefik.docker.network=${labelled}, which Traefik has not joined yet —"
+            echo "         'docker compose up -d' here recreates Traefik with it."
+            edge_pending=1 ;;
+          *)
+            case "${traefik_nets}" in
+              *" ${labelled} "*)
+                echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, which EDGE_NETWORKS does not list —"
+                echo "       Traefik still joins it, and the next 'docker compose up -d' here removes it: the stack"
+                echo "       becomes unreachable and the log says nothing. List it, or move the stack first" ;;
+              *)
+                echo "ERROR: ${cname} labels traefik.docker.network=${labelled}, a network Traefik does not join and"
+                echo "       EDGE_NETWORKS does not list — the stack is unreachable and the log says nothing. Add it to"
+                echo "       EDGE_NETWORKS, render.sh, 'docker compose up -d' here" ;;
+            esac
+            echo "       (docs/edge-networks.md)."
+            exit 1 ;;
+        esac
+      done < <(docker ps -q --filter label=traefik.enable=true | xargs -r docker inspect -f '{{.Name}} {{index .Config.Labels "traefik.docker.network"}}' 2>/dev/null | sed 's|^/||')
+    else
+      echo "NOTICE: ${TRAEFIK_CONTAINER_NAME} is not running — the routed containers' networks were not compared with Traefik's."
+    fi
+  else
+    echo "NOTICE: the routed containers' networks were not compared with Traefik's (Docker did not answer here)."
+  fi
+}
+if [ "${edge_pending}" -eq 1 ] && [ "${STRICT}" -eq 1 ]; then
+  echo "ERROR (--strict): a routed container labels an edge network Traefik has not joined — recreate Traefik first."
+  exit 1
+fi
 
 if [ -n "${TRAEFIK_BIND_V4:-}" ] && ! printf '%s' "${TRAEFIK_BIND_V4}" | grep -qE '^([0-9]{1,3}\.){3}[0-9]{1,3}$'; then
   echo "ERROR: TRAEFIK_BIND_V4 must be an IPv4 address such as 0.0.0.0 (got '${TRAEFIK_BIND_V4}')."
@@ -406,6 +619,16 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   for f in integrations.yml tls-profiles.yml routers-system.yml redirects.yml servers-transports.yml model.yml; do
     test -f "${ROOT_DIR}/config/dynamic/${f}" || { echo "Missing config/dynamic/${f} (run render.sh)"; exit 1; }
   done
+  # Every rendered file has to parse, without a key twice in one mapping:
+  # Traefik's file provider rejects the directory for one bad file and starts
+  # without every @file middleware (ops/scripts/check-yaml.py).
+  if command -v python3 >/dev/null 2>&1; then
+    yaml_rc=0
+    python3 "${ROOT_DIR}/ops/scripts/check-yaml.py" "${ROOT_DIR}/config/traefik.yml" "${ROOT_DIR}"/config/dynamic/*.yml || yaml_rc=$?
+    case ${yaml_rc} in 0) ;; 2) echo "NOT VERIFIED: the rendered YAML was not parsed (python3-yaml missing)" ;; *) exit 1 ;; esac
+  else
+    echo "NOT VERIFIED: the rendered YAML was not parsed (python3 missing)"
+  fi
   # The names the middleware model retired must be gone from config/dynamic:
   # a file from a render before the model, or a hand-kept copy, defines
   # middlewares no router may name and, for compress, a second definition.
@@ -415,7 +638,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       exit 1
     fi
   done
-  retired_names="$(grep -hoE '^    (acc-[a-z-]+|sec-[a-z0-9-]+|hdr-[a-z-]+|rl-[a-z-]+|permissions-policy|csp-enforce|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null | sed 's/[[:space:]:]//g' | sort -u | tr '\n' ' ' || true)"
+  retired_names="$(grep -hoE '^    (acc-[a-z-]+|access-lan(-vpn)?|sec-[a-z0-9-]+|hdr-[a-z-]+|rl-[a-z-]+|permissions-policy|csp-enforce|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)):' "${ROOT_DIR}"/config/dynamic/*.yml 2>/dev/null | sed 's/[[:space:]:]//g' | sort -u | tr '\n' ' ' || true)"
   if [ -n "${retired_names% }" ]; then
     echo "ERROR: config/dynamic defines names the middleware model retired: ${retired_names}"
     echo "       The templates no longer render them — bash ops/scripts/reset-templates.sh, then render.sh."
@@ -576,6 +799,83 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   fi
 fi
 
+# ---------------------------------------------------------------------------
+# The exposure profile and its layers (DEC-078). Derived from the bindings and
+# the trusted proxy — what the configuration intends, never what the internet
+# reaches; that is measured by scripts/exposure-test.sh from another machine
+# and recorded in config/exposure-verified, which --strict requires for a
+# public binding. The mandatory invariants are the checks above; every layer
+# below is present or named with the risk its absence leaves. Nothing optional
+# is an error by its absence.
+# ---------------------------------------------------------------------------
+published_bindings
+bind_v4_effective="${BIND_V4_EFFECTIVE}"
+bind_v6_effective="${BIND_V6_EFFECTIVE}"
+EXPOSURE_PROFILE="$(exposure_profile "${bind_v4_effective}" "${bind_v6_effective}" "${TRAEFIK_FORWARDED_PROXY}")"
+open_items=0
+echo ""
+echo "Exposure profile: ${EXPOSURE_PROFILE} — derived from TRAEFIK_BIND_V4=${bind_v4_effective}, TRAEFIK_BIND_V6=${bind_v6_effective:-not published}, TRAEFIK_FORWARDED_PROXY=${TRAEFIK_FORWARDED_PROXY}."
+echo "  What the internet reaches is measured by scripts/exposure-test.sh from another machine, not here."
+if [ "${EXPOSURE_PROFILE}" = proxied ] && [ "$(address_class "${bind_v4_effective}")" != public ] && [ "$(address_class "${bind_v6_effective}")" != public ]; then
+  : # unreachable: proxied needs a public binding by construction
+fi
+echo "  Layers for this profile (mandatory invariants are the checks above):"
+ingress_nft="${ROOT_DIR}/config/host/ingress.nft"
+# Where the host keeps its installed ruleset; a test points it elsewhere.
+installed_nft="${HOST_NFTABLES_DIR:-/etc/nftables.d}/ingress.nft"
+if [ -f "${ingress_nft}" ]; then
+  if [ -r "${installed_nft}" ]; then
+    if cmp -s "${ingress_nft}" "${installed_nft}"; then
+      echo "    host firewall      installed — /etc/nftables.d/ingress.nft matches the rendered ruleset (loaded? nft list table inet blueprint_ingress)"
+    else
+      echo "    host firewall      differs — /etc/nftables.d/ingress.nft is not the rendered ruleset: scripts/host-files.sh (docs/host-firewall.md)"
+    fi
+  else
+    case "${EXPOSURE_PROFILE}" in
+      direct)  risk="every published port answers the internet unfiltered and the VPN's IPv6 range is not spoof-protected" ;;
+      proxied) risk="a direct client that knows the origin bypasses Cloudflare, and the VPN's IPv6 range is not spoof-protected" ;;
+      *)       risk="no host-level gate in front of the bindings — acceptable where an upstream firewall is the gate" ;;
+    esac
+    echo "    host firewall      not installed (recommended) — config/host/ingress.nft is rendered; residual risk: ${risk}"
+  fi
+else
+  echo "    host firewall      not rendered — run render.sh"
+fi
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  echo "    crowdsec           present — the entrypoint bouncer (AppSec: ${CROWDSEC_APPSEC_ENABLED})"
+else
+  echo "    crowdsec           absent (recommended) — residual risk: no detection or remediation at the entrypoint; access policies and logins stand alone"
+fi
+if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
+  echo "    forward-auth       present — auth-authentik@file is rendered; the stacks' posture lines say where it is used"
+else
+  echo "    forward-auth       absent (optional) — residual risk: an application with a weak login has no gate in front; the posture lines name each (auth posture)"
+fi
+if [ "${EXPOSURE_PROFILE}" = proxied ]; then
+  echo "    cloudflare origin  not verifiable here — Authenticated Origin Pulls or a tunnel on Cloudflare's side; without one the host firewall above is what keeps a direct client out"
+fi
+echo "    management         the ruleset admits the host's services from the VPN ranges only, by key; the second, ingress-independent path (console, second interface) is yours to keep — not checkable here"
+marker_file="${ROOT_DIR}/config/exposure-verified"
+if [ "${EXPOSURE_PROFILE}" = private ]; then
+  echo "    exposure test      not required — nothing is published to a public address"
+elif [ -f "${marker_file}" ] && grep -q '^EXPOSURE_MARKER ' "${marker_file}"; then
+  marker_line="$(grep '^EXPOSURE_MARKER ' "${marker_file}" | tail -1)"
+  marker_profile="$(printf '%s' "${marker_line}" | sed -n 's/.* profile=\([a-z]*\).*/\1/p')"
+  marker_date="$(printf '%s' "${marker_line}" | sed -n 's/.* date=\([^ ]*\).*/\1/p')"
+  marker_target="$(printf '%s' "${marker_line}" | sed -n 's/.* target=\([^ ]*\).*/\1/p')"
+  if [ "${marker_profile}" != "${EXPOSURE_PROFILE}" ]; then
+    echo "ERROR: config/exposure-verified records profile '${marker_profile}', the configuration derives '${EXPOSURE_PROFILE}' —"
+    echo "       run scripts/exposure-test.sh ${marker_target:-<host>} ${EXPOSURE_PROFILE} from another machine and store its marker."
+    exit 1
+  fi
+  echo "    exposure test      recorded ${marker_date} against ${marker_target} (profile ${marker_profile}) — repeat it after a change of bindings or firewall"
+else
+  echo "PENDING: exposure test — a public binding needs the measurement from another machine:"
+  echo "         bash scripts/exposure-test.sh <this host's address> ${EXPOSURE_PROFILE}   then store its marker line in config/exposure-verified"
+  open_items=1
+fi
+echo ""
+
 # Published address families: IPv6 only where the client address survives the
 # way to the container — the effective Compose model, the Docker daemon's
 # settings under dual-stack, and the running container. The checker explains
@@ -588,15 +888,107 @@ if ! command -v python3 >/dev/null 2>&1; then
   echo "ERROR: python3 is needed to check which addresses Traefik is published on."
   exit 1
 fi
+# docker-compose.yml pins the published ports to the public network with
+# gw_priority, which Compose knows since 2.33.1 (docs.docker.com, Compose file
+# reference) and the Engine since 28.0. An older Compose refuses the file with
+# "additional properties not allowed"; say so before that happens.
+if command -v docker >/dev/null 2>&1; then
+  compose_version="$(docker compose version --short 2>/dev/null | sed 's/^v//')"
+  if [ -n "${compose_version}" ] && ! printf '%s\n%s\n' "2.33.1" "${compose_version}" | sort -t. -k1,1n -k2,2n -k3,3n -c 2>/dev/null; then
+    echo "ERROR: Docker Compose ${compose_version} is older than 2.33.1, the first release that knows"
+    echo "       gw_priority, which docker-compose.yml uses to pin the published ports to the public"
+    echo "       network. Update Compose (docker-compose-plugin) before starting Traefik."
+    exit 1
+  fi
+fi
+# Before the first render, the files COMPOSE_FILE names under config/ do not
+# exist yet, and the published-address checks have no model to read. They are
+# reported as not run — never as passed — and run after render.sh. Only in that
+# state: once config/traefik.yml exists, with -f, or when a file outside config/
+# is missing, a missing compose file stays the checker's ERROR.
+not_rendered=""
+if [ "${#COMPOSE_ARGS[@]}" -eq 0 ] && [ ! -f "${ROOT_DIR}/config/traefik.yml" ]; then
+  other_missing=""
+  IFS="${COMPOSE_PATH_SEPARATOR:-:}" read -r -a listed_files <<< "${COMPOSE_FILE:-}"
+  for f in ${listed_files[@]+"${listed_files[@]}"}; do
+    [ -f "${ROOT_DIR}/${f}" ] && continue
+    case "${f}" in
+      config/*) not_rendered="${not_rendered} ${f}" ;;
+      *) other_missing=1 ;;
+    esac
+  done
+  [ -n "${other_missing}" ] && not_rendered=""
+fi
 family_rc=0
-python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
-  --project-dir "${ROOT_DIR}" \
-  ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
-  --public-network "${PUBLIC_NETWORK}" \
-  --container "${TRAEFIK_CONTAINER_NAME}" \
-  --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+if [ -n "${not_rendered}" ]; then
+  echo "NOT VERIFIED: not rendered yet (${not_rendered# }) — the published-address checks run after render.sh."
+  family_rc=3
+else
+  python3 "${ROOT_DIR}/ops/scripts/check-published-family.py" \
+    --project-dir "${ROOT_DIR}" \
+    ${COMPOSE_ARGS[@]+"${COMPOSE_ARGS[@]}"} \
+    --public-network "${PUBLIC_NETWORK}" \
+    --container "${TRAEFIK_CONTAINER_NAME}" \
+    --daemon-check "${DOCKER_DAEMON_CHECK:-}" || family_rc=$?
+fi
+
+# The static configuration Traefik runs: config/traefik.yml is read once, at
+# the start of the container. render.sh replaces the file (a new inode) and the
+# running container keeps the one it started with; a plain 'docker compose up -d'
+# does not recreate it for that. Compared inside the container — its content
+# with the rendered file, and its time with the container's start, which catches
+# an edit in place. What cannot be read here is NOT VERIFIED, never passed.
+static_rc=0
+if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
+  static_file=/etc/traefik/traefik.yml
+  recreate="'docker compose up -d --force-recreate traefik' here loads it; a plain 'up -d' does not."
+  if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    echo "NOT VERIFIED: the static configuration Traefik runs was not compared with config/traefik.yml (Docker did not answer here)."
+    static_rc=3
+  elif ! started="$(docker inspect -f '{{.State.Running}} {{.State.StartedAt}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null)" \
+       || [ "${started%% *}" != true ]; then
+    echo "NOT VERIFIED: ${TRAEFIK_CONTAINER_NAME} is not running — the static configuration it runs was not compared with config/traefik.yml."
+    static_rc=3
+  elif ! running_static="$(docker exec "${TRAEFIK_CONTAINER_NAME}" cat "${static_file}" 2>/dev/null)" \
+       || ! static_mtime="$(docker exec "${TRAEFIK_CONTAINER_NAME}" stat -c %Y "${static_file}" 2>/dev/null)"; then
+    echo "NOT VERIFIED: ${static_file} could not be read in ${TRAEFIK_CONTAINER_NAME} — the static configuration it runs was not compared with config/traefik.yml."
+    static_rc=3
+  elif [ "${running_static}" != "$(cat "${ROOT_DIR}/config/traefik.yml")" ]; then
+    echo "PENDING: config/traefik.yml differs from the static configuration ${TRAEFIK_CONTAINER_NAME} started with —"
+    echo "         ${recreate}"
+    static_rc=3
+  else
+    # newer | older | unknown: the file's time inside the container against the start
+    static_age="$(python3 - "${started#* }" "${static_mtime}" <<'PYEOF_STATIC' 2>/dev/null || echo unknown
+import re, sys
+from datetime import datetime
+started = re.sub(r"\.\d+", "", sys.argv[1]).replace("Z", "+00:00")
+print("newer" if int(sys.argv[2]) > int(datetime.fromisoformat(started).timestamp()) else "older")
+PYEOF_STATIC
+)"
+    case "${static_age}" in
+      older) ;;
+      newer)
+        echo "PENDING: config/traefik.yml was changed after ${TRAEFIK_CONTAINER_NAME} started; Traefik runs the version it read then —"
+        echo "         ${recreate}"
+        static_rc=3 ;;
+      *)
+        echo "NOT VERIFIED: the start of ${TRAEFIK_CONTAINER_NAME} or the time of ${static_file} could not be read — an edit since the start was not ruled out."
+        static_rc=3 ;;
+    esac
+  fi
+fi
+[ "${static_rc}" -eq 3 ] && [ "${family_rc}" -eq 0 ] && family_rc=3
+
 case "${family_rc}" in
-  0) ;;
+  0)
+    if [ "${open_items}" -ne 0 ]; then
+      echo ""
+      echo "VALID, SECURITY NOT CONFIRMED: the exposure test above is open. Run it from another"
+      echo "machine, store the marker, then run validate.sh --strict."
+      [ "${STRICT}" -eq 1 ] && exit 1
+      exit 0
+    fi ;;
   3)
     # PENDING or NOT VERIFIED: the configuration is valid and the update that
     # resolves it must not be blocked — but this is not a security OK.

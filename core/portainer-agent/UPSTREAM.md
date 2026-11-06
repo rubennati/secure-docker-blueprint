@@ -10,7 +10,7 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Portainer
-- **Based on version:** `2.39.7`
+- **Based on version:** `2.45.3`
 - **Last verified:** 2026-05-05 (v2.39.1)
 
 ## What we changed and why
@@ -27,6 +27,21 @@ The `APP_TAG` in `.env.example` must stay in sync with the major version of
 the central `portainer/portainer-ce` instance (`core/portainer/`).
 Portainer CE and the Agent are versioned together — a major mismatch causes
 connection failures.
+
+## Version notes
+
+- Moved `portainer/agent` to `2.45.3` on 2026-11-05, together with the central
+  `portainer/portainer-ce` in `core/portainer/`, not run on a host at this tag. The
+  automatic proposal `3.0.1` was not taken: Docker Hub carries agent tags `3.0.0` and
+  `3.0.1` under the `sts` tag, but there is no Portainer CE 3.x release or image to
+  pair them with (the newest server release is 2.45.3 LTS, 2026-10-21), and this
+  stack keeps the agent on the server's version. Changes for agents in the range:
+  2.45.3 fixes starting a container with an empty request body on agent
+  environments and agent version detection on Docker engines newer than API 1.47;
+  2.45.2 enforces TLS verification of in-cluster Kubernetes API connections on the
+  agent. No compose change. Sources:
+  https://github.com/portainer/portainer/releases/tag/2.45.3,
+  https://github.com/portainer/portainer/releases/tag/2.45.2
 
 ## Upgrade checklist
 

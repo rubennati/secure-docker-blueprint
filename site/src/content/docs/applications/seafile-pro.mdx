@@ -6,10 +6,10 @@ description: Self-hosted file sync, sharing, and collaborative editing on Docker
 import { Steps, Tabs, TabItem } from '@astrojs/starlight/components';
 import StackEvidence from '../../../components/StackEvidence.astro';
 
-Seafile Pro is private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch) and antivirus scanning (ClamAV). All nine services deploy as a single Compose stack, and it needs a commercial license.
+Seafile Pro is private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch) and antivirus scanning (ClamAV). Its services are split over Compose files that `COMPOSE_FILE` combines — the example enables seven — and it needs a commercial license. OnlyOffice is a separate server and is enabled only when `ONLYOFFICE_JWT_SECRET` is set; the example ships it empty.
 
 <StackEvidence stack="apps/seafile-pro"
-  gap="backup and restore. Three databases and the block store have to come back together, and none of it has been rehearsed." />
+  gap="the official clients and SeaDrive, e-mail, WebDAV (off in the example) and the search reindex after a restore." />
 
 **To try it:** Docker, and a Seafile Pro commercial licence, which the image requires either way. See [Try it locally](#try-it-locally).
 
@@ -85,7 +85,7 @@ From `apps/seafile-pro/`:
 8. **Required:** restart the app container once to inject Blueprint configs into Seafile's settings files. This step only needs to run once — a marker prevents it from repeating on subsequent restarts:
 
    ```bash
-   docker compose restart app
+   docker compose restart seafile-pro-app
    ```
 
 9. Build the initial full-text search index:
@@ -99,7 +99,7 @@ From `apps/seafile-pro/`:
 ## Verify
 
 ```bash
-docker compose ps   # all nine containers up; app, db, redis, clamav should show healthy
+docker compose ps   # every service of the files in COMPOSE_FILE up; app, db, redis, clamav should show healthy
 ```
 
 Confirm the config injection from step 8 ran:
@@ -110,7 +110,7 @@ docker exec seafile-pro-app grep "SEASEARCH"  /shared/seafile/conf/seafevents.co
 docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf
 ```
 
-Each command should return a matching line. No output means the injection step was skipped — run `docker compose restart app` and recheck.
+Each command should return a matching line. No output means the injection step was skipped — run `docker compose restart seafile-pro-app` and recheck.
 
 Confirm the notification server is reachable:
 
@@ -138,7 +138,7 @@ Then in the browser, confirm each service works:
 
 OnlyOffice embeds a browser-based Office editor into Seafile. It runs as a separate server — either another Blueprint stack or a different machine — and both sides share the same JWT secret.
 
-**Server-to-server path:** OnlyOffice needs a direct network route to Seafile's configured hostname to fetch files and save edits back. That path can be a public internet connection or a private route such as Tailscale. If DNS for the Seafile hostname resolves to a Tailscale address on the OnlyOffice host, it will use that path automatically — no additional configuration is needed on the OnlyOffice side for the network path itself.
+**Server-to-server path:** OnlyOffice fetches the document from Seafile and saves it back through a callback. Seafile's route ships closed, and a closed route refuses every container, so on the same host these two paths have their own opt-in routes in `onlyoffice-callback.yml` (the stack README, "Access policy"); an OnlyOffice server on another host reaches a closed Seafile only by its address in `TRUSTED_RANGES`. Measured on a host: DOCX, XLSX and PPTX opened, saved and reopened through `onlyoffice-callback.yml`.
 
 **Allowed origins:** On the OnlyOffice server, add the Seafile origin to `ONLYOFFICE_ALLOWED_ORIGINS` in its `.env` so browsers are permitted to embed the editor in an iframe. In the Blueprint's `apps/onlyoffice` stack this value is embedded in a Traefik label — changing it takes effect only after recreating the container, not after a plain restart:
 
@@ -168,18 +168,18 @@ docker compose up -d --force-recreate
     `.env` would have no effect:
 
     ```bash
-    docker compose up -d app
+    docker compose up -d seafile-pro-app
     ```
 
     Send a test email from the Seafile admin panel before relying on this for password resets. Mail delivery has not been exercised for this stack.
   </TabItem>
 
   <TabItem label="Access">
-    The stack ships `APP_TRAEFIK_ACCESS=access-lan-vpn` — LAN and VPN, which also admits the Docker containers that OnlyOffice and SeaDoc call back from. `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
+    The stack ships `APP_TRAEFIK_ACCESS=access-trusted-vpn` — the ranges declared in `core/traefik/.env` and the VPN; no closed policy admits a Docker container; SeaDoc calls Seafile over the internal network, and the two paths OnlyOffice uses — the document fetch and the save callback — have their own routes in `onlyoffice-callback.yml` (the stack README, "Access policy"). `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
 
-    Setting `APP_TRAEFIK_ACCESS=access-vpn` enforces a source-IP allowlist for Tailscale addresses, restricting access to clients connected to the same Tailnet. Server-to-server integrations (OnlyOffice, notifications) must also reach Seafile via Tailscale for this to apply to them.
+    Setting `APP_TRAEFIK_ACCESS=access-vpn` admits VPN clients only; the declared ranges no longer.
 
-    Where traffic arrives through Docker published ports, `access-vpn` can reject a legitimate client because Traefik sees the Docker bridge gateway address instead. The fix is a dual-stack `proxy-public`, so the client's IPv6 source address survives to the allowlist (`TROUBLESHOOTING.md` §4.4 in the repository); widening the policy instead admits every caller that arrives through the bridge. See [Troubleshooting](#troubleshooting).
+    With the shipped published ports Traefik sees a client's own address on IPv4 and IPv6 — measured from a client off the host; a tailnet client has not been measured yet. If it sees a Docker gateway address instead, see [Troubleshooting](#troubleshooting); widening the policy would admit every caller that arrives through that gateway.
   </TabItem>
 
   <TabItem label="Antivirus">
@@ -246,7 +246,7 @@ a restore has been exercised for this stack.
 5. Watch app logs for any database migration output:
 
    ```bash
-   docker compose logs -f app
+   docker compose logs -f seafile-pro-app
    ```
 
 6. Verify login, file access, editing, and search after the update.

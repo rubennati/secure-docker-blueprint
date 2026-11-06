@@ -10,7 +10,7 @@ Single-container deployment with NocoDB's built-in SQLite:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `nocodb/nocodb:latest` | Web UI + REST/GraphQL API |
+| `nocodb-app` | `nocodb/nocodb:latest` | Web UI + REST/GraphQL API |
 
 Data lives in `./volumes/data/` (SQLite DB, attachments, user uploads).
 
@@ -46,7 +46,7 @@ mkdir -p volumes/data
 docker compose up -d
 
 # 5. Wait for first-boot init (~30 seconds)
-docker compose logs app --follow
+docker compose logs nocodb-app --follow
 # Watch for: "Visit: http://localhost:8080/dashboard"
 
 # 6. Open UI and create the first super-admin
@@ -102,7 +102,7 @@ Typical automation pattern:
 For n8n and NocoDB to reach each other on an internal network, either:
 
 - Run both in the same `compose.yml`, or
-- Attach n8n's app service to NocoDB's `proxy-public` network and address it as `http://nocodb-app:8080`.
+- Attach n8n's app service to the network NocoDB's `TRAEFIK_NETWORK` names (both on `proxy-public`, the shared choice) and address it as `http://nocodb-app:8080`.
 
 ## Known Issues
 

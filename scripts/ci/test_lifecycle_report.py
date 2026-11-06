@@ -109,9 +109,9 @@ class PinMatchesVerified(unittest.TestCase):
         self.assertFalse(lr.pin_matches_verified("1.15.1-edge", "v1.15.1"))
 
     def test_floating_minor_pin_does_not_match_the_exact_patch_verified(self):
-        # core/traefik pins float the patch on purpose (`traefik:v3.7`) and
-        # the stamp names exactly which patch was tested (`v3.7.13`) against
-        # that floating pin at the time. The pin can resolve to a newer patch
+        # A pin that floats the patch (`traefik:v3.7`, core/traefik's pin until
+        # 2026-11-02) with a stamp that names exactly which patch was tested
+        # (`v3.7.13`) against that floating pin at the time. The pin can resolve to a newer patch
         # upstream with no repository change at all, so this must NOT be
         # treated as freshness evidence — it is reported as `pin-drifted`
         # like any other mismatch, with no separate exemption.
@@ -196,6 +196,35 @@ class DriftEndToEnd(unittest.TestCase):
             self.assertTrue(current_format)
             self.assertTrue(lr.pin_matches_verified(pin_value, fixed_version))
 
+
+
+class OpenFindings(unittest.TestCase):
+    """A stack that ships recorded exceptions is counted and marked."""
+
+    def test_counts_every_stack_an_exception_names(self):
+        import json
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp) / "b.json"
+            base.write_text(json.dumps({"exceptions": {
+                "postgres": {"stacks": ["apps/a", "apps/b"], "cves": ["C1", "C2"]},
+                "redis": {"stacks": ["apps/a"], "cves": ["C3"]},
+            }}))
+            old, lr.TRIVY_BASELINE = lr.TRIVY_BASELINE, base
+            try:
+                self.assertEqual(lr.open_findings(), {"apps/a": 3, "apps/b": 2})
+            finally:
+                lr.TRIVY_BASELINE = old
+
+    def test_marker_links_to_the_readme_section(self):
+        self.assertEqual(lr.marker({"open_findings": 0, "stack": "apps/a"}), "—")
+        self.assertEqual(
+            lr.marker({"open_findings": 2, "stack": "apps/a"}),
+            "[⚠️ 2 CRITICAL](apps/a/README.md#open-findings)",
+        )
+
+    def test_section_heading_is_recognised(self):
+        self.assertTrue(lr.OPEN_FINDINGS.search("x\n## Open findings\n\ny"))
+        self.assertFalse(lr.OPEN_FINDINGS.search("## Open findings and more"))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

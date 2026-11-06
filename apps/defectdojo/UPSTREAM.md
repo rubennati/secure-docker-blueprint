@@ -10,15 +10,15 @@
 - **Decision facts checked:** not yet
 - **Domain:** Security operations
 - **Role:** Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure
-- **Based on version:** `3.3.100`
+- **Based on version:** `3.5.0`
 - **Last verified:** 2026-09-22 (3.3.100) — behind Traefik with TLS: the first start, the API with a token, scan imports, the interface, a restart, and the README's restore
 
 The licence names DefectDojo, Inc.; no jurisdiction was found in the pages checked.
 
 ## What we use
 
-- `defectdojo/defectdojo-django:3.3.100` for uWSGI, the Celery worker, Celery beat
-  and the initializer, and `defectdojo/defectdojo-nginx:3.3.100`. Upstream's compose
+- `defectdojo/defectdojo-django:3.5.0` for uWSGI, the Celery worker, Celery beat
+  and the initializer, and `defectdojo/defectdojo-nginx:3.5.0`. Upstream's compose
   defaults to `:latest`; not used here.
 - `postgres:18.6-alpine` and `valkey/valkey:9.1.2-alpine` — the versions upstream's
   compose pins (it also pins their digests).
@@ -37,6 +37,7 @@ The licence names DefectDojo, Inc.; no jurisdiction was found in the pages check
 | uWSGI healthcheck against `localhost:8081` | Django answers 400 to a Host outside `DD_ALLOWED_HOSTS` |
 | nginx healthcheck against `127.0.0.1` with `Host: localhost` | In that container `localhost` resolves to `::1` while nginx listens on IPv4 only, and the Host header must still be allowed |
 | Celery worker on `app-egress` | It sends notifications and talks to ticketing integrations; nothing else gets a route out |
+| `DD_GITHUB_STAR_PROMPT_ENABLED: "False"` | From 3.4.300 the interface shows users of seven days or more a card asking them to star the project on GitHub; upstream's default is on |
 
 ## Verification performed (2026-09-22)
 
@@ -97,6 +98,36 @@ peer container:
 **Not yet exercised:** Traefik routing and TLS; the browser interface; other scanner
 formats; notifications and ticketing integrations; Celery beat's scheduled jobs
 firing; backup and restore; an upgrade across versions.
+
+## Version notes
+
+- Valkey moved to `9.1.3-alpine` on 2026-10-31 (released 2026-10-26), not run at
+  this tag; the stack's state is anchored on the application pin, which did not
+  move. Upstream marks the release
+  SECURITY: GHSA-f4q9-j22m-xqq9, a heap buffer overflow in cluster Pub/Sub
+  message construction that an authenticated client could turn into code
+  execution. No breaking change; expired hash fields no longer propagate on
+  HDEL and related commands, and `hide-user-data-from-log` also redacts error
+  text.
+- Moved to `3.5.0` on 2026-11-05 (released 2026-11-02), django and nginx
+  together, not run on a host at this tag. Upstream's upgrade notes for 3.4.x
+  and 3.5.x name no manual step; database migrations run in the initializer.
+  API changes: from 3.5.0 `/api/v2/findings/` applies the `engagement`,
+  `product` and `prod_type` filters it used to ignore and rejects a
+  non-numeric value with 400; from 3.4.300 the `endpoint` field of
+  `/api/v2/endpoint_status/` carries the Endpoint's ID when Locations is
+  enabled. New settings: `DD_GITHUB_STAR_PROMPT_ENABLED` (3.4.300, set to
+  `False` here), `DD_SECRET_KEY_FALLBACKS` (3.5.0). The deprecated Tool Type,
+  Tool Configuration and API Scan Configuration endpoints are still present in
+  3.5.0. Upstream's own compose now pulls through `registry.defectdojo.com`,
+  which logs each pull; this stack keeps the Docker Hub names. Advisories fixed
+  after 3.3.100: GHSA-66vh-fm67-46vw, GHSA-52xm-5vrx-cqmm, GHSA-j635-qvw5-qv7j,
+  GHSA-g3w5-c3g8-5gfp, GHSA-p7f6-2fhg-x25w, GHSA-68cw-fx5m-7mq8,
+  GHSA-fhpm-fp42-h465, GHSA-vcgh-2275-cccm,
+  GHSA-hm9q-36mr-hg94, GHSA-qj59-6r69-xmgv, GHSA-x667-22jr-wvmw,
+  GHSA-p43f-52f3-6v3v, GHSA-9pmx-7vc8-r7xw, GHSA-r83j-v49f-m87m,
+  GHSA-r68c-qm7x-4926, GHSA-4chj-hx9x-6m59, GHSA-hprf-883v-c8h8 and
+  GHSA-xr4w-vf88-w48v (medium and low).
 
 ## Upgrade checklist
 

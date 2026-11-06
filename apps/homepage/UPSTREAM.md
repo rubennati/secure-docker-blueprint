@@ -10,7 +10,7 @@
 - **Origin:** US · community (gethomepage) · non-EU
 - **Domain:** Dashboards
 - **Role:** Dashboard configured with YAML files
-- **Based on version:** `v2.3.0` (2.x — see Version / tag notes)
+- **Based on version:** `v2.7.0` (2.x — see Version / tag notes)
 - **Last verified:** 2026-05-03 (v0.10.9)
 
 ## What we use
@@ -38,6 +38,14 @@
   Read https://github.com/gethomepage/homepage/releases/tag/v2.0.0 before deploying.
 - The bump also closes a medium advisory: the service proxy accepted client-controlled
   methods and bodies to configured targets, fixed in 2.2.0. Moved on 2026-09-13.
+- Moved to `v2.7.0` on 2026-11-05, not run on a host at this tag. `v2.6.0` fixes
+  GHSA-qxcr-4rv3-v23r (high): an authentication gate bypass via the Next.js
+  on-demand revalidation header, relevant where homepage's own authentication is
+  on. `v2.6.0` also keeps `$` sequences in environment and file secrets as
+  written. `v2.7.0` moves the image to Node 24 and the Next.js middleware to
+  `proxy`; host validation is unchanged, so `HOMEPAGE_ALLOWED_HOSTS` and the
+  healthcheck against `127.0.0.1:3000` keep working. No variable or configuration
+  change. https://github.com/gethomepage/homepage/releases
 
 ## Upgrade checklist
 

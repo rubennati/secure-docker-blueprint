@@ -215,6 +215,8 @@ services:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
       CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD}
       DOVEADM_API_KEY: ${DOVEADM_API_KEY}
+      # MCP endpoint off, as in docker-compose.yml.
+      MCP_ENABLED: "false"
       WAITSTART_TIMEOUT: 2m
       TZ: ${TZ}
 

@@ -10,13 +10,13 @@
 - **Origin:** France · Dolibarr Association · EU
 - **Domain:** Business operations
 - **Role:** ERP and CRM: contacts, quotes, invoices, stock and accounting
-- **Based on version:** `23.0.4` (23.x line; 24.x is the next major)
+- **Based on version:** `24.0.2`
 - **Last checked:** 2026-04-17
 
 ## What we use
 
 - Community `tuxgasy/dolibarr`
-- Official `mariadb:11.4`
+- Official `mariadb:12.3.3`
 - Docker Secrets for every credential (DB user, DB root, admin login, admin password)
 - Bind-mount `./volumes/mysql`, `./volumes/documents`, `./volumes/custom`
 
@@ -44,6 +44,44 @@
   `23.0.4` is the newest 23.x image (2026-08-29). CVE-2026-23500 (critical, OS command
   injection via `MAIN_ODT_AS_PDF`) is fixed on this line. Moved on 2026-09-13; schedule 24.x as
   its own piece of work.
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Support: Dolibarr requires MariaDB 10.3 or
+  newer with no upper bound
+  (https://wiki.dolibarr.org/index.php?title=Prerequisites).
+  `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
+  `mariadb-upgrade` at the first start on 12.3 after a backup of the system
+  tables; the data directory `./volumes/mysql` is reused. Take the
+  `mariadb-dump` before the tag changes: going back to 11.4 is only a restore of
+  that dump. Changed on the way (11.8 and 12.x): `innodb_snapshot_isolation` is
+  on by default, so a transaction that writes a row another transaction changed
+  after its snapshot fails with error 1020 instead of overwriting it; the new
+  default collation `utf8mb4_uca1400_ai_ci` does not apply, as the stack sets
+  `utf8mb4_unicode_ci` explicitly.
+- Moved to `24.0.2` on 2026-11-05 (image published 2026-10-31), the major the
+  note above deferred, not run on a host at this tag. Dolibarr 24 is a schema
+  migration: per the image README
+  (https://github.com/Dolibarr/dolibarr-docker), remove
+  `volumes/documents/install.lock`, then pull and start; with
+  `DOLI_INSTALL_AUTO` at its image default `1` (not set here) the entrypoint
+  migrates the database, otherwise the `/install/` wizard does. Take the
+  `mariadb-dump` and the `volumes/documents/` archive first: a schema downgrade
+  is not supported, so going back to 23.0.4 is a restore. The unsuffixed
+  `24.0.2` tag is published together with `24.0.2-php8.5`, so PHP moves from
+  the 8.4 of `23.0.4` to 8.5. Changes in 24.0.0 that may break setups
+  (https://github.com/Dolibarr/dolibarr/blob/24.0.2/ChangeLog): the login API
+  is off unless `API_ENABLE_LOGIN_API` is enabled; online-signature secure keys
+  use a default salt, so links issued without one stop working; the
+  `PAYMENT_SECURITY_TOKEN_UNIQUE` option and the Paybox and Deplacement modules
+  are removed; `DEPOSIT_AS_CREDIT_AVAILABLE_EVEN_UNPAID` is renamed; contact
+  titles need `MAIN_USE_TITLE_FOR_CONTACT`; filter parameters of functions
+  require Universal Search Syntax and the `info_admin` hook is renamed, which
+  matters for modules in `volumes/custom/`. Advisories: 24.0.1 enforces website
+  write rights in the legacy file manager and stops non-admins deleting admin
+  accounts; 24.0.2 fixes authorisation bypasses (leave API, project and task
+  comments, salary documents, supplier-invoice and VAT payment pages,
+  `core/ajax/mailtemplate.php`, ownership checks in several API endpoints) and
+  an SSRF through DNS rebinding in the external-calendar import. No CVE IDs
+  are given. Compose and `DOLI_*` variables are unchanged.
 
 ## Upgrade checklist
 

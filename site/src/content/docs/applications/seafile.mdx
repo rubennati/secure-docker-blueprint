@@ -11,7 +11,7 @@ desktop and mobile clients and optional collaborative editing. Eight containers,
 split across five compose files so the optional parts can be switched off.
 
 <StackEvidence stack="apps/seafile"
-  gap="everything below. The stack has never been brought up here: the first-boot settings injection, the optional components and client sync are read from the stack's files rather than observed." />
+  gap="the official desktop, mobile and SeaDrive clients, e-mail, and the metadata server's features." />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -64,7 +64,19 @@ From `apps/seafile/`:
    openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_db_pwd.txt
    openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_admin_pwd.txt
    openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
-   openssl rand -base64 32 | tr -d '\n' > .secrets/redis_pwd.txt
+   openssl rand -hex 32 | tr -d '\n' > .secrets/redis_pwd.txt
+   ```
+
+   The Redis password is hex, not base64: Seafile builds its Redis URL from it
+   without escaping, and a `/` would end the URL early.
+
+   The thumbnail server does not read Docker secrets; it takes two of these
+   values from `.env`. Left empty, every thumbnail fails while the container
+   reports healthy:
+
+   ```bash
+   sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(cat .secrets/jwt_key.txt)|" .env
+   sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(cat .secrets/seafile_db_pwd.txt)|" .env
    ```
 
 3. Create the SMTP secret file even if mail stays off — compose mounts it
@@ -73,6 +85,14 @@ From `apps/seafile/`:
    ```bash
    touch .secrets/smtp_pwd.txt                          # mail disabled
    # printf '%s' 'SMTP-PASSWORD' > .secrets/smtp_pwd.txt  # mail enabled
+   ```
+
+   The OnlyOffice secret file is mounted unconditionally as well. An empty file
+   keeps the integration off; with OnlyOffice, reuse its secret:
+
+   ```bash
+   touch .secrets/onlyoffice_jwt_secret.txt                                       # no OnlyOffice
+   # cp ../onlyoffice/.secrets/jwt_secret.txt .secrets/onlyoffice_jwt_secret.txt  # with OnlyOffice
    ```
 
 4. Start it. The first boot initialises the databases and runs migrations, which
@@ -124,7 +144,7 @@ configured.
 
 ### Private by default
 
-The stack ships `access-lan-vpn`, with `limit-sync` and `headers-standard`.
+The stack ships `access-trusted-vpn`, with `limit-sync` and `headers-standard`.
 Seafile holds whatever people put in it, and the sync clients reach it over the
 same hostname, so widening the access policy is a decision about every client at
 once.

@@ -5,6 +5,16 @@ statistics, tags, QR codes, and a REST API that everything else drives. There
 are no user accounts — the API takes keys.
 Upstream: [shlinkio/shlink](https://github.com/shlinkio/shlink).
 
+## Open findings
+
+The Shlink image, `ghcr.io/shlinkio/shlink:5.1.8`, and the web client, `shlink-web-client:4.9.0`, each ship Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). Both are the newest release, and upstream has not rebuilt them.
+
+**Risk:** the library backs PHP's curl, which Shlink uses when it fetches remote pages such as a long URL's title, so a hostile site could in principle reach it; the static web client does not use it. Move to the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text
@@ -20,7 +30,7 @@ Three routers on two host names, and that split is the point:
 
 | Router | Serves | Ships as |
 |---|---|---|
-| `<project>` | the short links themselves | `access-lan-vpn` — **the one to open**, see below |
+| `<project>` | the short links themselves | `access-trusted-vpn` — **the one to open**, see below |
 | `<project>-api` | `/rest`, which creates, edits and deletes links and reads visits | `access-vpn` (`APP_TRAEFIK_API_ACCESS`) |
 | `<project>-client` | the browser interface on its own host name | `access-vpn` (`CLIENT_TRAEFIK_ACCESS`) |
 
@@ -79,7 +89,7 @@ curl -I https://s.example.com/abc      # 302, Location: the long URL
 ## Deciding what is public
 
 A short link nobody outside can follow is a link that does not work, so this is
-a decision rather than a default. The stack ships `access-lan-vpn` on the redirect
+a decision rather than a default. The stack ships `access-trusted-vpn` on the redirect
 router, and opening it means accepting three things:
 
 - **A redirect is unauthenticated by design.** Anyone holding the URL follows

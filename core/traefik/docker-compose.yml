@@ -93,24 +93,44 @@ services:
 
     security_opt:
       - no-new-privileges:true
+    # Traefik is the internet-facing process: after a compromise, Docker's
+    # default capability set (NET_RAW, DAC_OVERRIDE, CHOWN, SETUID, …) would
+    # widen what an attacker can do. It runs as root and needs none of them —
+    # every file it writes (acme.json, the logs, the plugin cache) belongs to
+    # root. NET_BIND_SERVICE is kept for ports 80/443, although Docker already
+    # sets ip_unprivileged_port_start=0 in the container's network namespace,
+    # so a runtime that does not still works. Measured on the step 8 lab host
+    # (2026-11-04): start, a fresh plugin download, an ACME DNS-01 issuance,
+    # log writing and a reload under this set (final audit, FA-04).
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_BIND_SERVICE
     read_only: true
     tmpfs:
       - /tmp
 
+    # The published ports below are mapped to Traefik's address on ONE of its
+    # networks — the one that provides the container's default gateway. Docker
+    # picks it by gw_priority, and without one by Compose's order, which is
+    # alphabetical: crowdsec-security before public (measured 2026-10-31).
+    # gw_priority names the public network, so the ports arrive where the
+    # client address is preserved and the address family is checked, and a
+    # connection from the host or from another container reaches Traefik
+    # as this network's gateway. Needs Docker Engine 28.0 and Compose 2.33.1;
+    # validate.sh checks the running container (ops/scripts/check-published-family.py).
     networks:
-      - public
-      - socket_proxy_net
-      - crowdsec-security
+      public:
+        gw_priority: 100
+      socket_proxy_net:
+      crowdsec-security:
 
-    # IPv4 only. A port published without a host address also listens on
-    # [::], and on an IPv4-only public network Docker hands such a
-    # connection to Traefik from the bridge gateway, not from the client.
-    # network-dual-stack.yml adds the IPv6 bindings together with the IPv6
-    # subnet. Transitional: the operating modes of D12 replace this.
-    ports:
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTP_PORT}:80/tcp"
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTPS_PORT}:443/tcp"
-      - "${TRAEFIK_BIND_V4:-0.0.0.0}:${TRAEFIK_HTTPS_PORT}:443/udp"
+    # No ports here. render.sh writes them into config/published-ports.yml,
+    # one block per address family, from TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6
+    # — an empty variable leaves its family out, which a fixed line in this
+    # file could not (DEC-075.3). COMPOSE_FILE in .env applies the rendered
+    # file; every port names its host address, so nothing listens on [::]
+    # where the public network cannot carry IPv6 to the container.
 
     environment:
       - TZ=${TZ}
@@ -147,12 +167,12 @@ services:
     # --------------------------------------------------------
 
 networks:
-  # IPv4-only by default (Docker auto-assigns the subnet — unchanged
+  # IPv4-only in this file (Docker auto-assigns the subnet — unchanged
   # behavior for existing installs). Tailscale clients always have an
   # IPv6 address; without IPv6 on this network, IPv6 ingress loses the
-  # real client IP (see docs/ipv6-dual-stack.md). For dual-stack
-  # IPv4+IPv6 — recommended for new deployments — apply the
-  # network-dual-stack.yml overlay (opt-in, see that file for usage).
+  # real client IP (see docs/ipv6-dual-stack.md). The network-dual-stack.yml
+  # overlay adds IPv6; .env.example applies it, the default for a new
+  # installation (DEC-063), and an existing one keeps its COMPOSE_FILE.
   public:
     name: ${PUBLIC_NETWORK}
     driver: bridge

@@ -3,12 +3,10 @@
 #   cp .env.local.example .env.local
 #   mkdir -p .secrets volumes/data volumes/postgres
 #   openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+#   openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   open http://localhost:8080        # the setup wizard creates the administrator
+#   open http://localhost:8080        # sign in as ADMIN_EMAIL with .secrets/admin_pwd.txt
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
-#
-# The wizard is open until it has run once. On a loopback port that is the
-# point; the production file ships a VPN-only router for the same reason.
 
 services:
 
@@ -51,26 +49,27 @@ services:
     read_only: true
     tmpfs:
       - /tmp
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
     environment:
-      DB_TYPE: postgres
       DB_HOST: wikijs-db
       DB_PORT: "5432"
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS_FILE: /run/secrets/DB_PWD
       DB_SSL: "false"
-      SSL_ACTIVE: "false"
-      HA_ACTIVE: "false"
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
       LOG_LEVEL: ${APP_LOG_LEVEL}
       TZ: ${TZ}
     volumes:
       - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
+      - ./.secrets/admin_pwd.txt:/run/secrets/ADMIN_PWD:ro
       - ./volumes/data:/wiki/data
+      - ./ops/entrypoint.sh:/entrypoint.sh:ro
     ports:
       - "127.0.0.1:8080:3000"
     networks: [wikijs-local]
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/_ready || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10

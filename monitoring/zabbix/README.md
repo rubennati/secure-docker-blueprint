@@ -13,6 +13,12 @@ up", Grafana and Prometheus draw whatever exposes a metrics endpoint, and this
 is the one that also knows about SNMP, IPMI, escalation policies and
 maintenance windows — at the price of being the largest thing here to learn.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text

@@ -15,6 +15,7 @@ import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 TRAEFIK = REPO / "core" / "traefik"
@@ -23,7 +24,9 @@ BASE_ENV = {
     "TZ": "UTC",
     "TRAEFIK_IMAGE": "traefik:v3.7",
     "SOCKET_PROXY_IMAGE": "tecnativa/docker-socket-proxy:0.3.0",
-    "TRAEFIK_CONTAINER_NAME": "traefik-core",
+    # Not the name a deployment uses: validate.sh inspects the running container of
+    # that name, and a fixture must not read the state of a host it runs on.
+    "TRAEFIK_CONTAINER_NAME": "traefik-core-fixture",
     "SOCKET_PROXY_CONTAINER_NAME": "traefik-socket-proxy",
     "PUBLIC_NETWORK": "proxy-public",
     "SOCKET_PROXY_NETWORK": "socket-proxy",
@@ -55,6 +58,10 @@ BASE_ENV = {
     "DSP_BIND_CONFIG": "0.0.0.0:2375",
     "DSP_POST": "0",
     "TRAEFIK_NETWORK": "proxy-public",
+    "TRUSTED_RANGES": "",
+    "EDGE_NETWORKS": "",
+    "VPN_INTERFACE": "tailscale0",
+    "TRAEFIK_BIND_V4": "0.0.0.0",
 }
 
 
@@ -193,25 +200,36 @@ class DashboardCertificateStrategy(unittest.TestCase):
 
 
 class ShippedExampleRequiresAChoice(unittest.TestCase):
-    """The shipped .env.example preselects no certificate strategy, on purpose.
+    """The shipped .env.example makes two choices the operator's, on purpose.
 
-    Three strategies are supported and the Blueprint prescribes none, so the
-    example cannot demonstrate one without privileging it. Validation stops until
-    the operator chooses; this test keeps that a deliberate gate rather than
-    something a later change quietly papers over with a default.
+    It ships dual-stack with the documentation's IPv6 prefix, which validate.sh
+    refuses with the generating command, and it preselects no certificate
+    strategy — three are supported and the Blueprint prescribes none. Validation
+    stops at each until the operator chooses; this test keeps both deliberate
+    gates rather than something a later change quietly papers over with a default.
     """
 
-    def test_example_stops_with_a_strategy_prompt(self):
+    def _validate(self, **changes):
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         shutil.copytree(TRAEFIK / "ops", tmp / "ops")
-        shutil.copy(TRAEFIK / ".env.example", tmp / ".env")
-        r = subprocess.run(
-            ["bash", str(tmp / "ops" / "scripts" / "validate.sh")],
-            capture_output=True, text=True,
-        )
-        out = r.stdout + r.stderr
-        self.assertNotEqual(r.returncode, 0, "the example must not validate unchanged")
+        text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
+        changes.setdefault("TRAEFIK_CONTAINER_NAME", BASE_ENV["TRAEFIK_CONTAINER_NAME"])  # not the host's container
+        for key, value in changes.items():
+            text = "".join(f"{key}={value}\n" if line.startswith(f"{key}=") else line for line in text.splitlines(keepends=True))
+        (tmp / ".env").write_text(text, encoding="utf-8")
+        r = subprocess.run(["bash", str(tmp / "ops" / "scripts" / "validate.sh")], capture_output=True, text=True, env=no_daemon.env())
+        return r.returncode, r.stdout + r.stderr
+
+    def test_example_stops_at_the_documentation_prefix(self):
+        rc, out = self._validate()
+        self.assertNotEqual(rc, 0, "the example must not validate unchanged")
+        self.assertIn("PUBLIC_NETWORK_SUBNET_V6 is the example prefix", out)
+        self.assertIn("openssl rand -hex 5", out)
+
+    def test_example_with_a_prefix_stops_with_a_strategy_prompt(self):
+        rc, out = self._validate(PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64")
+        self.assertNotEqual(rc, 0, "the example must not validate without a certificate choice")
         self.assertIn("SELECT A CERTIFICATE STRATEGY", out)
         self.assertIn("Wildcard", out)
         self.assertIn("Per-domain", out)

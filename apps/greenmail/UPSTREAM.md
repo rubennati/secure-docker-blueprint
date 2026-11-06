@@ -10,12 +10,12 @@
 - **Origin:** Community · Marcel May · Germany · EU
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
-- **Based on version:** `2.1.13`
-- **Last verified:** 2026-09-22 (2.1.13) — behind Traefik with TLS: the REST API through the route, SMTPS and POP3S with a TLS client, and a restart
+- **Based on version:** `2.1.15`
+- **Last verified:** 2026-11-03 (2.1.15) — step 8 lab host behind Traefik 3.7.17: SMTP, SMTPS, IMAP, IMAPS, POP3 and POP3S from a container on `proxy-public`, the REST API through the route, no published port, not reachable from an edge network, a restart (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-22 (2.1.13)
 
 ## What we use
 
-- Official image, pinned tag: `greenmail/standalone:2.1.13`.
+- Official image, pinned tag: `greenmail/standalone:2.1.15`.
 - Runs as a non-root `greenmail` user by upstream default (verified via
   `docker inspect`) — no `user:` override in compose.
 - Upstream's default `GREENMAIL_OPTS` (test-all setup, all protocols on
@@ -62,6 +62,27 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
   in-memory design intends, and the same TLS round trip passed again
 - Nothing to restore: the stack keeps no volume
 
+## Verification performed (2026-11-03)
+
+Step 8 lab host, the production `docker-compose.yml` at 2.1.15 behind Traefik
+3.7.17, its router admitting the lab's loopback probe only:
+
+- Healthy 8 s after the start; no published port; the container runs as
+  `greenmail` (uid 999), read-only, all capabilities dropped; 102 MiB, 22 PIDs
+- From a throwaway container on `proxy-public`, by service name: SMTP on 3025
+  (EHLO offers AUTH, not STARTTLS) and SMTPS on 3465 with a login under any
+  password; both messages read back over IMAP (3143), IMAPS (3993, another
+  password), POP3 (3110) and POP3S (3995); another recipient's mailbox empty
+- TLS 1.3 with the baked-in self-signed certificate: a client that verifies it
+  refuses the connection; plain SMTP against 3465 is disconnected
+- The REST API through the route: `/`, `/api/configuration`, `/api/user` and
+  `/api/service/readiness` 200 from the probe; the host over its public address 404
+- From a container on an edge network (`whoami-edge`): `greenmail` does not
+  resolve and its address on `proxy-public` does not answer
+- After `docker compose restart` the mailbox was empty
+- The container reaches outside addresses — `proxy-public` gives it egress
+  it does not use
+
 ## Verification performed (2026-09-18)
 
 Against the local test stack, and against the production `docker-compose.yml`
@@ -89,6 +110,13 @@ on a throwaway `proxy-public` network without Traefik:
 
 Only the Swagger UI at `:8080/` was confirmed for the REST API; its endpoints
 were not exercised.
+
+## Version notes
+
+- Moved to `2.1.15` on 2026-10-31 (released 2026-10-25) and run at this tag on
+  2026-11-03 (step 8 lab host, below). 2.1.14 and 2.1.15 are dependency bumps — Bouncy Castle to
+  1.86.2, Jackson to 2.22.4, the Zulu JDK 21 image — with no breaking change,
+  property change or advisory.
 
 ## Upgrade checklist
 

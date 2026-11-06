@@ -13,6 +13,12 @@ go through a relationship-based policy (ReBAC) and can require approval.
 See the [PAM/bastion comparison](../README.md#privileged-access--bastion-alternatives)
 for how it differs from Warpgate, JumpServer, ShellHub and Teleport.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
@@ -64,6 +70,8 @@ target host — see that file's header for the exact steps.
 |---|---|---|---|
 | `ORION_SSH_PORT` (2222) | Raw SSH (agent rendezvous + your `ssh` client) | Every host running an agent, and everyone who needs to reach one | No — not HTTP |
 | API/console (8080 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
+
+The ports listen on `ORION_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published (DEC-075).
 
 Like ShellHub, the SSH port has to accept connections from both
 directions: agents dialing out from protected hosts, and your own SSH

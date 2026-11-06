@@ -14,14 +14,14 @@
 - **Origin:** Community project, no single company, maintained collectively on GitHub · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Zero-knowledge paste service for text and secrets
-- **Based on version:** `2.0.6`
+- **Based on version:** `2.1.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   exercised (see README.md's Preview → Ready gate); not yet run behind a
   real Traefik host
 
 ## What we use
 
-- `privatebin/nginx-fpm-alpine:2.0.6` — single container, nginx + php-fpm,
+- `privatebin/nginx-fpm-alpine:2.1.1` — single container, nginx + php-fpm,
   filesystem storage backend (the upstream default; database and S3/GCS
   backends exist but are not used here — nothing about this deployment
   needs them)
@@ -73,6 +73,26 @@ cause.
 - **Not verified:** an actual paste created and decrypted through the web
   UI, burn-after-read behavior, TLS/Traefik behind a real domain, and the
   database or S3/GCS storage backend options.
+
+## Version notes
+
+- Moved `privatebin/nginx-fpm-alpine` to `2.1.1` on 2026-11-05 (released
+  2026-11-04), across 2.1.0, not run on a host at this tag. Security: 2.1.1 fixes
+  GHSA-6vvp-q86m-cp8q (SVG attachment previews ran script in the instance's origin;
+  previews now use a data URL), GHSA-9rmv-j9gp-6vc5 (`sizelimit` checked only the
+  cipher text, so the unbounded `adata` array could fill the disk; the limit now
+  applies to the full request before decoding) and GHSA-c4gc-8mcm-hh65 (the 2.1.0 fix
+  for GHSA-w873-3ghv-hmh6, Bootstrap classes and inline styles in Markdown HTML, was
+  ineffective). Breaking change in 2.1.0: the Bootstrap 3 template is removed with
+  jQuery; a `cfg/conf.php` that sets `template = bootstrap` must use `bootstrap5`.
+  This stack mounts no `conf.php` and runs the image's default configuration, so
+  nothing changes here. 2.1.1 adds the option `discussionrequireauthenticatedids`
+  (off by default; older comments stay readable) and fixes passwords with
+  characters above U+00FF, keeping existing documents readable. The container
+  image's build (user `65534:82`, entrypoint, s6 services) is unchanged between the
+  releases, so the `read_only` and exec-tmpfs configuration carries over. Sources:
+  https://github.com/PrivateBin/PrivateBin/releases/tag/2.1.1,
+  https://github.com/PrivateBin/PrivateBin/releases/tag/2.1.0
 
 ## Upgrade checklist
 

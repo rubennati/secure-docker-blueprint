@@ -39,6 +39,23 @@
 | **`HOST_PHOTOVIEW_LOCATION` / `HOST_PHOTOVIEW_MEDIA_ROOT` / `HOST_PHOTOVIEW_BACKUP` renamed** to `MEDIA_ROOT` and `./volumes/` bind paths | Blueprint convention + drops unused backup variable |
 | **`access-public`, `limit-standard` and `headers-standard` as shipped** | Typical for public galleries |
 
+## Version notes
+
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Support: Photoview's example compose and its CI
+  use the floating `mariadb:lts` tag, which is 12.3
+  (https://github.com/photoview/photoview, `docker-compose example/` and
+  `.github/workflows/tests.yml`); the docs name no version.
+  `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
+  `mariadb-upgrade` at the first start on 12.3 after a backup of the system
+  tables; the data directory `./volumes/mariadb` is reused. Take the
+  `mariadb-dump` before the tag changes: going back to 11.4 is only a restore of
+  that dump. Changed on the way (11.8 and 12.x): `innodb_snapshot_isolation` is
+  on by default, so a transaction that writes a row another transaction changed
+  after its snapshot fails with error 1020 instead of overwriting it; the new
+  default collation `utf8mb4_uca1400_ai_ci` does not apply, as the stack sets
+  `utf8mb4_unicode_ci` explicitly.
+
 ## Upgrade checklist
 
 1. Check [Photoview releases](https://github.com/photoview/photoview/releases)

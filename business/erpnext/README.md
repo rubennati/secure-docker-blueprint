@@ -5,6 +5,16 @@ invoicing, stock, buying, selling, manufacturing, projects and HR. Upstream:
 [ERPNext](https://github.com/frappe/erpnext), deployed the way
 [frappe_docker](https://github.com/frappe/frappe_docker) deploys it.
 
+## Open findings
+
+The pinned image, `frappe/erpnext:v16.53.0`, ships with 6 CRITICAL vulnerabilities that have published fixes, all in the asset-build tooling under frappe's `node_modules` (loader-utils, shell-quote, and an old Go runtime inside esbuild). v16.53.0 is the newest v16 release.
+
+**Risk:** these tools build the front-end assets and are not part of the running web or worker processes. Watch for the next v16 release.
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text

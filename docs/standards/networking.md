@@ -11,7 +11,7 @@ Internet
 │  (core/)     │                                │   (core/)    │
 └──────────────┘                                └──────────────┘
    │
-   │ proxy-public (external)
+   │ <project>-edge (one per stack; or proxy-public, shared)
    ▼
 ┌──────────┐  app-internal   ┌──────────┐  ┌──────────┐
 │   App    │◄───────────────►│    DB    │  │  Redis   │
@@ -21,26 +21,49 @@ Internet
 
 ## Network Types
 
-### proxy-public
+### The proxy network — an edge network per stack, or the shared `proxy-public`
 
 ```yaml
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 ```
 
-- Created by `core/traefik`
-- Referenced by every app that needs Traefik routing
-- Only the web-facing service of an app belongs here
+- Created by `core/traefik`: the edge networks from `EDGE_NETWORKS` in its `.env`
+  (rendered into `config/edge-networks.yml`), `proxy-public` always
+- Referenced by every app that needs Traefik routing; only the web-facing
+  service of an app belongs on it
+- `TRAEFIK_NETWORK` in the stack's `.env` decides which network that is
+  ([DEC-075](../../.ai/decisions.md#dec-075)): `${COMPOSE_PROJECT_NAME}-edge`, the
+  stack's own edge network, is the default — its web container reaches Traefik
+  and its own `app-internal`, nothing else; `proxy-public`, the shared network,
+  is the choice for stacks that reach each other by service name — its members
+  reach one another directly, because Docker isolates networks from each other,
+  not containers within one, and the router positions act on the path through
+  Traefik alone ([`docs/audits/ingress-architecture-2026-10-31.md`](../audits/ingress-architecture-2026-10-31.md))
+- The label `traefik.docker.network=${TRAEFIK_NETWORK}` names the same network,
+  so Traefik dials the backend on it; a stack whose network Traefik does not
+  join is unreachable without a log line, which `core/traefik/ops/scripts/validate.sh`
+  checks against the running containers
+- The published ports stay on `proxy-public` in both shapes (`gw_priority`);
+  edge networks are IPv4-only, like `app-internal`
+- Shapes, migration and the address-pool limit:
+  [`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)
 
-**IP family — IPv4-only by default, dual-stack opt-in.** `proxy-public` is
-created IPv4-only unless the `core/traefik/network-dual-stack.yml` overlay
-is applied, and Traefik is published on IPv4 only until then — the overlay
-adds the IPv6 ports with the IPv6 subnet. Dual-stack matters specifically for Tailscale ingress:
+**IP family — dual-stack as shipped, IPv4-only and IPv6-only as settings** (IPv6-only is not verified on a host).
+The example `core/traefik/.env` applies the `network-dual-stack.yml` overlay, which
+creates `proxy-public` with an IPv6 subnet (DEC-063, refined by DEC-075); without
+it the network is IPv4-only. Traefik's published ports are one bind variable per family
+(`TRAEFIK_BIND_V4`, `TRAEFIK_BIND_V6`), rendered into `config/published-ports.yml`;
+an empty variable publishes nothing for its family, neither has a default, and an
+IPv6 binding needs the overlay (DEC-075.3). Every other published port in the catalogue names its host
+address through a required `*_BIND` variable, IPv4 as shipped — a port without an
+address also listens on `[::]`, where Docker relays IPv6 from the bridge gateway. Dual-stack matters specifically for Tailscale ingress:
 Tailscale always hands a client an IPv6 address, and that address only
 reaches Traefik intact if `proxy-public` itself can carry IPv6 — there is
 no header-based fallback the way there is for Cloudflare
-(`forwardedHeaders.trustedIPs`). Recommended for new deployments. Full
+(`forwardedHeaders.trustedIPs`). Full
 rationale, Docker daemon prerequisites, and the migration path for
 existing IPv4-only installs:
 [`core/traefik/docs/ipv6-dual-stack.md`](../../core/traefik/docs/ipv6-dual-stack.md).
@@ -93,7 +116,7 @@ placing one of them on `proxy-public`.
 
 ## Which Service in Which Network?
 
-| Service Type | proxy-public | app-internal | crowdsec-security |
+| Service Type | edge / proxy-public | app-internal | crowdsec-security |
 |-------------|:---:|:---:|:---:|
 | Web app (Traefik routing) | ✅ | ✅ | ❌ |
 | Database | ❌ | ✅ | ❌ |
@@ -166,24 +189,30 @@ The one place this repository writes a forward rule is CrowdSec's host
 remediation, and it is deliberately narrow — a single drop matched to one ingress
 interface and one address set, described in
 [`../../core/crowdsec/docs/firewall-bouncer.md`](../../core/crowdsec/docs/firewall-bouncer.md).
-Nothing else here adds a forward rule, and nothing here manages a host firewall on
-the operator's behalf.
+The one other forward rule is in the ruleset `core/traefik` renders for the
+`proxied` exposure profile — new connections to Traefik's translated 80 and 443
+from anyone but Cloudflare, the VPN and the trusted ranges are dropped — and the
+anti-spoofing drop for the VPN's IPv6 range. That ruleset
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md))
+closes the input path and keeps the forward policy `accept`; the operator installs
+it, nothing here applies a firewall on the operator's behalf.
 
 ### Exposing Ports
 
 ```yaml
 ports:
-  - "${APP_PORT}:8080"
+  - "${APP_BIND:?set APP_BIND}:${APP_PORT}:8080"
 ```
 
-**Avoid.** Only when the service cannot be routed through Traefik:
-
-- dnsmasq (DNS, not HTTP)
-- Hawser standard mode (Docker API, not web)
+**Avoid.** Only when the service cannot be routed through Traefik, and always with a
+host address from a required `*_BIND` variable (`port-no-host-address`). The
+catalogue publishes this way in `apps/unifi`, `apps/opencanary` and the access
+gateways under `core/` (Teleport, ShellHub, Warpgate, JumpServer, Orion Belt,
+step-ca, and Headscale with its opt-in `derp.yml`); their examples ship `0.0.0.0`. dnsmasq runs with `network_mode: host`.
 
 Database ports **never** exposed on host.
 
 ### Multiple Web Services
 
 For apps with multiple public endpoints (e.g. Seafile + Thumbnail Server):
-Both in `proxy-public`, each with its own Traefik router.
+Both on the stack's `TRAEFIK_NETWORK`, each with its own Traefik router.

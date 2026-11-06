@@ -35,6 +35,7 @@ from pathlib import Path
 import yaml
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com",
@@ -63,7 +64,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def static(self):
         return yaml.safe_load((self.root / "config" / "traefik.yml").read_text(encoding="utf-8"))
@@ -107,7 +108,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         for mode in ("none", "cloudflare"):
             self.render(dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY=mode))
             model = yaml.safe_load((self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"))
-            for name in ("access-lan", "access-vpn", "access-lan-vpn", "access-blocked"):
+            for name in ("access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked"):
                 self.assertNotIn("ipStrategy", model["http"]["middlewares"][name]["ipAllowList"], f"{mode} {name}")
             self.assertNotIn("sourceCriterion", (self.root / "config" / "dynamic" / "model.yml").read_text(encoding="utf-8"), mode)
 

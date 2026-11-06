@@ -37,6 +37,7 @@ type Entry = {
 	state: string;
 	verified: string | null;
 	verified_version: string | null;
+	open_findings: number;
 	footprint: {
 		services: number;
 		init_services: number;
@@ -83,10 +84,25 @@ const groups = DOMAIN_ORDER.map((domain) => ({
 
 const REPO = 'https://github.com/rubennati/secure-docker-blueprint/tree/main/';
 
-const checked = (e: Entry) =>
-	e.verified
-		? `Checked on a host ${new Date(e.verified).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' })}${e.verified_version ? ` (${e.verified_version})` : ''}`
-		: 'Not yet run on a host';
+const STATE_LABEL: Record<string, string> = {
+	scaffolded: 'Scaffolded',
+	verified: 'Verified',
+	'baseline-aligned': 'Baseline-aligned',
+	'ops-proven': 'Ops-proven',
+};
+
+// A leading "v" is a tag spelling, not a different version.
+const sameVersion = (a: string, b: string) => a.replace(/^v/, '') === b.replace(/^v/, '');
+
+// The host run is evidence about the version it ran, not about the current pin.
+const checked = (e: Entry) => {
+	if (!e.verified) return 'Not yet run on a host';
+	const date = new Date(e.verified).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+	if (!e.verified_version) return `Last run on a host ${date}`;
+	return sameVersion(e.verified_version, e.version)
+		? `Last run on a host ${date} with this version`
+		: `Historical host run ${date} with ${e.verified_version}; the current pin ${e.version} is not verified on a host`;
+};
 ---
 
 <div class="cat">
@@ -138,7 +154,13 @@ const checked = (e: Entry) =>
 								</details>
 							)}
 							<p class="cat__meta">
+								<span class="cat__state">{STATE_LABEL[e.state] ?? e.state}</span>
 								<span>{checked(e)}</span>
+								{e.open_findings > 0 && (
+									<a class="cat__findings" href={`${REPO.replace('/tree/', '/blob/')}${e.path}/README.md#open-findings`}>
+										{e.open_findings} open CRITICAL finding{e.open_findings === 1 ? '' : 's'}
+									</a>
+								)}
 								<a href={`${REPO}${e.path}`}>Files</a>
 								{e.upstream && <a href={e.upstream}>Upstream</a>}
 							</p>
@@ -259,6 +281,14 @@ const checked = (e: Entry) =>
 		color: var(--sl-color-gray-2);
 	}
 
+	.cat__state {
+		font-weight: 600;
+		color: var(--sl-color-gray-2);
+	}
+	.cat__findings {
+		color: var(--sl-color-orange);
+		font-weight: 600;
+	}
 	.cat__meta {
 		display: flex;
 		flex-wrap: wrap;

@@ -70,27 +70,85 @@ class Findings(unittest.TestCase):
             self.assertEqual(broken, ["x.json"])
 
 
+def _exception(*cves, **over):
+    entry = {"stacks": ["apps/x"], "reason": "no fixed release", "risk": "low",
+             "cves": list(cves)}
+    entry.update(over)
+    return entry
+
+
 class Baseline(unittest.TestCase):
     def test_round_trips(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "b.json"
             p.write_text(gate.render_baseline(
-                {"postgres": {"CVE-2", "CVE-1"}}, "2026-09-21", {"reg/x": "needs auth"}))
-            accepted, unscanned = gate.load_baseline(p)
-            self.assertEqual(accepted, {"postgres": {"CVE-1", "CVE-2"}})
+                {"postgres": _exception("CVE-2", "CVE-1")}, {"reg/x": "needs auth"}))
+            exceptions, unscanned = gate.load_baseline(p)
+            self.assertEqual(gate.accepted(exceptions), {"postgres": {"CVE-1", "CVE-2"}})
+            self.assertEqual(exceptions["postgres"]["reason"], "no fixed release")
             self.assertEqual(unscanned, {"reg/x": "needs auth"})
 
     def test_cves_are_sorted_so_a_rewrite_does_not_churn_the_diff(self):
-        out = gate.render_baseline({"postgres": {"CVE-9", "CVE-1"}}, "2026-09-21")
+        out = gate.render_baseline({"postgres": _exception("CVE-9", "CVE-1")}, {})
         self.assertLess(out.index("CVE-1"), out.index("CVE-9"))
-
-    def test_an_image_with_no_criticals_is_not_recorded(self):
-        out = json.loads(gate.render_baseline({"postgres": set()}, "2026-09-21"))
-        self.assertEqual(out["accepted"], {})
 
     def test_a_missing_baseline_reads_as_empty(self):
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(gate.load_baseline(Path(tmp) / "absent.json"), ({}, {}))
+
+    def test_an_exception_must_say_why_and_what_risk(self):
+        bad = gate.incomplete({"a": _exception("CVE-1", reason=""),
+                               "b": _exception("CVE-1", risk="", stacks=[]),
+                               "c": _exception("CVE-1")})
+        self.assertEqual(bad, {"a": ["reason"], "b": ["stacks", "risk"]})
+
+
+class Gate(unittest.TestCase):
+    """What must fail: an unrecorded finding, and an exception without its reason."""
+
+    def _run(self, tmp, exceptions, *extra):
+        import subprocess
+        res = Path(tmp) / "res"; res.mkdir(exist_ok=True)
+        _report(res, "a", "postgres:17", criticals=["CVE-1"])
+        _report(res, "b", "redis:8", criticals=[])
+        base = Path(tmp) / "b.json"
+        base.write_text(gate.render_baseline(exceptions, {}))
+        cmd = ["python3", str(Path(__file__).with_name("trivy-gate.py")),
+               "--results-dir", str(res), "--baseline", str(base), *extra]
+        return subprocess.run(cmd, capture_output=True, text=True), base
+
+    def test_an_unrecorded_finding_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r, _ = self._run(tmp, {})
+            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertIn("`postgres` — CVE-1", r.stdout)
+
+    def test_a_recorded_exception_passes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r, _ = self._run(tmp, {"postgres": _exception("CVE-1")})
+            self.assertEqual(r.returncode, 0, r.stdout)
+
+    def test_an_exception_without_a_risk_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r, _ = self._run(tmp, {"postgres": _exception("CVE-1", risk="")})
+            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertIn("missing: risk", r.stdout)
+
+    def test_prune_removes_only_what_the_scan_no_longer_finds(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            r, base = self._run(tmp, {"postgres": _exception("CVE-1", "CVE-OLD"),
+                                      "redis": _exception("CVE-GONE"),
+                                      "unscanned/app": _exception("CVE-7")}, "--prune")
+            self.assertEqual(r.returncode, 0, r.stdout)
+            exceptions, _ = gate.load_baseline(base)
+            self.assertEqual(gate.accepted(exceptions),
+                             {"postgres": {"CVE-1"}, "unscanned/app": {"CVE-7"}})
+            self.assertEqual(exceptions["postgres"]["reason"], "no fixed release")
+
+    def test_prune_never_adds_a_finding(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            _, base = self._run(tmp, {}, "--prune")
+            self.assertEqual(gate.load_baseline(base)[0], {})
 
 
 class Reach(unittest.TestCase):
@@ -107,7 +165,7 @@ class Reach(unittest.TestCase):
         _report(res, "a", "postgres:17", criticals=["CVE-1"])
         base = Path(tmp) / "b.json"
         base.write_text(gate.render_baseline(
-            {"postgres": {"CVE-1"}}, "2026-09-21",
+            {"postgres": _exception("CVE-1")},
             {"registry.example.com/app": unscanned_reason} if unscanned_reason else {}))
         fails = Path(tmp) / "f.tsv"
         fails.write_text(failures)

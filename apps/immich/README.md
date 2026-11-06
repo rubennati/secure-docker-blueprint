@@ -1,15 +1,25 @@
 # Immich
 
-Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with pgvectors/vectorchord extensions for embeddings), and Valkey (Redis-compatible).
+Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with the VectorChord extension for embeddings), and Valkey (Redis-compatible).
+
+## Open findings
+
+The Immich server image, `immich-server:v3.3.6`, carries 5 CRITICAL findings that have published fixes: brotli from its Debian base and the Node packages handlebars, `proxy-addr` and `tar`. The machine-learning image, `immich-machine-learning:v3.3.6`, carries 7, five of them in Pillow 12.3.0, plus anyio and certifi. v3.3.6 is the newest stable release.
+
+**Risk:** the machine-learning service decodes uploaded photos with Pillow, so allow uploads only from trusted users. The server's findings need admin-set templates, unusual proxy settings or crafted archives. Watch for v3.4.0.
+
+The Immich database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1`, carries 4 CRITICAL findings: Perl 5.36 from its Debian 12 base (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) and the `gosu` Go runtime (CVE-2025-68121). Every current Immich PostgreSQL build, on any supported major, ships the same packages.
+
+**Risk:** PostgreSQL does not run Perl on user data, and gosu makes no network connection. Keep the database on the internal network and watch for a rebuilt image.
 
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/immich-app/immich-server:v3.2.0` | Web UI + REST API + upload handler |
-| `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.2.0` | CLIP embeddings, face detection, object recognition |
-| `db` | `ghcr.io/immich-app/postgres:14-vectorchord…` | Postgres with vector extensions for similarity search |
-| `redis` | `valkey/valkey:8.1.6` | Background job queue (Bull/BullMQ) |
+| `immich-app` | `ghcr.io/immich-app/immich-server:v3.3.6` | Web UI + REST API + upload handler |
+| `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.3.6` | CLIP embeddings, face detection, object recognition |
+| `db` | `ghcr.io/immich-app/postgres:14-vectorchord1.1.1` (digest-pinned) | Postgres with vector extensions for similarity search |
+| `redis` | `valkey/valkey:9.1.3` | Background job queue (Bull/BullMQ) |
 
 ## Try it locally
 
@@ -47,7 +57,7 @@ mkdir -p volumes/postgres volumes/redis volumes/model-cache volumes/library
 docker compose up -d
 
 # 6. Wait for first-run migrations (~2 minutes)
-docker compose logs app --follow
+docker compose logs immich-app --follow
 # Watch for: "Immich Server is listening on..."
 
 # 7. Open UI and create the admin account
@@ -80,7 +90,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 | **Password** | `.secrets/db_pwd.txt` |
 | **State** | `./volumes/postgres` (database) · **`${UPLOAD_LOCATION}`** — the photo and video library itself |
 | **Reproducible** | `./volumes/redis` (cache) · `./volumes/model-cache` (re-downloaded models) |
-| **Quiescing** | Not needed for the dump. Pause uploads for a large library copy if you want the two halves to match exactly. |
+| **Quiescing** | Stop `immich-app` for the dump (see Restore); pause uploads for a large library copy if you want the two halves to match exactly. |
 
 ```yaml
 postgresql_databases:
@@ -90,8 +100,8 @@ postgresql_databases:
       password: "{credential file /srv/docker/apps/immich/.secrets/db_pwd.txt}"
 ```
 
-**`UPLOAD_LOCATION` points outside the stack directory**, which is exactly why it
-gets forgotten. It is also, by volume, the largest thing this repository backs up
+**`UPLOAD_LOCATION` can point outside the stack directory** (the example keeps it
+in `./volumes/library`), which is exactly why it gets forgotten. It is also, by volume, the largest thing this repository backs up
 and the only part that is irreplaceable — the database holds albums, faces and
 metadata, all of which can be rebuilt from the originals. The reverse is not true.
 
@@ -103,7 +113,16 @@ that produced the dump, not into a stock `postgres` image.
 **A plain `psql < dump.sql` does not restore this database**, and it does not
 report that it failed. Three parts of the [upstream
 procedure](https://docs.immich.app/administration/backup-and-restore) are load
-bearing:
+bearing. The dump it expects is one database in plain SQL, taken with the app
+stopped:
+
+```bash
+docker compose stop immich-app
+docker compose exec -T db sh -c 'pg_dump --username="$POSTGRES_USER" "$POSTGRES_DB"' | gzip > dump.sql.gz
+docker compose start immich-app
+```
+
+Restore it into the fresh database:
 
 ```bash
 gunzip --stdout dump.sql.gz \
@@ -119,6 +138,12 @@ gunzip --stdout dump.sql.gz \
 | `--single-transaction` | a failure rolls the whole restore back instead of leaving a half-populated database that starts and looks plausible |
 | `ON_ERROR_STOP=on` | without it `psql` continues past errors and exits 0. This is the part that turns a failed restore into one you find out about later |
 
+Measured on the step 8 lab host (v3.2.0): this pipeline restored the `pg_dump` above
+with every row count and the originals intact. The upstream page's `pg_dumpall
+--clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
+block` — and the `postgresql_databases` entry under Backup fails on a host whose
+`pg_restore` is newer than the server's PostgreSQL 14 (`transaction_timeout`).
+
 Two preconditions upstream states, both of which invalidate a restore if missed:
 
 - **Stop `app` before taking the dump.** A dump taken while the server writes can capture a torn state.
@@ -130,7 +155,7 @@ Two preconditions upstream states, both of which invalidate a restore if missed:
 
 - **A `429` on first install leaves the app on a black screen** — Immich's service worker pre-caches about 100 JS chunks in parallel. With a burst of 50 part of them were answered `429`. `.env.example` ships `limit-standard`, whose burst of 500 holds them.
 - **`DB_PWD_INLINE` duplicates the DB password** — Immich-server's `DB_PASSWORD` env var has no `_FILE` support. The Postgres service reads `POSTGRES_PASSWORD_FILE` from a Docker Secret, but immich-server needs the same value inline in `.env`. Setup step 3 syncs them. Mismatch = connection refused.
-- **Custom Postgres image is required** — the vector extensions (pgvectors, vectorchord) used for photo similarity search are Immich-specific. Do NOT substitute a stock `postgres:14` image.
+- **Custom Postgres image is required** — the vector extension (VectorChord) used for photo similarity search are Immich-specific. Do NOT substitute a stock `postgres:14` image.
 - **Upload volume** — `UPLOAD_LOCATION` can be an NFS/SMB share. The `db` volume must be local storage (Postgres corrupts on network filesystems).
 - **Hardware acceleration** — transcoding and ML inference can use GPU/NPU. See [Immich hwaccel docs](https://docs.immich.app/features/ml-hardware-acceleration) — add the `extends:` block and change the image tag (e.g. `v2-cuda`).
 - **First ML inference is slow** — CLIP model downloads on first photo upload (~5-10 min on slow links).

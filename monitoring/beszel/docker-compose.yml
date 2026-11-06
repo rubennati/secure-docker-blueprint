@@ -54,7 +54,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8090"
 
     # --- Health & Observability ---
@@ -197,6 +197,10 @@ services:
       NICS: ${AGENT_NICS:--*}
       # Optional: comma-separated mount points beyond root FS.
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
+      # Since 0.20.0 the agent asks image registries (Docker Hub, GHCR, ...)
+      # hourly whether a container's image has a newer digest. Off: it sends
+      # every image name out, and the socket proxy grants no IMAGES call.
+      DOCKER_IMAGE_CHECK: "false"
 
     # --- Networking ---
     # No network_mode: host, no published port, no listener. The agent dials
@@ -216,6 +220,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   # Private to the hub, the agent and the socket proxy. internal: true — no

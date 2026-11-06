@@ -22,6 +22,7 @@ Run:
     python3 -m unittest discover -s scripts/ci -p 'test_*.py'
 """
 
+import os
 import re
 import shutil
 import subprocess
@@ -32,11 +33,12 @@ from pathlib import Path
 import yaml
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
 
-ACCESS = {"access-public", "access-lan", "access-vpn", "access-lan-vpn", "access-blocked"}
+ACCESS = {"access-public", "access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked"}
 LIMITS = {"limit-none": None, "limit-standard": (125, 500), "limit-extra-large": (125, 1000),
           "limit-sync": (1000, 1000), "limit-strict": (20, 40)}
 PROFILES = {"headers-standard": ["hsts-base", "header-nosniff", "header-frame-deny", "header-referrer", "header-permissions"],
@@ -62,7 +64,7 @@ class Model(unittest.TestCase):
         return subprocess.run(["bash", str(self.root / "ops/scripts/render.sh")], capture_output=True, text=True)
 
     def validate(self):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True, env=no_daemon.env())
 
     def dyn(self, name):
         return yaml.safe_load((self.root / "config" / "dynamic" / name).read_text(encoding="utf-8"))
@@ -156,7 +158,7 @@ class Model(unittest.TestCase):
     def test_the_dashboard_router_carries_the_four_positions(self):
         self.render(VALID_ENV)
         router = self.dyn("routers-system.yml")["http"]["routers"]["traefik-dashboard"]
-        self.assertEqual(router["middlewares"], ["access-vpn@file", "limit-strict@file", "headers-standard@file", "auth-none@file"])
+        self.assertEqual(router["middlewares"], ["headers-standard@file", "access-vpn@file", "limit-strict@file", "auth-none@file"])
         self.assertEqual(router["tls"]["options"], BASE_ENV["TRAEFIK_DASHBOARD_TLS_OPTION"])
 
     def test_a_file_from_before_the_model_is_removed_by_render_and_refused_by_validate(self):
@@ -189,6 +191,100 @@ class Model(unittest.TestCase):
         defined_in = [f.name for f in (self.root / "config" / "dynamic").glob("*.yml")
                       if "compress" in (yaml.safe_load(f.read_text(encoding="utf-8")) or {}).get("http", {}).get("middlewares", {})]
         self.assertEqual(defined_in, ["model.yml"])
+
+
+class TrustedRanges(Model):
+    """DEC-076: access-trusted admits the networks TRUSTED_RANGES declares and
+    access-trusted-vpn adds the VPN; empty admits nobody; unset is refused by
+    render.sh and validate.sh; access-lan* no longer exists anywhere."""
+
+    def middlewares(self, env):
+        r = self.render(env)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return self.dyn("model.yml")["http"]["middlewares"], r.stdout
+
+    def test_declared_ranges_render_both_trusted_policies(self):
+        mw, out = self.middlewares(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.0/24 2001:db8:10::/64"))
+        self.assertEqual(mw["access-trusted"]["ipAllowList"]["sourceRange"], ["192.168.10.0/24", "2001:db8:10::/64"])
+        self.assertEqual(mw["access-trusted-vpn"]["ipAllowList"]["sourceRange"],
+                         ["192.168.10.0/24", "2001:db8:10::/64", BASE_ENV["TAILSCALE_CIDR_V4"], BASE_ENV["TAILSCALE_CIDR_V6"]])
+        self.assertNotIn("access-lan", mw)
+        self.assertNotIn("access-lan-vpn", mw)
+        self.assertIn("2 declared range(s)", out)
+        v = self.validate()
+        self.assertNotIn("ERROR", v.stdout + v.stderr)
+
+    def test_empty_admits_nobody(self):
+        mw, out = self.middlewares(dict(VALID_ENV, TRUSTED_RANGES=""))
+        self.assertEqual(mw["access-trusted"]["ipAllowList"]["sourceRange"], ["127.0.0.1/32"])
+        self.assertEqual(mw["access-trusted-vpn"]["ipAllowList"]["sourceRange"],
+                         ["127.0.0.1/32", BASE_ENV["TAILSCALE_CIDR_V4"], BASE_ENV["TAILSCALE_CIDR_V6"]])
+        self.assertIn("0 declared range(s)", out)
+
+    def test_unset_is_refused_by_render_and_validate_with_the_migration_named(self):
+        env = {k: v for k, v in VALID_ENV.items() if k != "TRUSTED_RANGES"}
+        r = self.render(env)
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("TRUSTED_RANGES is not set", r.stdout + r.stderr)
+        self.assertIn("migrate-traefik-env.sh", r.stdout + r.stderr)
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("TRUSTED_RANGES is not set", v.stdout + v.stderr)
+
+    def test_a_range_overlapping_the_vpn_is_refused(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="100.64.0.0/10"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("overlaps the VPN range", v.stdout)
+
+    def test_a_range_overlapping_the_public_network_subnet_is_refused(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16",
+                         PUBLIC_NETWORK_SUBNET_V6="fd3a:91c2:7e04::/64"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("overlaps the Docker network", v.stdout)
+
+    def validate_with_daemon_networks(self, networks):
+        """validate.sh against a stub docker whose daemon reports `networks` ({name: subnet})."""
+        stub_bin = self.root.parent / "bin"
+        stub_bin.mkdir(exist_ok=True)
+        ids = "\n".join(networks)
+        rows = "\n".join(f'[{{"Subnet":"{subnet}"}}] {name}' for name, subnet in networks.items())
+        (stub_bin / "docker").write_text(f"""#!/usr/bin/env bash
+case "$1 $2" in
+  "info "*) exit 0 ;;
+  "network ls") printf '%s\\n' "{ids}" ;;
+  "network inspect") printf '%s\\n' '{rows}' ;;
+esac
+exit 0
+""", encoding="utf-8")
+        (stub_bin / "docker").chmod(0o755)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh")], capture_output=True, text=True,
+                              env=no_daemon.env(PATH=f"{stub_bin}:{os.environ['PATH']}"))
+
+    def test_a_range_overlapping_a_daemon_network_is_refused(self):
+        # Step 8 lab host: a stack's edge network was given 192.168.0.0/20 by the daemon's pool.
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.0/24"))
+        v = self.validate_with_daemon_networks({"fixture-edge": "192.168.0.0/20"})
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("overlaps the Docker network 192.168.0.0/20 (fixture-edge)", v.stdout)
+        v = self.validate_with_daemon_networks({"fixture-edge": "172.28.0.0/16"})
+        self.assertNotIn("overlaps the Docker network", v.stdout)
+
+    def test_a_value_that_is_not_a_network_is_refused(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES="192.168.10.5/24"))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("not a network in CIDR form", v.stdout)
+
+    def test_a_rendered_lan_policy_from_before_is_refused_as_retired(self):
+        self.render(dict(VALID_ENV, TRUSTED_RANGES=""))
+        model = self.root / "config" / "dynamic" / "model.yml"
+        model.write_text(model.read_text(encoding="utf-8") + "\n    access-lan:\n      ipAllowList:\n        sourceRange:\n          - \"10.0.0.0/8\"\n", encoding="utf-8")
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("access-lan", v.stdout)
+        self.assertIn("retired", v.stdout)
 
 
 if __name__ == "__main__":

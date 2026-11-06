@@ -291,7 +291,7 @@ change within seconds.
 
 ### Step 1 — Block all traffic
 
-In `apps/caldiy/.env`, change:
+In `apps/caldiy/.env`, change the policy — `access-public` once the booking pages are open:
 
 ```env
 APP_TRAEFIK_ACCESS=access-public
@@ -398,7 +398,7 @@ covers `*.calendar.example.com` but **not** `www.example.com` or `example.com`; 
 
 ```bash
 # In apps/caldiy/docker-compose.yml, place the block before the headers profile:
-#   ...middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,hsts-include-subdomains@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}
+#   ...middlewares=hsts-include-subdomains@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}
 docker compose -f apps/caldiy/docker-compose.yml up -d --force-recreate app
 ```
 

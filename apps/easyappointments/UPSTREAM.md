@@ -11,12 +11,12 @@
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Appointment booking in PHP, established since 2013
 - **Based on version:** `1.6.1`
-- **Last verified:** 2026-05-03 (1.5.x)
+- **Last verified:** 2026-11-03 (1.6.1) — step 8 lab host behind Traefik 3.7.17 on its edge network: the installation wizard, the backend login, the REST API with a customer and an appointment, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (1.5.x)
 
 ## What we use
 
 - Official `alextselegidis/easyappointments`
-- Official `mariadb:11.4`
+- Official `mariadb:11.4.13`
 - Docker Secrets for MariaDB user + root password
 - Bind-mount `./volumes/storage` for the app's uploads directory
 
@@ -34,7 +34,7 @@ The upstream Docker compose example is minimal (app + db, linked via env). Bluep
 | `no-new-privileges:true` on both services | Baseline hardening |
 | Healthcheck-gated `depends_on` | Prevents EA from starting before MariaDB is ready |
 | `TZ` env on both services | Blueprint convention |
-| Default access `access-public`, `limit-standard` and `headers-standard` | Booking URLs must reach external visitors |
+| Default access `access-vpn`; `access-public` after the installation wizard | The wizard sets the administrator for whoever reaches it first; booking URLs must reach external visitors afterwards |
 
 ## Version notes
 

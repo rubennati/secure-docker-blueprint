@@ -82,7 +82,7 @@ services:
       # stack leaves this path answering wherever the host answers.
       # Thumbnail service. The four positions, with SIDE_TRAEFIK_LIMIT (.env): a
       # gallery view issues many parallel requests, not measured against a counter.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # TLS
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.tls=true"
       # Service
@@ -90,6 +90,7 @@ services:
 
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

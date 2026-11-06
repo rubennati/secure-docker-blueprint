@@ -18,7 +18,3 @@ general_settings:
   # Models added through the admin API or UI are stored in the database, their
   # credentials encrypted with the salt key. Without it, /model/new refuses.
   store_model_in_db: true
-
-litellm_settings:
-  # Upstream's anonymous usage telemetry.
-  telemetry: false

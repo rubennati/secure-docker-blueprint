@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lissy93/dashy:4.8.7` | Vue-based SPA + embedded build server |
+| `dashy-app` | `lissy93/dashy:4.9.15` | Vue-based SPA + embedded build server |
 
 No database. Config lives in `config/conf.yml`.
 
@@ -50,6 +50,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 - `no-new-privileges:true`
 - Default access `access-vpn` — personal dashboard, VPN-only
+- A basicAuth gate in front of the route (`APP_BASIC_AUTH_USERS`, DEC-077) — Dashy's built-in auth runs in the browser and guards nothing on the server; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash
 - `limit-standard` and `headers-standard`
 - No data persistence beyond config file — container can be recreated freely
 
@@ -70,7 +71,7 @@ the configuration file is the source of truth, and it lives in git.
 
 ## Known Issues
 
-- **Config changes** require a container restart to take effect (`docker compose restart app`).
+- **Config changes** require a container restart to take effect (`docker compose restart dashy-app`).
 - **In-app config editor unavailable** — `conf.yml` is mounted read-only (`:ro`). All changes go through the file directly. This is intentional: file-based management is cleaner and prevents accidental in-UI overwrites.
 
 ## Details

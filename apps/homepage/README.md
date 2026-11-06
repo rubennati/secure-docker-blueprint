@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/gethomepage/homepage:v2.3.0` | Next.js dashboard reading YAML configs |
+| `homepage-app` | `ghcr.io/gethomepage/homepage:v2.7.0` | Next.js dashboard reading YAML configs |
 
 Config lives in `./config/`. No database.
 
@@ -57,6 +57,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 - **`HOMEPAGE_ALLOWED_HOSTS` derived from `APP_TRAEFIK_HOST`** — inbox source had a hardcoded real-IP value (192.168.x.x:port). Now consistent with the blueprint TLS hostname.
 - **Default access `access-vpn`** — personal dashboard, VPN-only.
+- **A basicAuth gate in front of the route** (`APP_BASIC_AUTH_USERS`, DEC-077) — Homepage has no login of its own and its config holds the API keys of every widget; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash.
 - **`limit-standard` and `headers-standard`**.
 - **Docker socket integration disabled by default** — see below.
 - **`no-new-privileges:true`**.

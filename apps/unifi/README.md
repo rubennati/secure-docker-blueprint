@@ -2,12 +2,24 @@
 
 Controller for Ubiquiti UniFi access points, switches, and gateways. Runs as an on-prem alternative to UniFi Cloud. Two-service stack: LSIO-built UniFi controller + MongoDB 4.4.
 
+## Open findings
+
+UniFi Network Application 10.6.109 ships its own Tomcat 10.1.54, Spring Web MVC
+6.2.18 and Bouncy Castle 1.84, with 11 CRITICAL vulnerabilities between them
+that have published fixes. They are inside Ubiquiti's application, and no newer
+release exists yet. The MongoDB image carries one finding in its `gosu` start-up
+helper (CVE-2025-68121, Go TLS), which opens no TLS connection.
+
+**Risk:** Tomcat serves the controller's web interface and API, so treat its
+flaws as reachable on that port. Keep the controller off the public internet,
+reach it over VPN, and watch for the next UniFi Network Application release.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
-| `db` | `mongo:8.0` | Primary store. The image supports 3.6–7.0 from UniFi 8.1, and 8.0 from UniFi 9.0 |
+| `unifi-app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
+| `db` | `mongo:8.0.34` | Primary store. The image supports 3.6–7.0 from UniFi 8.1, and 8.0 from UniFi 9.0 |
 
 The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed directly on the host because Traefik cannot proxy UDP discovery or device-inform broadcasts.
 
@@ -46,7 +58,7 @@ mkdir -p volumes/mongodb volumes/config
 docker compose up -d
 
 # 6. First-run is slow — MongoDB init script runs, Java heap warms up (~2-3 min)
-docker compose logs app --follow
+docker compose logs unifi-app --follow
 # Watch for: "UniFi Network Application is now available"
 
 # 7. Open UI and run the setup wizard

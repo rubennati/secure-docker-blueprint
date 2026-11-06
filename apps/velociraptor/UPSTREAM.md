@@ -10,7 +10,7 @@
 - **Origin:** Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU
 - **Domain:** Security operations
 - **Role:** Endpoint forensics and threat hunting across a fleet, driven by queries
-- **Based on version:** `0.77.2`
+- **Based on version:** `0.77.3`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
   hardening and secret injection exercised against a live container; no
   endpoint agent has been enrolled
@@ -71,6 +71,18 @@ corrected in this stack (a specific version tag, and a generated secret).
 - **Not verified:** an actual endpoint agent enrolled, a VQL query
   executed, OIDC/SSO sign-in, and a restore rehearsal of the config +
   datastore pair.
+
+## Version notes
+
+- Moved to `0.77.3` on 2026-10-31 (released 2026-10-05), not run at this tag.
+  Upstream says the release addresses the CVEs of the 0.77.3 cycle without naming
+  them on the release page; the advisory is
+  https://docs.velociraptor.app/announcements/advisories/v0-77-3/, not reachable
+  from the session that moved the pin. Changes that can matter: the backup
+  artifacts `Server.Utils.BackupDirectory`, `BackupGCS` and `BackupS3` emit only
+  `ClientId`, `FlowId` and derived fields; `enrollments_per_second: -1` now
+  disables enrollment (this stack does not set it); the Prefetch
+  `VolumeSerialNumber` offset moved. No datastore migration stated.
 
 ## Upgrade checklist
 

@@ -11,12 +11,12 @@
 - **Domain:** Business operations
 - **Role:** Personal CRM for the people in your life
 - **Based on version:** `4.1.2-apache`
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-03 (4.1.2-apache) — step 8 lab host behind Traefik 3.7.17 on its edge network: the first account, signup closed after it, login, a contact, the session cookies `Secure` with `SESSION_SECURE_COOKIE`, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-04-17 (Last checked)
 
 ## What we use
 
 - Official `monica:4.1.2-apache` (Laravel + Apache + PHP). Monica 5 is published as `5.0.0-beta.*` only; the stack stays on the 4.x release line until 5 ships
-- Official `mariadb:11.4`
+- Official `mariadb:11.4.13`
 - Docker Secret for MariaDB user password + inline duplicate for Monica
 - Bind-mount `./volumes/mysql`, `./volumes/data`
 

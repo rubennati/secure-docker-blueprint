@@ -11,12 +11,12 @@
 - **Origin:** Latvia · Ascensio System SIA · EU
 - **Domain:** Documents and e-signature
 - **Role:** Document editing server for Nextcloud, Seafile and similar
-- **Based on version:** `9.4.0` (Document Server Community)
-- **Last checked:** 2026-06-14
+- **Based on version:** `10.0.0` (Document Server Community)
+- **Last verified:** 2026-11-02 (9.4.0) — step 8 lab host on its edge network: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud (`office.yml`) and Seafile CE and Pro (`onlyoffice-callback.yml`), and from a JWT-signed editor page; the command service and conversion refuse a missing or foreign token; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-06-14
 
 ## What we use
 
-- Official `onlyoffice/documentserver` image, pinned to `9.3.1.2`
+- Official `onlyoffice/documentserver` image, pinned to `10.0.0`
 - Single-container deployment — the image bundles PostgreSQL + Redis + RabbitMQ internally
 - `config/entrypoint.sh` wrapper to inject the JWT secret from Docker Secrets
 
@@ -52,7 +52,7 @@ original CSP until the container is recreated.
 
 ## Tag pinning
 
-`APP_TAG` is pinned to an exact patch release (`9.3.1.2`). Do not use floating tags such as `9.3`, `9`, or `latest` — they pick up upstream changes silently and make rollback ambiguous.
+`APP_TAG` is pinned to an exact patch release (`10.0.0`). Do not use floating tags such as `10.0`, `10`, or `latest` — they pick up upstream changes silently and make rollback ambiguous.
 
 ### Why 9.3.1.2 and not 9.4.x
 
@@ -61,6 +61,41 @@ original CSP until the container is recreated.
 - Seafile and Nextcloud iframe embedding and JWT handshake
 - First-boot behaviour (no RabbitMQ init messages expected in 9.4)
 - Data volume compatibility (the internal DB format changes between 9.3 and 9.4)
+
+## Version notes
+
+- Moved `onlyoffice/documentserver` to `10.0.0` on 2026-11-05 (released 2026-10-12;
+  `10.0.0.1` is the same release with the build number), a major release, not run on
+  a host at this tag. Security: the release fixes a long list of vulnerabilities,
+  among them SSRF in the WOPI endpoints, co-editing session hijacking over WOPI,
+  path traversal in the WOPI new-file template handler, arbitrary file write when
+  extracting archives during conversion, local file read during EPUB conversion,
+  creating `runtime.json` through Document Builder (CVE-2026-110385), an editor
+  token being usable for Document Builder, several XSS and macro-sandbox bypasses,
+  memory-safety bugs in the DOC, XLS, PPT, PDF, WMF and EMF+ converters, and
+  privilege escalation through `documentserver-flush-cache`. Behaviour changes that
+  touch this stack: (1) WOPI now needs an explicit `allow <host>` rule per WOPI host
+  in the IP filter, `allow *` is not enough; the image sets it from
+  `IP_FILTER_RULES` (semicolon-separated `allow <address>` / `deny <address>`, no
+  CIDR, replaces the existing rules when set). `WOPI_ENABLED` stays `true`, but no
+  rule is set, so WOPI clients are refused until one is added; the Nextcloud and
+  Seafile integrations this blueprint was verified with use the Document Server API
+  with the JWT secret, not WOPI, so they are not affected. (2) `/converter`,
+  `/docbuilder` and `/command` no longer accept a token taken from an editor
+  configuration; integrators must sign these requests with the shared secret, as
+  the Nextcloud connector does. (3) Only the `log4js` level can be changed through
+  `runtime.json`. (4) The deprecated `editorConfig.customization` parameters
+  `reviewDisplay`, `trackChanges` and `showReviewChanges` are ignored. (5) The image's
+  helper commands drop the `.sh` suffix (`documentserver-prepare4shutdown`,
+  `documentserver-jwt-status`); the checklist below uses the new name. (6) Service
+  stderr is merged into stdout instead of a separate `err.log`. The entrypoint
+  `/app/ds/run-document-server.sh`, port 80, `JWT_SECRET`, `JWT_ENABLED` and
+  `/healthcheck` are unchanged, so `config/entrypoint.sh` and the compose files keep
+  their configuration. Upstream's Docker repository has no release tags; the image
+  details above were read from its default branch, whose changes up to the release
+  date are in this tag. Back up both volumes before the first start. Sources:
+  https://github.com/ONLYOFFICE/DocumentServer/blob/master/CHANGELOG.md#1000,
+  https://github.com/ONLYOFFICE/Docker-DocumentServer (README, `run-document-server.sh`)
 
 ## Upgrade checklist
 
@@ -75,7 +110,7 @@ tar czf onlyoffice-logs-$(date +%Y%m%d).tgz ./volumes/logs
 2. If users are active, disconnect them first:
 
    ```bash
-   docker exec ${CONTAINER_NAME_APP} documentserver-prepare4shutdown.sh
+   docker exec ${CONTAINER_NAME_APP} documentserver-prepare4shutdown
    # Wait up to 5 minutes for sessions to close
    ```
 

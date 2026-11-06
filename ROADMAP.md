@@ -18,14 +18,15 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.6 — Current pins, a recorded baseline, the update programme
-(2026-10-31).** The lock files carry no open npm advisory, the image CVE baseline
-records every known CRITICAL pair with its assessment and is checked on every
-push to `main`, and seven image pins stand at the newest patch release of their
-line. The programme that brings every stack to its current upstream release is
+**Latest tag: v0.9.7 — The ingress programme, verified on a host
+(2026-11-05).** How traffic reaches a stack — bindings per address family, an
+edge network per stack, access policies, the auth posture, the rendered host
+ruleset — was rebuilt in eight steps and measured on a dual-stack host; the
+faults that run found are fixed, and fourteen stacks are `ops-proven`. The
+programme that brings every stack to its current upstream release is
 [`docs/audits/upstream-version-inventory-2026-10-31.md`](docs/audits/upstream-version-inventory-2026-10-31.md);
-batch 1 of seven is done, none of it run on a host. What has and has not been
-established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
+batches 1 and 2 of seven are done, none of them run on a host. What has and has
+not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
 
 ### v0.10.0 — Measured resource limits
 
@@ -65,6 +66,21 @@ Open in this repository:
   TLS exceptions without a recorded reason. The list is section 5 of
   [`core/traefik/docs/middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md#5-not-verified-on-a-host);
   it is measured in host sessions, not in editing.
+- **Trusted proxies narrowed to the Traefik hop.** An application behind its own
+  nginx has to trust the proxy that sets `X-Forwarded-For` and `X-Forwarded-Proto`,
+  and only that proxy. `business/invoiceninja` ships `TRUSTED_PROXIES` with the
+  ranges measured on the step 8 lab host — Docker's default pools — as an interim
+  value, not a standard: it trusts every container Docker can address.
+  `apps/nextcloud`'s `NC_TRUSTED_PROXIES` asks for the edge network's subnet, which
+  Docker assigns per host and anew when the network is recreated. The target
+  (decision of 2026-11-04): `core/traefik` creates each edge network on a subnet
+  the operator chooses, so the value is known and stays. A subnet is the same
+  boundary as Traefik's own address only while the edge network holds Traefik and
+  the stack's front container alone; an overlay that adds a member
+  (`apps/nextcloud/office.yml` puts Nextcloud's nginx on the office server's edge
+  network) or the shared `proxy-public` widens it, so the work decides whether the
+  trust names the subnet or a fixed Traefik address in it. Not implemented; it is
+  measured on a host before it replaces the interim value.
 
 Decision pending, with a possible impact on v1.0 — the site's personal data:
 see [A public repository should not carry personal data](#a-public-repository-should-not-carry-personal-data).

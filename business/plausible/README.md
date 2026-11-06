@@ -12,6 +12,12 @@ No feature is held back from the Community Edition. What the hosted service
 adds is infrastructure, support, the Looker Studio connector, and continuous
 releases instead of two a year.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text
@@ -74,7 +80,7 @@ that is a second router, not a different value here:
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/js/`) || Path(`/api/event`))"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.entrypoints=websecure"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.tls=true"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.middlewares=access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-tracker.middlewares=${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 Traefik matches the longest rule first, so the tracker router wins for those two
@@ -143,8 +149,8 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
   the one `ops/create-admin.sh` made.
 - **ClickHouse is one version upstream does not test.** Upstream's compose
   pins 24.12, which is out of support; upstream's CI runs 25.11. This pins a
-  current release and verifies the migrations and ingestion against it, which
-  is not the same as upstream supporting it.
+  current release (26.10); the migrations and ingestion were verified on 26.8,
+  not yet on 26.10, and neither is the same as upstream supporting it.
 - **The two-router split is written, not run.** See above.
 - **Nothing here has run behind this repository's Traefik yet.** The stack is
   `scaffolded`.

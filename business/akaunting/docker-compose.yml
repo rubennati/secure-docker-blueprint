@@ -99,7 +99,9 @@ services:
     read_only: true
 
     # --- Resources ---
-    # Apache with mod_php and a handful of workers; derived starting values.
+    # Apache with mod_php and a handful of workers; derived starting values. The
+    # unpacked application in the webroot tmpfs (about 300 MiB) counts against
+    # the limit.
     memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
@@ -112,7 +114,8 @@ services:
 
     # --- Configuration ---
     # entrypoint.sh replaces the image's own, which enables an Apache module and
-    # chowns the whole webroot on every start — both writes into the image.
+    # chowns the whole webroot on every start — both writes into the image — and
+    # unpacks the application only into a webroot without it.
     entrypoint: ["/bin/sh", "/entrypoint.sh"]
     command: ["docker-php-entrypoint", "apache2-foreground"]
     environment:
@@ -126,6 +129,10 @@ services:
       DB_USERNAME: ${DB_USER}
       DB_PREFIX: ${DB_PREFIX}
       TZ: ${TZ}
+      # Temporary files go to the /var/tmp tmpfs: /tmp holds the application
+      # archive of the image and stays read-only. PHP's own settings for the
+      # same are in config/php-overrides.ini.
+      TMPDIR: /var/tmp
     secrets:
       - DB_PWD
       - ADMIN_PWD
@@ -138,8 +145,16 @@ services:
     # application key and the installed flag. Both belong to uid 33 on the host.
     # Everything else is the image.
     volumes:
+      # The webroot: the image ships the application as an archive, and
+      # entrypoint.sh unpacks it here, as root, on every start. 493 is octal
+      # 755: www-data reads the code but cannot change it.
+      - type: tmpfs
+        target: /var/www/html
+        tmpfs:
+          mode: 493
       - ./config/entrypoint.sh:/entrypoint.sh:ro
       - ./config/rewrite.load:/etc/apache2/mods-enabled/rewrite.load:ro
+      - ./config/php-overrides.ini:/usr/local/etc/php/conf.d/zz-overrides.ini:ro
       - ./volumes/storage:/var/www/html/storage
       - ./volumes/app.env:/var/www/html/.env
       # Compiled service and package caches Laravel rebuilds as needed. The image
@@ -151,7 +166,7 @@ services:
         tmpfs:
           mode: 1023
     tmpfs:
-      - /tmp
+      - /var/tmp
       - /var/run/apache2
 
     # --- Networking ---
@@ -166,7 +181,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
@@ -185,6 +200,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

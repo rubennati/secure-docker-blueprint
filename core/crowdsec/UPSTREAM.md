@@ -11,8 +11,8 @@
 - **Origin:** France · CrowdSec SAS · EU
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced
-- **Based on version:** v1.7.8
-- **Last verified:** 2026-07-29 (v1.7.8) — engine, bouncer, an enforced ban and the AppSec layer all verified on a live host
+- **Based on version:** v1.8.2
+- **Last verified:** 2026-11-01 (v1.7.8) — step 8 lab host: engine on `crowdsec-security` only, the Traefik access log acquired, the Traefik bouncer plugin v1.7.1 pulling, a `cscli` ban enforced and lifted per address family, the AppSec virtual-patching rule answering 403, fail-open with the engine stopped; no firewall bouncer (docs/labs/ingress/2026-11-01-results.md)
 
 ## Architecture
 
@@ -86,19 +86,37 @@ Full architecture and the current verification status:
 
 ## Version / tag notes
 
-- **Held at `v1.7.8` on 2026-09-13, with 1.8.1 available.** The two advisories fixed in 1.8.0 are
-  unbounded body reads in the HTTP acquisition datasource and in the kubernetes-audit
-  acquisition webhook. Neither is configured here: `acquis.yaml` reads Traefik logs from a
-  file and `appsec.yaml` is the only other source, so this deployment is not in range.
-  1.8.0 is a feature release — WAF bot detection with a challenge and fingerprinting page,
-  a Kubernetes datasource, HTTP helpers in the expression language — and changing what the
-  WAF serves to clients is a decision rather than a patch.
-- **One external report of 1.8.1 running.** A separate lab deployment brought up 1.8.1
-  against a configuration of this shape and reported it working. That is evidence worth
-  having and it is not a verification: it was a different deployment, and what needs
-  checking here is what the bot-detection challenge does to the routes this blueprint
-  puts in front of the engine. Revisit when bot detection is wanted, when that check has
-  been run, or when an advisory lands that applies to the configured datasources.
+- **Moved to `v1.8.2` on 2026-11-05** (released 2026-10-26), across 1.8.0 and 1.8.1,
+  not run on a host at this tag; the ingress lab checks behind **Last verified**
+  were run at v1.7.8 and have not been repeated. The move was made because the
+  v1.7.8 image carries CRITICAL findings in the image scan that are fixed in
+  the v1.8.2 image, rebuilt on Go 1.27 and Alpine 3.24. It ends the hold recorded on
+  2026-09-13, which waited for the bot-detection behaviour to be checked.
+- **Bot detection stays off.** 1.8.0 adds WAF bot detection — a challenge and
+  fingerprinting page served to clients — and 1.8.2 adds custom JS
+  fingerprinting and WAF rate limiting; all of it is opt-in. In the hub it
+  ships as the `crowdsecurity/appsec-bot-challenge*` collections and
+  appsec-configs. This stack enables none of it: `config/appsec.yaml` loads
+  only `crowdsecurity/appsec-default` (in-band `base-config`, `vpatch-*` and
+  `generic-*` rules, out-of-band `experimental-*` and `appsec-generic-test`,
+  no challenge), `config/acquis.yaml` reads only the Traefik access log, and
+  `CROWDSEC_COLLECTIONS` names `traefik` (with `base-http-scenarios`),
+  `http-cve`, `appsec-generic-rules` and `appsec-virtual-patching`, none of
+  which pulls in a bot-challenge item. Checked against the hub on 2026-11-05.
+  Adding an `appsec-bot-challenge` collection, or naming one of its configs in
+  `appsec_configs`, is what would turn it on.
+- **Other changes.** 1.8.0 adds a Kubernetes datasource and HTTP helpers in the
+  expression language, and LAPI no longer accepts a JWT from the query string.
+  The image's start script now ignores `ENABLE_CONSOLE_MANAGEMENT` with a
+  deprecation warning (console decision management follows the console plan);
+  this stack does not set it. The name of a bouncer registered from a
+  `BOUNCER_KEY_*` Docker secret is now taken from the third `_` field; this
+  stack registers no bouncer that way.
+- **Advisories fixed:** GHSA-g2x2-jgfg-pg7g (HTTP acquisition datasource, no
+  decompressed body cap) and GHSA-rh69-4vqj-9gj8 (unbounded body read in the
+  kubernetes-audit webhook), both 1.8.0 and both medium; neither datasource is
+  configured here. GHSA-g9hc-g4w6-4mfx (notification-splunk plugin skips TLS
+  verification, low) names no fixed version.
 
 ## Upgrade checklist
 

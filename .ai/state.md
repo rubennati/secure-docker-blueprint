@@ -2,10 +2,10 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-10-31
+**Last updated:** 2026-11-05
 
-- **Phase:** pre-1.0. Latest tag `v0.9.6` (2026-10-31), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.6..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.7` (2026-11-05), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.7..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
@@ -64,6 +64,17 @@
   later host session, and so does a host with a global IPv6 address
   (`core/traefik/README.md`, *Not verified on a host*, item 8); the release
   says so.
+- **Decided (2026-10-31): the ingress target architecture**, after an audit of the
+  whole ingress path and a lab run with three stacks
+  ([`../docs/audits/ingress-architecture-2026-10-31.md`](../docs/audits/ingress-architecture-2026-10-31.md)):
+  an edge network per installed stack as the default for new installations, the
+  shared network as a documented choice, `access-trusted` with declared ranges
+  in place of `access-lan`, a stated auth posture per stack, exposure derived and
+  shown — DEC-075 to DEC-078 and an addendum to DEC-063 in
+  [`decisions.md`](decisions.md). An eight-step programme follows
+  ([`tasks.md`](tasks.md) §12). Before v1.0 a breaking change with a migration is
+  preferred to a compatibility gate (DEC-076, amended 2026-10-31).
+
 - **Released: v0.9.6** — a patch release without a host run: the two npm
   advisories closed, the image CVE baseline recording the scans of 2026-10-31
   with an assessment per pair, the scan on every push to `main`, seven pins at
@@ -74,6 +85,12 @@
   [`tasks.md`](tasks.md) §11). `monitoring/changedetection` and
   `business/invoiceninja` fell to `scaffolded` (`pin-drifted`) and need a host run
   at the new tag.
+- **Released: v0.9.7** — the ingress programme, steps 1–8, verified on a
+  dual-stack lab host (2026-11-01 to 2026-11-04) with the hardening round after
+  its security audit; fourteen stacks `ops-proven`. Not verified on a host: the
+  LAN columns of block A, IPv6-only (block O), CrowdSec's host-firewall blocking.
+  Open: FA-03 (the PostgreSQL client for backups), trusted proxies narrowed to
+  the Traefik hop (`ROADMAP.md`).
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.

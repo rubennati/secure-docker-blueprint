@@ -171,6 +171,8 @@ services:
       SHELLHUB_LOG_LEVEL: ${SHELLHUB_LOG_LEVEL}
       SHELLHUB_LOG_FORMAT: ${SHELLHUB_LOG_FORMAT}
       SHELLHUB_SSH_PORT: 2222
+      # Upstream defaults to a daily usage report to telemetry.shellhub.io.
+      SHELLHUB_TELEMETRY: "false"
       SHELLHUB_DOMAIN: ${APP_TRAEFIK_HOST}
       TZ: ${TZ}
     secrets:
@@ -187,7 +189,7 @@ services:
     ports:
       # Where agents dial in, and where `ssh <device>@<host>` connects out.
       # A raw TCP listener: Traefik's HTTP router cannot carry SSH.
-      - "${SHELLHUB_SSH_PORT}:2222"
+      - "${SHELLHUB_BIND:?Set SHELLHUB_BIND in .env}:${SHELLHUB_SSH_PORT}:2222"
 
     # --- Health & Observability ---
     # Verified against upstream's own compose file.
@@ -301,7 +303,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
     healthcheck:
@@ -316,6 +318,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

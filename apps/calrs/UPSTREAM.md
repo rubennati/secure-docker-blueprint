@@ -10,7 +10,7 @@
 - **Origin:** France · Olivier Lambert · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages and availability read from a CalDAV calendar you already run
-- **Based on version:** `1.17.1`
+- **Based on version:** `1.22.0`
 - **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the bootstrap, the login, a guest booking, a restart, and the README's restore
 
 ## Project maturity
@@ -24,7 +24,7 @@ distinction `core/orion-belt` records.
 
 ## What we use
 
-- `ghcr.io/olivierlambert/calrs:1.17.1` — upstream's own registry. Its README pins
+- `ghcr.io/olivierlambert/calrs:1.22.0` — upstream's own registry. Its README pins
   `:latest`; not used here.
 - One container. SQLite in the data directory; upstream ships no database service
   and the application needs none.
@@ -92,6 +92,17 @@ throwaway `proxy-public` network without Traefik, and against
 **Not yet exercised:** Traefik routing and TLS; a real CalDAV source and therefore
 availability, booking and rescheduling; SMTP and the `.ics` invitations; OIDC
 login; the public booking page as a guest sees it; backup and restore.
+
+## Version notes
+
+- Moved to `1.22.0` on 2026-11-05, not run on a host at this tag; `Last verified`
+  stays at `1.17.1`. Back up `volumes/data` first: migrations 064 to 076 add
+  columns, tables and an index, and rolling back means restoring that backup with
+  the old image. Migration 074 renames duplicate team slugs; since `1.19.0`
+  `/u/{username}` pages follow the visitor's language. No configuration change;
+  `CALRS_SYNC_MIN_AGE` is new and optional. `1.20.6` fixes a reflected XSS in the
+  Google Calendar OAuth callback (#299); no GHSA is published.
+  https://github.com/olivierlambert/calrs/releases
 
 ## Upgrade checklist
 

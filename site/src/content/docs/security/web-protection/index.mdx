@@ -44,7 +44,10 @@ around is not a filter.**
 
 Rule sets recognise the shapes of known attacks: injection patterns, traversal
 attempts, requests for known-vulnerable paths, and virtual patches for specific
-published vulnerabilities.
+published vulnerabilities. Which of these a given WAF catches depends on the rule
+sets it loads — the CrowdSec AppSec this blueprint ships, opt-in, carries virtual
+patches and a small generic set but not the Core Rule Set, and injection probes
+passed it on a host ([CrowdSec](/infrastructure/crowdsec/)).
 
 That is genuinely worth having, because the overwhelming majority of unsolicited
 traffic to a small public server is exactly this: mass scanning that finds any
@@ -76,12 +79,17 @@ the one that enforces it does nothing at all.
 
 2  Application-layer blocking
    A component inside the proxy polls that list and answers matching requests
-   with a 403. Covers HTTP, sees the URL, can say why it refused.
+   with a 403. Covers HTTP, sees the URL, can say why it refused. Optionally the
+   same plugin also sends each request to CrowdSec's AppSec component, whose
+   rule engine is Coraza — shipped with virtual-patching rules, not the Core
+   Rule Set. Shipped fail-open: if the engine is down, requests pass (measured
+   on a test host).
 
 3  Host-level blocking
    An agent on the host applies the same list as firewall rules. Covers every
-   port, not just HTTP — SSH brute force, port scans, anything that never
-   reaches the proxy. The packet is dropped before a connection exists.
+   port, not just HTTP — anything that never reaches the proxy. The packet is
+   dropped before a connection exists. In this blueprint: designed, optional,
+   and its blocking rules not yet run on a host.
 ```
 
 **A decision with no enforcer attached does nothing.** This is the most common

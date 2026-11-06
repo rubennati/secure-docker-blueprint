@@ -5,8 +5,8 @@ services:
   # Everything Leantime holds lives here — projects, tickets, users, settings.
   # The volumes on the application hold uploads and caches only.
   #
-  # MySQL rather than MariaDB: upstream's own compose example ships `mysql:8.4`
-  # and the migrations are written against it.
+  # MySQL rather than MariaDB: upstream's own compose example ships MySQL
+  # (`mysql:8.4`); Leantime requires MySQL 8.0 or newer.
   # --------------------------------------------------------
   leantime-db:
     # --- Identity ---
@@ -196,7 +196,7 @@ services:
       # certificate already covers this host.
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares — who may reach it, then what headers apply.
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 
@@ -216,6 +216,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

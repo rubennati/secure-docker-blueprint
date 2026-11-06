@@ -13,8 +13,8 @@
 - **Origin:** Germany · n8n GmbH · EU
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation
-- **Based on version:** `2.41.7`
-- **Last verified:** 2026-05-02 (v2.19.2)
+- **Based on version:** `2.46.6`
+- **Last verified:** 2026-11-03 (2.41.7) — step 8 lab host behind Traefik 3.7.17 on its edge network: the owner, login, a webhook workflow with a Code node in the task runner, a stored credential, and the README's quiesced backup restored into a throwaway instance that decrypts it (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-02 (v2.19.2)
 
 ## What we use
 
@@ -44,6 +44,41 @@
 | **`traefik` external network → `proxy-public`** | Blueprint standard network name |
 | **Unused `traefik_data` volume removed** | Stray leftover from a full Traefik+n8n bundle |
 | **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | n8n hosts API tokens for many third-party services — VPN-only is safer than public |
+
+## Version notes
+
+- Moved to `2.46.6` on 2026-11-05 (released 2026-11-04, upstream's `stable`
+  channel), across 2.42 to 2.46, not run on a host at this tag. Pinned by the
+  digest of the multi-arch index (linux/amd64, linux/arm64),
+  `sha256:8602f5dfacbe2c931eeafd010de0e68182310e9f309921e780ab69182e92b3ae`.
+  The 3.x tags on Docker Hub (`3.0.0`, `3.0.1`, `3.1.0`) are GitHub
+  pre-releases built with `N8N_RELEASE_TYPE=rc`, not stable releases, so the
+  pin stays on the 2.x line; before a later move to 3.x, read
+  https://docs.n8n.io/changelog/v30-breaking-changes and the v3 migration
+  report that 2.45 and later show in the UI.
+  The image's npm dependencies move to `@simple-git/argv-parser` 2.0.1,
+  `simple-git` 4.0.2, `handlebars` 4.7.10, `proxy-addr` 2.0.8 and
+  `shell-quote` 1.11.0, and `openssh` to `10.3_p1-r1`; 3.1.0 carries the same
+  versions. `brotli-libs` is still `1.2.0-r1` in this tag, in 2.47.2 (`beta`)
+  and in 3.1.0, so CVE-2026-111497 remains until upstream rebuilds its base.
+  Node.js 26.7.0 becomes 26.12.1 (`n8nio/base:26.12.1`). No breaking change in
+  `packages/cli/BREAKING-CHANGES.md` touches this stack (the only entry is for
+  the n8n Packages preview); `N8N_SCHEDULER_MIN_INTERVAL` is removed (2.45.0,
+  not set here); the entrypoint, port 5678 and `/healthz` are unchanged, so
+  the compose files keep their configuration. Behaviour changes: creating or
+  updating a workflow that contains a deprecated node is refused (2.42.6, the
+  fix for GHSA-9p7v-45m2-wxgj), so such workflows must be migrated to the
+  current node first; the image removes GraphicsMagick's MSL, MVG, PCD, SVG
+  and URL coders and sets `MAGICK_CODER_STABILITY=PRIMARY`, so the Edit Image
+  node no longer reads those formats (GHSA-f2cw-9483-7vcp); JavaScript task
+  runners no longer have Node Web Storage. Database migrations run on first
+  start, so back up `volumes/data/` before. Fixes the advisories affecting
+  2.41.7, among them the high-severity GHSA-wvjj-qg37-pv73,
+  GHSA-mp7q-23hg-35cf, GHSA-m7gv-mpg5-7c9v (2.43.5), GHSA-gx3v-3x3v-f8r5,
+  GHSA-f2cw-9483-7vcp (2.45.5) and GHSA-9p7v-45m2-wxgj (2.42.6), plus 16
+  medium-severity ones published 2026-10-14 and 2026-10-28 —
+  https://github.com/n8n-io/n8n/security/advisories,
+  https://github.com/n8n-io/n8n/releases.
 
 ## Upgrade checklist
 

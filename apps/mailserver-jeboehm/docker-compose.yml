@@ -250,6 +250,11 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       TRUSTED_PROXIES: ${APP_TRAEFIK_TRUSTED_PROXIES}
+      # MCP endpoint (/mcp) for AI agents, on in the image since 8.1.0: with a
+      # user's API token an agent can manage domains and accounts and read and
+      # send that user's mail. Off here; turning it on also needs
+      # MCP_ALLOWED_HOSTS set to the host name (see UPSTREAM.md).
+      MCP_ENABLED: "false"
       WAITSTART_TIMEOUT: 2m
       TZ: ${TZ}
     secrets:
@@ -282,7 +287,7 @@ services:
       # certificate already covers this host.
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 
@@ -455,6 +460,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

@@ -51,12 +51,10 @@ expand-hosts
 # =========================================================
 # WILDCARD ZONES
 # =========================================================
-# Route all *.domain to a single IP address.
-# Add/remove zones as needed after rendering.
-
-address=/${DNS_WILDCARD_1_DOMAIN}/${DNS_WILDCARD_1_IP}
-address=/${DNS_WILDCARD_2_DOMAIN}/${DNS_WILDCARD_2_IP}
-# address=/${DNS_WILDCARD_3_DOMAIN}/${DNS_WILDCARD_3_IP}
+# Every name below a domain answers with the host's addresses, one line per
+# family — rendered from DNS_WILDCARD_<n>_{DOMAIN,IP,IP6}; empty slots render
+# nothing.
+${DNS_WILDCARD_LINES}
 
 # =========================================================
 # LOGGING

@@ -32,8 +32,9 @@ name: Trivy
 #     this job produces. That is not a claim it is safe to ignore — only that no
 #     fix exists yet for a pin change to apply.
 #   - Trivy's own exit code stays 0 on every image. The gate is a separate step:
-#     trivy-gate.py fails the job on a CRITICAL absent from .trivy-baseline.json,
-#     so findings recorded as known pass and new ones do not.
+#     trivy-gate.py fails the job on a CRITICAL that is not listed under an
+#     image exception in .trivy-baseline.json, each with its stacks, reason and
+#     risk. A finding with a fixed upstream release is fixed by the pin instead.
 
 on:
   pull_request:
@@ -44,7 +45,10 @@ on:
     - cron: '0 4 * * 1'  # Weekly Monday 04:00 UTC
   workflow_dispatch:
 
-permissions: read-all
+# Least privilege: the token reads the repository and nothing else; a job
+# that needs more names it in its own block.
+permissions:
+  contents: read
 
 # A superseded run on the same open PR is cancelled. A push, scheduled or
 # manual run never shares this group with a PR (different ref), so
@@ -72,6 +76,8 @@ jobs:
       security-events: write  # Required for SARIF upload to GitHub Security tab
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Scan repository for IaC misconfigurations
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
@@ -103,10 +109,15 @@ jobs:
   image-scan:
     name: Image CVE scan
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read   # gh api …/pulls/<n>/files lists the changed files
     env:
       TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Decide whether this run can change what the scan sees
         # Every trigger but a pull request scans in full. A pull request scans

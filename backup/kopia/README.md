@@ -10,6 +10,12 @@ This is the one shape of a containerised backup service
 agent that reads a machine's files stays on that machine, and nothing of this
 host is mounted here. It is the same split as [`backup/urbackup`](../urbackup/).
 
+## Open findings
+
+The pinned image, `kopia/kopia:0.23.1`, ships with 2 CRITICAL vulnerabilities that have published fixes, both in the bundled rclone binary. 0.23.1 is the newest stable release.
+
+**Risk:** Kopia runs rclone only for an rclone storage backend; this stack uses a filesystem repository. Watch for the next release.
+
 ## Architecture
 
 ```text

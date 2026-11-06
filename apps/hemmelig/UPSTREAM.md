@@ -14,27 +14,23 @@
 - **Origin:** Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)
 - **Domain:** Identity, access and secrets
 - **Role:** Ephemeral secret sharing with a built-in request flow
-- **Based on version:** `v7.4.8`
+- **Based on version:** `v7.6.1`
 - **Verification snapshot:** 2026-09-19 — clean start and one full migration
   cycle, not a full operational verification (see below)
 
 ## What we use
 
-- `hemmeligapp/hemmelig:v7.4.8` — single container, SQLite via Prisma, no
+- `hemmeligapp/hemmelig:v7.6.1` — single container, SQLite via Prisma, no
   separate database service
 
-## Pin note: the moving tags have not advanced since this release
+## Pin note
 
-Verified against Docker Hub's own tag metadata, 2026-09-19: the floating
-`v7` and `v7.4` tags resolve to the exact same image digest as the pinned
-`v7.4.8` (published 2026-03-23), even though the GitHub repository's `v7`
-branch has continued to receive commits through at least 2026-08-27 (feature
-work, dependency bumps, i18n). No newer tagged release or rebuilt image has
-been published in the roughly six months since `v7.4.8`. This stack is
-already pinned to the newest artifact that actually exists on Docker Hub —
-there is nothing newer to pin to, and self-building from source is the only
-way to get anything past this point. Re-check before the next upgrade
-rather than assuming a new tag has appeared.
+Until 2026-09-24 the newest image on Docker Hub was `v7.4.8` (2026-03-23): the
+floating `v7` and `v7.4` tags did not advance for six months while the
+repository's `v7` branch kept receiving commits. `v7.5.0`, `v7.6.0` and
+`v7.6.1` were published on 2026-09-24 and 2026-09-25, and the floating `v7` tag
+moved with them. Check Docker Hub, not only the GitHub tags, before the next
+bump — the two have drifted apart before.
 
 ## What we changed vs. upstream compose
 
@@ -70,12 +66,35 @@ rather than assuming a new tag has appeared.
   UI, TLS/Traefik behind a real domain, upload handling, webhook delivery, or
   behavior across a restart.
 
+## Version notes
+
+- Moved to `v7.6.1` on 2026-11-05, not run on a host at this tag; the
+  verification above was against `v7.4.8`. v7.5.0 brings the v2 interface and
+  requires `HEMMELIG_TRUSTED_PROXIES` behind a reverse proxy — this stack now
+  sets it, see `.env.example`. It also makes `BETTER_AUTH_SECRET` mandatory
+  (already injected here), removes the default analytics HMAC secret (already
+  generated here), requires the `x-hemmelig-delete-token` header to delete a
+  secret and `x-hemmelig-file-token` to download a file through the API, and
+  stops accepting plaintext passwords for password-protected secrets from CLI
+  and API clients (Go CLI `cli-v1.1.0`, npm CLI `hemmelig@7.1.0`). v7.6.0 runs
+  a new database migration at start, accepts API keys on every route, and
+  makes `HEMMELIG_INSTANCE_*`, `HEMMELIG_ALLOW_REGISTRATION`,
+  `HEMMELIG_ALLOW_PASSWORD_PROTECTION` and `HEMMELIG_ALLOW_IP_RESTRICTION`
+  override the dashboard outside managed mode; this stack sets none of them.
+  Upstream now supports a read-only root filesystem (`/tmp`, `/app/database`
+  and `/app/uploads` writable) with the schema engine baked into the image;
+  `read_only` stays off here until that is run. The image entrypoint
+  (`chown`, `gosu`, `prisma migrate deploy`) is unchanged, so
+  `config/entrypoint.sh` still applies. No GHSA is published; v7.5.0 lists
+  security fixes for reveal-token deletes, file download authorization,
+  forwarded-IP trust, webhook DNS pinning, bounded request bodies, expired
+  secrets and the registration policy.
+
 ## Upgrade checklist
 
 1. Check the [Hemmelig tags on GitHub](https://github.com/HemmeligOrg/Hemmelig.app/tags)
    and [Docker Hub](https://hub.docker.com/r/hemmeligapp/hemmelig/tags) —
-   confirm whether a newer tag/image actually exists (see the pin note above;
-   as of this writing, none has for six months)
+   confirm whether a newer tag/image actually exists (see the pin note above)
 2. Read the commit history since the current pin for anything migration- or
    auth-related
 3. Back up `./volumes/database` and `./volumes/uploads` before upgrading
@@ -87,9 +106,8 @@ rather than assuming a new tag has appeared.
 ## Known limitations
 
 - **Not an OSI-approved license** — see README.md's License section.
-- **No new image published in ~6 months** despite continued source commits —
-  see the pin note above. Security fixes landing in source may not be
-  reachable via the published image without building it yourself.
+- **Images have lagged the source before** — see the pin note above. Security
+  fixes landing in source may not reach the published image right away.
 - **`read_only: true` is not used** — see the compose file's Security block.
 - **The secret-request flow requires a manual, out-of-band step** — the
   decryption key does not reach the requester automatically. See README.md.

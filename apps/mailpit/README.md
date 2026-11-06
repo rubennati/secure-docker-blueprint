@@ -39,15 +39,22 @@ cp .env.example .env
 # 2. Create the message store, owned by USERMAP_UID (your own account, by default)
 mkdir -p volumes/data
 
-# 3. Start
+# 3. The UI and API login — a bcrypt htpasswd, one user per line (MP_UI_AUTH_FILE)
+mkdir -p .secrets && chmod 700 .secrets
+docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$(openssl rand -base64 24)" > .secrets/mailpit_htpasswd.txt
+chmod 600 .secrets/mailpit_htpasswd.txt     # keep the password from that line in your password manager
+
+# 4. Start
 docker compose up -d
 
-# 4. Open in browser
+# 5. Open in browser
 # https://<APP_TRAEFIK_HOST>
 # Reachable through Tailscale/VPN only by default (access-vpn).
 ```
 
-No secrets, no accounts, no setup page.
+One secret, the htpasswd; no accounts inside Mailpit, no setup page. Without the file the start stops
+with `bind source path does not exist`. The API answers only under the host name in `MP_ALLOWED_HOSTS`
+— a script that reads it over a Docker network sends that name as `Host`.
 
 ## Verify
 
@@ -82,12 +89,16 @@ Restart the stack, trigger a password reset, and read it in the UI.
 ## Security model
 
 - **Everything in the inbox is readable by whoever reaches the UI.** Password
-  resets, verification links, invitations. The UI has no login of its own, so
-  the router ships `access-vpn`; opening it further needs `MP_UI_AUTH_FILE`
-  (an htpasswd file, which then also protects the API).
-- **Every container on `proxy-public` reaches port 1025.** A sink has to be
-  reachable by every stack that sends, which is also why it is for trying
-  things out: a stack whose users are real people sends real reset links, and
+  resets, verification links, invitations. The router ships `access-vpn`, and
+  Mailpit's own `MP_UI_AUTH_FILE` — the htpasswd in `.secrets/mailpit_htpasswd.txt`,
+  bcrypt, one user per line — asks for a user on the UI and the API, which also
+  holds against a container that reaches port 8025 directly (DEC-077).
+- **Every container on `proxy-public` reaches port 1025 — and only those.** A
+  stack that sends here sets `TRAEFIK_NETWORK=proxy-public` in its `.env`, the
+  shared choice ([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md));
+  on its own edge network, the examples' default, `mailpit` does not resolve. A
+  sink has to be reachable by every stack that sends, which is also why it is
+  for trying things out: a stack whose users are real people sends real reset links, and
   those belong in a mailbox, not in a store the whole host can read.
 - **The HTTP side is gated by hostname.** `MP_ALLOWED_HOSTS` is set to
   `APP_TRAEFIK_HOST`, so the API and the UI answer requests that arrive through

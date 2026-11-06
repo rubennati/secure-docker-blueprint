@@ -54,6 +54,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/shlink.
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
@@ -153,7 +157,8 @@ services:
       POSTGRES_USER: ${DB_USER}
       DATABASE_POOL_SIZE: ${DATABASE_POOL_SIZE}
       # The first account to register becomes admin. Close registration
-      # afterwards — here, or from /admin, which overrides this value.
+      # afterwards here: since 1.26.0 a set variable outranks the value saved
+      # at /admin, so the admin page cannot reopen or close it.
       REGISTRATION_ENABLED: ${REGISTRATION_ENABLED}
       # Mail. `test` discards every message silently; `smtp` needs a host, a
       # username and a non-empty password or the app refuses to boot. Port 587
@@ -164,7 +169,10 @@ services:
       SMTP_HOST: ${SMTP_HOST}
       SMTP_PORT: ${SMTP_PORT}
       SMTP_USERNAME: ${SMTP_USERNAME}
-      # Social login stays off. Calendar and video OAuth are separate: each
+      # Social login stays off. Since 1.26.0 these variables outrank the admin
+      # page, so single sign-on is switched on here, not at /admin: set the
+      # provider to "true" and add its credentials. Calendar and video OAuth are
+      # separate: each
       # user connects them from the dashboard once the provider credentials
       # (GOOGLE_*, OUTLOOK_*, ZOOM_*) are added to this block.
       ENABLE_GOOGLE_AUTH: "false"
@@ -200,7 +208,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=4000"
 
@@ -221,6 +229,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

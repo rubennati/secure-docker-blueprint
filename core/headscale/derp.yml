@@ -29,4 +29,4 @@ services:
 
     ports:
       # STUN, for NAT traversal. Not HTTP, not routable through Traefik.
-      - "${APP_DERP_STUN_PORT}:3478/udp"
+      - "${APP_DERP_STUN_BIND:?Set APP_DERP_STUN_BIND in .env}:${APP_DERP_STUN_PORT}:3478/udp"

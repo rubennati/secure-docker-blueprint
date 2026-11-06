@@ -3,7 +3,8 @@
 check-structure.py that describe the four positions.
 
 - router-positions (FAIL): a router missing a position, carrying one twice,
-  out of order, with an empty variable, or still naming what the model
+  out of order (headers, access, limit, auth — headers first since
+  2026-11-04, FA-13), with an empty variable, or still naming what the model
   replaced
 - retired-name (FAIL): a stack's .env.example with *_TRAEFIK_SECURITY or
   *_TRAEFIK_THREAT, with an acc-* / sec-* / tls-basic|aplus|modern value, or
@@ -52,7 +53,7 @@ APP_TRAEFIK_SECURITY=sec-2
 APP_TRAEFIK_THREAT=
 """
 
-MODEL_LABEL = "${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+MODEL_LABEL = "${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 
 
 def compose(routers):
@@ -126,7 +127,7 @@ class RouterPositions(Scratch):
     def test_a_router_without_any_middlewares_misses_all_four(self):
         f = self.rule(self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", None, None)]), "router-positions")
         self.assertEqual(len(f), 1)
-        self.assertIn("missing access, limit, headers, auth", f[0]["detail"])
+        self.assertIn("missing headers, access, limit, auth", f[0]["detail"])
 
     def test_positions_out_of_order_and_twice_are_named(self):
         label = "${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_HEADERS}@file,headers-none@file,${APP_TRAEFIK_AUTH}"
@@ -155,7 +156,7 @@ class RouterPositions(Scratch):
 
     def test_a_secondary_router_with_its_own_access_variable_is_judged_on_it(self):
         env = MODEL_ENV + "API_TRAEFIK_ACCESS=\n"
-        label = "${API_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+        label = "${APP_TRAEFIK_HEADERS}@file,${API_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
         f = self.rule(self.findings(MODEL_ENV + "API_TRAEFIK_ACCESS=access-vpn\n",
                                     [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, None),
                                      ("demo-api", "Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/api`)", label, None)]),
@@ -168,19 +169,19 @@ class RouterPositions(Scratch):
 
 class BlockOrder(Scratch):
     def test_a_response_block_after_the_profile_is_reported(self):
-        label = "${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,hsts-include-subdomains@file,${APP_TRAEFIK_AUTH}"
+        label = "${APP_TRAEFIK_HEADERS}@file,hsts-include-subdomains@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
         f = self.rule(self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", label, None)]), "block-order")
         self.assertEqual(len(f), 1, f)
         self.assertEqual(f[0]["level"], "WARN")
         self.assertIn("hsts-include-subdomains stands after the headers profile", f[0]["detail"])
 
     def test_a_response_block_before_the_profile_passes(self):
-        label = "${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+        label = "frame-self@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
         f = self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", label, None)])
         self.assertEqual(f, [], f)
 
     def test_a_request_block_before_the_auth_position_is_reported(self):
-        label = "${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,forwarded-proto-https@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+        label = "${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,forwarded-proto-https@file,${APP_TRAEFIK_AUTH}"
         f = self.rule(self.findings(MODEL_ENV, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", label, None)]), "block-order")
         self.assertEqual(len(f), 1, f)
         self.assertIn("forwarded-proto-https stands before the auth position", f[0]["detail"])
@@ -196,7 +197,7 @@ class BurstExposure(Scratch):
         self.assertIn("found 'access-public'", f[0]["detail"])
 
     def test_the_wide_bucket_behind_each_closed_policy_passes(self):
-        for access in ("access-lan", "access-vpn", "access-lan-vpn", "access-blocked"):
+        for access in ("access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked"):
             env = MODEL_ENV.replace("limit-standard", "limit-extra-large").replace("access-public", access)
             f = self.rule(self.findings(env, [("demo", "Host(`${APP_TRAEFIK_HOST}`)", MODEL_LABEL, None)]), "burst-exposure")
             self.assertEqual(f, [], access)

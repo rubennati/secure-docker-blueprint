@@ -109,6 +109,17 @@ keep_yearly: 1
 # mariadb-client, postgresql-client, mongodb-database-tools. Without it:
 #   [Errno 2] No such file or directory: 'mariadb-dump'
 #
+# POSTGRESQL — operating rule: the client's major version is the server's (the
+# conservative choice, and the combination tested). Name the three
+# programs in every entry (pg_dump_command, pg_restore_command, psql_command)
+# from /usr/lib/postgresql/<major>/bin, the major of that entry's server — not
+# the `pg_dump` on the PATH, which is the newest installed (Debian 13: 17).
+# Measured: a dump by client 17 from server 16 failed its restore into 16
+# (`SET transaction_timeout`); with client 16 named here, backup and restore
+# passed. Backup and restore use the same entry's programs. When a server
+# changes major, change its three paths and rehearse a restore. ../README.md,
+# "PostgreSQL: the client's major version is the server's".
+#
 # TLS: a distribution client is often newer than the pinned server and will
 # demand TLS the server does not offer. For a host-to-container connection over
 # a local bridge, set `tls: false` on the entry. For a genuinely remote
@@ -131,6 +142,19 @@ postgresql_databases:
       username: myapp
       password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
       format: custom
+      # Server: postgres 16 (the stack's DB_TAG) — so the client of major 16.
+      pg_dump_command: /usr/lib/postgresql/16/bin/pg_dump
+      pg_restore_command: /usr/lib/postgresql/16/bin/pg_restore
+      psql_command: /usr/lib/postgresql/16/bin/psql
+    # A database on another major names that major's programs:
+    # - name: otherapp
+    #   container: otherapp-db
+    #   username: otherapp
+    #   password: "{credential file /srv/docker/apps/otherapp/.secrets/db_pwd.txt}"
+    #   format: custom
+    #   pg_dump_command: /usr/lib/postgresql/17/bin/pg_dump
+    #   pg_restore_command: /usr/lib/postgresql/17/bin/pg_restore
+    #   psql_command: /usr/lib/postgresql/17/bin/psql
 
 mysql_databases:
     - name: myapp

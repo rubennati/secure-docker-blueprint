@@ -72,11 +72,11 @@ services:
     # No proxy-public, no Traefik network at all — see the file header.
     ports:
       # Node/agent join and inter-service traffic.
-      - "${TELEPORT_AUTH_PORT}:3025"
+      - "${TELEPORT_BIND:?Set TELEPORT_BIND in .env}:${TELEPORT_AUTH_PORT}:3025"
       # Multiplexed: web UI, tsh, SSH, Kubernetes, database protocols — all
       # behind Teleport's own certificate-based TLS. A raw TCP/TLS listener
       # Traefik cannot safely sit in front of; see the file header.
-      - "${TELEPORT_PROXY_PORT}:3080"
+      - "${TELEPORT_BIND:?Set TELEPORT_BIND in .env}:${TELEPORT_PROXY_PORT}:3080"
 
     # --- Health & Observability ---
     # The image is distroless — genuinely no shell (verified: `/bin/sh`

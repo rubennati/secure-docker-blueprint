@@ -69,6 +69,13 @@ const checked =
 // rather than as the tier's name.
 const restored = entry.state === 'ops-proven';
 
+// CRITICAL vulnerabilities the pinned images still carry, because no upstream
+// release removes them yet. Each is recorded with its reason and risk, and the
+// stack README says what that means for an installation — so the page links
+// there instead of repeating it.
+const openFindings = Number(entry.open_findings || 0);
+const readme = `https://github.com/rubennati/secure-docker-blueprint/blob/main/${stack}/README.md#open-findings`;
+
 // Where nothing has been verified, the version alone is not enough to leave a
 // reader with — but a generic hedge ("may well work") is worse than nothing: it
 // warns without saying what to check. So the gap becomes mandatory here, and
@@ -109,6 +116,16 @@ if (!checked && !gap) {
 		)
 	}
 	{gap && <p class="evidence__gap">Not exercised: {gap}</p>}
+	{
+		openFindings > 0 && (
+			<p class="evidence__findings">
+				<strong>
+					Ships with {openFindings} open CRITICAL finding{openFindings === 1 ? '' : 's'}
+				</strong>{' '}
+				that no upstream release fixes yet — <a href={readme}>reason and risk</a>
+			</p>
+		)
+	}
 </div>
 
 <style>
@@ -134,6 +151,11 @@ if (!checked && !gap) {
 	}
 	.evidence__line code {
 		font-size: 0.8rem;
+	}
+	.evidence__findings {
+		margin: 0.25rem 0 0;
+		font-size: 0.85rem;
+		color: var(--sl-color-orange);
 	}
 	.evidence__gap {
 		margin: 0.25rem 0 0;

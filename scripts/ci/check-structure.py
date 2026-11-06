@@ -21,18 +21,44 @@ FAIL (blocks CI — dangerous or leak-prone):
                     (limit-extra-large) while its access policy admits more
                     than a closed set of clients
   router-positions  a router that does not carry the four positions of the
-                    middleware model — access, limit, headers, auth — once
+                    middleware model — headers, access, limit, auth — once
                     each and in that order, or carries a name the model
                     replaced (D2/D6, 2026-10-18; headers is the mandatory
-                    position, HSTS lives there)
+                    position, HSTS lives there; first since 2026-11-04, so
+                    that a refusal carries it — FA-13)
   tls-conflict      two routers of one stack serve the same host name with
                     different tls.options — Traefik logs the conflict and
                     serves `default` to both
+  auth-posture      an *_TRAEFIK_AUTH variable without a `# auth posture:`
+                    line above it, a posture that does not fit its value
+                    (auth-none@file is app-login, public or none;
+                    auth-authentik@file is forward-auth; *-auth@docker is
+                    basic), or `none` — no login anywhere — without a reason
+                    or behind an open access policy (DEC-077)
   retired-name      a stack still carries the vocabulary from before the
                     model: *_TRAEFIK_SECURITY or *_TRAEFIK_THREAT, an
                     acc-* / sec-* / tls-basic|aplus|modern value, a router
-                    naming such a TLS profile — scripts/migrate-traefik-env.sh
-                    maps every one of them
+                    naming such a TLS profile — or the LAN class access-lan /
+                    access-lan-vpn that access-trusted(-vpn) replaced
+                    (DEC-076) — scripts/migrate-traefik-env.sh maps every one
+  network-name      a stack's proxy network (the `proxy-public` key) that is not
+                    named through `${TRAEFIK_NETWORK}` — the variable that
+                    decides between the stack's edge network and the shared
+                    network (DEC-075); the label and the declaration have to
+                    name the same network
+  missing-network-label
+                    a service with traefik.enable=true and no
+                    traefik.docker.network label — without it Traefik takes
+                    the first network of the container in map order, which
+                    is random, and a route lands on the internal network in
+                    some of its reloads (measured 2026-10-31: two of six)
+  port-no-host-address
+                    a published port without a host address: it listens on
+                    every address of the host, IPv4 and IPv6, and on an
+                    IPv4-only network Docker relays the IPv6 side from the
+                    bridge gateway (docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md).
+                    The nine stacks that did so when the rule came in are
+                    bound since step 7 (a required *_BIND variable each)
 
 WARN (reported — structural drift):
   missing-file      .env.example / README.md / UPSTREAM.md absent
@@ -102,21 +128,32 @@ SECRET_VAR = re.compile(r"^[A-Z0-9_]*(PASSWORD|SECRET|TOKEN|PASSWD|PWD)$")
 # keep the set of such addresses closed — access-blocked closes the router
 # altogether. The names before the model are kept so that a stack carrying
 # them is still judged (and fails for the name, see retired-name).
-CLOSED_ACCESS = {"access-lan", "access-vpn", "access-lan-vpn", "access-blocked",
-                 "acc-private", "acc-tailscale", "acc-deny"}
+CLOSED_ACCESS = {"access-trusted", "access-vpn", "access-trusted-vpn", "access-blocked",
+                 "access-lan", "access-lan-vpn", "acc-private", "acc-tailscale", "acc-deny"}
 
 # The middleware model (core/traefik/config/dynamic/model.yml, decided
-# 2026-10-18): four positions on every router, in this order. A router names
+# 2026-10-18; headers first since 2026-11-04, so a refusal by the access or
+# limit position carries the HSTS base): four positions on every router, in
+# this order. A router names
 # each through its stack's variable — ${X_TRAEFIK_ACCESS}@file and so on — and
 # the auth position carries its provider in the value (auth-none@file,
 # <stack>-auth@docker), so it is recognised by the variable as well as by name.
-POSITIONS = ("access", "limit", "headers", "auth")
+POSITIONS = ("headers", "access", "limit", "auth")
 POSITION_VAR = re.compile(r"TRAEFIK_[A-Z0-9_]*?(ACCESS|LIMIT|HEADERS|AUTH)$")
+
+# DEC-077: the line above every auth variable states the stack's posture, so
+# that auth-none@file reads as what it is — the application's own login, a
+# public service by design, or no login anywhere, which needs a closed access
+# policy and a reason. The value decides which postures fit.
+POSTURES = ("app-login", "public", "basic", "forward-auth", "none")
+POSTURE_LINE = re.compile(r"^#\s*auth posture:\s*([a-z-]+)(?:\s+[—–-]+\s*(.*))?\s*$")
+POSTURE_FOR_VALUE = {"auth-none@file": ("app-login", "public", "none"),
+                     "auth-authentik@file": ("forward-auth",)}
 # The names the model replaced (v0.9.4: access.yml, security-blocks.yml,
 # security-chains.yml, crowdsec.yml, tls-profiles.yml). A stack carrying one
 # has not been migrated — scripts/migrate-traefik-env.sh maps every one.
-OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec))")
-RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern))")
+OLD_NAME = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|access-lan(-vpn)?(@|$))")
+RETIRED_VALUE = re.compile(r"^(sec-|acc-|hdr-|rl-|crowdsec-(basic|appsec)|tls-(basic|aplus|modern)|access-lan(-vpn)?$)")
 RETIRED_KEY = re.compile(r"TRAEFIK_[A-Z0-9_]*(SECURITY|THREAT)$")
 TLS_RETIRED = {"tls-basic", "tls-aplus", "tls-modern"}
 # Per-app blocks and the side of the four they belong on (model.yml).
@@ -128,7 +165,7 @@ AFTER_FOUR = {"forwarded-proto-https"}
 MODEL_LEVEL = "FAIL"
 # Substitution of ${VAR} and ${VAR:-default} in a label, with the stack's
 # .env.example values standing in for a deployment's .env.
-LABEL_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
+LABEL_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*)|:?\?[^}]*)?\}")
 
 # Accepted placeholders in a committed example file.
 PLACEHOLDER = re.compile(r"^(__REPLACE_ME__|<.*>|changeme|CHANGEME|\$\{.*\}|)$")
@@ -266,9 +303,22 @@ def compose_files(app: Path) -> list[Path]:
     if main.exists() and in_repository(main):
         return [main]
     # For a split stack the glob decides what counts as production, so the
-    # local test stack must be excluded from it.
+    # local test stack must be excluded from it, and so must a file that only
+    # adds to a service another file defines — `onlyoffice-callback.yml` carries
+    # labels for the seafile service and no image; it is an overlay of the stack,
+    # checked as one by overlay_files(), not a part of it.
     return sorted(p for p in app.glob("*.yml")
-                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml"))
+                  if in_repository(p) and is_compose(p) and not p.name.endswith(".local.yml")
+                  and _defines_a_service(p))
+
+
+def _defines_a_service(path: Path) -> bool:
+    """True when at least one service of the file has an image or a build."""
+    try:
+        services = compose_load(path).get("services") or {}
+    except yaml.YAMLError:
+        return False
+    return any(isinstance(s, dict) and ("image" in s or "build" in s) for s in services.values())
 
 
 def overlay_files(app: Path) -> list[Path]:
@@ -341,6 +391,13 @@ def external_networks(app: Path) -> dict:
     """
     env_path = app / ".env.example"
     env = dict(parse_env(env_path)[0]) if env_path.exists() else {}
+    # A network named through TRAEFIK_NETWORK is the shared network whenever
+    # the operator says so, whatever the example's default (DEC-075: the edge
+    # network per stack is the default, the shared network the choice), so the
+    # shared-network rules judge it as the shared network.
+    canonical = canonical_shared_network()
+    if canonical and "TRAEFIK_NETWORK" in env:
+        env = dict(env, TRAEFIK_NETWORK=canonical)
     out: dict = {}
     for path in compose_files(app):
         try:
@@ -351,6 +408,30 @@ def external_networks(app: Path) -> dict:
             if isinstance(net, dict) and net.get("external"):
                 out[key] = _expand(str(net.get("name", key)), env)
     return out
+
+
+def check_network_name(app: Path, findings: list[dict]) -> None:
+    """DEC-075: the stack's proxy network is named through TRAEFIK_NETWORK.
+
+    The `proxy-public` key is a local label; `name: ${TRAEFIK_NETWORK}` is what
+    lets one .env choose the stack's edge network or the shared one, and what
+    keeps the declaration and the `traefik.docker.network` label on the same
+    network. Opt-in overlays are checked too: a fragment that redeclares the
+    network without the name would join a different network than its base.
+    """
+    for path in compose_files(app) + overlay_files(app):
+        try:
+            data = compose_load(path)
+        except yaml.YAMLError:
+            continue
+        net = (data.get("networks") or {}).get("proxy-public")
+        if not isinstance(net, dict) or not net.get("external"):
+            continue
+        if str(net.get("name", "")).strip() != "${TRAEFIK_NETWORK}":
+            findings.append({"level": "FAIL", "rule": "network-name", "service": path.name,
+                             "detail": "the proxy-public network is not named through ${TRAEFIK_NETWORK} — add "
+                                       "`name: ${TRAEFIK_NETWORK}` so that .env decides between the stack's edge "
+                                       "network and the shared network (DEC-075)"})
 
 
 @functools.lru_cache(maxsize=1)
@@ -500,6 +581,36 @@ def parse_env(path: Path) -> tuple[list[tuple[str, str]], list[str]]:
         key, _, value = line.partition("=")
         variables.append((key.strip(), value.strip()))
     return variables, sections
+
+
+def auth_postures(path: Path) -> list[tuple[str, str, str | None, str | None]]:
+    """(variable, value, posture, reason) for every *_TRAEFIK_AUTH= line.
+
+    The posture is read from the comment block directly above the variable —
+    the nearest `# auth posture:` line before a non-comment line — and is None
+    when that block has none.
+    """
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    out: list[tuple[str, str, str | None, str | None]] = []
+    for i, raw in enumerate(lines):
+        line = raw.strip()
+        if line.startswith("#") or "=" not in line:
+            continue
+        key, _, value = line.partition("=")
+        key = key.strip()
+        m = POSITION_VAR.search(key)
+        if not m or m.group(1) != "AUTH":
+            continue
+        posture = reason = None
+        j = i - 1
+        while j >= 0 and lines[j].strip().startswith("#"):
+            pm = POSTURE_LINE.match(lines[j].strip())
+            if pm:
+                posture, reason = pm.group(1), (pm.group(2) or "").strip() or None
+                break
+            j -= 1
+        out.append((key, value.strip(), posture, reason))
+    return out
 
 
 IMAGE_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
@@ -723,6 +834,34 @@ def check_env(app: Path, findings: list[dict]) -> None:
             if not reserved and "${" not in value:
                 findings.append({"level": "WARN", "rule": "real-domain",
                                  "detail": f"{key}={value} — use *.example.com in a committed file"})
+
+    # -- the auth posture beside every auth variable (DEC-077) ----------------
+    access_of = {k[: -len("ACCESS")]: v for k, v in variables
+                 if (pm := POSITION_VAR.search(k)) and pm.group(1) == "ACCESS"}
+    for key, value, posture, reason in auth_postures(env):
+        if posture is None:
+            findings.append({"level": "FAIL", "rule": "auth-posture",
+                             "detail": f"{key} has no `# auth posture:` line above it — app-login, public, "
+                                       "basic, forward-auth or none, with the reason after a dash (DEC-077)"})
+            continue
+        if posture not in POSTURES:
+            findings.append({"level": "FAIL", "rule": "auth-posture",
+                             "detail": f"{key}: posture '{posture}' is not one of {', '.join(POSTURES)}"})
+            continue
+        fits = ("basic",) if value.endswith("-auth@docker") else POSTURE_FOR_VALUE.get(value)
+        if fits and posture not in fits:
+            findings.append({"level": "FAIL", "rule": "auth-posture",
+                             "detail": f"{key}={value} states posture {posture}; that value means "
+                                       + " or ".join(fits)})
+        if posture == "none":
+            if not reason:
+                findings.append({"level": "FAIL", "rule": "auth-posture",
+                                 "detail": f"{key}: posture none — no login anywhere — needs its reason after the dash"})
+            access = access_of.get(key[: -len("AUTH")])
+            if access is not None and access not in CLOSED_ACCESS:
+                findings.append({"level": "FAIL", "rule": "auth-posture",
+                                 "detail": f"{key}: posture none behind {access} — no login anywhere needs a "
+                                           "closed access policy (DEC-077.3)"})
 
     # -- the wide first-load burst is judged per router: check_routers --------
 
@@ -995,6 +1134,73 @@ def check_routers(app: Path, findings: list[dict]) -> None:
                                        f"Traefik falls back to `default` for all of them ({shape})"})
 
 
+IPV4_LITERAL = re.compile(r"^(\d{1,3}\.){3}\d{1,3}$")
+
+
+def _port_has_host_address(entry, env: dict) -> bool:
+    """True when a `ports:` entry names the host address it binds to.
+
+    Short syntax: `host:published:target[/proto]`, where `host` is an IPv4
+    literal or a bracketed IPv6 literal after the stack's example values are
+    substituted — `${APP_MAIL_BIND}:25:25` with `APP_MAIL_BIND=0.0.0.0`,
+    `${APP_TRAPPER_BIND}:10051` with `APP_TRAPPER_BIND=0.0.0.0:10051`. Long
+    syntax: a non-empty `host_ip`. A variable the example does not set, or sets
+    to nothing, leaves the host empty, and Compose then binds every address of
+    the host — so it does not count, whatever the variable is called.
+    """
+    if isinstance(entry, dict):
+        host = str(entry.get("host_ip") or "").strip()
+        return bool(host) and "${" not in host
+    raw = str(entry).strip().strip("'\"")
+    value = resolve_label(raw, env).split("/", 1)[0]
+    if "${" in value:
+        return False
+    if value.startswith("["):
+        return "]:" in value and value.count(":") >= 2
+    parts = value.split(":")
+    return len(parts) >= 3 and bool(IPV4_LITERAL.fullmatch(parts[0]))
+
+
+def check_ports_and_labels(app: Path, findings: list[dict]) -> None:
+    """Two guards of the ingress programme (DEC-075, step 1).
+
+    A published port binds to a host address, or the host listens on every
+    address it has — IPv4 and IPv6 alike, which is how an IPv6 client reached
+    Traefik as the bridge gateway before v0.9.5. A routed service names the
+    network Traefik reaches it on, or Traefik picks one at random.
+    """
+    env_file = app / ".env.example"
+    env = dict(parse_env(env_file)[0]) if env_file.exists() else {}
+    labels_by_service: dict[str, list[str]] = {}
+    routed: set[str] = set()
+    for path in compose_files(app) + overlay_files(app):
+        try:
+            data = compose_load(path)
+        except yaml.YAMLError:
+            continue
+        for name, svc in (data.get("services") or {}).items():
+            if not isinstance(svc, dict):
+                continue
+            labels = svc.get("labels") or []
+            label_list = labels if isinstance(labels, list) else [f"{k}={v}" for k, v in labels.items()]
+            labels_by_service.setdefault(name, []).extend(str(l) for l in label_list)
+            for entry in svc.get("ports") or []:
+                if _port_has_host_address(entry, env):
+                    continue
+                findings.append({"level": "FAIL", "rule": "port-no-host-address",
+                                 "service": name,
+                                 "detail": f"{path.name}: '{entry}' binds to every host address, IPv4 and IPv6 — "
+                                           "publish on a *_BIND variable"})
+    for name, labels in labels_by_service.items():
+        enabled = any(re.fullmatch(r"traefik\.enable\s*=\s*['\"]?true['\"]?", l.strip()) for l in labels)
+        named = any(l.strip().startswith("traefik.docker.network=") for l in labels)
+        if enabled and not named:
+            findings.append({"level": "FAIL", "rule": "missing-network-label", "service": name,
+                             "detail": "traefik.enable=true without traefik.docker.network — Traefik then "
+                                       "takes a random network of the container; name the one it reaches "
+                                       "the service on (traefik.docker.network=${TRAEFIK_NETWORK})"})
+
+
 def root_gitignore() -> str:
     p = Path(".gitignore")
     return p.read_text(encoding="utf-8", errors="replace") if p.exists() else ""
@@ -1080,6 +1286,8 @@ def main() -> int:
         check_local_pins(app, findings)
         check_compose(app, findings)
         check_routers(app, findings)
+        check_ports_and_labels(app, findings)
+        check_network_name(app, findings)
         if findings:
             by_app.setdefault(app, []).extend(findings)
 

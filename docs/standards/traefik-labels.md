@@ -50,7 +50,7 @@ labels:
   - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
   #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
   # Middlewares — the four positions, in this order
-  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+  - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
   # Service
   - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 ```
@@ -61,7 +61,7 @@ The middleware list answers four independent questions, in this order:
 
 | Position | Variable | Question | Values |
 |---|---|---|---|
-| 1 | `APP_TRAEFIK_ACCESS` | Who may reach this router, by connecting address? | `access-public` · `access-lan` · `access-vpn` · `access-lan-vpn` · `access-blocked` |
+| 1 | `APP_TRAEFIK_ACCESS` | Who may reach this router, by connecting address? | `access-public` · `access-trusted` · `access-vpn` · `access-trusted-vpn` · `access-blocked` |
 | 2 | `APP_TRAEFIK_LIMIT` | How fast may one address ask? | `limit-standard` · `limit-strict` · `limit-sync` · `limit-extra-large` · `limit-none` |
 | 3 | `APP_TRAEFIK_HEADERS` | Which browser-security headers does the proxy set? | `headers-standard` · `headers-application-owned` · `headers-none` — every profile starts with the HSTS base |
 | 4 | `APP_TRAEFIK_AUTH` | Who must be identified before the request reaches the app? | `auth-none@file` · `auth-authentik@file` · `${COMPOSE_PROJECT_NAME}-auth@docker` |
@@ -82,6 +82,12 @@ needs the stack's user list and lives in its compose labels, so its value is
 `${COMPOSE_PROJECT_NAME}-auth@docker`. The label therefore ends in
 `${APP_TRAEFIK_AUTH}` without a suffix of its own.
 
+**The line above the auth variable states the posture.** `# auth posture:
+app-login`, `public`, `basic`, `forward-auth` or `none`, with the reason after a
+dash; CI checks that it is there and fits the value, and that `none` sits behind
+a closed access policy ([`traefik-security.md`](traefik-security.md), "The posture
+beside the value").
+
 **Threat enforcement and compression are not positions.** `compress` sits on
 the `websecure` entrypoint in front of every router. CrowdSec is optional and
 off as shipped: an installation that enables it (`CROWDSEC_BOUNCER_ENABLED`,
@@ -101,12 +107,12 @@ never a label.
 |----------|----------------|
 | `APP_TRAEFIK_HOST` | `app.example.com` |
 | `APP_TRAEFIK_CERT_RESOLVER` | `cloudflare-dns`, `httpResolver`, `tlsResolver` |
-| `APP_TRAEFIK_ACCESS` | `access-public`, `access-lan`, `access-vpn`, `access-lan-vpn`, `access-blocked` |
+| `APP_TRAEFIK_ACCESS` | `access-public`, `access-trusted`, `access-vpn`, `access-trusted-vpn`, `access-blocked` |
 | `APP_TRAEFIK_LIMIT` | `limit-standard`, `limit-strict`, `limit-sync`, `limit-extra-large`, `limit-none` |
 | `APP_TRAEFIK_HEADERS` | `headers-standard`, `headers-application-owned`, `headers-none` |
 | `APP_TRAEFIK_AUTH` | `auth-none@file`, `auth-authentik@file`, `${COMPOSE_PROJECT_NAME}-auth@docker` |
 | `APP_TRAEFIK_TLS_OPTION` | only on a stack with a documented exception: `tls-compatible`, `tls-standard`, `tls-strict` |
-| `TRAEFIK_NETWORK` | `proxy-public` |
+| `TRAEFIK_NETWORK` | `${COMPOSE_PROJECT_NAME}-edge` (default, listed in `EDGE_NETWORKS`) or `proxy-public` (shared) |
 
 A secondary router whose answer differs from the stack's gets a variable of
 its own, named for the router: `APP_TRAEFIK_API_ACCESS` and
@@ -121,9 +127,9 @@ answer is the same, the router reads the stack's variable.
 | Policy | Who gets through |
 |--------|-----------------|
 | `access-public` | Everyone (no restriction) |
-| `access-lan` | LAN only (RFC1918 + IPv6 ULA) |
+| `access-trusted` | the ranges `TRUSTED_RANGES` declares in `core/traefik/.env`; empty admits nobody |
 | `access-vpn` | VPN only (`TAILSCALE_CIDR_V4` + `TAILSCALE_CIDR_V6` from `core/traefik/.env`) |
-| `access-lan-vpn` | LAN + VPN combined |
+| `access-trusted-vpn` | the declared ranges + VPN |
 | `access-blocked` | Nobody (emergency kill switch) |
 
 Which address a policy evaluates: [`traefik-security.md`](traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
@@ -135,7 +141,7 @@ Which address a policy evaluates: [`traefik-security.md`](traefik-security.md#tr
 | `limit-standard` | 125 per second, 500 | the default — every first load measured so far but two fits |
 | `limit-strict` | 20 per second, 40 | administration surfaces, login-only routes |
 | `limit-sync` | 1000 per second, 1000 | applications with file-sync clients |
-| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket; CI accepts it only behind `access-lan`, `access-vpn`, `access-lan-vpn` or `access-blocked` (`burst-exposure`) |
+| `limit-extra-large` | 125 per second, 1000 | a whole first load in one bucket; CI accepts it only behind `access-trusted`, `access-vpn`, `access-trusted-vpn` or `access-blocked` (`burst-exposure`) |
 | `limit-none` | no counter | a websocket or long-poll endpoint, a server called by another server |
 
 ## Header Profiles
@@ -186,11 +192,11 @@ this application. Where it stands decides what it does:
 
 ```yaml
 # listmonk: frames its campaign preview
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=frame-self@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 # Keycloak: sends its own headers, lacks the Permissions-Policy
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-permissions@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 # Paperless-ngx: derives absolute URLs from the forwarded protocol
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
 ```
 
 CI reports a block on the wrong side (`block-order`). A header the stack
@@ -199,7 +205,7 @@ the operator embeds the editor in — stays a Docker middleware of the stack,
 placed before the profile like a block:
 
 ```yaml
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=header-nosniff@file,${COMPOSE_PROJECT_NAME}-csp@docker,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},forwarded-proto-https@file"
 - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-csp.headers.contentSecurityPolicy=frame-ancestors 'self' ${COLLABORA_ALLOWED_ORIGINS}"
 ```
 
@@ -223,11 +229,11 @@ APP_TRAEFIK_AUTH=${COMPOSE_PROJECT_NAME}-auth@docker
 # Main router — catch-all
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.priority=1"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 # Path-scoped router — the four positions again, with its own counter
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/thumbnail`)"
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.priority=100"
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-thumbnail.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
 ```
 
 A middleware attaches to a router, not to a host. A second router is a second
@@ -248,7 +254,7 @@ Where a router needs a rewrite of its own, it stands after the four, because
 access and the gate are decided before the path changes:
 
 ```yaml
-- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH},seadoc-strip@docker"
+- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-seadoc.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${SIDE_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},seadoc-strip@docker"
 ```
 
 ### No Traefik

@@ -4,11 +4,17 @@ UI-driven uptime monitoring. Single container, SQLite backend, rich probe types 
 
 Modern successor to Statping — more active (weekly releases), better UI, wider probe support.
 
+## Open findings
+
+The image, `louislam/uptime-kuma:2.5.9`, carries 7 CRITICAL findings that have published fixes: Chromium (2), libbrotli1, protobufjs, the Go runtime of the healthcheck helper (2) and node-tar. It is the newest release, and upstream has not rebuilt it.
+
+**Risk:** Chromium only runs for "Real Browser" monitors and protobufjs only for gRPC monitors, so avoid pointing those at untrusted targets. The `-slim` image drops Chromium if you do not need browser monitors.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
+| `uptime-kuma-app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 
@@ -30,7 +36,7 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 mkdir -p volumes/data
 docker compose up -d
-docker compose logs app --follow
+docker compose logs uptime-kuma-app --follow
 # Watch for: "Listening on 3001"
 
 # Open UI and create the owner account on first visit

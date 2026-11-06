@@ -13,7 +13,7 @@
 - **Origin:** Canada · BlueWave Labs · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime, certificate, hardware and container monitoring with incidents, maintenance windows and status pages
-- **Based on version:** `v3.12.0`
+- **Based on version:** `v3.13.1`
 
 ## Project maturity
 
@@ -23,7 +23,7 @@ the `bluewave-labs` organisation name do not match the product name.
 
 ## What we use
 
-- `ghcr.io/bluewave-labs/checkmate:v3.12.0`, one container carrying the API,
+- `ghcr.io/bluewave-labs/checkmate:v3.13.1`, one container carrying the API,
   the built dashboard and the worker that runs the checks. Two ports: 52345
   serves everything, 52346 answers `/livez` for the worker.
 - `mongo:8.0.32`.
@@ -34,8 +34,9 @@ the `bluewave-labs` organisation name do not match the product name.
 |--------|--------|
 | MongoDB with authentication | Upstream's compose runs `mongod --bind_ip_all` with no credentials at all. `MONGO_INITDB_ROOT_*` plus `authSource=admin` in the connection string |
 | `config/entrypoint.sh` exports three credentials from Docker Secrets | Checkmate reads everything from the environment and has no `_FILE` variant. The connection string carries the password inline, so the whole URL is the secret |
-| `APP_TAG=v3.12.0` | Upstream's compose uses `:latest` with `pull_policy: always` |
+| `APP_TAG=v3.13.1` | Upstream's compose uses `:latest` with `pull_policy: always` |
 | `NODE_ENV=production`, `LOG_LEVEL=info` | The schema in `config/envValidation.js` defaults them to `development` and `debug` |
+| `TELEMETRY_ENABLED=false` | Upstream turns an anonymous daily telemetry heartbeat on by default since v3.13.0 |
 | `TOKEN_TTL=7d` | Upstream's default is `99d` and no refresh flow exists, so a stolen token is usable for three months |
 | `read_only: true`, `cap_drop: ALL`, `no-new-privileges` | Upstream's compose sets none of them. The image runs as uid 1000 and the container keeps no state — there is no data volume at all |
 | No `ports:` | Upstream publishes 52345 to the host |
@@ -89,8 +90,10 @@ volume.
 ## Where upstream's "nothing leaves" needs a footnote
 
 checkmate.so states: *"Does any data leave my infrastructure? No. …No
-phone-home, no telemetry pipeline."* That is true of telemetry — nothing in the
-image reports on the installation. Three features send data outward **when you
+phone-home, no telemetry pipeline."* Since v3.13.0 that is no longer true of
+telemetry: the image sends an anonymous daily heartbeat by default, with a count
+of monitors by type since v3.13.1, and `TELEMETRY_ENABLED=false` turns it off —
+which `docker-compose.yml` sets. Three features send data outward **when you
 choose them**, which is different from a beacon but is not nothing:
 
 | Feature | Endpoint | What goes out |
@@ -101,6 +104,17 @@ choose them**, which is different from a beacon but is not nothing:
 
 Notification channels — Pushover, Telegram, Twilio, PagerDuty, SignalGrid and
 the rest — also reach their vendors, which is what a notification channel is.
+
+## Version notes
+
+- Moved to `v3.13.1` on 2026-11-05, not run on a host at this tag. Upstream's
+  notes for `v3.13.0` and `v3.13.1` say no new required variables and no
+  migrations. The image moves to Node 24 and the server to Express 5, and
+  `v3.13.0` turns on an anonymous daily telemetry heartbeat by default, which
+  `v3.13.1` extends with a count of monitors by type. `TELEMETRY_ENABLED: "false"`
+  in `docker-compose.yml` turns it off. No advisory is published for the range;
+  the image bump clears CRITICAL findings of the image scan.
+  https://github.com/bluewave-labs/checkmate/releases/tag/v3.13.0
 
 ## Upgrade checklist
 

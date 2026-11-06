@@ -10,12 +10,12 @@
 - **Origin:** United States · Ollama Inc. (California) · non-EU
 - **Domain:** AI and local AI
 - **Role:** Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU
-- **Based on version:** `0.34.2`
+- **Based on version:** `0.40.14`
 - **Last verified:** 2026-09-21 (0.34.2) — behind Traefik with TLS: models to 3.2B parameters pulled and served through the route on CPU, concurrent requests, a restart, and a restore of `volumes/data`
 
 ## What we use
 
-- Official image, pinned tag: `ollama/ollama:0.34.2` (3.7 GB, `amd64` and
+- Official image, pinned tag: `ollama/ollama:0.40.14` (3.4 GB, `amd64` and
   `arm64`). It bundles the CUDA libraries, so the same image serves CPU and
   GPU hosts.
 - Entrypoint `/bin/ollama`, command `serve`, port `11434`. The image sets
@@ -39,7 +39,7 @@ Internet → Traefik (TLS, port 443) → ollama :11434
 | `OLLAMA_NO_CLOUD=1` | Turns off Ollama's cloud features (remote inference, web search), which are outbound calls this stack has no use for. The server logs `Ollama cloud disabled: true` |
 | GPU access is a separate overlay file | A device reservation fails on a host with no NVIDIA runtime, so it cannot live in the base file |
 | No `app-internal` network | There is no database or internal service to isolate |
-| Traefik router defaults to `access-lan-vpn` | Ollama has no authentication; the route's access policy is the only control |
+| Traefik router defaults to `access-trusted-vpn` | Ollama has no authentication; the route's access policy is the only control |
 
 ## Authentication
 
@@ -100,6 +100,29 @@ Docker VM with six CPUs and 12 GB of memory and no GPU:
 - A separate container on `proxy-public` reached `ollama:11434` by service name
 - The model was still listed after a container restart
 - The unauthenticated `DELETE` described above
+
+## Version notes
+
+- Moved `ollama/ollama` to `0.40.14` on 2026-11-05 (released 2026-11-03), across
+  0.34.3 to 0.40.14, not run on a host at this tag; the `-rc` tags of 0.40.15 are
+  pre-releases and were not taken. The run-as-non-root, `read_only`, `cap_drop: ALL`
+  and noexec `/tmp` hardening was verified against 0.34.2 and has not been re-run;
+  0.40 runs models on llama.cpp (llama-server), so check on the first start that
+  inference still works under this configuration before relying on it. Model
+  storage: from 0.40.2, models pulled with an earlier version are upgraded in the
+  background the first time they run, and the original copy is kept as a backup, so
+  `volumes/data/models` temporarily holds both — leave room on the disk. A downgrade
+  below 0.40 needs those models pulled again unless the backups are kept; the
+  release notes give a command to delete the backups. Behaviour changes: OpenAI-
+  compatible endpoints no longer override a model's packaged sampler defaults when a
+  client sends no `temperature` or `top_p` (0.40.14); new decision-model endpoint
+  `/v1/systemone` (0.35.0); `ollama show` and `/api/show` report thinking controls,
+  renderer, parser and template source. Cloud usage and balance APIs are proxied
+  (0.40.1); `OLLAMA_NO_CLOUD=1` stays set. No advisories are published for the
+  range, no environment variable was removed, and port 11434 and the entrypoint are
+  unchanged, so the compose files keep their configuration. The image shrinks from
+  3.7 GB to 3.4 GB (`amd64`). Sources: https://github.com/ollama/ollama/releases
+  (v0.34.3 to v0.40.14), https://github.com/ollama/ollama/releases/tag/v0.40.2
 
 ## Upgrade checklist
 

@@ -59,12 +59,18 @@ services:
       DB_USERNAME: ${DB_USER}
       DB_PREFIX: ${DB_PREFIX}
       TZ: ${TZ}
+      TMPDIR: /var/tmp
     depends_on:
       db:
         condition: service_healthy
     volumes:
+      - type: tmpfs
+        target: /var/www/html
+        tmpfs:
+          mode: 493
       - ./config/entrypoint.sh:/entrypoint.sh:ro
       - ./config/rewrite.load:/etc/apache2/mods-enabled/rewrite.load:ro
+      - ./config/php-overrides.ini:/usr/local/etc/php/conf.d/zz-overrides.ini:ro
       - ./.secrets/db_pwd.txt:/run/secrets/DB_PWD:ro
       - ./.secrets/admin_pwd.txt:/run/secrets/ADMIN_PWD:ro
       - ./volumes/storage:/var/www/html/storage
@@ -74,7 +80,7 @@ services:
         tmpfs:
           mode: 1023
     tmpfs:
-      - /tmp
+      - /var/tmp
       - /var/run/apache2
     ports:
       - "127.0.0.1:8080:80"

@@ -4,17 +4,23 @@
 
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Five services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `nextcloud:34.0.4-fpm-alpine` | PHP-FPM — the Nextcloud application |
-| `nextcloud-nginx` | `nginx:1.29-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
-| `db` | `mariadb:11.8` | Primary data store |
-| `redis` | `redis:7.4-alpine` | File locking + session cache |
-| `cron` | `nextcloud:34.0.4-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
+| `app` | `nextcloud:35.0.2-fpm-alpine` | PHP-FPM — the Nextcloud application |
+| `nextcloud-nginx` | `nginx:1.31.8-alpine-slim` | Web server, speaks HTTP to Traefik and FastCGI to `app` |
+| `db` | `mariadb:12.3.3` | Primary data store |
+| `redis` | `redis:8.10.3-alpine` | File locking + session cache |
+| `cron` | `nextcloud:35.0.2-fpm-alpine` | Runs Nextcloud's scheduled jobs (`cron.php` every 5 minutes) |
 
 Traefik routes to `nextcloud-nginx`, which proxies PHP requests to `app` via FastCGI on port 9000. `cron` uses the same image as `app` but with `entrypoint: /cron.sh` and no HTTP listener.
 
@@ -48,9 +54,13 @@ unauthenticated setup form is reachable.
 cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, NC_TRUSTED_PROXIES, TZ, and the SMTP block
 
-# 2. Find the correct NC_TRUSTED_PROXIES value — both families if IPv6 is enabled
-docker network inspect proxy-public \
+# 2. Find the correct NC_TRUSTED_PROXIES value: the network Traefik reaches nginx on —
+#    the stack's TRAEFIK_NETWORK, nextcloud-edge as shipped (it exists once Traefik has
+#    rendered and joined it), proxy-public on the shared network; both families if IPv6
+docker network inspect nextcloud-edge \
   --format '{{range .IPAM.Config}}{{.Subnet}} {{end}}'
+#    Another network's range makes Nextcloud record Traefik as every client: one
+#    brute-force counter for all, and no client address in the log.
 
 # 3. Generate the six secrets
 mkdir -p .secrets
@@ -78,17 +88,71 @@ docker compose logs -f app
 Expect `Initializing nextcloud` followed by `Nextcloud was successfully
 installed`.
 
-Default access policy is `access-lan-vpn`, with `limit-sync` and
-`headers-standard` behind `frame-self` — reachable from LAN and VPN, the
+Default access policy is `access-trusted-vpn`, with `limit-sync` and
+`headers-standard` behind `frame-self` — reachable from the ranges
+`TRUSTED_RANGES` declares in `core/traefik/.env` and from the VPN, the
 standard headers with `SAMEORIGIN` framing, and the rate limit the sync
-clients need. `access-lan-vpn` also covers the Docker gateway, which the
-instance needs to run its own setup checks against itself.
+clients need. No closed policy admits a Docker network, so the instance
+cannot reach itself through the proxy while it is closed: the setup checks
+that call its own public name report failures until it is opened, and an office
+server is pointed at Nextcloud's internal address (below).
 
 Switch to `access-public` once the instance is configured and verified.
 
-> **If you plan to integrate OnlyOffice:** `APP_TRAEFIK_ACCESS=access-public` is
-> required. OnlyOffice makes server-to-server callbacks to Nextcloud over the
-> public domain, and every restricted policy blocks them.
+> **Office servers behind a closed route.** OnlyOffice, Euro-Office and Collabora
+> call Nextcloud back; a closed access policy refuses a call from a container
+> (DEC-076). The call goes over a Docker network the two stacks share. On edge
+> networks (DEC-075) they share none, so `office.yml` joins Nextcloud's nginx —
+> and only nginx — to the office stack's edge network: the office server reaches
+> it by container name, and no other stack gains a path to Nextcloud. Nextcloud
+> calls the office server at its public name, as the browser does; the office
+> route is `access-public`. Start the office stack first — Traefik creates its
+> network once `EDGE_NETWORKS` lists it — then in this stack's `.env`:
+>
+> ```env
+> OFFICE_NETWORK=onlyoffice-edge          # the office stack's TRAEFIK_NETWORK
+> COMPOSE_FILE=docker-compose.yml:office.yml
+> ```
+>
+> `docker compose up -d`, then the connector's own settings, run as `www-data`
+> after the app is installed (`<nginx>` is `CONTAINER_NAME_NGINX`,
+> `nextcloud-nginx` as shipped):
+>
+> ```bash
+> # Nextcloud has to accept the internal name as a host it serves
+> docker compose exec -u www-data app php occ config:system:set trusted_domains 2 --value="<nginx>"
+> # OnlyOffice and Euro-Office (the onlyoffice connector): the document server's public
+> # address stays the one Nextcloud and the browser use; the address the document server
+> # fetches from and saves to is nginx's
+> docker compose exec -u www-data app php occ config:app:set onlyoffice DocumentServerUrl --value="https://office.example.com/"
+> docker compose exec -u www-data app php occ config:app:set onlyoffice StorageUrl --value="http://<nginx>/"
+> # and the document server's JWT secret — without it the connector's check answers
+> # "Invalid token"; the connector reads no secret file (the path is the office stack's)
+> docker compose exec -u www-data app php occ config:app:set onlyoffice jwt_secret --value="$(cat ../onlyoffice/.secrets/jwt_secret.txt)"
+> # (Euro-Office: ../euro-office/.secrets/jwt_secret.txt)
+> # Collabora (the richdocuments app, 12.x on Nextcloud 35): the server Nextcloud and
+> # the browser call, and the callback it hands out, both through activate-config — a
+> # callback set with config:app:set is reset to "autodetected" when activate-config
+> # runs afterwards
+> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="https://office.example.com" --callback-url="http://<nginx>"
+> # COLLABORA_ALIASGROUP in the Collabora stack admits the callback host as an alias of
+> # Nextcloud's group: https://cloud\.example\.com:443,http://nextcloud-nginx:80
+> ```
+>
+> The route stays closed; the office traffic never passes it. OnlyOffice refuses
+> requests to private addresses by default (`request-filtering-agent`,
+> `allowPrivateIPAddress: false`) but exempts a URL that arrives inside the signed
+> JWT — which is how the connector hands over the storage and callback URLs — so
+> `ALLOW_PRIVATE_IP_ADDRESS` stays off. A stack still on `proxy-public` needs no
+> file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
+> with the consequence `core/traefik/docs/edge-networks.md` names. An office server
+> on another host reaches a closed instance only by its address in
+> `TRUSTED_RANGES`. **Measured on the step 8 lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
+> XLSX and PPTX opened, saved and reopened behind the closed route, without
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora does not work behind the closed route:** the
+> WOPI calls take nginx, but Collabora then fetches a template preset at Nextcloud's
+> public name, the closed route refuses it, and the document does not open — open.
 
 ### Post-install
 
@@ -153,8 +217,13 @@ docker compose ps
 # Nextcloud installed and reachable
 docker compose exec -u www-data app php occ status
 
-# Confirm trusted proxies are set correctly
+# Confirm trusted proxies are set correctly — exactly the subnets of step 2
 docker compose exec -u www-data app php occ config:system:get trusted_proxies
+#    More entries than NC_TRUSTED_PROXIES has: the install wrote the value it started
+#    with into config.php, and the environment replaces that list by position, so an
+#    entry beyond the new list's length stays trusted. Drop the stored list; the
+#    environment value is the one that remains:
+#      docker compose exec -u www-data app php occ config:system:delete trusted_proxies
 
 # Confirm Redis is reachable and the correct policy is active
 docker compose exec redis sh -c \
@@ -264,9 +333,11 @@ With `APP_TRAEFIK_ACCESS=access-vpn`, several checks report failures —
 calls itself through the proxy and the access policy denies it, which is the
 policy working.
 
-This is why the shipped default is `access-lan-vpn` rather than `access-vpn`: it
-covers the Docker gateway as well as LAN and VPN, so the instance can reach
-itself and the checks pass while the instance is still closed to the internet.
+The shipped default `access-trusted-vpn` behaves the same way: no closed policy
+admits a Docker network (DEC-076), so these checks pass only once the route is
+`access-public`. Until then they are the policy working, not a defect — nothing
+of the instance's function depends on them; an office server reaches Nextcloud
+by its internal address (above, "Office servers behind a closed route", `office.yml`).
 
 ## Backup
 
@@ -328,7 +399,7 @@ empty target, and let borgmatic restore into it:
 ```bash
 PW=$(openssl rand -hex 16)
 docker run -d --name nextcloud-restore-test \
-  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:11.8
+  -e MARIADB_ROOT_PASSWORD="$PW" --tmpfs /var/lib/mysql:rw mariadb:12.3
 docker exec nextcloud-restore-test mariadb -uroot -p"$PW" -e 'CREATE DATABASE nextcloud;'
 
 sudo borgmatic restore --archive latest --database nextcloud \
@@ -459,7 +530,7 @@ that is the part that scales with use:
 | RAM per PHP process | 128 MB minimum, **512 MB recommended** | [System requirements](https://docs.nextcloud.com/server/latest/admin_manual/installation/system_requirements.html) |
 | RAM for the built-in updater | 256 MB | same |
 | PHP | 8.3 · 8.4 · **8.5 recommended** — the pinned image ships 8.5 | same |
-| MariaDB | 10.11 · 11.4 · **11.8 recommended** · 12.3 | same |
+| MariaDB | 10.11 · 11.4 · 11.8 · **12.3 recommended** — the pinned tag is 12.3 | same |
 | CPU, disk | not specified upstream | — |
 
 Translating that into a machine, for the reference workload — a small team, this

@@ -113,7 +113,7 @@ services:
       TZ: ${TZ}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     command: >
-      sh -c 'exec redis-server
+      sh -c 'exec docker-entrypoint.sh redis-server
       --requirepass "$$REDIS_PASSWORD"
       --maxmemory 192mb
       --maxmemory-policy noeviction'

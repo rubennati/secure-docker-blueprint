@@ -101,7 +101,7 @@ Not mandatory in our definition, but largest ROI in the security bucket:
 | **CORS for external client** | `PAPERLESS_CORS_ALLOWED_HOSTS` | Additional origins explicitly | Only for mobile/web client on a different domain |
 | **CSRF for external frontend** | `PAPERLESS_CSRF_TRUSTED_ORIGINS` | Additional origins explicitly | Only for embedding / PWA |
 | **Self-signed IMAP** | `PAPERLESS_EMAIL_CERTIFICATE_LOCATION` | Path to CA file | Only for internal IMAP with own CA |
-| **Initial admin without `createsuperuser`** | `PAPERLESS_ADMIN_USER` + `ADMIN_PASSWORD` + `ADMIN_MAIL` | Unset — we use `docker compose exec app python manage.py createsuperuser` | Only in Kubernetes/ECS where no interactive exec is available. Does **not** change existing passwords. |
+| **Initial admin without `createsuperuser`** | `PAPERLESS_ADMIN_USER` + `ADMIN_PASSWORD` + `ADMIN_MAIL` | Unset — we use `docker compose exec paperless-app createsuperuser` | Only in Kubernetes/ECS where no interactive exec is available. Does **not** change existing passwords. |
 | **⚠️ Dangerous** | `PAPERLESS_AUTO_LOGIN_USERNAME` | **Never set if publicly reachable** | Bypasses authentication entirely. Only in strictly-internal setups behind another full auth layer. |
 
 ### 1.4 Current state vs. repo
@@ -466,7 +466,7 @@ For an archive app, backup is **not** nice-to-have — it is core infrastructure
 
 ### 6.5 Management commands (maintenance cheatsheet)
 
-Per command: purpose, when to use. All via `docker compose exec app <cmd>`.
+Per command: purpose, when to use. All via `docker compose exec paperless-app <cmd>` — the image's wrappers; plain `python manage.py` under `exec` lacks the secrets the container read at start.
 
 | Command | What | Bucket | When to use |
 |---|---|---|---|
@@ -720,7 +720,7 @@ Without SMTP config all of that silently drops — Paperless keeps running, but 
 | `PAPERLESS_EMAIL_HOST` | SMTP server host | unset (= `localhost`) | low | **Nice-to-have** | SMTP relay provider (Brevo, SES, Mailgun, etc.) — `localhost` works only if container has a local MTA (it doesn't). |
 | `PAPERLESS_EMAIL_PORT` | SMTP port | unset (= `25`) | low | **Nice-to-have** | Typical: `587` (STARTTLS/submission), `465` (SMTPS), rarely `25`. |
 | `PAPERLESS_EMAIL_HOST_USER` | SMTP auth username | unset | low | **Nice-to-have** | Only for relays with auth (almost always nowadays). |
-| `PAPERLESS_EMAIL_HOST_PASSWORD` | SMTP auth password | via `.env` (Paperless limitation — no `_FILE`) | low | **Nice-to-have** | **No `_FILE` support in Paperless**. Stays in `.env` (gitignored). Docker secret via entrypoint wrapper possible but rarely worth it for SMTP alone. |
+| `PAPERLESS_EMAIL_HOST_PASSWORD` | SMTP auth password | `PAPERLESS_EMAIL_HOST_PASSWORD_FILE` → `.secrets/email_pwd.txt` | low | **Nice-to-have** | The image reads `_FILE` for it at start (`[env-init] PAPERLESS_EMAIL_HOST_PASSWORD set from PAPERLESS_EMAIL_HOST_PASSWORD_FILE`, step 8 lab host); the compose file mounts the secret. |
 | `PAPERLESS_EMAIL_USE_TLS` | Enable STARTTLS | `true` (for port 587) | low | **Nice-to-have** | Exactly one of TLS/SSL must be on — cleartext SMTP is out of date. |
 | `PAPERLESS_EMAIL_USE_SSL` | SMTPS (implicit TLS) | `false` (port 587); `true` (port 465) | low | **Nice-to-have** | **Exclusive** to `USE_TLS` — never both `true`. |
 | `PAPERLESS_EMAIL_FROM` | Sender address | e.g. `noreply@example.com` | low | **Nice-to-have** | Must be authenticatable at the relay (SPF/DKIM). Default falls back to `HOST_USER` — can produce broken mails with generic SMTP-relay users. |

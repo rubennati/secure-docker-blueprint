@@ -3,6 +3,16 @@
 Collaborative incident-response case management: cases, IOCs, evidence,
 timelines, notes and templates, shared across a response team.
 
+## Open findings
+
+The IRIS application image, `iriswebapp_app:v2.4.29`, carries 22 CRITICAL findings that have published fixes: Debian 13 packages (glib, brotli, GnuTLS, Perl, libunbound, kernel headers) and Python packages (Pillow 11.3.0, PyJWT 2.4.0, certifi). The database image, `iriswebapp_db:v2.4.29`, carries 6 more in an old Alpine base and an old `gosu` build (OpenSSL, libxml2, Go). v2.4.29 is the newest IRIS release, and upstream has not rebuilt it.
+
+**Risk:** Pillow may be reached through uploaded files, so restrict uploads to trusted analysts and keep IRIS off the public internet. The database findings are 32-bit-only OpenSSL, schema validation PostgreSQL does not do by default, and Go code gosu does not use. Move with the next release.
+
+The RabbitMQ image carries one CRITICAL OpenSSL finding, CVE-2026-31789. The application has not documented support for RabbitMQ 4, the only line that is still rebuilt, so the broker stays on the last 3.x release.
+
+**Risk:** the flaw affects only 32-bit platforms. Keep the broker on the internal network.
+
 ## What security problem this solves
 
 A shared, structured place for incident data during and after a real

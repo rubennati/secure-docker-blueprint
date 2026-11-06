@@ -12,7 +12,7 @@
 - **Domain:** Business operations
 - **Role:** CRM: companies, people, opportunities and tasks, with an extensible data model and an API
 - **Edition gating:** files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0 — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
-- **Based on version:** `v2.41.0`
+- **Based on version:** `v2.55.0`
 - **Last verified:** 2026-09-23 (v2.41.0) — behind Traefik with TLS: the first sign-up and workspace, a company over the interface and over REST, the interface under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
 
 The origin comes from Twenty's terms of service, which name Twenty.com PBC as a
@@ -20,10 +20,10 @@ public benefit corporation incorporated in Delaware.
 
 ## What we use
 
-- `twentycrm/twenty:v2.41.0` for both server and worker, as upstream's compose does.
+- `twentycrm/twenty:v2.55.0` for both server and worker, as upstream's compose does.
   Upstream pins `:latest`; not used here.
-- `postgres:16.14` — upstream's compose runs the PostgreSQL 16 line.
-- `redis:7.4-alpine` — upstream's compose uses an untagged `redis`.
+- `postgres:16.15` — upstream's compose runs the PostgreSQL 16 line.
+- `redis:8.10.3-alpine` — upstream's compose uses an untagged `redis`.
 - Local file storage, upstream's default; the S3 option is not configured.
 
 ## What we changed and why
@@ -128,6 +128,57 @@ container:
 mail and calendar sync (which need outbound access, see README); SSO; S3 storage;
 backup and restore; an upgrade across versions.
 
+## Version notes
+
+- Moved to `v2.55.0` on 2026-11-05 (released 2026-11-03), not run on a host at
+  this tag. Upstream's upgrade guide allows the jump from any release from v1.23
+  on straight to the latest; the server runs the migrations and upgrade
+  commands at start (the worker keeps `DISABLE_DB_MIGRATIONS`). PostgreSQL 15 or
+  newer is required; `DB_TAG` is 16. Steps and changes between v2.41.0 and
+  v2.55.0:
+  - v2.51.0 converts rich text to TipTap with the workspace command
+    `upgrade:2-51:migrate-rich-text-to-tiptap`; check after the first start
+    that no workspace failed: `docker compose exec twenty-server yarn command:prod
+    upgrade:status --failed-only`. The BlockNote sub-field of rich text is
+    deprecated in the API.
+  - v2.48.0 verifies IMAP and SMTP server certificates by default; a mail
+    server with a self-signed certificate stops working.
+  - v2.55.0: every webhook needs a role (`roleId`, and the `ROLES` permission
+    to create or edit one) — recreate webhooks that have none;
+    `setRecordGeneralAccess` and the metadata API fields `readability`,
+    `writability` and `sharingReach` are removed.
+  - API consumers: the legacy workspace-id workflow GraphQL API is gone
+    (v2.47.0) and the record sharing API is reshaped (v2.46.0).
+  - New optional variables `REDIS_QUEUE_PREFIX`, a Redis cache prefix and
+    `OTEL_METRIC_EXPORT_INTERVAL`; `BILLING_PLANS` concerns billing only. None
+    is set here.
+
+  Advisories fixed: GHSA-8w82-h3w4-62r5 (v2.47.0), GHSA-9pfj-h2fx-29hg
+  (v2.48.0), GHSA-j86q-q8c2-f8x7 (v2.52.0), CVE-2026-93990 in libexpat
+  (v2.43.0), and a TOTP code replay (v2.55.0). GHSA-m4vm-35cw-44rq (high) and
+  GHSA-pg47-7c3r-fwfx name no patched release.
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. No Redis version requirement was found for Twenty; upstream's
+  compose uses an untagged `redis`. This service starts as UID 999 through its own
+  `config/redis-entrypoint.sh`, which execs `redis-server` directly, so the image
+  entrypoint's privilege handling and module loading do not apply; no compose
+  change. Sources: https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh
+
 ## Upgrade checklist
 
 1. Read the release notes: https://github.com/twentyhq/twenty/releases
@@ -136,6 +187,8 @@ backup and restore; an upgrade across versions.
 4. Bump `APP_TAG` in `.env.example` — server and worker move together
 5. `docker compose pull && docker compose up -d`; the server runs the upgrade
    commands at start
-6. Log in and open a record
-7. Update **Based on version** above — and add **Last verified** only if the
+6. `docker compose exec twenty-server yarn command:prod upgrade:status --failed-only`
+   lists workspaces whose upgrade failed; a server restart retries it
+7. Log in and open a record
+8. Update **Based on version** above — and add **Last verified** only if the
    upgrade was exercised on a real install

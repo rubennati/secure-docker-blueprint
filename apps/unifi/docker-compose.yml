@@ -125,15 +125,15 @@ services:
       - proxy-public
       - app-internal
     ports:
-      - "3478:3478/udp"       # STUN
-      - "10001:10001/udp"     # device discovery
-      - "8080:8080/tcp"       # device inform (unifi → controller)
+      - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:3478:3478/udp"       # STUN
+      - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:10001:10001/udp"     # device discovery
+      - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:8080:8080/tcp"       # device inform (unifi → controller)
       # Optional (uncomment if needed):
-      # - "1900:1900/udp"     # L2 mDNS / UDP broadcast
-      # - "8843:8843/tcp"     # guest portal HTTPS
-      # - "8880:8880/tcp"     # guest portal HTTP
-      # - "6789:6789/tcp"     # mobile speedtest
-      # - "5514:5514/udp"     # remote syslog
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:1900:1900/udp"     # L2 mDNS / UDP broadcast
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:8843:8843/tcp"     # guest portal HTTPS
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:8880:8880/tcp"     # guest portal HTTP
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:6789:6789/tcp"     # mobile speedtest
+      # - "${UNIFI_BIND:?Set UNIFI_BIND in .env}:5514:5514/udp"     # remote syslog
 
     # --- Traefik (web UI only — device ports are direct) ---
     labels:
@@ -147,7 +147,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service — UniFi's UI runs on 8443/HTTPS inside the container
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8443"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
@@ -158,6 +158,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

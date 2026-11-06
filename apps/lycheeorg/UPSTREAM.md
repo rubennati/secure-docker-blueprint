@@ -11,14 +11,14 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Based on version:** `v7.8.3`
+- **Based on version:** `v7.12.1`
 - **Last checked:** 2026-04-17
 
 ## What we use
 
 - `lycheeorg/lychee` as the Laravel app
-- Official `mariadb:11.4` as backend
-- Official `redis:7.4-alpine` for cache and sessions
+- Official `mariadb:12.3.3` as backend
+- Official `redis:8.10.3-alpine` for cache and sessions
 - Docker Secrets for DB password, DB root password — natively consumed by both services
 - Bind-mounts under `./volumes/` for `/conf`, `/uploads`, `/sym`, `/logs`, `/lychee-tmp`
 
@@ -42,6 +42,56 @@
 | **Container names standardized** — `lychee-app/db/redis` instead of `lychee/lychee_db/lychee_redis` | Project-scoped naming |
 | **100+ lines of commented env-var examples trimmed** | Moved to upstream docs reference; `.env.example` is lean. Every dropped option remains available via standard env vars if needed |
 | **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for a public gallery |
+
+## Version notes
+
+- Moved to `v7.12.1` on 2026-11-05, not run on a host at this tag. No breaking change
+  and no manual step in the notes. The standard image moves to FrankenPHP 1.13.3
+  and builds its own ImageMagick 7.1.2 with JPEG XL support, and turns off PHP's `session.upload_progress`; entrypoint,
+  `PUID`/`PGID`, the volume paths and the healthcheck on `:2019/metrics` are
+  unchanged. The move from debian-slim to a PHP base image in v7.12.0 (#4915)
+  concerns only the `-legacy` image. Upstream's `.env.example` renames
+  `CACHE_DRIVER` to `CACHE_STORE`; `CACHE_DRIVER`, which this stack sets, is still
+  read while `CACHE_STORE` is unset. v7.12.0 adds email login. Security fixes:
+  CVE-2026-109618 and CVE-2026-109619 (PHP, in the Docker image, v7.12.0), a sprintf
+  vulnerability (v7.11.0), complete stripping against XSS and blocking of
+  IPv6-transition spellings of internal IPv4 addresses (v7.10.0), dependency CVEs
+  (v7.8.4).
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Support: Lychee requires "MariaDB (version >
+  10.2)" with no upper bound
+  (https://lycheeorg.dev/docs/getting-started/manual-installation/); upstream's
+  compose uses `mariadb:11`. `MARIADB_AUTO_UPGRADE: "1"`, already set in both
+  compose files, runs `mariadb-upgrade` at the first start on 12.3 after a
+  backup of the system tables; the data directory `./volumes/mysql` is reused.
+  Take the `mariadb-dump` before the tag changes: going back to 11.4 is only a
+  restore of that dump. Changed on the way (11.8 and 12.x):
+  `innodb_snapshot_isolation` is on by default, so a transaction that writes a
+  row another transaction changed after its snapshot fails with error 1020
+  instead of overwriting it; the new default collation `utf8mb4_uca1400_ai_ci`
+  does not apply, as the stack sets `utf8mb4_unicode_ci` explicitly.
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. No Redis version requirement was found for Lychee. The image's
+  entrypoint now drops to the `redis` user only when SETUID and SETGID are in the
+  capability bounding set, empties that set while dropping, and fixes ownership only
+  of `*.rdb` files and `appendonlydir` in `/data`. This service starts as root with
+  Docker's default capabilities, so it drops to UID 999 as before; no compose
+  change. Sources: https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh
 
 ## Upgrade checklist
 

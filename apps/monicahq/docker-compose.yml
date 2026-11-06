@@ -96,6 +96,9 @@ services:
       APP_URL: https://${APP_TRAEFIK_HOST}
       APP_KEY: ${APP_KEY}
       APP_TRUSTED_PROXIES: "*"
+      # Unset, Laravel sets its session and remember cookies without Secure
+      # behind Traefik's HTTPS (step 8 lab host, 4.1.2).
+      SESSION_SECURE_COOKIE: "true"
       # Database — Monica's Laravel config reads DB_PASSWORD from env only.
       # Value must match contents of .secrets/db_pwd.txt.
       DB_HOST: db
@@ -140,7 +143,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
@@ -149,6 +152,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

@@ -75,12 +75,12 @@ services:
       # SSH protocol proxy — every SSH target, reached by anyone with a
       # Warpgate account. A raw TCP listener: Traefik's HTTP router cannot
       # carry this protocol.
-      - "${WARPGATE_SSH_PORT}:2222"
+      - "${WARPGATE_BIND:?Set WARPGATE_BIND in .env}:${WARPGATE_SSH_PORT}:2222"
       # MySQL protocol proxy. Only meaningful once a MySQL target exists in
       # the admin UI — comment this line out otherwise, it costs nothing to
       # leave open but there is no reason to publish a port for a protocol
       # not in use.
-      - "${WARPGATE_MYSQL_PORT}:33306"
+      - "${WARPGATE_BIND:?Set WARPGATE_BIND in .env}:${WARPGATE_MYSQL_PORT}:33306"
 
     # --- Traefik ---
     # Admin web UI only. Warpgate's own docs (Running behind a reverse proxy)
@@ -93,13 +93,14 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8888"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
 
     # --- Health & Observability ---
-    # The image ships its own healthcheck (verified: `docker inspect` shows
-    # Config.Healthcheck = ["CMD-SHELL", "warpgate healthcheck"]). Restated
+    # The image ships its own healthcheck — exec form since the distroless
+    # image of 0.30.0 (`HEALTHCHECK CMD ["/usr/local/bin/warpgate",
+    # "healthcheck"]` in upstream's Dockerfile; there is no shell). Restated
     # explicitly for visibility, matching this repository's convention of
     # always showing the Health block rather than relying on an invisible
     # image default.
@@ -115,4 +116,5 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true

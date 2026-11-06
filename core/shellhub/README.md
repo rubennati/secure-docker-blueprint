@@ -6,6 +6,12 @@ nothing on the target needs an inbound port, a public IP, or a firewall
 change. See the [PAM/bastion comparison](../README.md#privileged-access--bastion-alternatives)
 for how it differs from Warpgate, JumpServer, Teleport and Orion Belt.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
@@ -61,6 +67,8 @@ install an agent on a target machine and register it from the UI.
 |---|---|---|---|
 | `SHELLHUB_SSH_PORT` (2222) | Raw SSH (agent rendezvous + your `ssh` client) | Every device running an agent, and everyone who needs to connect to one | No — not HTTP |
 | Gateway (80 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
+
+The ports listen on `SHELLHUB_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published (DEC-075).
 
 The SSH port has to be reachable from both directions this repository
 normally keeps separate: agents on target machines dial *out* to it, and
@@ -127,10 +135,10 @@ For the general PostgreSQL restore procedure and verification checklist, see
 
 ## Known Issues
 
-- **`server` has no stable Docker Hub tag as of this writing** — this
-  deployment pins the newest release candidate; see
-  [UPSTREAM.md](UPSTREAM.md#known-limitations) and check for a stable
-  release before every deploy.
+- **Usage telemetry is switched off.** Upstream sends a daily usage report
+  to `telemetry.shellhub.io` by default since v0.28.0; this stack sets
+  `SHELLHUB_TELEMETRY=false` on the server. See
+  [UPSTREAM.md](UPSTREAM.md#version-notes).
 - **Not yet exercised beyond a clean start** — no agent registered, no SSH
   session proxied, no restart or upgrade tested.
 - **OIDC-in-Community-Edition status unconfirmed** — see Security Model.

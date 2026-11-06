@@ -261,18 +261,69 @@ be marked *for review*; none needed it.
 
 Inventory and batches:
 [`../docs/audits/upstream-version-inventory-2026-10-31.md`](../docs/audits/upstream-version-inventory-2026-10-31.md).
-One pull request per batch, one commit per stack, the move recorded in the
-stack's `UPSTREAM.md`; the scan of the pull request from `dev` to `main`
-measures it.
+One pull request and one commit per batch, each move recorded in the
+stack's `UPSTREAM.md`; a full image scan of the tree with the new pins measures
+it (today a run started by hand on `dev`; the trigger is an open CI decision),
+the baseline record follows, and `dev` reaches `main` when the maintainer
+decides, not per batch.
 
 - [x] Batch 1 — seven patch releases with the most recorded CRITICAL pairs (#292, 2026-10-31; none run on a host)
-- [ ] Batch 2 — the remaining 28 patch releases; `apps/defectdojo`, `apps/dify`, `apps/greenmail` and `business/chatwoot` are `baseline-aligned` and fall to `scaffolded` without a host run
+- [x] Batch 2 — 26 of the 28 patch releases moved on 2026-10-31, none run on a host; `apps/greenmail` fell to `scaffolded`, the three other `baseline-aligned` stacks moved a side image only and keep their state. Held, with the reason in `UPSTREAM.md`: Dify's plugin daemon (moves with the next Dify release) and SeaSearch (no notes past 1.0.4, pairing stated only in the Seafile manual)
 - [ ] Batch 3 — 60 minor releases of applications, release notes per stack
 - [ ] Batch 4 — 9 minor releases of database and infrastructure images, one pull request per family
 - [ ] Batch 5 — 20 major releases of applications, a decision per stack
 - [ ] Batch 6 — 23 major releases of databases: PostgreSQL 18 across 12 stacks with one procedure, then Valkey 9, MariaDB 11.8, nginx 1.31
 - [ ] Batch 7 — floating, release-candidate, date and distribution tags, and the six registries the inventory could not reach
 - [ ] The inventory is retaken before each batch until the Renovate decision (`docs/renovate-proposal.md`) is made
+
+### 12. The ingress programme — decided 2026-10-31
+
+DEC-075 to DEC-078 ([`decisions.md`](decisions.md)); the audit is
+[`../docs/audits/ingress-architecture-2026-10-31.md`](../docs/audits/ingress-architecture-2026-10-31.md).
+One pull request per step, each without a behaviour change for an installation that
+declares nothing — the render-identity test holds that.
+
+- [x] 1. The guards: `missing-network-label`, `port-no-host-address`, the subnet check,
+      the render-identity test; the records and the register.
+- [x] 2. The published ports on one named network: `gw_priority` on `proxy-public`;
+      `check-published-family.py` reads the gateway endpoint of the container rather
+      than assuming `public`; the Compose minimum for `gw_priority` written down (2.33.1). Changes
+      the hairpin source address on the next `up -d` — CHANGELOG Migration. Done on
+      `feature/ingress-step-2-gateway`; the IPv6 endpoint stays a host proof.
+- [x] 3. `access-trusted*` from `TRUSTED_RANGES`, the overlap check, `access-lan*`
+      retired, `migrate-traefik-env.sh` renames and adds the line (DEC-076, amended:
+      breaking with a migration, no gate). Done on `feature/ingress-step-3-trusted`.
+      Integrations call back over a Docker network with the application's setting;
+      Seafile's two OnlyOffice paths have opt-in routes (`onlyoffice-callback.yml`).
+- [x] 4. The auth posture in every `.env.example` (`# auth posture:` above the auth
+      variable), the `auth-posture` rule, the stacks without a login decided one by
+      one (DEC-077): basicAuth for Ollama, Homepage, Dashy, Heimdall; Mailpit's own
+      htpasswd; `none` with a reason for whoami, httpbin, it-tools, GreenMail, Gatus.
+      Done on `feature/ingress-step-4-posture`.
+- [x] 5. Edge networks: `EDGE_NETWORKS` in `core/traefik/.env` is the explicit list of
+      installed stacks; `render.sh` writes `config/edge-networks.yml`, `COMPOSE_FILE`
+      applies it; every stack's `networks:` block carries `name: ${TRAEFIK_NETWORK}` and
+      the examples default to `<project>-edge`; `validate.sh` compares the routed
+      containers' labels with Traefik's networks; the migration guide is
+      `core/traefik/docs/edge-networks.md`. Done on `feature/ingress-step-5-edge`.
+- [x] 6. Exposure shown: the derived profile and the layer list in `validate.sh`, the
+      external test script `scripts/exposure-test.sh` and its marker, the rendered
+      `config/host/ingress.nft` (`nft -c` on every profile), the management requirement
+      (DEC-078). Done on `feature/ingress-step-6-exposure`; loading the ruleset on a
+      host and a real exposure test stay step 8.
+- [x] 7. IPv6 as bindings per family: `render.sh` writes `TRAEFIK_BIND_V4` and
+      `TRAEFIK_BIND_V6` into `config/published-ports.yml` (empty publishes nothing,
+      neither variable with a default, the base and dual-stack files without
+      ports); dual-stack the example's default (DEC-063); the nine known unbound stacks on a required `*_BIND` variable; the
+      operator site, the Traefik README and the IPv6 guide corrected. Done on
+      `feature/ingress-step-7-ipv6`. Open for step 8: the IPv6 gateway endpoint on a
+      host, an IPv6-only host (ingress and the egress prerequisites), the bound
+      stacks reached over their binding.
+- [x] 8. Host evidence and release. Run on the step 8 lab host 2026-11-01 to 2026-11-04
+      against [`docs/host-verification-ingress.md`](../docs/host-verification-ingress.md),
+      results in its table and in `docs/labs/ingress/2026-11-01-results.md`; released in
+      v0.9.7. Not verified: the LAN columns of block A (no LAN on the host), IPv6-only
+      (block O, its own run), CrowdSec's blocking in the host firewall.
 
 ## Blocked on a host
 

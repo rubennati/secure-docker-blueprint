@@ -10,15 +10,15 @@
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions
-- **Based on version:** `2.5.0`
+- **Based on version:** `2.8.4`
 - **Last checked:** 2026-04-17
 
 ## What we use
 
 - Upstream `jhumanj/opnform-api` (Laravel)
 - Upstream `jhumanj/opnform-client` (Nuxt)
-- Official `postgres:16-alpine`
-- Official `redis:7.4-alpine`
+- Official `postgres:16.15-alpine`
+- Official `redis:8.10.3-alpine`
 - Docker Secret for Postgres password + inline duplicate for Laravel
 - Bind-mount `./volumes/postgres`, `./volumes/redis`, `./volumes/api-storage`
 
@@ -45,6 +45,74 @@ Key design choices:
 | **`app-internal` network (`internal: true`)** | Isolate Postgres + Redis |
 | **`security_opt: no-new-privileges`** on all services | Baseline |
 | **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Forms are meant to be filled by external users; `access-vpn` would be OK if your forms are internal-only |
+
+## Version notes
+
+- Moved to `2.8.4` on 2026-11-05 (released 2026-11-05), not run on a host at
+  this tag. Both images now carry the tag. No database migration from 2.8.1
+  to 2.8.4; API and client move together, as `APP_TAG` names both. 2.8.2
+  saves edits to existing integrations correctly and filters shared and
+  transition address ranges in webhook URLs more strictly; 2.8.3 also rejects
+  Teredo IPv6 addresses in webhook and PDF image URLs; 2.8.4 updates six
+  Symfony components to 7.4.23 for their security fixes. 2.8.4 adds the
+  hostname to the instance telemetry; this stack keeps
+  `OPNFORM_ANONYMOUS_TELEMETRY_DISABLED=true`, so none is sent. No compose
+  change. CRITICAL findings 1 -> 1: the API image still ships Alpine
+  `brotli-libs` 1.2.0 (CVE-2026-111497, fixed in 1.2.1); the client image has
+  none. Sources: https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.2,
+  https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.3,
+  https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.4
+- Moved to `2.8.1` on 2026-11-05, not run on a host at this tag. Not 2.8.3:
+  `jhumanj/opnform-api` carries 2.8.2 and 2.8.3, but `jhumanj/opnform-client`
+  stops at 2.8.1 on Docker Hub — the release pipeline runs for both tags were
+  cancelled — and `APP_TAG` names both images. Move to 2.8.3 once the client
+  tag exists (2.8.2 and 2.8.3 tighten webhook and PDF image URL filtering and
+  add no migration). In the range: 2.6.0 and 2.7.0 carry database migrations,
+  which the API image runs at start — back up first. 2.7.0 stops sending
+  answers to an embedding page by default, revokes sessions and tokens on a
+  password change, requires public HTTPS endpoints without redirects for OIDC,
+  a TXT proof for new custom domains, and `X-AI-Completion-Token` when polling
+  an AI completion. 2.6.1 routes `/api/_nuxt_icon/` to the client in nginx;
+  `docker/nginx.conf` already carries it. 2.8.1 adds the optional
+  `PUBLIC_UPLOADS_MAX_FILE_SIZE` (50 MB default for temporary uploads), 2.6.0
+  the optional `EMAIL_TRACKING_SNS_TOPICS`. Security: 2.6.1 rebuilds on PHP
+  8.3.36 for CVE-2026-109618 and CVE-2026-109619 and disables PHP session upload
+  progress; 2.7.0 hardens password resets, credential revocation, OAuth/OIDC,
+  domain ownership and file signing. No GHSA is published.
+- nginx moved to `1.31` on 2026-11-05, not run on a host at this tag.
+  1.29.7 enables upstream keepalive by default and makes `proxy_http_version`
+  default to 1.1 without a `Connection` header; `docker/nginx.conf` sets both
+  explicitly on its proxied locations. 1.31.0 rejects HTTP/2 and HTTP/3
+  requests carrying connection-specific headers; this nginx listens on plain
+  HTTP/1.1 behind Traefik. Security fixes in the range include CVE-2026-27654
+  (1.29.7), CVE-2026-1642 (1.29.5), CVE-2026-42945, CVE-2026-42926,
+  CVE-2026-40460 (1.31.0), CVE-2026-9256 (1.31.1), CVE-2026-42530 (1.31.2),
+  CVE-2026-56434 (1.31.3), CVE-2026-90439 (1.31.6), CVE-2026-15176,
+  CVE-2026-93479, CVE-2026-95101, CVE-2026-97629 and CVE-2026-97205 (1.31.7).
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. OpnForm's deployment guide names Redis without a version. The
+  image's entrypoint now drops to the `redis` user only when SETUID and SETGID are
+  in the capability bounding set, empties that set while dropping, and fixes
+  ownership only of `*.rdb` files and `appendonlydir` in `/data`. This service
+  starts as root with Docker's default capabilities, so it drops to UID 999 as
+  before; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
+  https://docs.opnform.com/deployment
 
 ## Upgrade checklist
 

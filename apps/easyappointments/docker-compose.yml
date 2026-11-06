@@ -120,11 +120,28 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+      # The image serves its build files from the web root: the dependency list
+      # with exact versions (vendor/composer/installed.json, 77 kB), composer.json,
+      # README.md, CHANGELOG.md and LICENSE (final audit FA-34). The pages load
+      # nothing from these paths — assets come from /assets/. A second router of
+      # higher priority answers them with 404 and lets nobody through; it keeps
+      # the four positions, so a refusal carries the headers as well.
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.rule=Host(`${APP_TRAEFIK_HOST}`) && (PathPrefix(`/vendor/`) || Path(`/composer.json`) || Path(`/composer.lock`) || Path(`/README.md`) || Path(`/CHANGELOG.md`) || Path(`/LICENSE`))"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.priority=1000"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH},${COMPOSE_PROJECT_NAME}-files-deny@docker"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-files.service=${COMPOSE_PROJECT_NAME}"
+      # Nobody: 192.0.2.1 is TEST-NET-1 (RFC 5737) and never a client — unlike
+      # access-blocked, whose placeholder 127.0.0.1 admits Traefik's own namespace.
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-files-deny.ipallowlist.sourcerange=192.0.2.1/32"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-files-deny.ipallowlist.rejectstatuscode=404"
 
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

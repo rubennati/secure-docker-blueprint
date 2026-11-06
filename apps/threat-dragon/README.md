@@ -10,6 +10,12 @@ transmit secrets at all.
 Architecture → Threat Dragon → Trust boundaries → Threats → Mitigations
 ```
 
+## Open findings
+
+The image, `owasp/threat-dragon:v2.6.2`, carries 2 CRITICAL findings: `proxy-addr` (CVE-2026-90711) and the npm CLI's `tar` (CVE-2026-59873). It is the newest release.
+
+**Risk:** the `proxy-addr` flaw concerns a mis-written trusted subnet, which Threat Dragon does not configure, and npm does not run in the container. Move to the next release.
+
 ## Where threat models live
 
 Threat Dragon supports two storage modes, and this stack ships with the

@@ -2,13 +2,19 @@
 
 Self-hosted photo gallery focused on fast browsing and clean presentation. Three-service stack: Laravel app, MariaDB backend, Redis cache.
 
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `lycheeorg/lychee:v7.8.3` | PHP/Laravel app + Apache |
-| `db` | `mariadb:11.4` | Primary store (albums, photo metadata, users) |
-| `redis` | `redis:7.4-alpine` | Cache + session driver |
+| `lychee-app` | `lycheeorg/lychee:v7.12.1` | PHP/Laravel app on FrankenPHP |
+| `db` | `mariadb:12.3.3` | Primary store (albums, photo metadata, users) |
+| `redis` | `redis:8.10.3-alpine` | Cache + session driver |
 
 ## Try it locally
 
@@ -48,7 +54,7 @@ sudo chown -R 1000:1000 volumes/conf volumes/uploads volumes/sym volumes/logs vo
 docker compose up -d
 
 # 6. Wait for first-run migrations (~60 seconds — note the STARTUP_DELAY=30)
-docker compose logs app --follow
+docker compose logs lychee-app --follow
 # Watch for: "Started Apache"
 
 # 7. Open UI and create the admin account on first visit

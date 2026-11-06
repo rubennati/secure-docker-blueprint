@@ -181,11 +181,11 @@ sudo chown -R 999:999 volumes/data
    # Check: does the Host() value exactly match the DNS name you're hitting?
    ```
 
-2. **Container not on the correct Docker network** — Traefik can only route to containers on a shared network.
+2. **Container not on the correct Docker network** — Traefik routes only to containers on a network it has joined: the stack's `TRAEFIK_NETWORK` (by default `<project>-edge`), which must be listed in `EDGE_NETWORKS` of `core/traefik` with Traefik recreated since. A stack whose network is not listed is unreachable and Traefik's log says nothing; `bash ops/scripts/validate.sh` in `core/traefik` reports it.
 
    ```bash
    docker inspect <container> --format '{{range $k,$v := .NetworkSettings.Networks}}{{$k}} {{end}}'
-   # Must include proxy-public (or whatever TRAEFIK_NETWORK is set to)
+   # Must include the stack's TRAEFIK_NETWORK (<project>-edge, or proxy-public)
    ```
 
 3. **Labels not applied** — happens when `docker compose up -d` used an old compose file or the container wasn't recreated after a label change.
@@ -255,11 +255,14 @@ The full reasoning is in
    `"userland-proxy": false`, then `sudo systemctl restart docker`.
 2. Set `PUBLIC_NETWORK_SUBNET_V4` and `PUBLIC_NETWORK_SUBNET_V6` in
    `core/traefik/.env`. Generate your own ULA prefix — do not copy the example.
-3. Bring Traefik up with the overlay and confirm it:
+   Set `TRAEFIK_BIND_V6=[::]` and
+   `COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml`.
+3. Render, bring Traefik up and confirm it:
 
    ```bash
-   docker compose -f docker-compose.yml -f network-dual-stack.yml up -d
-   bash ops/scripts/validate.sh --strict -f docker-compose.yml -f network-dual-stack.yml
+   bash ops/scripts/render.sh
+   docker compose up -d
+   bash ops/scripts/validate.sh --strict
    ```
 
    An existing `proxy-public` without IPv6 is reported as an error — it has to be
@@ -270,7 +273,9 @@ reported the client's real tailnet address in `X-Real-Ip` for a browser request
 over the tailnet, and the same setup preserved the real client IP over public
 IPv4 and public IPv6. The three daemon flags and the overlay were applied
 together and **not** isolated individually, so which of them is strictly required
-is still open — but the combination is proven.
+is still open. That run predates the per-family bindings and the edge networks;
+the tailnet path has not been run with the current configuration
+([`docs/host-verification-ingress.md`](docs/host-verification-ingress.md), Results).
 
 **Confirm it yourself before blaming the policy:**
 

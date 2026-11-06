@@ -11,6 +11,12 @@ log in as the recipient and assert on what arrived.
 | Read mail with | a browser | any IMAP or POP3 client, per recipient |
 | Typical caller | a person looking at what a stack would have sent | an automated test that connects as the recipient |
 
+## Open findings
+
+The image, `greenmail/standalone:2.1.15`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497). It is the newest release, and upstream has not rebuilt it.
+
+**Risk:** only the font library depends on it, and GreenMail renders no fonts. It is a test mail server: keep it on the internal network and move to the next release.
+
 ## Architecture
 
 ```text
@@ -21,7 +27,10 @@ Other containers on proxy-public → greenmail :3025 :3110 :3143 :3465 :3993 :39
 One container. Test mail lives in memory and is gone after a restart — no
 database, no volume. The mail ports are not HTTP and are not published to the
 host; other stacks reach them by service name on `proxy-public`, the same way
-they reach Mailpit.
+they reach Mailpit — which means the stack under test sets
+`TRAEFIK_NETWORK=proxy-public` in its `.env`, the shared choice
+([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md));
+on its own edge network, the examples' default, `greenmail` does not resolve.
 
 ## Setup
 
@@ -31,7 +40,7 @@ docker compose up -d
 ```
 
 Set `APP_TRAEFIK_HOST` in `.env` for the API and Swagger UI; access defaults to
-`access-lan-vpn`. From any container on `proxy-public`, point SMTP at
+`access-trusted-vpn`. From any container on `proxy-public`, point SMTP at
 `greenmail:3025` and IMAP or POP3 at `greenmail:3143` / `greenmail:3110`,
 logging in with the recipient's address and any password.
 
@@ -44,9 +53,10 @@ Two things follow from the test-double design:
 
 ## Status
 
-Run behind Traefik with TLS on 2026-09-22 (2.1.13): the REST API and
-Swagger UI through the route, SMTPS and POP3S with a TLS client, and a restart.
-Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
+Run behind Traefik on the step 8 lab host on 2026-11-03 (2.1.15): all six
+mail protocols from a container on `proxy-public`, the REST API through the
+route, no published port, nothing reachable from an edge network, and a
+restart. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-11-03).
 
 ## Try it locally
 

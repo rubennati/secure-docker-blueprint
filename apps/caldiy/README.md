@@ -6,13 +6,35 @@
 
 For an alternative with an established track record and no build dependency, see [`apps/easyappointments/`](../easyappointments/) (PHP + MariaDB, GPL-3.0).
 
+## Open findings
+
+The pinned image, `ghcr.io/rubennati/cal.diy:v6.2.0-6`, ships with 24 CRITICAL
+vulnerabilities that have published fixes: Next.js 16.2.3 (five advisories,
+among them GHSA-vcvr-r3jv-pc5j in `next/og`), `@sentry/nextjs`, `handlebars`,
+`proxy-addr`, `shell-quote`, `tar`, a Go standard library, and Debian 12 packages
+(`libgnutls30`, ImageMagick, `perl`, `libbrotli1`, `mariadb-common`, kernel
+headers). The image is this project's own build of the Cal.diy fork; the fixes
+need a rebuild on Next.js 16.4.1 or later and a current Debian base, which is
+planned but not done.
+
+**Risk:** the Next.js and Node.js packages sit in the request path of the web
+application, so treat them as reachable; whether each advisory applies to how
+Cal.diy uses Next.js has not been checked. The Debian packages and kernel
+headers are not on that path. Keep the stack on the shipped `access-vpn`
+default, or behind the Cloudflare proxy described above, until the rebuilt
+image is pinned.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
-| `db` | `postgres:17.11` | Users, event types, bookings, team memberships |
-| `redis` | `redis:7.4-alpine` | Session cache + job queue |
+| `caldiy-app` | `ghcr.io/rubennati/cal.diy:v6.2.0-6` | Next.js web app + scheduling engine |
+| `db` | `postgres:18.6` | Users, event types, bookings, team memberships |
+| `redis` | `redis:8.10.3-alpine` | Session cache + job queue |
 
 The image is built from [`rubennati/cal.diy`](https://github.com/rubennati/cal.diy) — the security-first, review-gated **cal.forte** fork that publishes reviewed, versioned images to GHCR (never `latest`). Upstream does not publish a reliable pre-built image. See [UPSTREAM.md](UPSTREAM.md).
 
@@ -42,12 +64,29 @@ docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
 
 # 4. Start
 docker compose up -d
-docker compose logs app --follow
+docker compose logs caldiy-app --follow
 # Watch for: "ready on port 3000"
 
-# https://<APP_TRAEFIK_HOST>
+# https://<APP_TRAEFIK_HOST>, over the VPN — the router ships closed (below)
 # Setup wizard runs on first visit — first user becomes the owner.
+
+# 5. Open the booking pages once the owner exists: in .env
+#    APP_TRAEFIK_ACCESS=access-public
+docker compose up -d   # recreates the app with the new label
 ```
+
+### The open window, and why the router starts closed
+
+Until the setup wizard has run, whoever reaches the instance first creates the
+owner account. `NEXT_PUBLIC_DISABLE_SIGNUP=true` closes signup, not the wizard,
+and there is no setup password; certificates are public, and a new name is
+scanned within minutes. `.env.example` therefore ships
+`APP_TRAEFIK_ACCESS=access-vpn` — or `access-trusted` with your address in
+`TRUSTED_RANGES` where there is no VPN. Booking pages, embeds, calendar push
+notifications and incoming webhooks need the public route, so opening it is the
+step after the wizard, not the default; what it then exposes is the login form.
+Admin pages and booking pages share the host and the router, so they share the
+policy.
 
 > **Before exposing publicly:** put the host behind Cloudflare (proxied) and apply
 > [docs/cloudflare.md](docs/cloudflare.md) — WAF, geo allowlist, and origin hiding are the edge
@@ -80,6 +119,7 @@ Secrets are plain env in `.env.local` (gitignored) — **local only**, never pro
 | Postgres | `app-internal` network (`internal: true`) — not reachable from host |
 | Redis | `app-internal` (`internal: true`), `read_only: true`, `cap_drop: ALL`, `pids_limit: 50` |
 | Host header injection | `ALLOWED_HOSTNAMES` set to deployment hostname |
+| First-run takeover | Router ships `access-vpn` until the setup wizard has created the owner; `access-public` afterwards ("The open window") |
 | Public self-registration | Disabled — `NEXT_PUBLIC_DISABLE_SIGNUP=true` (no open account creation) |
 | HTTP security headers | Traefik `headers-standard` (`APP_TRAEFIK_HEADERS`) — HSTS, `nosniff`, `X-Frame-Options: DENY`, Referrer-Policy, Permissions-Policy. See [Traefik middlewares](#traefik-middlewares) below. |
 | Privilege escalation | `no-new-privileges:true` on all services |
@@ -91,7 +131,7 @@ Secrets are plain env in `.env.local` (gitignored) — **local only**, never pro
 
 ### Traefik middlewares
 
-Cal.diy's router carries the four positions of the middleware model ([`docs/standards/traefik-labels.md`](../../docs/standards/traefik-labels.md)): `access-public`, `limit-standard`, `headers-standard`, `auth-none@file`. No request is blocked at the proxy beyond the counter (125 req/s average, burst 500, per client address); the headers profile sets what a **public-facing scheduling app that stores PII** (names, emails, meeting topics) should send:
+Cal.diy's router carries the four positions of the middleware model ([`docs/standards/traefik-labels.md`](../../docs/standards/traefik-labels.md)): `headers-standard`, `access-public` once the owner exists (`access-vpn` until then), `limit-standard`, `auth-none@file`. No request is blocked at the proxy beyond the counter (125 req/s average, burst 500, per client address); the headers profile sets what a **public-facing scheduling app that stores PII** (names, emails, meeting topics) should send:
 
 | Header | `headers-standard` |
 |--------|--------------------|
@@ -119,7 +159,7 @@ same-origin, or a per-app middleware replacing `X-Frame-Options` with a
 `frame-ancestors` allowlist — `apps/collabora` and `apps/onlyoffice` show the
 shape. Neither has been run against the embed here.
 
-**Changing a position:** set the new value in `.env` and recreate the app container — `docker compose up -d --force-recreate app`. Container labels are read at create time; Traefik hot-reloads the middleware reference, no Traefik restart needed.
+**Changing a position:** set the new value in `.env` and recreate the app container — `docker compose up -d --force-recreate caldiy-app`. Container labels are read at create time; Traefik hot-reloads the middleware reference, no Traefik restart needed.
 
 ## Backup
 

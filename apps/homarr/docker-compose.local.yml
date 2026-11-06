@@ -22,7 +22,7 @@ services:
       - "127.0.0.1:7575:7575"
     networks: [homarr-local]
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:7575"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:7575/api/health/live',{method:'HEAD',signal:AbortSignal.timeout(8000)}).then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 5

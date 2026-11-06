@@ -77,8 +77,9 @@ APP_TRAEFIK_CERT_RESOLVER=cloudflare-dns
 APP_TRAEFIK_ACCESS=access-vpn
 APP_TRAEFIK_LIMIT=limit-standard
 APP_TRAEFIK_HEADERS=headers-standard
+# auth posture: app-login — the application's own login governs every request
 APP_TRAEFIK_AUTH=auth-none@file
-TRAEFIK_NETWORK=proxy-public
+TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge
 ```
 
 This section is second because it's what you change most often per deployment.
@@ -223,7 +224,7 @@ For which generation command to use per secret type, how to store the result, an
 - [ ] Infra images (redis, mariadb, postgres, nginx, clamav) pinned to `major.minor`
 - [ ] Image name + Docker Hub link as comment above each tag variable
 - [ ] Container names derived from `${COMPOSE_PROJECT_NAME}`
-- [ ] `TRAEFIK_NETWORK=proxy-public` in Domain & Traefik section
+- [ ] `TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge` in Domain & Traefik section (`proxy-public` only for a stack that other stacks reach by name)
 - [ ] Domain placeholders use `example.com`
 - [ ] `TZ=UTC` (not `TIMEZONE=`)
 - [ ] No passwords or tokens — only in `.secrets/`

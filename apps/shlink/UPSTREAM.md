@@ -11,12 +11,12 @@
 - **Origin:** Spain · Alejandro Celaya · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** URL shortener on your own domain with visit statistics and a REST API; no user accounts, API keys instead
-- **Based on version:** `5.1.7`
+- **Based on version:** `5.1.8`
 
 ## What we use
 
 - `ghcr.io/shlinkio/shlink:5.1.7` — the server, RoadRunner with PHP workers.
-- `ghcr.io/shlinkio/shlink-web-client:4.8.1` — the browser interface, static
+- `ghcr.io/shlinkio/shlink-web-client:4.9.0` — the browser interface, static
   files behind nginx. Optional; the API works without it.
 - `postgres:18.6-alpine`. Shlink's own default is SQLite, which upstream states
   is not supported for production.
@@ -26,7 +26,7 @@
 | Change | Reason |
 |--------|--------|
 | Three routers instead of one published port | The short links, the REST API and the browser interface have different audiences. Traefik matches the longer rule first, so `/rest` keeps its own access policy even when the redirects are opened |
-| `APP_TRAEFIK_ACCESS=access-lan-vpn` on the redirects | Every stack here ships restricted. A short link is meant to be followed, so this is the one value an operator decides deliberately — the README says what opening it accepts |
+| `APP_TRAEFIK_ACCESS=access-trusted-vpn` on the redirects | Every stack here ships restricted. A short link is meant to be followed, so this is the one value an operator decides deliberately — the README says what opening it accepts |
 | `AUTO_RESOLVE_TITLES: "false"` | Upstream's default is `true`, which makes the server fetch every long URL that is shortened to read its `<title>` — an outbound request to an address the caller chose |
 | `SKIP_INITIAL_GEOLITE_DOWNLOAD: "true"` | Without a MaxMind licence key the download cannot succeed; skipping it keeps the start clean. Set a key and remove this to geolocate visits |
 | `ANONYMIZE_REMOTE_ADDR: "true"`, `TRUSTED_PROXIES` | Upstream's default restated, and the proxy named so a visit records the visitor rather than Traefik |
@@ -63,6 +63,17 @@ What a host run still has to establish: the three routers behind Traefik with
 TLS, a refused client on the API router while a redirect still works, the
 first-load request count for the web client, a restart, and the restore in the
 README.
+
+## Version notes
+
+- Moved to `5.1.8` on 2026-10-31 (released 2026-10-21), not run at this tag. The
+  one change is the image base, Alpine 3.24, so PHP security updates arrive
+  again, among them CVE-2026-109618 and CVE-2026-109619. Changed, added, removed
+  and deprecated all read "nothing"; no variable or migration.
+- The web client moved to `4.9.0` on 2026-11-05, not run on a host at this
+  tag. The one addition is forward support for Mercure 1.0, used once the
+  server exposes it, plus dependency updates; deprecated, removed and fixed
+  read "nothing". No variable, path or port change, no advisory.
 
 ## Upgrade checklist
 

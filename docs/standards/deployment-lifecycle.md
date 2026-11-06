@@ -21,10 +21,14 @@ both at once, which is why the procedure below pins a release.
 
 ## 1 — Prepare the host
 
-Docker 24.0+ with Compose v2, a Linux host, `envsubst` from `gettext-base`, and a domain —
-at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at any
-provider for HTTP-01 or TLS-ALPN-01.
+Docker Engine 28.0+ with Compose 2.33.1+, a Linux host, `envsubst` from `gettext-base`, and a
+domain — at Cloudflare for DNS-01 certificates, the one provider `core/traefik` wires; at
+any provider for HTTP-01 or TLS-ALPN-01.
 The root [`README.md`](../../README.md#getting-started) states these as the requirements.
+Engine 28.0 is the first release that accepts `"ipv6": true` without `fixed-cidr-v6`,
+the shape the dual-stack prerequisites document, and the first that keeps a port
+published on a loopback address off the network (moby#49325); on 27.x the documented
+`daemon.json` does not start the daemon. Compose 2.33.1 is the first release that knows `gw_priority`, which `core/traefik/docker-compose.yml` uses to pin the published ports to `proxy-public`; an older Compose refuses the file.
 
 **The Docker daemon bounds container logs — the stacks do not.** No service in this
 repository sets a `logging:` block, and Docker's default driver, `json-file`, rotates
@@ -57,9 +61,23 @@ containers keep running while the daemon itself restarts or is upgraded. The ope
 site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
 the same file, as its own line.
 
-**Not yet standardised here:** host firewall policy, unattended upgrades, the account the
-stacks run under, and kernel or `sysctl` expectations. A deployment works without them
-being written down; it is simply not this repository that says what they should be.
+**The host itself** — updates, accounts, SSH, the provider filter, the second way in, the
+VPN — is outside the blueprint; [`docs/host-baseline.md`](../host-baseline.md) is the
+baseline it assumes, with what was tested on a host and what is open.
+
+**The host firewall and management access.** `core/traefik` renders a recommended
+`nftables` ruleset for the exposure profile it derives — `config/host/ingress.nft`,
+installed by the operator, never applied by the repository — and the two requirements
+that go with it: administration arrives over the VPN by key, and a second path that does
+not depend on ingress (the hoster's console, a second interface) exists for the day the
+first is gone. No automatically filled rule reaches the management plane. What the
+internet reaches is measured from another machine with `scripts/exposure-test.sh`, and
+`validate.sh --strict` requires that measurement's marker for a public binding
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), DEC-078).
+
+**Not yet standardised here:** unattended upgrades, the account the stacks run under,
+and kernel or `sysctl` expectations. A deployment works without them being written
+down; it is simply not this repository that says what they should be.
 
 ## 2 — Choose a release
 
@@ -85,8 +103,11 @@ set. Secrets do not belong in `.env` — see [`secrets.md`](secrets.md) for what
 
 ## 4 — Deploy in order
 
-**Traefik first.** It creates `proxy-public`, the external network every stack that
-publishes a domain attaches to; a stack started before it fails on a missing network.
+**Traefik first.** It creates `proxy-public` and the edge networks `EDGE_NETWORKS` in
+its `.env` lists — the external network each stack that publishes a domain attaches to;
+a stack started before it fails on a missing network, and a stack whose edge network is
+not listed is unreachable without a log line
+([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
 
 After that the order follows one rule: **a stack starts after whatever creates a network
 it declares as external, or provides a middleware its Traefik labels name.** Those are the
@@ -95,9 +116,9 @@ stack's own compose file rather than remembered here:
 
 | Before | Comes | Why |
 |---|---|---|
-| `core/traefik` | every stack publishing a domain | creates `proxy-public` |
+| `core/traefik` | every stack publishing a domain | creates `proxy-public` and the listed edge networks |
 | `core/authentik` | stacks whose Traefik labels use forward-auth | the middleware answers at its address |
-| `core/crowdsec` | stacks joining `crowdsec-security` | the network is created there |
+| `core/crowdsec` | stacks joining `crowdsec-security` | `core/traefik` creates the network; `core/crowdsec` joins it as `external: true` |
 
 Which stacks those are is a property of the tree, so read it off rather than trusting a
 number written here:
@@ -147,7 +168,9 @@ Then recreate the stacks the release touched. `docker compose up -d` applies a c
 compose file; a stack whose service names changed also needs `--remove-orphans`.
 `core/traefik` renders its configuration from templates, so a release that changes
 a template takes effect only after `bash ops/scripts/render.sh` in that directory
-and a `--force-recreate` of the proxy where the static configuration changed.
+and a `--force-recreate` of the proxy where the static configuration changed — which
+interrupts every stack it routes for about seven seconds
+([`edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
 
 A checkout carries the stack files; it does not carry what a stack installed
 outside it — a logrotate stanza, systemd units, a backup agent's configuration.

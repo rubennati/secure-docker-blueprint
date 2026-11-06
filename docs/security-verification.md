@@ -164,7 +164,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/model.yml.tmpl` — position 1 of the model |
-| **Policies** | `access-public`, `access-lan` (RFC1918 + ULA hardcoded), `access-vpn` (CIDR from .env), `access-lan-vpn` (LAN + VPN), `access-blocked` (nobody) |
+| **Policies** | `access-public`, `access-trusted` (the ranges `TRUSTED_RANGES` declares), `access-vpn` (CIDR from .env), `access-trusted-vpn` (declared ranges + VPN), `access-blocked` (nobody) |
 | **Gaps** | `forwardedHeaders.trustedIPs` is rendered from `core/traefik/ops/cloudflare-ips.txt` (Cloudflare's published ranges), closing the X-Forwarded-For spoofing gap for the Cloudflare path; CI checks that every entry parses, and the `Cloudflare ranges` workflow compares the file with the published lists weekly. Not verified per deployment — an edited `.env` or file on a host is outside CI. Separately, the Tailscale path recovers the real client IP at the network layer (direct connection, no header involved) — this only works end to end if `proxy-public` is dual-stack, which is opt-in (`core/traefik/network-dual-stack.yml`), not the default. An IPv4-only deployment publishes Traefik on IPv4 only, so a Tailscale client's IPv6 connection is refused rather than evaluated as the Docker gateway; `validate.sh` checks the published address families against the network, the Docker daemon and the running container. See `core/traefik/docs/ipv6-dual-stack.md` and `docs/bugfixes/traefik-ipv6-dualstack-2026-06-19.md`. |
 
 #### 13. `exposedByDefault: false`
@@ -203,8 +203,8 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Coverage** | Compose files declaring a network with `internal: true` — figures: [`security-coverage.md`](security-coverage.md) |
-| **Pattern** | Database and internal services on `app-internal` (internal: true). Web services on `proxy-public` + `app-internal`. No database ports exposed on host. |
-| **Gaps** | Not CI-enforced. Nothing prevents a developer from adding a database to `proxy-public`. Several apps intentionally do NOT mark `app-internal` as internal (e.g. Nextcloud — documented in README). |
+| **Pattern** | Database and internal services on `app-internal` (internal: true). Web services on their proxy network (`<project>-edge` by default, or `proxy-public`) + `app-internal`. No database ports exposed on host. |
+| **Gaps** | `check-structure.py` rule `db-exposed` fails a datastore on `proxy-public` or with a host port; it does not inspect edge networks. Several apps intentionally do NOT mark `app-internal` as internal (e.g. Nextcloud — documented in README). |
 
 #### 17. `__REPLACE_ME__` sentinel values
 
@@ -265,7 +265,7 @@ Based on **CIS Docker Benchmark v1.6.0**.
 | **5.10** Memory limits | ✅ | `memory` and `pids` on every service — [`security-coverage.md`](security-coverage.md) | Values are derived rather than measured — v0.10.0 |
 | **5.11** CPU limits | ❌ Partial | Same as memory limits | |
 | **5.12** Read-only root FS | ⚠ Partial | Coverage in [`security-coverage.md`](security-coverage.md) | Not CI-enforced; many images write to their root filesystem |
-| **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082` | |
+| **5.14** Bind only to required interfaces | ✅ Yes | `ping` entryPoint bound to `127.0.0.1:8082`; Traefik's published ports one binding per family (`TRAEFIK_BIND_V4`/`V6`); every other published port needs a required `*_BIND` host address (`port-no-host-address`) | |
 | **5.15** `docker.sock` mount | ✅ Enforced | CI FAIL — socket proxy pattern enforced | Documented exceptions with risk acceptance |
 | **5.25** Restart policy | ✅ Yes | All services use `restart: unless-stopped` | |
 | **5.28** PIDs limit | ❌ Partial | Only in 3 files with `deploy.resources` | |
@@ -376,14 +376,22 @@ document restates their coverage, severity or exit behavior — it points here.
 - Trivy's own exit code stays 0 on every image, at every severity: the scan
   reports rather than judges. **What blocks is a separate gate.**
   `scripts/ci/trivy-gate.py` fails the job on a CRITICAL finding that is not
-  recorded in `.trivy-baseline.json`, so a finding the repository has accounted
-  for passes and a new one does not. Making the scan itself blocking was
+  listed under an image exception in `.trivy-baseline.json`. A finding is fixed
+  by moving the pin to an upstream release that no longer carries it; only where
+  no such release exists does it become an exception, written by hand per image
+  with the stacks that use it, why the pin cannot move and the risk. An
+  exception missing any of these fails the gate as well, and there is no way to
+  record a scan's findings in bulk. Each stack named in an exception carries an
+  `## Open findings` section in its README and an *Open findings* mark in
+  `LIFECYCLE.md` and on the site, which `lifecycle-report.py --check` enforces.
+  Making the scan itself blocking was
   rejected in `.ai/decisions.md` (2026-09-20): the blueprint does not build
   these images, the findings that exist sit in layers upstream ships, and a gate
   that fails every pull request on its first day is one people learn to ignore.
 - The baseline is keyed by image repository rather than by tag, so bumping a pin
   surfaces what is new instead of re-presenting everything. An entry whose
-  finding has gone is reported as prunable and does not fail the gate.
+  finding has gone is reported, removed with `trivy-gate.py --prune`, and does
+  not fail the gate.
 - **Coverage can only shrink deliberately.** An unscanned image contributes no
   findings, so it can never fail the CVE half of the gate; it fails on its own
   unless `.trivy-baseline.json` acknowledges it with a reason. Three images are

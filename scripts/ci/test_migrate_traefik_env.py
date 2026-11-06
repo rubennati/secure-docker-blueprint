@@ -103,7 +103,7 @@ class EveryOldValue(Scratch):
             self.assertIn(f"- APP_TRAEFIK_SECURITY={chain}\n", out)
             self.assertRegex(out, rf"\+ APP_TRAEFIK_LIMIT=limit-(none|standard|extra-large|sync|strict)\n  \+ APP_TRAEFIK_HEADERS=headers-(standard|none)")
         for policy in policies:
-            self.assertRegex(out, rf"- APP_TRAEFIK_ACCESS={policy}\n  \+ APP_TRAEFIK_ACCESS=access-(public|lan|vpn|lan-vpn|blocked)")
+            self.assertRegex(out, rf"- APP_TRAEFIK_ACCESS={policy}\n  \+ APP_TRAEFIK_ACCESS=access-(public|trusted|vpn|trusted-vpn|blocked)")
         for name in tls:
             self.assertRegex(out, rf"- APP_TRAEFIK_TLS_OPTION={name}\n  \+ APP_TRAEFIK_TLS_OPTION=tls-(compatible|standard|strict)")
         self.assertIn("dry run, nothing written", out)
@@ -116,8 +116,8 @@ class EveryOldValue(Scratch):
             "sec-3": ("limit-standard", "headers-standard"), "sec-3e-sync": ("limit-sync", "headers-standard"),
             "sec-4": ("limit-strict", "headers-standard"), "sec-5": ("limit-strict", "headers-standard"),
         }
-        access = {"acc-public": "access-public", "acc-local": "access-lan", "acc-tailscale": "access-vpn",
-                  "acc-private": "access-lan-vpn", "acc-deny": "access-blocked"}
+        access = {"acc-public": "access-public", "acc-local": "access-trusted", "acc-tailscale": "access-vpn",
+                  "acc-private": "access-trusted-vpn", "acc-deny": "access-blocked"}
         for chain, (limit, headers) in expect.items():
             d = self.stack("x", STACK_ENV.format(tls="tls-aplus", access="acc-public", chain=chain, threat=""))
             rc, out = self.run_tool(str(d))
@@ -217,7 +217,7 @@ class Shape(Scratch):
         rc, out = self.run_tool("--write", str(d))
         self.assertEqual(rc, 0, out)
         text = (d / ".env").read_text(encoding="utf-8")
-        self.assertIn('APP_TRAEFIK_ACCESS="access-lan"\n', text)
+        self.assertIn('APP_TRAEFIK_ACCESS="access-trusted"\n', text)
         self.assertIn("APP_TRAEFIK_LIMIT='limit-strict'\nAPP_TRAEFIK_HEADERS='headers-standard'\nAPP_TRAEFIK_AUTH='auth-none@file'\n", text)
         self.assertIn("APP_TRAEFIK_TLS_OPTION=tls-strict\n", text)
 
@@ -274,6 +274,84 @@ class Shape(Scratch):
         self.assertIn("business/b/.env", out)
         self.assertNotIn("business/c", out, "an example file is not a deployment")
         self.assertIn("2 file(s)", out)
+
+
+class TrustedClass(Scratch):
+    """DEC-076: the LAN class maps to access-trusted(-vpn) — the old acc-* names
+    and the access-lan* names of v0.9.5 alike — with a note on what the policy
+    admits; a core .env without TRUSTED_RANGES gets the line."""
+
+    def test_the_lan_class_maps_and_the_note_says_what_changes(self):
+        for old, new in (("access-lan", "access-trusted"), ("access-lan-vpn", "access-trusted-vpn"),
+                         ("acc-local", "access-trusted"), ("acc-private", "access-trusted-vpn")):
+            d = self.stack("x", STACK_ENV.format(tls="tls-aplus", access=old, chain="sec-2", threat=""))
+            rc, out = self.run_tool(str(d))
+            self.assertEqual(rc, 0, out)
+            self.assertIn(f"- APP_TRAEFIK_ACCESS={old}\n  + APP_TRAEFIK_ACCESS={new}\n", out, old)
+            self.assertIn("TRUSTED_RANGES declares", out)
+
+    def test_the_trusted_names_pass_unchanged(self):
+        d = self.stack("x", STACK_ENV.format(tls="tls-standard", access="access-trusted-vpn", chain="sec-2", threat=""))
+        rc, out = self.run_tool(str(d))
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("- APP_TRAEFIK_ACCESS=", out)
+
+    def test_the_core_env_gets_trusted_ranges_once(self):
+        core = self.root / "core" / "traefik"
+        core.mkdir(parents=True)
+        f = core / ".env"
+        f.write_text("TLS_DEFAULT_OPTION=tls-standard\nHSTS_MAX_AGE=63072000\n", encoding="utf-8")
+        rc, out = self.run_tool("--write", str(f))
+        self.assertEqual(rc, 0, out)
+        self.assertIn('+ TRUSTED_RANGES=""', out)
+        self.assertIn('TRUSTED_RANGES=""\n', f.read_text(encoding="utf-8"))
+        self.assertIn('+ EDGE_NETWORKS=""', out)
+        self.assertIn('+ COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml', out)
+        text = f.read_text(encoding="utf-8")
+        self.assertIn('EDGE_NETWORKS=""\nCOMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n', text)
+        self.assertNotIn("TRAEFIK_BIND_V6", text, "no overlay, no IPv6 binding added")
+        self.assertIn("\nTRAEFIK_BIND_V4=0.0.0.0\n", text, "the old IPv4 default is kept explicitly")
+        (core / ".env.pre-model").unlink()
+        rc, out = self.run_tool(str(f))
+        self.assertNotIn("TRUSTED_RANGES", out.replace("note", ""), "the second run adds nothing")
+        self.assertNotIn("+ EDGE_NETWORKS", out)
+        self.assertNotIn("+ TRAEFIK_BIND_V4", out)
+
+    def test_an_empty_ipv4_binding_is_left_empty(self):
+        core = self.root / "core" / "traefik"
+        core.mkdir(parents=True)
+        f = core / ".env"
+        f.write_text("TLS_DEFAULT_OPTION=tls-standard\nHSTS_MAX_AGE=63072000\nTRUSTED_RANGES=\"\"\nTRAEFIK_BIND_V4=\n", encoding="utf-8")
+        rc, out = self.run_tool("--write", str(f))
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("+ TRAEFIK_BIND_V4", out, "an IPv6-only choice stays IPv6-only")
+
+    def test_a_dual_stack_core_env_keeps_its_ipv6_ingress(self):
+        core = self.root / "core" / "traefik"
+        core.mkdir(parents=True)
+        f = core / ".env"
+        f.write_text("TLS_DEFAULT_OPTION=tls-standard\nHSTS_MAX_AGE=63072000\nTRUSTED_RANGES=\"\"\nCOMPOSE_FILE=docker-compose.yml:network-dual-stack.yml\n", encoding="utf-8")
+        rc, out = self.run_tool("--write", str(f))
+        self.assertEqual(rc, 0, out)
+        self.assertIn('+ EDGE_NETWORKS=""', out)
+        text = f.read_text(encoding="utf-8")
+        self.assertIn("COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
+        self.assertIn("\nTRAEFIK_BIND_V6=[::]\n", text)
+        self.assertIn("\nTRAEFIK_BIND_V4=0.0.0.0\n", text)
+        (core / ".env.pre-model").unlink()
+        rc, out = self.run_tool(str(f))
+        self.assertNotIn("+ COMPOSE_FILE", out)
+        self.assertNotIn("+ TRAEFIK_BIND_V6", out)
+
+    def test_a_compose_file_that_already_names_both_files_is_left_alone(self):
+        core = self.root / "core" / "traefik"
+        core.mkdir(parents=True)
+        f = core / ".env"
+        line = "COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n"
+        f.write_text("TLS_DEFAULT_OPTION=tls-standard\nHSTS_MAX_AGE=63072000\nTRUSTED_RANGES=\"\"\nEDGE_NETWORKS=\"\"\n" + line, encoding="utf-8")
+        rc, out = self.run_tool(str(f))
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("COMPOSE_FILE", out)
 
 
 if __name__ == "__main__":

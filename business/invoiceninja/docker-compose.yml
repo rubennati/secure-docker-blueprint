@@ -160,7 +160,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
 
@@ -267,9 +267,13 @@ services:
 
     # --- Configuration ---
     # The password is read from the secret at startup, so it never appears in
-    # the process environment.
+    # the process environment. The image's entrypoint (docker-entrypoint.sh) is
+    # what drops to its redis user and fixes the ownership of /data: a command
+    # that starts redis-server directly bypasses it and runs Redis as root
+    # (final audit FA-05). Here sh reads the secret as root and hands over to
+    # the entrypoint, so redis-server runs as UID 999.
     command: >
-      sh -c 'exec redis-server
+      sh -c 'exec docker-entrypoint.sh redis-server
       --requirepass "$$(cat /run/secrets/REDIS_PWD)"
       --maxmemory 192mb
       --maxmemory-policy noeviction'
@@ -321,8 +325,8 @@ volumes:
 # --------------------------------------------------------
 networks:
   proxy-public:
-    external: true
     name: ${TRAEFIK_NETWORK}
+    external: true
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

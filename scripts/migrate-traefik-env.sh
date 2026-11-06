@@ -16,14 +16,21 @@
 #
 # What it maps, per stack .env:
 #   *_TRAEFIK_ACCESS       acc-public|local|tailscale|private|deny
-#                          → access-public|lan|vpn|lan-vpn|blocked
+#                          → access-public|trusted|vpn|trusted-vpn|blocked;
+#                          access-lan|lan-vpn → access-trusted|trusted-vpn (DEC-076)
 #   *_TRAEFIK_SECURITY     sec-* → *_TRAEFIK_LIMIT + *_TRAEFIK_HEADERS, and
 #                          *_TRAEFIK_AUTH=auth-none@file where no AUTH exists
 #   *_TRAEFIK_THREAT       removed — threat enforcement is an entrypoint
 #                          decision (CROWDSEC_BOUNCER_ENABLED in core/traefik)
 #   *_TRAEFIK_TLS_OPTION   tls-basic|aplus|modern → tls-compatible|standard|strict
 # and per core/traefik/.env (recognised by TLS_DEFAULT_OPTION):
-#   TLS_DEFAULT_OPTION, TRAEFIK_DASHBOARD_TLS_OPTION renamed; HSTS_MAX_AGE added.
+#   TLS_DEFAULT_OPTION, TRAEFIK_DASHBOARD_TLS_OPTION renamed; HSTS_MAX_AGE and
+#   TRUSTED_RANGES and EDGE_NETWORKS added where missing; COMPOSE_FILE made to
+#   apply config/published-ports.yml and config/edge-networks.yml (step 7: the
+#   base file publishes no port), TRAEFIK_BIND_V4=0.0.0.0 added where it is
+#   missing, and TRAEFIK_BIND_V6=[::] where the dual-stack overlay is applied
+#   and the variable is missing — neither has a default any more, and the two
+#   values keep the ingress the old defaults gave.
 #
 # What it cannot do: a per-app block (frame-self, hsts-include-subdomains,
 # csp-self-only) is named in the stack's compose file by the release, not in
@@ -67,12 +74,12 @@ fi
 
 map_access() {
   case "$1" in
-    acc-public)     echo access-public ;;
-    acc-local)      echo access-lan ;;
-    acc-tailscale)  echo access-vpn ;;
-    acc-private)    echo access-lan-vpn ;;
-    acc-deny)       echo access-blocked ;;
-    access-public|access-lan|access-vpn|access-lan-vpn|access-blocked) echo "$1" ;;
+    acc-public)                   echo access-public ;;
+    acc-local|access-lan)         echo access-trusted ;;
+    acc-tailscale)                echo access-vpn ;;
+    acc-private|access-lan-vpn)   echo access-trusted-vpn ;;
+    acc-deny)                     echo access-blocked ;;
+    access-public|access-trusted|access-vpn|access-trusted-vpn|access-blocked) echo "$1" ;;
   esac
 }
 
@@ -159,6 +166,20 @@ migrate_file() {
       value="${value%"${value##*[![:space:]]}"}"
 
       case "$key" in
+        COMPOSE_FILE)
+          if [ "$is_core" = 1 ]; then
+            # The base file publishes no port since step 7; both rendered files
+            # go after every file the line already names, in this order.
+            cf="$value"
+            for need in config/published-ports.yml config/edge-networks.yml; do
+              case ":${cf}:" in *":${need}:"*) ;; *) cf="${cf}:${need}" ;; esac
+            done
+            if [ "$cf" != "$value" ]; then
+              printf '  - COMPOSE_FILE=%s\n  + COMPOSE_FILE=%s\n' "$value" "$cf"; CHANGES=$((CHANGES + 1))
+              line="COMPOSE_FILE=${quote}${cf}${quote}"
+            fi
+          fi
+          ;;
         TLS_DEFAULT_OPTION|TRAEFIK_DASHBOARD_TLS_OPTION)
           mapped="$(map_tls "$value")"
           if [ -z "$mapped" ] && [ -n "$value" ]; then
@@ -187,6 +208,9 @@ migrate_file() {
           elif [ "$mapped" != "$value" ]; then
             printf '  - %s=%s\n  + %s=%s\n' "$key" "$value" "$key" "$mapped"; CHANGES=$((CHANGES + 1))
             line="${key}=${quote}${mapped}${quote}"
+            case "$mapped" in access-trusted|access-trusted-vpn)
+              printf '  note: %s admits the client networks TRUSTED_RANGES declares in core/traefik/.env (and, for -vpn, the VPN) — no Docker network and no private range as such; a container reaches the application over a Docker network, not through this route\n' "$mapped"; NOTES=$((NOTES + 1)) ;;
+            esac
           fi
           ;;
         *TRAEFIK*_SECURITY)
@@ -225,6 +249,30 @@ migrate_file() {
     NEW_CONTENT="${NEW_CONTENT}${line}"$'\n'
   done < "$file"
 
+  if [ "$is_core" = 1 ] && ! grep -qE '^TRUSTED_RANGES=' "$file"; then
+    printf '  + TRUSTED_RANGES=""\n'; CHANGES=$((CHANGES + 1))
+    printf '  note: TRUSTED_RANGES names the client networks access-trusted admits, quoted and space-separated (your LAN prefixes, IPv4 and IPv6); empty admits nobody. Added at the end of the file — fill it in before render.sh\n'; NOTES=$((NOTES + 1))
+    NEW_CONTENT="${NEW_CONTENT}"$'\n'"# Client networks access-trusted admits, quoted and space-separated; empty admits nobody."$'\n'"TRUSTED_RANGES=\"\""$'\n'
+  fi
+  if [ "$is_core" = 1 ] && ! grep -qE '^EDGE_NETWORKS=' "$file"; then
+    printf '  + EDGE_NETWORKS=""\n'; CHANGES=$((CHANGES + 1))
+    printf '  note: EDGE_NETWORKS names the edge network of every installed stack (its TRAEFIK_NETWORK), quoted and space-separated; empty keeps every stack on the shared network. Added at the end of the file; COMPOSE_FILE applies the rendered config/edge-networks.yml (core/traefik/docs/edge-networks.md)\n'; NOTES=$((NOTES + 1))
+    NEW_CONTENT="${NEW_CONTENT}"$'\n'"# Edge network of every installed stack (its TRAEFIK_NETWORK), quoted and space-separated; empty: the shared network."$'\n'"EDGE_NETWORKS=\"\""$'\n'
+  fi
+  if [ "$is_core" = 1 ] && ! grep -qE '^COMPOSE_FILE=' "$file"; then
+    printf '  + COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml\n'; CHANGES=$((CHANGES + 1))
+    NEW_CONTENT="${NEW_CONTENT}""COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml"$'\n'
+  fi
+  if [ "$is_core" = 1 ] && ! grep -qE '^TRAEFIK_BIND_V4=' "$file"; then
+    printf '  + TRAEFIK_BIND_V4=0.0.0.0\n'; CHANGES=$((CHANGES + 1))
+    printf '  note: TRAEFIK_BIND_V4 has no default any more; 0.0.0.0 keeps the IPv4 ingress the old default gave. An empty value publishes no IPv4\n'; NOTES=$((NOTES + 1))
+    NEW_CONTENT="${NEW_CONTENT}"$'\n'"# IPv4 host address of the published ports; empty publishes no IPv4 (step 7)."$'\n'"TRAEFIK_BIND_V4=0.0.0.0"$'\n'
+  fi
+  if [ "$is_core" = 1 ] && grep -qE '^COMPOSE_FILE=.*network-dual-stack\.yml' "$file" && ! grep -qE '^TRAEFIK_BIND_V6=' "$file"; then
+    printf '  + TRAEFIK_BIND_V6=[::]\n'; CHANGES=$((CHANGES + 1))
+    printf '  note: TRAEFIK_BIND_V6 has no default any more; [::] keeps the IPv6 ingress the dual-stack overlay gave. An empty value publishes IPv4 only\n'; NOTES=$((NOTES + 1))
+    NEW_CONTENT="${NEW_CONTENT}"$'\n'"# IPv6 host address of the published ports; empty publishes no IPv6 (step 7)."$'\n'"TRAEFIK_BIND_V6=[::]"$'\n'
+  fi
   if [ "$is_core" = 1 ] && [ "$has_hsts" = 0 ]; then
     printf '  + HSTS_MAX_AGE=63072000\n'; CHANGES=$((CHANGES + 1))
     printf '  note: HSTS_MAX_AGE is the max-age every header profile sends (two years); added at the end of the file — move it next to TLS_DEFAULT_OPTION if you keep the file ordered\n'; NOTES=$((NOTES + 1))

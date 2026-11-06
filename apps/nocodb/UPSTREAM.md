@@ -11,7 +11,7 @@
 - **Origin:** US · NocoDB Inc · non-EU
 - **Domain:** Automation and data
 - **Role:** Spreadsheet-style interface on top of a database
-- **Based on version:** `2026.09.0`
+- **Based on version:** `2026.10.1`
 - **Last verified:** 2026-05-02 (v0.301.5)
 
 ## What we use
@@ -60,6 +60,26 @@ NC_DB_PASSWORD_FILE: /run/secrets/DB_PWD
 Blueprint's existing Postgres + `app-internal` patterns from `apps/paperless-ngx/` or `apps/immich/` can be copied.
 
 Migrating data from SQLite to Postgres requires running NocoDB's CLI `nc-migrate` tool or re-entering data — there is no supported in-place upgrade.
+
+## Version notes
+
+- Moved to `2026.10.1` on 2026-11-05 (released 2026-10-29), not run on a host at
+  this tag. Upstream lists no manual migration step; schema migrations run at
+  start. Behaviour changes in 2026.09.1 to 2026.10.1: v3 API currency options
+  are `currency_code` and `currency_locale`, and the form validators
+  `minValue`, `maxValue` and `custom` are rejected; CSV currency exports drop the
+  thousands separator; dates in API responses, webhook payloads and CSV exports
+  carry milliseconds; a password change deletes the user's API tokens and
+  disconnects OAuth apps; interfaces are renamed classic apps; the image moves
+  to Node 24.22.1. `NC_ATTACHMENT_ACCESS_CONTROL_ENABLED` and
+  `NC_ALLOW_LOCAL_EXTERNAL_DBS` change meaning or are new; neither is set here.
+  Advisories fixed in 2026.10.0 and 2026.10.1 (published 2026-11-02), high:
+  GHSA-hpmf-p392-q5j5, GHSA-xmfr-pc8j-4xh5, GHSA-mf7h-mwxr-38r5,
+  GHSA-hm8p-622v-9c6j, GHSA-v279-4cwv-mrcj, GHSA-982h-vc99-prcr,
+  GHSA-2xx9-r3gm-mw87, GHSA-fx53-qf4h-cx38; medium and low:
+  GHSA-r872-6prr-v2jc, GHSA-9g75-jg2x-68m4, GHSA-jcc2-3vff-7867,
+  GHSA-qgv3-m9j5-jph8, GHSA-9fp2-px3g-mggq, GHSA-2ggp-wwhj-f84q,
+  GHSA-4wph-jpw9-43hh, GHSA-4j94-335x-8wjj, GHSA-ppvx-p9g2-5m37.
 
 ## Upgrade checklist
 

@@ -37,6 +37,13 @@ services:
       # 64-character hex encryption key (openssl rand -hex 32)
       # See README "Setup" section for generation instructions.
       SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY}
+      # Canonical public origin (v2): MCP OAuth metadata and origin checks.
+      # Upstream requires an HTTPS origin behind a TLS-terminating proxy.
+      BASE_URL: https://${APP_TRAEFIK_HOST}
+      # Proxies whose X-Forwarded-For the bundled nginx trusts (v2). Empty by
+      # default: every client behind Traefik then shares one OAuth abuse budget.
+      # See .env.example before setting it.
+      HOMARR_TRUSTED_PROXIES: ${HOMARR_TRUSTED_PROXIES:-}
 
     # --- Storage ---
     volumes:
@@ -62,13 +69,15 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=7575"
 
     # --- Health & Observability ---
+    # v2's Debian image has no wget or curl; node checks upstream's liveness
+    # route (database and internal Redis) through the bundled nginx on 7575.
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO /dev/null http://127.0.0.1:7575"]
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:7575/api/health/live',{method:'HEAD',signal:AbortSignal.timeout(8000)}).then((r)=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -79,4 +88,5 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true

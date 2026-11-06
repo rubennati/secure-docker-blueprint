@@ -9,8 +9,8 @@
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
-- **Based on version:** `1.37.3`
-- **Last checked:** 2026-06-14
+- **Based on version:** `1.37.5`
+- **Last verified:** 2026-11-02 (1.37.4) — step 8 lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we changed and why
 
@@ -119,6 +119,43 @@ registration at https://bitwarden.com/host/:
 Only works with official Bitwarden apps (App Store / Google Play, not F-Droid).
 Upstream reference:
 [Enabling Mobile Client Push Notification](https://github.com/dani-garcia/vaultwarden/wiki/Enabling-Mobile-Client-push-notification).
+
+## Version notes
+
+- Moved to `1.37.4` on 2026-10-31 (released 2026-10-05), not run at this tag. A
+  security release: GHSA-69q9-v8p6-xvx3 (high, 8.1), GHSA-7jg8-8m5x-6j9r,
+  GHSA-v576-3wvq-xh3c, GHSA-q5x6-grh5-fqgc, GHSA-64mc-4p6f-r7x9,
+  GHSA-7ccc-c43j-4p36 and GHSA-qwx4-wcv4-mpcv; upstream advises rotating an
+  organisation's API key. Behaviour changes: with `IP_HEADER=X-Forwarded-For` the
+  client address is the rightmost one outside `IP_HEADER_TRUSTED_PROXIES` — this
+  stack sets `IP_HEADER: X-Real-IP`, which Traefik writes, so the change does not
+  reach it; the legacy `POST /identity/accounts/register` and
+  `POST /api/accounts/prelogin` are removed; the feature flags are removed and
+  `EXPERIMENTAL_CLIENT_FEATURE_FLAGS` only warns (not set here); `DUO_USE_IFRAME`
+  is ignored (not set here); `MARIADB_TLS_DISABLE_PEER_VERIFICATION` is new.
+- Moved to `1.37.5` on 2026-11-05 (released 2026-11-01), not run on a host at
+  this tag. A security release: GHSA-x9cq-f669-vrr4 (website icons, medium) and
+  GHSA-9pjj-f9g5-3x4c (emergency access, medium), both still private upstream.
+  The bundled web vault is v2026.10.1. Invalid configuration values now stop
+  the start with an error: numeric options have tighter ranges, and the rate
+  limit `*_SECONDS` and `*_MAX_BURST` options must be at least 1 — the values
+  this stack sets (300/3 for the admin page, 60/10 for logins) are inside the
+  ranges. Not checked: whether the empty strings the compose file passes for
+  unset options (`PUSH_RELAY_URI`, `PUSH_IDENTITY_URI`, `SMTP_HOST`) pass the
+  new validation; watch the first start.
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Support: the MariaDB backend page names no
+  version range, and its examples use the untagged `mariadb` image
+  (https://github.com/dani-garcia/vaultwarden/wiki/Using-the-MariaDB-(MySQL)-Backend).
+  `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
+  `mariadb-upgrade` at the first start on 12.3 after a backup of the system
+  tables; the data directory `./volumes/mysql` is reused. Take the
+  `mariadb-dump` before the tag changes: going back to 11.4 is only a restore of
+  that dump. Changed on the way (11.8 and 12.x): `innodb_snapshot_isolation` is
+  on by default, so a transaction that writes a row another transaction changed
+  after its snapshot fails with error 1020 instead of overwriting it; the new
+  server default collation `utf8mb4_uca1400_ai_ci` does not touch the existing
+  database, whose tables keep the collation it was created with.
 
 ## Upgrade checklist
 

@@ -59,6 +59,7 @@ services:
       LOG_LEVEL: ${APP_LOG_LEVEL}
       CLIENT_HOST: http://localhost:52345
       TOKEN_TTL: ${APP_TOKEN_TTL}
+      TELEMETRY_ENABLED: "false"
       TZ: ${TZ}
     volumes:
       - ./config/entrypoint.sh:/config/entrypoint.sh:ro

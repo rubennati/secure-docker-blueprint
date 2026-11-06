@@ -77,7 +77,7 @@ services:
       start_period: 30s
 
   # --------------------------------------------------------
-  # PHOTOPRISM (Go app + TensorFlow)
+  # PHOTOPRISM (Go app + ONNX models)
   # --------------------------------------------------------
   photoprism-app:
     # --- Identity ---
@@ -132,7 +132,8 @@ services:
       PHOTOPRISM_DISABLE_SETTINGS: "false"
       PHOTOPRISM_DISABLE_TENSORFLOW: "false"
       PHOTOPRISM_DISABLE_FACES: "false"
-      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"
+      # MCP API for AI agents (on by default since 261029) stays off.
+      PHOTOPRISM_DISABLE_MCP: "true"
       PHOTOPRISM_DISABLE_RAW: "false"
       PHOTOPRISM_SIDECAR_YAML: "true"
       PHOTOPRISM_BACKUP_ALBUMS: "true"
@@ -152,9 +153,10 @@ services:
       # PhotoPrism reads DATABASE_PASSWORD from env only (no _FILE support).
       # Value must match contents of .secrets/db_pwd.txt.
       PHOTOPRISM_DATABASE_PASSWORD: ${DB_PWD_INLINE}
-      # First-run init: download tensorflow models. `https` removed
-      # because Traefik terminates TLS.
-      PHOTOPRISM_INIT: "tensorflow"
+      # First-run init targets: none. The image defaults to `https`, which
+      # Traefik makes unnecessary; the `tensorflow` target is gone since 261029
+      # (classification runs on ONNX models shipped in the image).
+      PHOTOPRISM_INIT: ""
 
     # --- Storage ---
     volumes:
@@ -191,7 +193,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=2342"
 
@@ -200,6 +202,7 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:

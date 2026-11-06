@@ -27,3 +27,5 @@ a128ff027b5efa9171d9e0bc96993b131d6a3cf8:business/plane/UPSTREAM.md:generic-api-
 # not a credential of this project.
 2abdaa3f6404367ed1d76089a7c4063f2b1d4cdb:docs/research/egress-apps-business-2026-07-31.json:generic-api-key:46
 2abdaa3f6404367ed1d76089a7c4063f2b1d4cdb:docs/research/egress-apps-business-2026-07-31.json:generic-api-key:50
+# The invented bouncer key of a test fixture, replaced in the next commit by the placeholder every other test uses (PR 306).
+afad4f5aaabade564fbdb83aa6371b9b2e52118b:scripts/ci/test_traefik_exposure.py:generic-api-key:136

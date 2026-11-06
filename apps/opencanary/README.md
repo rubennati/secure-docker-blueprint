@@ -3,6 +3,12 @@
 Lightweight deception: fake FTP, Telnet, HTTP, MySQL and RDP services that
 do nothing except look real and log every connection attempt against them.
 
+## Open findings
+
+The pinned image, `thinkst/opencanary:0.9.10`, ships with 8 CRITICAL vulnerabilities that have published fixes, in certifi, the `uv` tool and Debian 12 packages (ImageMagick, brotli, perl, kernel headers). 0.9.10 is the newest release, and upstream has not rebuilt it.
+
+**Risk:** the canary's listeners are Python services that do not use these packages; the certifi CA bundle matters only if you send alerts over HTTPS. Watch for the next OpenCanary release.
+
 ## What security problem this solves
 
 Detection through a completely different signal than logs or metrics from

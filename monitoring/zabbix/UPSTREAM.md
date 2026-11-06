@@ -13,19 +13,19 @@
 - **Origin:** Latvia · Zabbix, Riga — the project's own record adds Tokyo and New York; the site's copyright line reads "Zabbix LLC" · EU
 - **Domain:** Monitoring
 - **Role:** Enterprise monitoring — agents, SNMP, IPMI and HTTP checks with triggers, escalation and history
-- **Based on version:** `alpine-7.0.31`
+- **Based on version:** `alpine-7.0.32`
 
 ## Project maturity
 
 7.0 is the long-term-support line: full support to 2027-06-30, limited support
 to 2029-06-30. 8.0 is where new features land; this is where a deployment that
-wants to be left alone lives. `alpine-7.0.31` was published between the
-evaluation and this stack.
+wants to be left alone lives. The stack follows the patch releases of 7.0;
+`alpine-7.0.32` is the current one.
 
 ## What we use
 
-- `zabbix/zabbix-server-pgsql:alpine-7.0.31` — the collector, not routed.
-- `zabbix/zabbix-web-nginx-pgsql:alpine-7.0.31` — nginx and PHP, the only
+- `zabbix/zabbix-server-pgsql:alpine-7.0.32` — the collector, not routed.
+- `zabbix/zabbix-web-nginx-pgsql:alpine-7.0.32` — nginx and PHP, the only
   routed service.
 - `postgres:17.11-alpine` — pinned to 17 because that is the client the server
   image ships (`postgresql17-client`).
@@ -90,6 +90,15 @@ alert delivered, and a restore from the volume.
 With `ZBX_ALLOWSOFTWAREUPDATECHECK=0`, nothing. Zabbix reaches exactly what you
 configure it to monitor.
 
+## Version notes
+
+- Moved from `alpine-7.0.31` to `alpine-7.0.32` on 2026-11-05 (released
+  2026-10-20), not run on a host at this tag. A patch release of the 7.0 LTS
+  for server and web together: bug fixes and a raised TimescaleDB version
+  limit (2.30), no breaking changes listed. The reason for the move is the CVE
+  findings in the packages of the 7.0.31 images. Source:
+  https://www.zabbix.com/rn/rn7.0.32
+
 ## Upgrade checklist
 
 1. Read the release notes and the upgrade page for the 7.0 line —
@@ -110,6 +119,6 @@ configure it to monitor.
 curl -s https://raw.githubusercontent.com/zabbix/zabbix-docker/7.0/docker-compose_v3_alpine_pgsql_latest.yaml
 
 # Every setting the server reads, with upstream's defaults
-docker run --rm --entrypoint sh zabbix/zabbix-server-pgsql:alpine-7.0.31 \
+docker run --rm --entrypoint sh zabbix/zabbix-server-pgsql:alpine-7.0.32 \
     -c 'cat /etc/zabbix/zabbix_server.conf'
 ```

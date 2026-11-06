@@ -4,14 +4,14 @@
 
 **Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
 
-Hardened configurations for 80+ services — standardized security baseline, Docker Secrets, Traefik routing, CrowdSec integration, and network isolation out of the box. For software you build yourself, [`development/`](development/) holds two deployment patterns — a static site and a web API.
+Hardened configurations for 80+ services — standardized security baseline, Docker Secrets, Traefik routing and network isolation out of the box; CrowdSec as an optional layer (its AppSec component opt-in, shipped without the OWASP Core Rule Set — see [`core/crowdsec/docs/appsec.md`](core/crowdsec/docs/appsec.md)). For software you build yourself, [`development/`](development/) holds two deployment patterns — a static site and a web API.
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.9.6-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.7-blue)](CHANGELOG.md)
 
 **[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
@@ -43,7 +43,7 @@ Where several tools solve the same problem, more than one is included.
 Traefik goes up first — every stack reachable over the network routes through it.
 Each stack is then installed from its own README.
 
-**Requirements:** Docker 24.0+ with Compose v2, a Linux host (tested on Debian 12/13),
+**Requirements:** Docker Engine 28.0+ with Compose 2.33.1+, a Linux host (tested on Debian 12/13),
 `envsubst` (`gettext-base`), and a domain on a
 [DNS provider Traefik supports](https://doc.traefik.io/traefik/https/acme/#providers).
 

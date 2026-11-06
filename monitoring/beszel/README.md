@@ -9,8 +9,8 @@ port, and no host port is published for it.
 
 | Service | Image | Role |
 |---------|-------|------|
-| `beszel-hub` | `henrygd/beszel:0.19.0` | Web UI + SQLite metric store |
-| `agent` | `henrygd/beszel-agent:0.19.0` | Collects host and container metrics |
+| `beszel-hub` | `henrygd/beszel:0.21.1` | Web UI + SQLite metric store |
+| `agent` | `henrygd/beszel-agent:0.21.1` | Collects host and container metrics |
 | `socket-proxy` | `tecnativa/docker-socket-proxy:v0.5.0` | The only container that holds the Docker socket |
 
 ```text
@@ -201,7 +201,7 @@ reconnect without re-registration.
 
 - **Two-phase start on first install** — see [Setup](#setup). Subsequent starts need no manual steps.
 - **The hub runs as root** (measured on 0.19.0: no `USER` in the image, none set here) and owns everything under `volumes/hub-data/`, including the SSH key. Read the directory with `sudo`.
-- **`APP_TAG=0.19.0` is pinned** — Beszel is pre-1.0. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading; update both hub and agent together.
+- **`APP_TAG=0.21.1` is pinned** — Beszel is pre-1.0. Check [releases](https://github.com/henrygd/beszel/releases) before upgrading; update both hub and agent together.
 - **Both images have no healthcheck** — hub is scratch-based (no shell/wget), agent provides no health endpoint. Both use `healthcheck: disable: true`; hub status in the UI is the reliable liveness signal for all agents.
 - **`403 Forbidden` for `/version` and `/info`** in agent debug logs — expected. The socket proxy grants neither; the agent logs both at debug level and carries on. Granting `INFO=1` was measured to change nothing.
 - **Host NIC bandwidth is unavailable** and the system Bandwidth alert cannot fire — see [What this provides](#what-this-provides).

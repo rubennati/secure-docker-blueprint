@@ -53,6 +53,7 @@ import unittest
 from pathlib import Path
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import no_daemon
 
 CHECKER = TRAEFIK / "ops" / "scripts" / "check-published-family.py"
 
@@ -68,11 +69,17 @@ IPV4 = [port("0.0.0.0", 80, 80), port("0.0.0.0", 443, 443), port("0.0.0.0", 443,
 IPV6 = [port("::", 80, 80), port("::", 443, 443), port("::", 443, 443, "udp")]
 
 
-def model(ports, dual_stack=False):
+SERVICE_NETWORKS = {"public": {"gw_priority": 100}, "socket_proxy_net": None, "crowdsec-security": None}
+
+
+def model(ports, dual_stack=False, networks=SERVICE_NETWORKS):
     net = {"name": "proxy-public"}
     if dual_stack:
         net["enable_ipv6"] = True
-    return {"services": {"traefik": {"ports": ports}}, "networks": {"public": net}}
+    svc = {"ports": ports}
+    if networks is not None:
+        svc["networks"] = networks
+    return {"services": {"traefik": svc}, "networks": {"public": net}}
 
 
 class Checker(unittest.TestCase):
@@ -110,7 +117,8 @@ class Checker(unittest.TestCase):
         os.utime(path, (then, then))
         return str(path)
 
-    def run_checker(self, m, *extra, env=None, runtime=None, info=None, endpoint="unix:///var/run/docker.sock"):
+    def run_checker(self, m, *extra, env=None, runtime=None, info=None, endpoint="unix:///var/run/docker.sock",
+                    networks=None):
         mj = self.tmp / "model.json"
         mj.write_text(json.dumps(m), encoding="utf-8")
         ij = self.tmp / "info.json"
@@ -128,6 +136,10 @@ class Checker(unittest.TestCase):
                 lj = self.tmp / "labels.json"
                 lj.write_text(json.dumps(labels[0]), encoding="utf-8")
                 args += ["--running-labels", str(lj)]
+            if networks is not None:
+                nj = self.tmp / "networks.json"
+                nj.write_text(json.dumps(networks), encoding="utf-8")
+                args += ["--running-networks", str(nj)]
         full_env = {k: v for k, v in os.environ.items() if k != "DOCKER_HOST"}
         full_env.update(env or {})
         return subprocess.run(args + list(extra), capture_output=True, text=True, env=full_env)
@@ -373,6 +385,64 @@ class Checker(unittest.TestCase):
         self.assertEqual(r.returncode, 3, r.stdout)
         self.assertIn("PENDING: docker-proxy relays IPv6", r.stdout)
 
+    # --- the gateway endpoint (step 2 of the ingress programme, DEC-075.2) ---
+    # Docker maps the published ports to the container's address on the network
+    # with the highest gw_priority; without one, to the first in Compose order,
+    # which is crowdsec-security (measured 2026-10-31).
+
+    def test_model_without_gw_priority_on_public_is_refused(self):
+        r = self.run_checker(model(IPV4, networks={"public": None, "socket_proxy_net": None, "crowdsec-security": None}))
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("not pinned to the public network", r.stdout)
+        self.assertIn("'public' has gw_priority 0, not above 'crowdsec-security' (0), 'socket_proxy_net' (0)", r.stdout)
+
+    def test_model_with_another_network_at_least_as_high_is_refused(self):
+        r = self.run_checker(model(IPV4, networks={"public": {"gw_priority": 100}, "crowdsec-security": {"gw_priority": 100}}))
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("'crowdsec-security' (100)", r.stdout)
+
+    def test_model_as_a_list_of_networks_is_refused(self):
+        r = self.run_checker(model(IPV4, networks=["public", "socket_proxy_net"]))
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("not pinned", r.stdout)
+
+    def test_model_not_joining_public_is_refused(self):
+        r = self.run_checker(model(IPV4, networks={"socket_proxy_net": None}))
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertIn("does not join the network 'public'", r.stdout)
+
+    def test_running_container_from_before_gw_priority_is_pending(self):
+        new = self.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("0.0.0.0", 443, 443, "tcp"), ("0.0.0.0", 443, 443, "udp"))
+        r = self.run_checker(model(IPV4), runtime=("false", new),
+                             networks={"proxy-public": 0, "socket_proxy_net": 0, "crowdsec-security": 0})
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("PENDING: traefik-core runs with its published ports on another network than proxy-public", r.stdout)
+        self.assertIn("docker compose up -d", r.stdout)
+
+    def test_running_container_with_public_as_gateway_is_silent(self):
+        new = self.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("0.0.0.0", 443, 443, "tcp"), ("0.0.0.0", 443, 443, "udp"))
+        r = self.run_checker(model(IPV4), runtime=("false", new),
+                             networks={"proxy-public": 100, "socket_proxy_net": 0, "crowdsec-security": 0})
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertEqual(r.stdout.strip(), "")
+
+    def test_daemon_without_gateway_priority_is_not_verified(self):
+        new = self.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("0.0.0.0", 443, 443, "tcp"), ("0.0.0.0", 443, 443, "udp"))
+        r = self.run_checker(model(IPV4), runtime=("false", new),
+                             networks={"proxy-public": None, "socket_proxy_net": None, "crowdsec-security": None})
+        self.assertEqual(r.returncode, 3, r.stdout)
+        self.assertIn("NOT VERIFIED: traefik-core reports no gateway priority", r.stdout)
+        self.assertIn("Engine 28.0", r.stdout)
+
+    def test_runtime_gateway_is_not_judged_while_the_model_is_wrong(self):
+        """One finding per cause: a model without the pin is the ERROR, and the
+        running container is not also reported for the same thing."""
+        new = self.inspect_ports(("0.0.0.0", 80, 80, "tcp"), ("0.0.0.0", 443, 443, "tcp"), ("0.0.0.0", 443, 443, "udp"))
+        r = self.run_checker(model(IPV4, networks={"public": None, "crowdsec-security": None}), runtime=("false", new),
+                             networks={"proxy-public": 0, "crowdsec-security": 0})
+        self.assertEqual(r.returncode, 1, r.stdout)
+        self.assertNotIn("PENDING", r.stdout)
+
     # --- review finding 2: access errors are not "absent" -------------------
 
     def fake_docker(self, network_err=None, container_err=None):
@@ -528,7 +598,7 @@ class ValidateOutcome(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
     def validate(self, *args):
-        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True)
+        return subprocess.run(["bash", str(self.root / "ops/scripts/validate.sh"), *args], capture_output=True, text=True, env=no_daemon.env())
 
     def test_open_items_exit_0_without_a_plain_ok(self):
         # The copy has no docker-compose.yml, so the checks are NOT VERIFIED.
@@ -555,7 +625,9 @@ class ValidateOutcome(unittest.TestCase):
     def test_f_files_reach_the_checker(self):
         for name in ("docker-compose.yml", "network-dual-stack.yml"):
             shutil.copy(TRAEFIK / name, self.root / name)
-        r = self.validate("-f", str(self.root / "docker-compose.yml"))
+        # docker-compose.yml publishes nothing itself since step 7; the rendered
+        # file is part of every deployment's file list.
+        r = self.validate("-f", str(self.root / "docker-compose.yml"), "-f", str(self.root / "config" / "published-ports.yml"))
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertNotIn("unknown argument", r.stdout)
         if shutil.which("docker") is None:
@@ -568,16 +640,76 @@ class ValidateOutcome(unittest.TestCase):
         self.assertIn("unknown argument", r.stdout)
 
 
+class ValidateBeforeRender(unittest.TestCase):
+    """The documented order is validate, render, validate (README, step 8 plan P2).
+    On a fresh checkout COMPOSE_FILE names files render.sh has not written yet:
+    the published-address checks are open, not failed and not passed."""
+
+    def setUp(self):
+        tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
+        self.root = tmp / "core" / "traefik"
+        shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        for name in ("docker-compose.yml", "network-dual-stack.yml"):
+            shutil.copy(TRAEFIK / name, self.root / name)
+        (tmp / "scripts" / "ci").mkdir(parents=True)
+        shutil.copy(TRAEFIK.parents[1] / "scripts" / "ci" / "check-crowdsec-config.py",
+                    tmp / "scripts" / "ci" / "check-crowdsec-config.py")
+        env = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", TRAEFIK_BIND_V6="[::]",
+                   PUBLIC_NETWORK_SUBNET_V4="172.30.0.0/16", PUBLIC_NETWORK_SUBNET_V6="fd3e:8647:15b3::/64",
+                   COMPOSE_FILE="docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml")
+        (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+
+    def run_script(self, name, *args):
+        return subprocess.run(["bash", str(self.root / "ops/scripts" / name), *args], capture_output=True, text=True)
+
+    def test_fresh_checkout_is_open_not_failed(self):
+        r = self.run_script("validate.sh")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("NOT VERIFIED: not rendered yet (config/published-ports.yml config/edge-networks.yml)", r.stdout)
+        self.assertIn("SECURITY NOT CONFIRMED", r.stdout)
+        self.assertNotIn("compose file not found", r.stdout + r.stderr)
+
+    def test_strict_fails_before_render(self):
+        r = self.run_script("validate.sh", "--strict")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("not rendered yet", r.stdout)
+
+    def test_missing_file_outside_config_stays_an_error(self):
+        (self.root / "network-dual-stack.yml").unlink()
+        r = self.run_script("validate.sh")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertIn("compose file not found", r.stderr)
+        self.assertNotIn("not rendered yet", r.stdout)
+
+    def test_missing_rendered_file_after_a_render_stays_an_error(self):
+        r = self.run_script("render.sh")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        (self.root / "config" / "published-ports.yml").unlink()
+        r = self.run_script("validate.sh")
+        self.assertEqual(r.returncode, 1, r.stdout + r.stderr)
+        self.assertNotIn("not rendered yet", r.stdout)
+        self.assertIn("compose file not found", r.stderr)
+
+
 @unittest.skipUnless(shutil.which("docker"), "needs the docker CLI for docker compose config")
 class ShippedComposeFiles(unittest.TestCase):
+    V4_ONLY = "docker-compose.yml:config/published-ports.yml:config/edge-networks.yml"
+    DUAL = "docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml"
+
     def config(self, *overlay_env):
+        # render.sh writes the published ports (step 7), so the model is read
+        # after a render, through COMPOSE_FILE, as on a host.
         tmp = Path(tempfile.mkdtemp())
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         for name in ("docker-compose.yml", "network-dual-stack.yml"):
             shutil.copy(TRAEFIK / name, tmp / name)
-        env = dict(BASE_ENV)
+        shutil.copytree(TRAEFIK / "ops", tmp / "ops")
+        env = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", COMPOSE_FILE=self.V4_ONLY)
         env.update(dict(overlay_env))
         (tmp / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
+        r = subprocess.run(["bash", str(tmp / "ops/scripts/render.sh")], capture_output=True, text=True)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         r = subprocess.run(["docker", "compose", "config", "--format", "json"], cwd=tmp, capture_output=True, text=True)
         self.assertEqual(r.returncode, 0, r.stderr)
         return json.loads(r.stdout)
@@ -591,6 +723,15 @@ class ShippedComposeFiles(unittest.TestCase):
         m = self.config()
         self.assertEqual(self.bindings(m), [("0.0.0.0", "443", "tcp"), ("0.0.0.0", "443", "udp"), ("0.0.0.0", "80", "tcp")])
         self.assertFalse(m["networks"]["public"].get("enable_ipv6"))
+
+    def test_base_pins_the_published_ports_to_public(self):
+        """The shipped file gives public the only gw_priority, so Docker maps the
+        ports to Traefik's address there and not on crowdsec-security."""
+        nets = self.config()["services"]["traefik"]["networks"]
+        self.assertEqual(nets["public"].get("gw_priority"), 100)
+        for name, cfg in nets.items():
+            if name != "public":
+                self.assertFalse((cfg or {}).get("gw_priority"), name)
 
     def test_checker_evaluates_explicit_f_files(self):
         tmp = Path(tempfile.mkdtemp())
@@ -607,12 +748,25 @@ class ShippedComposeFiles(unittest.TestCase):
         both = run("docker-compose.yml", "network-dual-stack.yml")
         self.assertNotIn("IPv4-only", both.stdout)  # the overlay was evaluated: dual-stack, no P2 error
 
-    def test_overlay_adds_ipv6_bindings_and_the_ipv6_subnet(self):
-        m = self.config(("COMPOSE_FILE", "docker-compose.yml:network-dual-stack.yml"),
+    def test_overlay_and_bind_v6_add_ipv6_bindings_and_the_ipv6_subnet(self):
+        m = self.config(("COMPOSE_FILE", self.DUAL), ("TRAEFIK_BIND_V6", "[::]"),
                         ("PUBLIC_NETWORK_SUBNET_V4", "172.30.0.0/16"),
                         ("PUBLIC_NETWORK_SUBNET_V6", "fd00:db8:30::/64"))
         self.assertEqual(self.bindings(m), [("0.0.0.0", "443", "tcp"), ("0.0.0.0", "443", "udp"), ("0.0.0.0", "80", "tcp"),
                                             ("::", "443", "tcp"), ("::", "443", "udp"), ("::", "80", "tcp")])
+        self.assertTrue(m["networks"]["public"]["enable_ipv6"])
+
+    def test_ipv6_only_publishes_no_ipv4_binding(self):
+        m = self.config(("COMPOSE_FILE", self.DUAL), ("TRAEFIK_BIND_V4", ""), ("TRAEFIK_BIND_V6", "[::]"),
+                        ("PUBLIC_NETWORK_SUBNET_V4", "172.30.0.0/16"),
+                        ("PUBLIC_NETWORK_SUBNET_V6", "fd00:db8:30::/64"))
+        self.assertEqual(self.bindings(m), [("::", "443", "tcp"), ("::", "443", "udp"), ("::", "80", "tcp")])
+
+    def test_the_overlay_with_an_empty_bind_v6_publishes_ipv4_only(self):
+        m = self.config(("COMPOSE_FILE", self.DUAL), ("TRAEFIK_BIND_V6", ""),
+                        ("PUBLIC_NETWORK_SUBNET_V4", "172.30.0.0/16"),
+                        ("PUBLIC_NETWORK_SUBNET_V6", "fd00:db8:30::/64"))
+        self.assertEqual(self.bindings(m), [("0.0.0.0", "443", "tcp"), ("0.0.0.0", "443", "udp"), ("0.0.0.0", "80", "tcp")])
         self.assertTrue(m["networks"]["public"]["enable_ipv6"])
 
 

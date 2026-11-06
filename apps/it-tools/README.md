@@ -2,13 +2,19 @@
 
 A self-hosted collection of handy IT and developer tools: JSON/YAML formatters, hash and UUID generators, regex tester, base64/URL encoders, QR code generator, timezone converters, and dozens more. Pure static SPA — no backend, no database, no accounts.
 
+## Open findings
+
+The image, `ghcr.io/corentinth/it-tools:2024.10.22-7ca5933`, carries 2 CRITICAL findings: OpenSSL (CVE-2026-31789, 32-bit systems only) and libxml2 (CVE-2024-56171). **Upstream has published no release since October 2024 and the image sits on an end-of-life Alpine, so this stack is unmaintained.**
+
+**Risk:** the container only serves static files to the browser. Keep it internal.
+
 ## Architecture
 
 Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `app` | `ghcr.io/corentinth/it-tools` | Static SPA served by Nginx on port 80 |
+| `it-tools-app` | `ghcr.io/corentinth/it-tools` | Static SPA served by Nginx on port 80 |
 
 Completely stateless. Can be torn down and recreated without data loss.
 

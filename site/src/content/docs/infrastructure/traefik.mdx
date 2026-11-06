@@ -39,14 +39,28 @@ Don't use Cloudflare, or don't want a wildcard? See "Certificate strategy" under
    ACME_WILDCARD_DOMAIN=example.com
    ```
 
-3. Render and start:
+   Unless you run IPv4 only, also replace the example IPv6 prefix in
+   `PUBLIC_NETWORK_SUBNET_V6` with one of your own — `validate.sh` refuses the
+   example on purpose ([dual-stack, below](#networking-dual-stack-by-default-two-bind-variables)).
+
+3. List the edge networks of the stacks you will install (see
+   [Edge networks](#edge-networks-one-per-stack) below). It can stay empty until
+   the first stack:
+
+   ```ini
+   EDGE_NETWORKS="whoami-edge nextcloud-edge"
+   ```
+
+4. Check, render, check again and start:
 
    ```bash
+   bash ops/scripts/validate.sh
    bash ops/scripts/render.sh
+   bash ops/scripts/validate.sh
    docker compose up -d
    ```
 
-4. Confirm both containers are healthy:
+5. Confirm both containers are healthy:
 
    ```bash
    docker compose ps
@@ -79,20 +93,59 @@ docker exec traefik-core cat /etc/traefik/acme/acme.json | jq '.[] | .Certificat
 
 ## Going further
 
-### Networking: IPv4-only or dual-stack?
+### Edge networks: one per stack
 
-The installation above is IPv4-only, which works for most setups. The failure dual-stack exists to prevent, in this architecture, is **Tailscale**: it always hands a client both addresses, and if the client connects over IPv6 while Traefik's network is IPv4-only, Traefik loses the real client address and may wrongly refuse a Tailscale-only service.
+Each application stack ships on a Docker network of its own,
+`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge` — `nextcloud-edge`, `whoami-edge`.
+Traefik creates and joins exactly the networks listed in `EDGE_NETWORKS` in
+`core/traefik/.env`: `render.sh` writes them into `config/edge-networks.yml`, which
+`COMPOSE_FILE` applies, and each stack declares its network as external. Nothing
+creates a network automatically when a stack appears.
 
-That is the case this blueprint has hit, not the only one IPv6 matters for — another VPN that assigns IPv6, or a service reached directly over public IPv6 rather than through a proxy, raises the same question. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is unaffected, because the real address is recovered from a trusted forwarded header instead of from the connection.
+**A stack whose network is not listed is unreachable, and Traefik's log says
+nothing.** `validate.sh` compares the network label of every running routed
+container with `EDGE_NETWORKS` and with the networks Traefik has joined, and
+reports the one missing.
+
+Adding a stack is: list its network, `bash ops/scripts/render.sh`,
+`docker compose up -d` in `core/traefik`, then start the stack. That `up -d`
+recreates Traefik, which **interrupts every stack it routes for about seven
+seconds** (measured on a test host) — plan it like a short maintenance window.
+
+On its own edge network a stack's web container reaches Traefik and its own
+internal network, nothing else. `proxy-public` stays as the shared choice
+(`TRAEFIK_NETWORK=proxy-public`) for stacks that must reach each other by service
+name, at the cost that every member reaches every other directly. It also carries
+Traefik's published ports in both shapes. Moving an existing shared installation
+and the way back:
+[`core/traefik/docs/edge-networks.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/edge-networks.md).
+
+### Networking: dual-stack by default, two bind variables
+
+Host ingress is two variables in `core/traefik/.env`, one per address family:
+`TRAEFIK_BIND_V4` and `TRAEFIK_BIND_V6`. `render.sh` writes them into
+`config/published-ports.yml`, which `COMPOSE_FILE` applies; `docker-compose.yml`
+publishes nothing itself. An empty variable publishes nothing for its family, and
+neither has a default — `render.sh` refuses `TRAEFIK_BIND_V4` unset, so a missing
+line never binds every address. An IPv6 binding needs `network-dual-stack.yml`,
+which makes the proxy network carry IPv6; `render.sh` refuses one without it.
+
+The failure dual-stack prevents, in this architecture, is **Tailscale**: it always
+hands a client both addresses, and if the client connects over IPv6 to a proxy
+network without IPv6, Docker hands the connection to Traefik from the bridge
+gateway — the access policy then sees a private address, not the client, and
+answers 403. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is
+unaffected, because the real address is recovered from a trusted forwarded header.
+That a tailnet client over IPv6 is seen with its own address was measured on a host
+before the current bindings and edge networks; with the current configuration the
+tailnet path is **not verified** yet, while a client off the host over public IPv4
+and IPv6 is.
 
 <Tabs>
-  <TabItem label="IPv4-only (default)">
-    No extra setup. Skip this section if you don't use Tailscale, or haven't run into this.
-  </TabItem>
-  <TabItem label="Dual-stack">
+  <TabItem label="Dual-stack (default)">
     <Steps>
 
-    1. Generate your own IPv6 ULA prefix — never reuse a documentation example:
+    1. Generate your own IPv6 ULA prefix — the example in `.env.example` is refused on purpose:
 
        ```bash
        RANDOM_HEX=$(openssl rand -hex 5)
@@ -122,23 +175,65 @@ That is the case this blueprint has hit, not the only one IPv6 matters for — a
        sudo systemctl restart docker
        ```
 
-    4. In `core/traefik/.env`:
+    4. In `core/traefik/.env`, set the prefix; the rest is the example's default:
 
        ```ini
        PUBLIC_NETWORK_SUBNET_V4=172.30.0.0/16
        PUBLIC_NETWORK_SUBNET_V6=<your generated prefix>/64
-       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml
+       TRAEFIK_BIND_V4=0.0.0.0
+       TRAEFIK_BIND_V6=[::]
+       COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
        ```
 
     </Steps>
+  </TabItem>
+  <TabItem label="IPv4 only">
+    Leave `TRAEFIK_BIND_V6` empty and drop the overlay from the list:
 
-    :::caution
-    Set `COMPOSE_FILE` as shown — don't rely on remembering a `-f network-dual-stack.yml` flag. Once the dual-stack network exists, running `docker compose` without it makes Compose try to recreate the network as IPv4-only — which fails loudly if other containers are attached, or can silently revert it if not.
-    :::
+    ```ini
+    TRAEFIK_BIND_V6=
+    COMPOSE_FILE=docker-compose.yml:config/published-ports.yml:config/edge-networks.yml
+    ```
 
-    Full migration guide for adding this to an already-running deployment: [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md).
+    A Tailscale client is then served over IPv4 only.
+  </TabItem>
+  <TabItem label="IPv6 only">
+    Leave `TRAEFIK_BIND_V4` empty and keep the overlay: no public IPv4 ingress. What
+    the host needs for IPv6-only outbound connections — registries and sources without
+    `AAAA` records — is a prerequisite list, not a mode; see the ingress audit, §3.4.
+    Not verified on a host yet.
   </TabItem>
 </Tabs>
+
+:::caution
+`COMPOSE_FILE` lives in `.env`, never on the command line. A command run without the
+network overlay would recreate `proxy-public` as IPv4-only, and one run without the
+rendered file would publish nothing. Run `bash ops/scripts/render.sh` after changing a
+binding. Adding dual-stack to an already-running IPv4-only deployment is a parallel
+network and a cutover, not an overlay applied to the live network:
+[`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md).
+:::
+
+### Exposure profile and host firewall
+
+There is no exposure variable. `validate.sh` derives a **profile** from the two
+bindings and `TRAEFIK_FORWARDED_PROXY` — `direct` (published to everyone),
+`proxied` (behind Cloudflare) or `private` (only loopback, LAN or VPN addresses) —
+and prints which protection layers are present and which are absent: host
+firewall, CrowdSec, forward-auth, origin protection.
+
+What the internet actually reaches only a measurement from outside shows:
+`scripts/exposure-test.sh <address> <profile>`, run from a machine that is not on
+the VPN, ends with a marker line you append to `config/exposure-verified`.
+`validate.sh --strict` requires that marker for a public binding.
+
+`render.sh` also writes a host firewall for the profile,
+`config/host/ingress.nft` — an `nftables` table of its own that closes the host's
+input path except for the VPN and keeps Docker's forward path open. It is
+**optional, and nothing in the blueprint loads it**: the operator installs it.
+Its syntax is checked in CI; loaded on a host it has **not been verified** yet.
+How to load it with a way back:
+[`core/traefik/docs/host-firewall.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/host-firewall.md).
 
 ### Certificate strategy
 
@@ -170,7 +265,9 @@ Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record 
 ## Troubleshooting
 
 :::caution
-**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
+**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field (the tailnet path is not verified with the current configuration; this is the check to run).
+
+**A stack that answers 404 or nothing at all** — its network is probably missing from `EDGE_NETWORKS`, or Traefik has not been recreated since it was added. `bash ops/scripts/validate.sh` names it. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
 :::
 
 ```bash
@@ -194,7 +291,7 @@ docker compose config | sed -E 's/(CF_DNS_API_TOKEN: ).*/\1***REDACTED***/'
 # Bump TRAEFIK_IMAGE in .env, then:
 bash ops/scripts/render.sh
 docker compose pull
-docker compose up -d
+docker compose up -d       # recreates Traefik: every routed stack pauses ~7 s
 docker compose logs traefik 2>&1 | grep -i error   # should be empty
 ```
 
@@ -204,6 +301,8 @@ Never jump major versions without reading the migration guide — the configurat
 
 - [`core/traefik/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/README.md) — full setup, the middleware model, the CrowdSec and Authentik switches
 - [`core/traefik/docs/ipv6-dual-stack.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/ipv6-dual-stack.md) — dual-stack networking in depth
+- [`core/traefik/docs/edge-networks.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/edge-networks.md) — edge networks, the shared network, migration and the way back
+- [`core/traefik/docs/host-firewall.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/host-firewall.md) — exposure profile, host firewall, exposure test
 - [`core/traefik/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/.env.example) — all configurable variables
 - [`docs/standards/traefik-security.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/traefik-security.md) — the four router positions (access, rate limit, headers, auth), the entrypoint pair, TLS profiles
 - [`TROUBLESHOOTING.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/TROUBLESHOOTING.md) — symptoms this blueprint has hit, with their fixes

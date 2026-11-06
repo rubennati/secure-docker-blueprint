@@ -69,6 +69,7 @@ services:
       POSTGRES_DATABASE: shellhub
       SHELLHUB_SSH_PORT: 2222
       SHELLHUB_DOMAIN: localhost
+      SHELLHUB_TELEMETRY: "false"
     secrets:
       - local_api_private_key
       - local_api_public_key

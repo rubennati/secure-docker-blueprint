@@ -11,21 +11,20 @@
 - **Origin:** Germany · Nextcloud GmbH · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share with calendars, contacts and collaborative editing
-- **Based on version:** `34.0.4-fpm-alpine`
-- **Last verified:** 2026-09-13 (34.0.4-fpm-alpine) — in-place upgrade from 34.0.2 on a live host: the entrypoint ran the upgrade, `occ status` reports 34.0.4 with `needsDbUpgrade: false`, the login redirect answers as before. The first `up -d` failed on a container-name conflict left by the earlier service rename — see `TROUBLESHOOTING.md` §5.3. Earlier: 2026-07-29 (34.0.2-fpm-alpine)
-- **Supported until:** 2027-06-08
+- **Based on version:** `35.0.2-fpm-alpine`
+- **Last verified:** 2026-11-02 (34.0.4-fpm-alpine) — step 8 lab host behind Traefik 3.7.17 on its edge network: unattended install, an app password from OCS, WebDAV PUT/GET/PROPFIND, a 100 MB upload and a 200 MB file through chunked upload v2 (checksum identical), CalDAV and CardDAV objects created and found, login flow v2 started, the brute-force counter on the client's address once the trusted proxy is the edge network (a host-local client; external IPv4 and IPv6 clients not measured) — all through curl, no official client run (docs/labs/ingress/2026-11-01-results.md)
+- **Supported until:** 2027-09-15
 
 Nextcloud publishes a major version every four months and maintains each for one
-year. 34 was released 2026-06-09, so it is the newest version carrying a full
+year. 35 was released 2026-09-16, so it is the newest version carrying a full
 support window — [release schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule).
 
 ### The database, and the upgrade that was performed
 
-`DB_TAG=11.8` — the version Nextcloud 34 recommends of 10.11 · 11.4 · **11.8** ·
-12.3.
-
-It was reached by upgrading a running instance from 10.11, not by installing
-fresh, so the documented path is the one that was taken:
+`DB_TAG=12.3` — the version Nextcloud 35 recommends of 10.11 · 11.4 · 11.8 ·
+**12.3** (see Version notes). The step before, from 10.11 to 11.8, was taken by
+upgrading a running instance rather than installing fresh, so the documented
+path is the one that was taken:
 
 - **Skipping majors is supported** for a standalone server; only Galera requires
   one step at a time.
@@ -79,6 +78,96 @@ If fpm-alpine + nginx causes issues:
 4. Change loadbalancer port to `80`
 5. Remove `nginx/nginx.conf` mount
 6. The `cron` service stays unchanged
+
+## Version notes
+
+- Moved to `34.0.5-fpm-alpine` on 2026-11-05 (released 2026-10-15, image rebuilt
+  2026-10-28), not run on a host at this tag. A maintenance release of the 34 line
+  with no breaking change, no new requirement and no change to the environment
+  variables or `nginx.conf`
+  ([v34.0.5](https://github.com/nextcloud-releases/server/releases/tag/v34.0.5)).
+  The three CRITICAL findings at `34.0.4` are all in Alpine packages, not in
+  Nextcloud: `brotli-libs` 1.2.0 (CVE-2026-111497, fixed in 1.2.1, which this
+  image carries) and `libraw` 0.22.1, pulled in by `imagemagick-raw`
+  (CVE-2026-20884 and CVE-2026-24450, fixed in 0.22.2). **The two `libraw`
+  findings stay**: both `34.0.5-fpm-alpine` and `35.0.2-fpm-alpine` still ship
+  `libraw` 0.22.1 although Alpine 3.24 has published 0.22.2
+  ([secdb](https://secdb.alpinelinux.org/v3.24/community.json)), so the move
+  to Nextcloud 35 below does not remove them either. They clear with the next
+  image rebuild. `libraw` is reached only when
+  ImageMagick decodes a camera RAW file, for example in a preview. The
+  rebuilt `35.0.2-fpm-alpine` image scanned on 2026-11-06 no longer carries
+  them.
+
+- The nginx front (`NGINX_TAG`) moved from `1.29-alpine-slim` to
+  `1.31-alpine-slim` on 2026-11-05, not run on a host at this tag; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
+  stable branch). The "Change:" entries from 1.30.0 to 1.31.8 do not touch this
+  configuration: HTTP/2 and HTTP/3 requests carrying `Connection`, `Upgrade`, `TE`
+  and similar headers are rejected, requests to backends always carry `:authority`
+  or `Host`, HTTP/2 uses RFC 9218 priorities, xslt external entities are off,
+  `working_directory` is relative to the prefix, `$request_id` uses SipHash.
+  Security fixes in 1.31.0 to 1.31.7: CVE-2026-42926, CVE-2026-42945,
+  CVE-2026-42946, CVE-2026-42934, CVE-2026-40460, CVE-2026-40701, CVE-2026-9256,
+  CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
+  CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
+  CVE-2026-97629, CVE-2026-97205.
+- The nginx front is pinned to `1.31.8-alpine-slim` on 2026-11-05, not run on a
+  host at this tag; until then it followed the floating `1.31-alpine-slim`. The
+  image the scan had pulled under that tag carried `brotli-libs` 1.2.0
+  (CVE-2026-111497); the 1.31.8 build on Alpine 3.24.3 ships no brotli library
+  at all. CRITICAL findings 1 -> 0. No configuration change.
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. Nextcloud requires Redis 4.0.0 or later and names no upper
+  limit. The image's entrypoint now drops to the `redis` user only when SETUID and
+  SETGID are in the capability bounding set, empties that set while dropping, and
+  fixes ownership only of `*.rdb` files and `appendonlydir` in `/data`. This service
+  starts as root with Docker's default capabilities, so it drops to UID 999 as
+  before; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
+  https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/caching_configuration.html
+- Moved to `35.0.2-fpm-alpine` on 2026-11-05 (35.0.2 released 2026-10-15, image
+  built 2026-10-23), not run on a host at this tag. One major step, 34 to 35,
+  as Nextcloud requires; 35.0.3 exists only as a release candidate. The image
+  ships PHP 8.5, as the 34 image did. Nextcloud 35 drops PHP 8.2, MariaDB 10.6
+  and MySQL 8.0 and adds MariaDB 12.3 as a supported LTS
+  ([upgrade notes](https://docs.nextcloud.com/server/35/admin_manual/release_notes/upgrade_to_35.html),
+  [system requirements](https://docs.nextcloud.com/server/35/admin_manual/installation/system_requirements.html)).
+  No change to the environment variables or upstream's example `nginx.conf`;
+  the image changes since June (PHP 8.5, Alpine 3.24, the Redis connection
+  rework, `session.upload_progress.enabled=0`, fewer ImageMagick modules) were
+  built into the 34 image too. Office connectors follow the server major: the
+  Collabora app `richdocuments` 12.x supports only 35 (11.x only 34), and
+  `occ richdocuments:activate-config` keeps `--wopi-url` and `--callback-url`;
+  the OnlyOffice connector 10.2.1 supports 33 to 35. The app updater moves them
+  during `occ upgrade`. Supported until 2027-09-15
+  ([v35.0.2](https://github.com/nextcloud-releases/server/releases/tag/v35.0.2),
+  [schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule)).
+- Moved `mariadb` from `11.8` to `12.3.3`, the current LTS line, on 2026-11-05,
+  not run on a host at this tag. Nextcloud 35 lists 12.3 as recommended;
+  Nextcloud 34 supports it too, so take the two steps apart as README.md
+  "Updates" says: first `DB_TAG` with `APP_TAG` still on 34, then `APP_TAG`.
+  `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
+  `mariadb-upgrade` at the first start on 12.3; there is no downgrade, so take
+  the archive before the tag changes. The server options in `command:` are all
+  still valid in 12.3. `innodb_snapshot_isolation` (on since 11.6) does not
+  apply under `READ-COMMITTED`, and the new default collation
+  `utf8mb4_uca1400_ai_ci` affects only new databases without an explicit
+  collation; Nextcloud sets its own on install.
 
 ## Upgrade checklist
 

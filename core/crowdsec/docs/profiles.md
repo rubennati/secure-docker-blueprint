@@ -19,7 +19,7 @@ default** — the Traefik plugin and the two middlewares exist only with
 ## Where CrowdSec sits — the entrypoint, not a router position
 
 Every app router in this blueprint carries four middlewares from its own `.env`
-(access, limit, headers, auth — [`docs/standards/traefik-security.md`](../../../docs/standards/traefik-security.md)).
+(headers, access, limit, auth — [`docs/standards/traefik-security.md`](../../../docs/standards/traefik-security.md)).
 Threat enforcement is none of them. `render.sh` places it on the `websecure`
 entrypoint, where it runs before any router's list:
 
@@ -119,7 +119,7 @@ named **`geo-*`** because it is *not* a CrowdSec-plugin mechanism — see below.
 
 ### `threat-crowdsec-appsec`
 
-- **Purpose:** `threat-crowdsec` **plus** synchronous WAF inspection of each request (SQLi, XSS, path traversal, virtual patches) via the AppSec engine.
+- **Purpose:** `threat-crowdsec` **plus** synchronous inspection of each request by the AppSec engine with the shipped rule sets — virtual patches and a small generic set, no Core Rule Set: SQL injection, XSS and traversal probes passed it on a host ([appsec.md](appsec.md)).
 - **Intended for:** a deployment whose public applications' traffic has been tested against the WAF and shown clean — after the engine is confirmed reachable from Traefik. It replaces `threat-crowdsec` on the entrypoint for every router at once (`CROWDSEC_APPSEC_ENABLED=true`).
 - **Blocks:** banned IPs **and** individual requests matching a WAF rule. AppSec blocks the request without creating an IP ban (see [appsec.md](appsec.md)).
 - **AppSec:** yes, **fail-open** (`crowdsecAppsecFailureBlock: false`, `crowdsecAppsecUnreachableBlock: false`).

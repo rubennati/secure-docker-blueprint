@@ -8,6 +8,16 @@ It sits beside [`apps/agentgateway`](../agentgateway/), which routes to MCP
 servers you run yourself. obot **starts them for you**, and that is the whole
 difference — in what it can do, and in what it costs you to run it.
 
+## Open findings
+
+The pinned image, `ghcr.io/obot-platform/obot:v0.27.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: the CA bundle still trusts revoked eMudhra intermediates, and brotli. v0.27.0 is the newest release.
+
+**Risk:** the CA issue lets someone holding those keys intercept Obot's outbound TLS from an on-path position; whether brotli decoding is used was not checked. Watch for the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## The deviation this stack carries
 
 **obot can create containers on this host. That is root on this host.**
@@ -117,11 +127,14 @@ local in the sense of "not routed", not in the sense of "harmless".
 
 ## What leaves the host
 
-The update check is off. Four catalogue feeds remain, all on GitHub, all read at
-start: the MCP catalogue, the system MCP catalogue, the skills repository and
-the hosted-agents catalogue. They are content rather than telemetry — nothing
-about this installation is sent — and each can be pointed at your own
-repository. See `UPSTREAM.md` for the settings.
+The update check is off. Three catalogue feeds remain, all on GitHub, all read at
+start: the MCP catalogue, the system MCP catalogue and the skills repository.
+The hosted-agents catalogue went with Hosted Agents in v0.27.0. They are content
+rather than telemetry — nothing about this installation is sent — and each can
+be pointed at your own repository. See `UPSTREAM.md` for the settings.
+
+Since v0.27.0 MCP clients connect through virtual MCP servers (vMCPs) only; a
+direct connection to a catalogue entry or a server instance is refused.
 
 Anything you then ask an agent to do reaches whatever model provider and MCP
 servers you configured — that is the work, not a side effect.

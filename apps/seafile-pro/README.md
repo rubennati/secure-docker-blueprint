@@ -1,8 +1,19 @@
 # Seafile Pro
 
-> **Backup and restore are untested** for this stack.
-
 Cloud file storage with collaboration, search, and antivirus scanning.
+
+## Open findings
+
+The findings of the community edition apply here too: PyJWT CVE-2026-102268 and
+`proxy-addr` CVE-2026-90711 in SeaDoc 2.0.11, PyJWT in the thumbnail server
+13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The optional
+Seafile AI image 13.0.10 carries 21 CRITICAL vulnerabilities, among them LiteLLM
+authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13
+build of it exists, and Seafile 14 is not yet stable.
+
+**Risk:** as in `apps/seafile` for the core images. Seafile AI is off by default
+and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave
+it off unless you need it, and watch for a stable Seafile 14.
 
 ## Services
 
@@ -44,7 +55,8 @@ sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(openssl rand
 sed -i "s|^INIT_SEAFILE_ADMIN_PASSWORD=.*|INIT_SEAFILE_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
 sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(openssl rand -base64 48 | tr -d '\n')|" .env
 sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$(openssl rand -hex 32)|" .env
-# OnlyOffice JWT secret — copy from the OnlyOffice server (must match exactly):
+# OnlyOffice JWT secret — copy from the OnlyOffice server (must match exactly); left
+# empty, the integration stays off:
 #   sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=<paste-value>|" .env
 
 # 3. Pull images
@@ -76,6 +88,8 @@ curl -s https://your-domain/notification/ping              # {"ret": "pong"}
 
 OnlyOffice needs a server-to-server network path to Seafile's configured hostname (`APP_TRAEFIK_HOST`). This path can be public internet, Tailscale, or any direct route. If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice server, traffic routes via Tailscale automatically — no public internet exposure required.
 
+**The integrations call back past a closed policy, each by its own mechanism.** No closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — admits a request from a Docker container (DEC-076). SeaDoc calls Seafile over the internal network (`SEAHUB_SERVICE_URL` in `seadoc.yml`) and needs nothing. OnlyOffice fetches the document from `/seafhttp/files/<token>/…` and saves by calling `/onlyoffice/editor-callback/`, both at Seafile's public name, the only address Seafile hands it; the token is a fileserver access token valid for one hour, and the callback is acted on only for a document key Seafile issued — seahub verifies no JWT on it. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`; a Document Server on another host reaches a closed instance instead when its address is in `TRUSTED_RANGES` or on the VPN. Add the file to `COMPOSE_FILE` when you run OnlyOffice; the rest of the instance stays closed (`apps/seafile/README.md`, "Access policy", has the detail).
+
 **`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure setting.** `access-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls. `access-vpn` enforces a source-IP allowlist but may reject Tailscale-routed traffic if Docker bridge masquerades the source IP before Traefik sees it — see `UPSTREAM.md` and `TROUBLESHOOTING.md §4.4` for the known caveat and investigation steps.
 
 On the OnlyOffice server, add the Seafile domain to `ONLYOFFICE_ALLOWED_ORIGINS` so browsers can embed the editor in an iframe — see `apps/onlyoffice/.env.example`. **Changes to `ONLYOFFICE_ALLOWED_ORIGINS` require container recreation** (`docker compose up -d --force-recreate` on the OnlyOffice server), not just restart — the value is baked into a Traefik label at container creation time.
@@ -97,7 +111,7 @@ Adding a brand-new setting that was absent from `seahub_custom.py` at injection 
 | | |
 |---|---|
 | **Database** | MariaDB · container `seafile-pro-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
-| **Password** | `SEAFILE_MYSQL_DB_PASSWORD` in `.env`. **This stack creates no `.secrets/` file** — see Passwords above — so the borgmatic snippet below needs one written for it: `printf '%s' "$SEAFILE_MYSQL_DB_PASSWORD" > .secrets/seafile_db_pwd.txt`. Borgmatic reads credentials from a file, a container, KeePassXC or systemd; there is no form that reads a `.env` entry directly |
+| **Password** | `SEAFILE_MYSQL_DB_PASSWORD` in `.env`. **This stack creates no `.secrets/` file** — see Passwords above — so the borgmatic snippet below needs one written for it from `.env`: `mkdir -p .secrets && grep '^SEAFILE_MYSQL_DB_PASSWORD=' .env \| cut -d= -f2- \| tr -d '\n' > .secrets/seafile_db_pwd.txt && chmod 600 .secrets/seafile_db_pwd.txt` (the variable is not set in your shell, so a `printf` of it writes an empty file). Borgmatic reads credentials from a file, a container, KeePassXC or systemd; there is no form that reads a `.env` entry directly |
 | **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
 | **Reproducible** | `./volumes/redis` (cache) · the Elasticsearch volume · `./volumes/seasearch-data` — both search indexes, rebuildable |
 | **Quiescing** | Not needed for the dumps. Content-addressed blocks tolerate a mid-write copy. |
@@ -128,6 +142,22 @@ which looks like data loss and is not.
 
 **Restore order:** databases first, then the block store, then the app, then
 trigger the reindex.
+
+A dump holds the databases, not the account Seafile connects with. Restored into a
+fresh `db` container, the app starts and every request fails with `Access denied
+for user 'seafile'`. Create the account before starting the app:
+
+```bash
+docker compose up -d db
+# restore the three dumps, then:
+docker compose exec -T db sh -c 'mariadb -uroot -p"$MYSQL_ROOT_PASSWORD"' <<SQL
+CREATE USER IF NOT EXISTS 'seafile'@'%' IDENTIFIED BY '$(grep '^SEAFILE_MYSQL_DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\n')';
+GRANT ALL PRIVILEGES ON ccnet_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seafile_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
+SQL
+docker compose up -d
+```
 
 ## Details
 

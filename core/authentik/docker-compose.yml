@@ -73,6 +73,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/shlink.
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
@@ -188,6 +192,14 @@ services:
       AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/DB_PWD
       AUTHENTIK_SECRET_KEY: file:///run/secrets/AUTHENTIK_SECRET_KEY
       AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      # Since 2026.8 authentik honours X-Forwarded-* only from a trusted proxy
+      # network. Upstream's default list has the private IPv4 ranges but not
+      # IPv6 ULA (fc00::/7), which the dual-stack proxy-public network of
+      # core/traefik uses; without it a request from Traefik over IPv6 reads as
+      # plain HTTP. Setting the variable replaces the default list.
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7,::1/128"
+      # The external URL of the instance; required from 2026.11 on.
+      AUTHENTIK_WEB__BASE_URL: https://${APP_TRAEFIK_HOST}
       AUTHENTIK_EMAIL__HOST: ${SMTP_HOST}
       AUTHENTIK_EMAIL__PORT: ${SMTP_PORT}
       AUTHENTIK_EMAIL__USERNAME: ${SMTP_USERNAME}
@@ -225,7 +237,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
       #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
       # Middlewares
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       # Service
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=9000"
       # Router (static assets — bypasses rate limit)
@@ -237,7 +249,7 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/_static/`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_ACCESS}@file,${STATIC_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${STATIC_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.service=${COMPOSE_PROJECT_NAME}"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-static.priority=100"
 
@@ -294,6 +306,14 @@ services:
       AUTHENTIK_POSTGRESQL__PASSWORD: file:///run/secrets/DB_PWD
       AUTHENTIK_SECRET_KEY: file:///run/secrets/AUTHENTIK_SECRET_KEY
       AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
+      # Since 2026.8 authentik honours X-Forwarded-* only from a trusted proxy
+      # network. Upstream's default list has the private IPv4 ranges but not
+      # IPv6 ULA (fc00::/7), which the dual-stack proxy-public network of
+      # core/traefik uses; without it a request from Traefik over IPv6 reads as
+      # plain HTTP. Setting the variable replaces the default list.
+      AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS: "127.0.0.0/8,10.0.0.0/8,172.16.0.0/12,192.168.0.0/16,fc00::/7,::1/128"
+      # The external URL of the instance; required from 2026.11 on.
+      AUTHENTIK_WEB__BASE_URL: https://${APP_TRAEFIK_HOST}
       AUTHENTIK_EMAIL__HOST: ${SMTP_HOST}
       AUTHENTIK_EMAIL__PORT: ${SMTP_PORT}
       AUTHENTIK_EMAIL__USERNAME: ${SMTP_USERNAME}
@@ -317,8 +337,13 @@ services:
       - ./volumes/custom-templates:/templates
 
     # --- Networking ---
+    # Outbound for the worker only: it sends every e-mail (recovery, invitations,
+    # notifications) and runs the version check. On app-internal alone the SMTP
+    # host does not resolve and every send_mail task fails. The database and Redis
+    # stay on app-internal. See README, "Network exception".
     networks:
       - app-internal
+      - app-egress
 
     # --- Health & Observability ---
     # healthcheck: none — upstream removed the built-in worker healthcheck in
@@ -332,11 +357,16 @@ services:
 # --------------------------------------------------------
 networks:
   proxy-public:
+    name: ${TRAEFIK_NETWORK}
     external: true
 
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
+
+  # Outbound for the worker only. See README, "Network exception".
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
 
 # --------------------------------------------------------
 # SECRETS

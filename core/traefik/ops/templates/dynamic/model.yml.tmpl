@@ -6,15 +6,31 @@ http:
     # ==========================================================
     # Every router carries exactly four middlewares, in this order:
     #
-    #   1  access-*    who may reach the router, by connecting address
-    #   2  limit-*     how fast one address may ask
-    #   3  headers-*   the response headers the proxy adds — always
+    #   1  headers-*   the response headers the proxy adds — always
     #                  the HSTS base, never less
+    #   2  access-*    who may reach the router, by connecting address
+    #   3  limit-*     how fast one address may ask
     #   4  auth-*      admit only a confirmed identity
+    #
+    # The headers profile comes first because a middleware sets its
+    # response headers only on what passes through it: behind the
+    # access position, a refusal (403), a rate-limit answer (429) and a
+    # login redirect left without HSTS (final audit, FA-13). The first
+    # middleware is the outermost one, and on a header both set, the
+    # outer one wins (measured 2026-11-04).
+    #
+    # The section numbers below (1 access … 4 auth) name the positions
+    # as decided on 2026-10-18; they are not the order on a router.
     #
     # plus, where a stack's README states the need, one named block
     # placed BEFORE the headers profile (a response header that must
     # win over it) or AFTER the four (backend compatibility).
+    #
+    # The headers profile cannot move to the entrypoint instead: as the
+    # outermost middleware it would override a router's own HSTS
+    # variant (hsts-include-subdomains, measured 2026-11-04). A refusal
+    # by the threat position on the entrypoint (a CrowdSec ban) is
+    # therefore answered without these headers.
     #
     # Threat enforcement and compression are not router positions:
     # traefik.yml places them on the websecure entrypoint, in front
@@ -53,13 +69,15 @@ http:
       chain:
         middlewares: []
 
-    access-lan:
+    # The networks TRUSTED_RANGES declares (.env) and nothing else: no address is
+    # trusted for being private — validate.sh refuses a Docker network and the
+    # VPN range. Empty admits nobody. The LAN class this replaced admitted
+    # RFC 1918 and fc00::/7, every Docker subnet and Tailscale's IPv6 range with
+    # them (docs/audits/ingress-architecture-2026-10-31.md).
+    access-trusted:
       ipAllowList:
         sourceRange:
-          - "192.168.0.0/16"    # RFC1918
-          - "10.0.0.0/8"        # RFC1918
-          - "172.16.0.0/12"     # RFC1918 — includes the Docker bridge gateway
-          - "fc00::/7"          # IPv6 ULA
+${ACCESS_TRUSTED_RANGES_YAML}
 
     access-vpn:
       ipAllowList:
@@ -67,13 +85,10 @@ http:
           - "${TAILSCALE_CIDR_V4}"
           - "${TAILSCALE_CIDR_V6}"
 
-    access-lan-vpn:
+    access-trusted-vpn:
       ipAllowList:
         sourceRange:
-          - "192.168.0.0/16"
-          - "10.0.0.0/8"
-          - "172.16.0.0/12"
-          - "fc00::/7"
+${ACCESS_TRUSTED_RANGES_YAML}
           - "${TAILSCALE_CIDR_V4}"
           - "${TAILSCALE_CIDR_V6}"
 
@@ -100,7 +115,7 @@ http:
         burst: 500
 
     # A whole first load in one bucket — only behind access-vpn,
-    # access-lan, access-lan-vpn or access-blocked (CI: burst-exposure).
+    # access-trusted, access-trusted-vpn or access-blocked (CI: burst-exposure).
     # Measured: Windmill 857 and Twenty 516 requests on first load.
     limit-extra-large:
       rateLimit:

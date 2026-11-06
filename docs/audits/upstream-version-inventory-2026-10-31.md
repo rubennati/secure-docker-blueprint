@@ -3,7 +3,7 @@
 What every image pin in the tree stands against upstream on 2026-10-31, and the
 order in which the pins move. The inventory is a snapshot and the programme is a
 plan; neither moves a pin. A pin moves through the Version Chain in
-[`../maintenance.md`](../maintenance.md#version-chain), one stack per commit, and
+[`../maintenance.md`](../maintenance.md#version-chain), one batch per commit, and
 the record of each move is the stack's `UPSTREAM.md` and `CHANGELOG.md`.
 
 ## How the inventory was taken
@@ -36,16 +36,23 @@ The state in the last column is the stack's state in `LIFECYCLE.md` on
 
 ### Rules that hold for every batch
 
-1. **One pull request per batch, one commit per stack**, each commit moving
-   `.env.example` and `.env.local.example` together and recording the move under
+1. **One pull request and one commit per batch**: a batch of pin moves is one
+   change, as a dependency bot groups it. Every stack in it moves
+   `.env.example` and `.env.local.example` together and records the move under
    *Version notes* in the stack's `UPSTREAM.md`: date, from and to, what
    upstream's release notes say about breaking changes, migrations, variables
    and advisories, and whether the stack ran at the new tag.
-2. **The measurement is the image scan of the pull request from `dev` to
-   `main`**, which runs in full when an `.env.example` changed. The baseline
-   record that follows it states which recorded pairs the new tags removed and
-   which they did not (DEC-043). A batch is not judged by how many pairs it
-   removes; it is judged by whether every move is recorded.
+2. **The measurement is a full image scan of the tree with the new pins** —
+   today a Trivy run started by hand on `dev` after the merge, as runs 173 and
+   182 were on 2026-10-31; which trigger carries it in future is an open
+   decision on the CI's own design, not this programme's. The baseline record
+   that follows states which recorded pairs the new tags removed and which
+   they brought (DEC-043). `dev` reaches `main` when the maintainer decides,
+   not per batch — [`../../.ai/domains/release.md`](../../.ai/domains/release.md)
+   says `main` staying behind is not by itself a problem. A batch is judged by
+   the findings it removes: a pair the scan no longer finds leaves the
+   baseline, and a pair that stays is recorded only with its reason and risk,
+   never in bulk to turn the gate green.
 3. **A `baseline-aligned` stack keeps its state only with a host run at the new
    tag** in the same batch, because `Last verified` names a version and the
    lifecycle report marks a newer pin as `pin-drifted`. A batch that moves such a
@@ -55,7 +62,7 @@ The state in the last column is the stack's state in `LIFECYCLE.md` on
    the migration path in `UPSTREAM.md` before the pin moves, and a database
    family moves once, with one procedure, not twelve times.
 5. **`LIFECYCLE.md`, `site/src/data/lifecycle.json` and
-   `site/src/data/catalogue.json` are regenerated in the batch's last commit**
+   `site/src/data/catalogue.json` are regenerated in the batch's commit**
    (`lifecycle-report.py --write`, `site-catalogue.py`), and the checkers run
    before the push.
 
