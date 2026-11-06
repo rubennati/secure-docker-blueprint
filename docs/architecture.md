@@ -1,409 +1,22 @@
 # Blueprint Architecture
 
-This document owns the capability model: which security and operational capabilities the
-blueprint provides, which product currently implements each one, how they connect, and what
-an application may assume about them. It also explains why the directories are split the way
-they are and how services connect at the network level.
-
-It is the "why" behind the "what". Product configuration belongs to each stack's own
-`README.md` — this document names a reference implementation without describing how to set
-it up.
-
----
-
-## Design Goals
-
-- **Fork-ready**: Clone, copy `.env.example` to `.env`, fill secrets, `docker compose up -d`. No undocumented prerequisites.
-- **Portable**: No host-specific assumptions beyond "Debian + Docker". Runs on a VM, a VPS, or bare metal. **One named exception:** the backup agent (`backup/borgmatic/`) is installed on the host, because a containerised agent reaches other stacks' data only through `/:/host:ro` or `--privileged` — a container able to read every secret in the deployment. The reasoning is in [`backup/README.md`](../backup/README.md) → *Layout*; the decision record is `.ai/decisions.md` (2026-07, resolved 2026-10-15).
-- **Security-first**: Hardening is the default. Relaxing a control requires a documented exception.
-- **Standards-consistent**: Every service follows the same compose structure, env layout, secrets pattern, and naming convention. A new app that follows the standards fits in without friction.
-
----
-
-## Directory Structure
-
-Five top-level categories, split by **how** each tool accesses the system — not by who uses it:
-
-| Directory | Responsibility | Access pattern |
-|---|---|---|
-| `core/` | Shared platform and control plane — capabilities scoped to the installation, not to one stack | Privileged or cross-stack — controls Docker, the host or other containers, or serves a capability other stacks route through, authenticate against, resolve names with, or store secrets in |
-| `apps/` | User-facing applications | Standard — Traefik-routed, DB + volume access |
-| `business/` | Business operations tools | Standard — same pattern as `apps/`, distinct operational scope |
-| `monitoring/` | Observability and alerting | Cross-stack — reads metrics and logs from other containers |
-| `backup/` | Data protection | Privileged — reads volumes across services, writes to remote targets |
-
-`monitoring/` and `backup/` are top-level (not under `apps/`) because their access patterns are fundamentally different: they reach across service boundaries and need broader permissions than a typical user-facing app.
-
-**Which category does a new service belong to?** One test question each, applied in order:
-
-| Directory | Test |
-|---|---|
-| `core/` | Does it control Docker, the host or other containers, or does it provide a shared network, TLS, identity, DNS, security or secrets capability for the installation rather than for its own users? Scope decides, not dependency: a member may be optional, and two members may be alternatives to each other. |
-| `monitoring/` | Does it observe one or more other services? |
-| `backup/` | Does it protect data belonging to other services? |
-| `business/` | Is a company needed for this to be useful at all? (issuing invoices, customer helpdesk, compliance) |
-| `apps/` | Everything else — would a homelab user *and* a company both use it? A stack that serves its own users belongs here, including a diagnostic fixture deployed to prove another stack works: that is a lifecycle property, and no category test asks about lifecycle. |
-
-The rule was sharpened after an earlier attempt placed `business/` by analogy to `monitoring/` and left ten existing apps stranded. Categorising by **access pattern** rather than by audience is what makes it hold.
-
----
-
-## Physical layout, conceptual domains and navigation are three different layers
-
-Three separate questions get asked about this repository, and conflating them is
-what stranded `business/` once already (above). Each has its own owner and its
-own reason to change.
-
-| Layer | Question it answers | Owner | Changes when |
-|---|---|---|---|
-| **Physical layout** | how does a stack access the system? | this document, the five directories | a stack's access pattern differs from every existing category |
-| **Conceptual domain** | how does a reader group this in their head? | documentation, `.ai/decisions.md` | a subject-matter grouping helps a reader, independent of any directory |
-| **Website navigation** | how does a reader find this? | `site/` | reader research shows a different grouping helps — already independent today, see the site's Infrastructure/Applications/Operations split |
-
-The physical layout is `core/apps/business/monitoring/backup`, unchanged, and is
-the only one of the three that CI knows about at all: `check-structure.py` and
-`check-coverage.py` enforce that every stack sits under one of the five roots and
-that no root goes unchecked. Which of the five a given stack belongs in is a
-judgement against the table above, not something CI can decide. A conceptual
-domain can exist purely as documentation
-and navigation vocabulary, with no stack in it, for as long as that stays
-useful to a reader — it earns a directory the same way any category does: by
-failing every test in the [Directory Structure](#directory-structure) table.
-
-**Conceptual domains today**, alongside the five that already map to a
-directory (Infrastructure → `core/`, Applications → `apps/`, Business →
-`business/`, Monitoring → `monitoring/`, Operations & Recovery → `backup/`):
-
-- **Development / Custom Applications** — has a physical home, `development/`,
-  for the patterns it owns. See below.
-- **AI & Local AI** — deployable services, in `apps/`; the engineering above them is not this repository's. See below.
-- **Document Processing** — real capabilities plus one standalone service; still no orchestrated pipeline. See below.
-
-AI & Local AI and Document Processing do not justify a new top-level directory.
-Development has one, for a different reason than the access-pattern test the
-five categories use — see below.
-
-### AI & Local AI is deployment, not engineering
-
-The line runs between running a service and doing the engineering. Deploying
-and hardening a reusable AI service — a model runtime, a gateway, a vector
-store — is this repository's problem, and it goes through the same
-categorisation test as anything else: nothing about "AI" changes which
-directory it lands in, and an observability component for it would most likely
-be `monitoring/`. The engineering above that line — model evaluation,
-retrieval architecture, prompt design, the experiments that decide whether any
-of it is worth running — belongs to a different project and is not served by
-putting a Compose file here.
-
-The first services are in `apps/`:
-
-| Part | Where it lives |
-|---|---|
-| Model runtime, simple, runs on CPU | `apps/ollama` |
-| Model serving, high throughput, NVIDIA GPU | `apps/vllm` |
-| Vector database | `apps/qdrant` |
-| Gateway with virtual keys and budgets | `apps/litellm` |
-| Chat interface | `apps/open-webui` |
-| LLM and MCP gateway | `apps/agentgateway` |
-| LLM application platform | `apps/dify` |
-| LLM observability | `monitoring/langfuse` |
-
-Ollama and vLLM both serve models and are both kept: they cover different
-deployments — one runs on any machine and pulls models by name, the other needs
-a GPU host and is built for concurrent load. Neither depends on the other or on
-Qdrant, and each is usable on its own.
-
-LiteLLM and agentgateway are both gateways and are both kept: LiteLLM adds
-virtual keys, budgets and a spend log in PostgreSQL, agentgateway is a single
-distroless binary that also routes MCP. Open WebUI is a chat interface. None of
-them requires another: each takes an OpenAI-compatible endpoint from its
-configuration, and any of the model servers above, or a hosted provider, can sit
-behind it. Pointing one at another is an operator's choice, not something the
-stacks assume.
-
-Dify is an application platform whose model providers are plugins, so it too takes
-its backend from its own console rather than from the stack. Langfuse is an
-observability service and sits in `monitoring/`: it receives traces from whatever
-instruments its code with an SDK or OpenTelemetry, and none of the other stacks
-sends to it or requires it.
-
-Two properties of these services shape the stacks. Ollama has no authentication, and vLLM's `--api-key` protects only
-its `/v1` paths, so the reverse proxy is the real access control — vLLM's route
-forwards `/v1/` only. And the model servers need outbound access to fetch weights, so their single
-service sits on the stack's proxy network — the edge network `<project>-edge` by
-default, a plain bridge with outbound access — rather than on an `internal`
-network; Qdrant ships the same way. A stack that consumes one of them by service
-name (no shipped stack does) needs both on the shared `proxy-public` instead;
-otherwise it reaches them through their route. Each
-stack's own README states what was verified; vLLM's CUDA image has not been run
-on a GPU here.
-
-Machine learning also runs inside Immich and PhotoPrism as a property of those
-applications, which is not a separate domain.
-
-### Document Processing has the capabilities, and one standalone service
-
-The domain is real and covered in four parts:
-
-| Part | Where it lives |
-|---|---|
-| Archive and ingest — OCR, indexing, search | `apps/paperless-ngx` |
-| Browser-based editing | `apps/onlyoffice`, `apps/euro-office`, `apps/collabora` |
-| Electronic signature | `business/documenso`, `business/opensign` |
-| Document understanding for AI/RAG pipelines — layout, structure, tables | `apps/docling-serve` |
-
-Apache Tika and Gotenberg still belong to Paperless-ngx as its own converters,
-not as shared services other stacks call — `docling-serve` landing did not
-give either a second consumer, so this is unchanged. `docling-serve` earns a
-standalone stack for a different reason: layout-aware document understanding
-for AI pipelines had no home in this repository at all, and multiple plausible
-callers (a workflow tool, a future RAG stack) exist for it, where Tika and
-Gotenberg still have exactly one.
-
-A general document-processing pipeline — one orchestrated path from any input
-document through every possible extraction step — still does not exist.
-`docling-serve` is one capability, consumed directly by whatever calls its
-API; it is not that pipeline. Building an orchestrated multi-step chain before
-a real case needs one remains the deliberate absence this section described
-before docling-serve existed.
-
-OCRmyPDF was evaluated for a standalone stack and excluded. Upstream describes
-its own Docker image as ephemeral — one container per OCR job, exiting like a
-command-line program, not a server — and this repository does not give a
-CLI/job tool with no independently operated service a blueprint entry. See
-[`ROADMAP.md`](../ROADMAP.md#out-of-scope-here).
-
-### Development is a Supporting-tier domain, not a sixth category
-
-The mission covers two kinds of software: existing self-hosted open-source
-projects, and applications someone builds themselves. Both go through the same
-**deploy → secure → operate → recover** model, but the first phase differs — an
-existing project starts from a published, versioned image; software someone
-builds starts from source and a build step, which
-[`standards/custom-application.md`](standards/custom-application.md) owns.
-
-**This is not what `docker-compose.local.yml` is for.** The local test stack
-([`standards/compose-structure.md`](standards/compose-structure.md)) is a
-deployment mode of an already-packaged application — the same `image:` tag,
-published without Traefik, DNS or a certificate so it can be tried on one
-machine. It answers "how do I try this app," not "how do I harden an app I
-wrote."
-
-[`development/`](../development/) is where the build phase lives as a reusable
-artifact. `development/static-site/` and `development/web-api/` are complete,
-working deployment shapes — a real build, a real hardened runtime, a
-local-validation compose file, each proven by a minimal fixture — that a real
-project copies into `apps/` or `business/` under its own name once it exists.
-They are never deployed from inside this repository, and they are not stacks
-in the access-pattern sense the five categories use: the [Directory
-Structure](#directory-structure) test asks how a running service reaches the
-system, and a pattern that is never run here has no access pattern to test.
-That is also why `development/` does not become a sixth category — it sits
-alongside `docs/`, `scripts/ci/` and `site/` as a Supporting-tier directory,
-checked by [`scripts/ci/check-structure.py`](../scripts/ci/check-structure.py)
-anyway, because unlike those three it holds real, buildable compose files
-worth the same structural and security check any stack gets.
-
-Two stacks here already build their own image, in two different shapes:
-`business/vikunja` adds a layer to a published image because upstream ships
-`FROM scratch`, and `apps/caldiy` consumes a governed fork's reviewed release.
-[`standards/custom-application.md`](standards/custom-application.md) is derived
-from those two — it covers source, build, image identity and what verifies the
-image, and states that every phase after the image is unchanged. `development/`'s
-patterns are a third shape built on the same standard: a reusable starting
-point with no concrete application behind it yet, adopted by copying rather
-than by reference.
-
-`apps/_reference` still templates the hardening pattern around a pre-built,
-versioned image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the
-Trivy scan target all presume one. `development/`'s patterns hand off to it:
-once a project copied out of `development/` has its own identity, everything
-after the image — configuration, networking, backup documentation — follows
-`apps/_reference`'s structure exactly like any other stack.
-
-A genuinely first-party application — source with no upstream at all — no
-longer starts with no shape at all. `business/vikunja` and `apps/caldiy` both
-still wrap third-party software; `development/`'s patterns are what a
-first-party application starts from now, established because the need for a
-reusable starting point — not for one specific named application — was real
-and current. This replaces the earlier position that the shape "stays absent
-until a real application needs it" (`decisions.md`).
-
----
-
-## Networking Model
-
-Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app — the edge network towards Traefik and `app-internal` behind it — plus, in a few stacks, an outbound `app-egress`:
-
-```text
-Internet / VPN
-    │   host firewall, optional: config/host/ingress.nft — rendered, operator-installed, not verified on a host
-    │   published ports 80/443 on proxy-public (gw_priority)
-    ▼
- Traefik ──── <project>-edge (one per stack, external: true) ──► App server (web-facing)
-    │         (or proxy-public, the shared choice)                      │
-    │                                                    app-internal (isolated, internal: true)
-    │  forward-auth middleware (optional)                               │
-    ├──► Authentik (its own stack and route)     DB · Redis · Workers · internal services
-    │                                                                   │
-    │                                    <project>-egress (only where a named backend service needs outbound)
-    │
-    └─────── crowdsec-security (core-to-core, external: true) ──► CrowdSec engine
-             bouncer plugin: LAPI decisions; AppSec (optional)      (AppSec rule engine: Coraza)
-```
-
-**`<project>-edge`** — one per stack, the default of every `.env.example` (`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge`). `core/traefik` creates each network listed in `EDGE_NETWORKS` and joins it; a stack whose network is not listed is unreachable. Only Traefik and the stack's web-facing service join it, so a web container reaches Traefik and its own `app-internal`, no other front end. Owner: [`core/traefik/docs/edge-networks.md`](../core/traefik/docs/edge-networks.md), [DEC-075](../.ai/decisions.md#dec-075).
-
-**`proxy-public`** — created by `core/traefik`; carries Traefik's published ports (`gw_priority`) and is the shared choice for stacks that reach each other by service name (Mailpit, for example). Dual-stack IPv4+IPv6 for a new installation (the example `.env` applies `network-dual-stack.yml`; DEC-063), IPv4-only without the overlay — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). That a tailnet client over IPv6 keeps its address was measured before the current bindings and edge networks; with the current configuration the tailnet path is not verified on a host, and IPv6-only ingress is not verified either ([`host-verification-ingress.md`](host-verification-ingress.md), Results). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
-
-Two properties of this shape are measured, not assumed ([`audits/ingress-architecture-2026-10-31.md`](audits/ingress-architecture-2026-10-31.md)). Members of one Docker network reach each other's ports directly, so the four positions of the middleware model protect the path through Traefik and only that path: a compromised web container on `proxy-public` reaches every other web container on it without passing an access policy, a rate limit or a forward-auth gate. And Docker maps Traefik's published ports to its address on the network with the highest `gw_priority`, and without one to the first in Compose order — `crowdsec-security`, not `proxy-public`; since step 2 of the programme `docker-compose.yml` pins them to `proxy-public`, and an installation takes the pin on its next `docker compose up -d`. The decided direction is an edge network per installed stack, with `proxy-public` as the network that carries the published ports ([DEC-075](../.ai/decisions.md#dec-075)); it is implemented (`EDGE_NETWORKS`, step 5 of the programme), and an installation on the shared shape keeps it until it migrates ([`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation to edge networks"). The lateral path above remains for stacks that stay on `proxy-public`.
-
-**`app-internal`** — one per app, `internal: true`. DB, Redis, workers. No route to the internet, no route between apps. A compromised app cannot reach another app's database. Always IPv4-only — nothing outside the Docker host connects to these services directly.
-
-**`app-egress`** — the exception, per stack and only where a backend service must reach the outside: a plain bridge that a named service joins *in addition* to `app-internal`, for example Authentik's worker for SMTP or Nextcloud's app for federation and app updates. The database and cache never join it. A member can open any outbound connection; the stack's README states why it is there and what it needs (`core/authentik/README.md`, "Network exception"). Eleven stacks use it today — `grep -l app-egress */*/docker-compose.yml`.
-
-**`crowdsec-security`** — a dedicated core-to-core network carrying one conversation: Traefik's bouncer plugin to the CrowdSec LAPI and AppSec engine. `core/traefik` declares it, `core/crowdsec` joins it as an external network, and no application stack joins it. The engine is on no other network, so its control-plane ports answer the reverse proxy and nothing else on the host's Docker networks. An ordinary IPv4 bridge rather than `internal: true` — the engine needs outbound access for hub updates, the Central API and blocklists. The network type and the rule for adding another are owned by [`docs/standards/networking.md`](standards/networking.md).
-
-Traefik is the only service on both planes. Databases and caches **never** join `proxy-public` or an edge network. They have no exposure beyond their own app stack.
-
----
-
-## Capabilities and reference implementations
-
-The blueprint is a set of **capabilities**. Each one answers a security or operational
-question on its own, and each has at most one maintained **reference implementation** —
-the product this repository actually configures, tests and documents.
-
-The distinction matters because it separates two questions that are easy to conflate:
-*does my deployment need this capability?* and *which product provides it?* The first is
-architectural, the second is replaceable.
-
-| Capability | Question it answers | Reference implementation | Status |
-|---|---|---|---|
-| **Foundation** | how does this host run containers safely at all? | the standards in `docs/standards/` | prerequisite |
-| **Reverse Proxy** | how does a request reach the right service, over TLS, under a policy? | Traefik (`core/traefik/`) | implemented |
-| **Identity & Access** | who is allowed to use this service? | Authentik (`core/authentik/`) | implemented, per app |
-| **Threat Detection & Remediation** | which sources are known bad, and where is that enforced? | CrowdSec (`core/crowdsec/`) | implemented |
-| **Web Application Security** | is *this request* an attack, regardless of who sent it? | CrowdSec AppSec — its rule engine is Coraza, inside CrowdSec; shipped with virtual-patching and generic rules, no OWASP Core Rule Set | implemented, opt-in, fail-open as shipped |
-| **Network Security / IDS** | what is happening on the wire that no log records? | — | candidate, not implemented |
-
-Capabilities are independent. Integrations connect them, and an integration is named,
-documented and owned. CrowdSec is not a Traefik feature; Authentik is not a proxy layer;
-a web application firewall is not the same control as blocking a source address.
-
-**One maintained implementation per capability.** Alternatives may be documented without
-being implemented — that keeps the maintenance surface bounded. Three states are kept
-apart deliberately:
-
-| State | Meaning |
-|---|---|
-| **implemented** | configured, documented and exercised in this repository |
-| **documented alternative** | described so a fork can choose it; not maintained here |
-| **evaluation candidate** | under consideration; no claim of support |
-
-SIEM, XDR and SOC platforms are outside this blueprint. They carry a different operating
-model — agents, central collection, an analyst rota — and a secure Docker host does not
-require one.
-
----
-
-## Foundation
-
-Foundation is the substrate. It is what a host needs before any of the capabilities above
-make sense, and it does not know which of them are installed.
-
-| Part | Owns | Canonical source |
-|---|---|---|
-| **Host** | the prerequisites a Docker host must meet — a supported and patched system, management access that is not the public attack surface, a host firewall policy, working time and name resolution, and enough capacity held back for management and recovery | thin, see below |
-| **Docker** | privileges, capabilities, socket access, image pinning | [`standards/security-baseline.md`](standards/security-baseline.md) |
-| **Network** | hub-and-spoke layout, isolation, which service belongs on which network | [`standards/networking.md`](standards/networking.md) |
-| **Secrets** | how a credential reaches a container without entering the image or the environment | [`standards/security-baseline.md`](standards/security-baseline.md) |
-| **Backup** | what is protected, from what, and how a restore is proven | [`../backup/README.md`](../backup/README.md) |
-| **Image provenance** | where a deployable image comes from, and what pins it, when this repository builds it rather than pulling one | [`standards/custom-application.md`](standards/custom-application.md) |
-| **Updates** | version pinning and the upgrade path per stack | each stack's `UPSTREAM.md` |
-| **Lifecycle** | what has been established about each stack | [`standards/status-model.md`](standards/status-model.md) |
-
-**Host is deliberately thin.** It owns generic invariants — a management path should not be
-reachable the same way the public service is; a host firewall policy exists and someone
-owns it. It is not configuration management, and not a hardening distribution.
-
-A service may *implement* a Host invariant through an integration. CrowdSec's host-firewall
-remediation is one: it enforces decisions in the host firewall, within a scope the Host
-policy defines. It does not become the host firewall policy. Designed and optional; its
-blocking rules have not been run on a host.
-
-`core/traefik` renders a host-firewall ruleset for its exposure profile
-(`config/host/ingress.nft`, [`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md),
-DEC-078): it closes the host's input path except for the VPN and leaves Docker's forward
-path open. The operator installs it; nothing in the repository loads it, and it has not
-been verified on a host.
-
-### Workload pressure must not consume what recovery needs
-
-**A host under load from its own workloads has to stay administratively reachable.**
-Losing an application is an incident; losing the ability to log in, read logs and stop
-the offending container turns it into an outage that ends with a power cycle.
-
-Container-level limits bound each workload, and that is where most of the protection
-lives — a service reaching its own ceiling fails alone. What they do not do is reserve
-anything: nothing in a per-container limit keeps memory available for the trusted
-management path, the container runtime, logging, or the tools used to stop a workload.
-On a default host, management services and container workloads compete in the same
-place.
-
-The invariant is Foundation's:
-
-> Enough host capacity remains available for management and recovery that an operator
-> can always reach the machine, see what is happening, and stop the workload causing it.
-
-The mechanism is **not decided**. The candidate is a separate cgroup hierarchy for
-container workloads with memory protection on the slice holding management services —
-the kernel supports it, and the interfaces are stable. It is not a default here, and
-it is not installed anywhere, because it has not been rehearsed: a protection that has
-never been tested under real pressure is an assumption.
-
-What a rehearsal has to establish, on a disposable host:
-
-1. container workloads land in the intended hierarchy, and management services do not;
-2. controlled memory pressure inside a container reaches that container's boundary;
-3. the trusted management path stays usable throughout;
-4. the container runtime stays administratively usable;
-5. logs remain readable;
-6. the offending workload can be stopped;
-7. what happens when the reserve mechanism itself is absent or misconfigured.
-
-Until that has run, the invariant is documented and the enforcement is per-container.
-Products are examples: a VPN, an SSH daemon and a container runtime are roles, and a
-deployment may fill them differently.
-
----
-
-## Exposure decides which controls apply
-
-A control is not chosen by working through a list in order. It follows from what a
-deployment actually exposes.
-
-| Classification | Meaning |
-|---|---|
-| **Prerequisite** | without it the system does not run safely — Foundation, and a reverse proxy for anything reachable over a network |
-| **Exposure-driven control** | warranted because a specific exposure exists, and largely pointless without it |
-| **Optional enhancement** | real value, not implied by every deployment |
-| **Advanced** | higher operational cost, tuning burden or blast radius |
-
-Worked through:
-
-- A service that terminates **on the host** and is reachable from the internet is not
-  behind the reverse proxy — the proxy never sees it. Protecting it is a host firewall
-  question, and CrowdSec's host-firewall remediation is the relevant control. Whether any
-  such service is exposed at all is a Host/Foundation decision first.
-- A public **HTTP application behind the reverse proxy** is covered by reverse-proxy
-  remediation. That does not require host-firewall remediation.
-- **Management access over a private path** does not remove the need for either, but it
-  does constrain them: an enforcement rule must not be able to reach the management path.
-  That is an invariant, independent of which VPN or interface a deployment uses.
-
-Both CrowdSec remediation points may run together. They enforce at different places and
-see different things. Running both is a choice, not a requirement.
+Applications run as Docker Compose stacks on a Linux host. Traefik provides
+shared HTTPS ingress; each application normally has its own edge network and an
+isolated backend network. Host-installed components provide management, backup
+and host integration. Optional identity and threat controls connect to the proxy.
+
+Start with the overview below, then follow the question you need to answer:
+
+- **How does a request reach an application?** [Networks](#networking-model) and
+  [ingress paths and trust boundaries](#ingress-paths-profiles-and-trust-boundaries).
+- **Who provides which control?** [Capabilities](#capabilities-and-reference-implementations)
+  and [the application contract](#the-application-contract).
+- **Where does a component belong?** [Directories](#directory-structure) and
+  [conceptual domains](#physical-layout-conceptual-domains-and-navigation-are-three-different-layers).
+
+For installation and operations, use the stack's README and the
+[standards guide](standards/README.md). This page explains the system's structure,
+responsibilities and limits.
 
 ---
 
@@ -412,7 +25,7 @@ see different things. Running both is a choice, not a requirement.
 ```mermaid
 flowchart TB
   subgraph edge["Ingress"]
-    PF2["Provider filter"] --> NFT2["Host ruleset<br/>inet blueprint_ingress"]
+    PF2["Provider filter<br/>(where configured)"] --> NFT2["Host ruleset (optional)<br/>inet blueprint_ingress"]
     NFT2 --> TR["Traefik<br/>headers · access · limit · auth"]
     TR <--> CS2["CrowdSec engine + AppSec<br/>(optional)"]
     TR <-.-> AK["Authentik forward-auth<br/>(optional)"]
@@ -431,14 +44,58 @@ flowchart TB
   HF -. installed by the operator .-> NFT2
 ```
 
-Implemented and tested on a host: everything drawn with a solid line. Optional: CrowdSec,
-AppSec, Authentik. The backup agent's PostgreSQL client is an open decision
-([`research/postgres-dump-client-decision.md`](research/postgres-dump-client-decision.md)).
+The diagram shows the deployment shape, not a verification level for every stack.
+The host firewall, CrowdSec/AppSec and Authentik are optional layers; provider
+filtering depends on the host environment. Recorded ingress tests and remaining
+gaps are [summarised below](#what-is-in-place-and-how-far-it-is-proven); stack
+verification is in [`LIFECYCLE.md`](../LIFECYCLE.md). The backup agent's PostgreSQL
+client remains an [open decision](research/postgres-dump-client-decision.md).
+
+---
+
+## Networking Model
+
+Every multi-service app uses a **hub-and-spoke** network layout. Two Docker networks per app — the edge network towards Traefik and `app-internal` behind it — plus, in a few stacks, an outbound `app-egress`:
+
+```text
+Internet / VPN
+    │   host firewall, optional: config/host/ingress.nft — rendered, operator-installed (host tests: see evidence below)
+    │   published ports 80/443 on proxy-public (gw_priority)
+    ▼
+ Traefik ──── <project>-edge (one per stack, external: true) ──► App server (web-facing)
+    │         (or proxy-public, the shared choice)                      │
+    │                                                    app-internal (isolated, internal: true)
+    │  forward-auth middleware (optional)                               │
+    ├──► Authentik (its own stack and route)     DB · Redis · Workers · internal services
+    │                                                                   │
+    │                                    <project>-egress (only where a named backend service needs outbound)
+    │
+    └─────── crowdsec-security (core-to-core, external: true) ──► CrowdSec engine
+             bouncer plugin: LAPI decisions; AppSec (optional)      (AppSec rule engine: Coraza)
+```
+
+**`<project>-edge`** — one per stack, the default of every `.env.example` (`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge`). `core/traefik` creates each network listed in `EDGE_NETWORKS` and joins it; a stack whose network is not listed is unreachable. Only Traefik and the stack's web-facing service join it, so a web container reaches Traefik and its own `app-internal`, no other front end. Owner: [`core/traefik/docs/edge-networks.md`](../core/traefik/docs/edge-networks.md), [DEC-075](../.ai/decisions.md#dec-075).
+
+**`proxy-public`** — created by `core/traefik`; carries Traefik's published ports (`gw_priority`) and is the shared choice for stacks that reach each other by service name (Mailpit, for example). Dual-stack IPv4+IPv6 for a new installation (the example `.env` applies `network-dual-stack.yml`; DEC-063), IPv4-only without the overlay — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). The host runs of 2026-11-03/04 recorded preserved tailnet client addresses over both families, including after a reboot with the firewall drop-in (A1–A5, F9, T8). The admitting LAN paths and IPv6-only ingress remain unverified; these records do not re-verify later image pins ([`host-verification-ingress.md`](host-verification-ingress.md#results)). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
+
+Two properties of this shape are measured, not assumed ([`audits/ingress-architecture-2026-10-31.md`](audits/ingress-architecture-2026-10-31.md)). Members of one Docker network reach each other's ports directly, so the four positions of the middleware model protect the path through Traefik and only that path: a compromised web container on `proxy-public` reaches every other web container on it without passing an access policy, a rate limit or a forward-auth gate. And Docker maps Traefik's published ports to its address on the network with the highest `gw_priority`, and without one to the first in Compose order — `crowdsec-security`, not `proxy-public`; since step 2 of the programme `docker-compose.yml` pins them to `proxy-public`, and an installation takes the pin on its next `docker compose up -d`. The decided direction is an edge network per installed stack, with `proxy-public` as the network that carries the published ports ([DEC-075](../.ai/decisions.md#dec-075)); it is implemented (`EDGE_NETWORKS`, step 5 of the programme), and an installation on the shared shape keeps it until it migrates ([`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation to edge networks"). The lateral path above remains for stacks that stay on `proxy-public`.
+
+**`app-internal`** — one per app, `internal: true`. DB, Redis, workers. No route to the internet, no route between apps. A compromised app cannot reach another app's database. Always IPv4-only — nothing outside the Docker host connects to these services directly.
+
+**`app-egress`** — the exception, per stack and only where a backend service must reach the outside: a plain bridge that a named service joins *in addition* to `app-internal`, for example Authentik's worker for SMTP or Nextcloud's app for federation and app updates. The database and cache never join it. A member can open any outbound connection; the stack's README states why it is there and what it needs (`core/authentik/README.md`, "Network exception"). Eleven stacks use it today — `grep -l app-egress */*/docker-compose.yml`.
+
+**`crowdsec-security`** — a dedicated core-to-core network carrying one conversation: Traefik's bouncer plugin to the CrowdSec LAPI and AppSec engine. `core/traefik` declares it, `core/crowdsec` joins it as an external network, and no application stack joins it. The engine is on no other network, so its control-plane ports answer the reverse proxy and nothing else on the host's Docker networks. An ordinary IPv4 bridge rather than `internal: true` — the engine needs outbound access for hub updates, the Central API and blocklists. The network type and the rule for adding another are owned by [`docs/standards/networking.md`](standards/networking.md).
+
+Traefik is the only service on both planes. Databases and caches **never** join `proxy-public` or an edge network. They have no exposure beyond their own app stack.
+
+---
 
 ## Ingress paths, profiles and trust boundaries
 
-Every request to an application crosses the same layers; which of them decide depends on
-the path it takes. The diagram is the one installation shape the blueprint implements:
+HTTP requests through the shared ingress cross the layers below; which controls
+apply depends on the path. Services with native protocol ports have their own
+ingress, documented in their stack READMEs. This diagram shows the shared HTTPS
+installation:
 one Traefik per host, its ports published by Docker, Tailscale on the host itself.
 
 ```mermaid
@@ -636,6 +293,147 @@ one hiding the other.
 
 ---
 
+## Capabilities and reference implementations
+
+The blueprint is a set of **capabilities**. Each one answers a security or operational
+question on its own, and each has at most one maintained **reference implementation** —
+the product this repository actually configures, tests and documents.
+
+The distinction matters because it separates two questions that are easy to conflate:
+*does my deployment need this capability?* and *which product provides it?* The first is
+architectural, the second is replaceable.
+
+| Capability | Question it answers | Reference implementation | Status |
+|---|---|---|---|
+| **Foundation** | how does this host run containers safely at all? | the standards in `docs/standards/` | prerequisite |
+| **Reverse Proxy** | how does a request reach the right service, over TLS, under a policy? | Traefik (`core/traefik/`) | implemented |
+| **Identity & Access** | who is allowed to use this service? | Authentik (`core/authentik/`) | implemented, per app |
+| **Threat Detection & Remediation** | which sources are known bad, and where is that enforced? | CrowdSec (`core/crowdsec/`) | implemented |
+| **Web Application Security** | is *this request* an attack, regardless of who sent it? | CrowdSec AppSec — its rule engine is Coraza, inside CrowdSec; shipped with virtual-patching and generic rules, no OWASP Core Rule Set | implemented, opt-in, fail-open as shipped |
+| **Network Security / IDS** | what is happening on the wire that no log records? | — | candidate, not implemented |
+
+Capabilities are independent. Integrations connect them, and an integration is named,
+documented and owned. CrowdSec is not a Traefik feature; Authentik is not a proxy layer;
+a web application firewall is not the same control as blocking a source address.
+
+**One maintained implementation per capability.** Alternatives may be documented without
+being implemented — that keeps the maintenance surface bounded. Three states are kept
+apart deliberately:
+
+| State | Meaning |
+|---|---|
+| **implemented** | configured, documented and exercised in this repository |
+| **documented alternative** | described so a fork can choose it; not maintained here |
+| **evaluation candidate** | under consideration; no claim of support |
+
+SIEM, XDR and SOC platforms are outside this blueprint. They carry a different operating
+model — agents, central collection, an analyst rota — and a secure Docker host does not
+require one.
+
+---
+
+## Foundation
+
+Foundation is the substrate. It is what a host needs before any of the capabilities above
+make sense, and it does not know which of them are installed.
+
+| Part | Owns | Canonical source |
+|---|---|---|
+| **Host** | the prerequisites a Docker host must meet — a supported and patched system, management access that is not the public attack surface, a host firewall policy, working time and name resolution, and enough capacity held back for management and recovery | thin, see below |
+| **Docker** | privileges, capabilities, socket access, image pinning | [`standards/security-baseline.md`](standards/security-baseline.md) |
+| **Network** | hub-and-spoke layout, isolation, which service belongs on which network | [`standards/networking.md`](standards/networking.md) |
+| **Secrets** | file-based credential delivery and documented environment exceptions | [`standards/security-baseline.md`](standards/security-baseline.md) |
+| **Backup** | what is protected, from what, and how a restore is proven | [`../backup/README.md`](../backup/README.md) |
+| **Image provenance** | where a deployable image comes from, and what pins it, when this repository builds it rather than pulling one | [`standards/custom-application.md`](standards/custom-application.md) |
+| **Updates** | version pinning and the upgrade path per stack | each stack's `UPSTREAM.md` |
+| **Lifecycle** | what has been established about each stack | [`standards/status-model.md`](standards/status-model.md) |
+
+**Host is deliberately thin.** It owns generic invariants — a management path should not be
+reachable the same way the public service is; a host firewall policy exists and someone
+owns it. It is not configuration management, and not a hardening distribution.
+
+A service may *implement* a Host invariant through an integration. CrowdSec's host-firewall
+remediation is one: it enforces decisions in the host firewall, within a scope the Host
+policy defines. It does not become the host firewall policy. Designed and optional; its
+blocking rules have not been run on a host.
+
+`core/traefik` renders a host-firewall ruleset for its exposure profile
+(`config/host/ingress.nft`, [`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md),
+DEC-078): it closes the host's input path except for the VPN and leaves Docker's forward
+path open. The operator installs it; nothing in the repository loads it automatically.
+The 2026-11-03/04 host tests covered the ruleset, persistence and VPN access;
+[the evidence and its limits](host-verification-ingress.md#results) remain separate
+from verification at later image pins.
+
+### Workload pressure must not consume what recovery needs
+
+**A host under load from its own workloads has to stay administratively reachable.**
+Losing an application is an incident; losing the ability to log in, read logs and stop
+the offending container turns it into an outage that ends with a power cycle.
+
+Container-level limits bound each workload, and that is where most of the protection
+lives — a service reaching its own ceiling fails alone. What they do not do is reserve
+anything: nothing in a per-container limit keeps memory available for the trusted
+management path, the container runtime, logging, or the tools used to stop a workload.
+On a default host, management services and container workloads compete in the same
+place.
+
+The invariant is Foundation's:
+
+> Enough host capacity remains available for management and recovery that an operator
+> can always reach the machine, see what is happening, and stop the workload causing it.
+
+The mechanism is **not decided**. The candidate is a separate cgroup hierarchy for
+container workloads with memory protection on the slice holding management services —
+the kernel supports it, and the interfaces are stable. It is not a default here, and
+it is not installed anywhere, because it has not been rehearsed: a protection that has
+never been tested under real pressure is an assumption.
+
+What a rehearsal has to establish, on a disposable host:
+
+1. container workloads land in the intended hierarchy, and management services do not;
+2. controlled memory pressure inside a container reaches that container's boundary;
+3. the trusted management path stays usable throughout;
+4. the container runtime stays administratively usable;
+5. logs remain readable;
+6. the offending workload can be stopped;
+7. what happens when the reserve mechanism itself is absent or misconfigured.
+
+Until that has run, the invariant is documented and the enforcement is per-container.
+Products are examples: a VPN, an SSH daemon and a container runtime are roles, and a
+deployment may fill them differently.
+
+---
+
+## Exposure decides which controls apply
+
+A control is not chosen by working through a list in order. It follows from what a
+deployment actually exposes.
+
+| Classification | Meaning |
+|---|---|
+| **Prerequisite** | without it the system does not run safely — Foundation, and a reverse proxy for the shared HTTPS ingress |
+| **Exposure-driven control** | warranted because a specific exposure exists, and largely pointless without it |
+| **Optional enhancement** | real value, not implied by every deployment |
+| **Advanced** | higher operational cost, tuning burden or blast radius |
+
+Worked through:
+
+- A service that terminates **on the host** and is reachable from the internet is not
+  behind the reverse proxy — the proxy never sees it. Protecting it is a host firewall
+  question, and CrowdSec's host-firewall remediation is the relevant control. Whether any
+  such service is exposed at all is a Host/Foundation decision first.
+- A public **HTTP application behind the reverse proxy** is covered by reverse-proxy
+  remediation. That does not require host-firewall remediation.
+- **Management access over a private path** does not remove the need for either, but it
+  does constrain them: an enforcement rule must not be able to reach the management path.
+  That is an invariant, independent of which VPN or interface a deployment uses.
+
+Both CrowdSec remediation points may run together. They enforce at different places and
+see different things. Running both is a choice, not a requirement.
+
+---
+
 ## One owner per piece of changing state
 
 **A changing security state has exactly one canonical owner.** Other components may read
@@ -665,7 +463,8 @@ An application may assume:
 - routing metadata it declares is honoured;
 - named middleware — access policy, security headers, threat enforcement — can be
   referenced by name;
-- secrets arrive as files;
+- secrets arrive as files by default; documented environment exceptions follow
+  [the security baseline](standards/security-baseline.md#secrets);
 - its logs are readable by security tooling.
 
 An application is expected to provide:
@@ -682,9 +481,19 @@ An application must not:
 - define global middleware;
 - depend on an infrastructure container's lifecycle unless it genuinely requires it.
 
-The consequence: **an application does not intrinsically require Traefik.** It requires the reverse-proxy capability when it is served over a network, and
-Traefik is what this blueprint currently implements. Most stacks also ship a local compose
-file that uses no proxy at all.
+For the shared HTTPS ingress, an application consumes the reverse-proxy capability;
+Traefik is its implementation here. Native protocol ports follow the stack's own
+exposure model. Many stacks also provide a local Compose file that runs without
+a proxy.
+
+---
+
+## Design Goals
+
+- **Fork-ready**: Clone, copy `.env.example` to `.env`, fill secrets, `docker compose up -d`. No undocumented prerequisites.
+- **Portable**: Supported Linux hosts share the documented [deployment prerequisites](standards/deployment-lifecycle.md#1--prepare-the-host). Host integration is explicit: Borgmatic, optional watchdogs and host files have their own installation steps and permissions. The [backup design](../backup/README.md#where-the-backup-agent-belongs) explains the host-agent choice; the [host-file standard](standards/host-files.md) covers installed rulesets, units and log rotation.
+- **Security-first**: Hardening is the default. Relaxing a control requires a documented exception.
+- **Standards-consistent**: Every service follows the same compose structure, env layout, secrets pattern, and naming convention. A new app that follows the standards fits in without friction.
 
 ---
 
@@ -711,6 +520,223 @@ Grouped by role, every member accounted for:
 The socket proxy is a service inside `core/traefik`, not a directory of its own.
 `acme-certs` is being extracted to its own repository ([`ROADMAP.md`](../ROADMAP.md)) —
 a maintenance decision, not a classification one.
+
+---
+
+## Directory Structure
+
+Five top-level categories, split by **how** each tool accesses the system — not by who uses it:
+
+| Directory | Responsibility | Access pattern |
+|---|---|---|
+| `core/` | Shared platform and control plane — capabilities scoped to the installation, not to one stack | Privileged or cross-stack — controls Docker, the host or other containers, or serves a capability other stacks route through, authenticate against, resolve names with, or store secrets in |
+| `apps/` | User-facing applications | Standard — Traefik-routed, DB + volume access |
+| `business/` | Business operations tools | Standard — same pattern as `apps/`, distinct operational scope |
+| `monitoring/` | Observability and alerting | Cross-stack — reads metrics and logs from other containers |
+| `backup/` | Data protection | Privileged — reads volumes across services, writes to remote targets |
+
+`monitoring/` and `backup/` are top-level (not under `apps/`) because their access patterns are fundamentally different: they reach across service boundaries and need broader permissions than a typical user-facing app.
+
+**Which category does a new service belong to?** One test question each, applied in order:
+
+| Directory | Test |
+|---|---|
+| `core/` | Does it control Docker, the host or other containers, or does it provide a shared network, TLS, identity, DNS, security or secrets capability for the installation rather than for its own users? Scope decides, not dependency: a member may be optional, and two members may be alternatives to each other. |
+| `monitoring/` | Does it observe one or more other services? |
+| `backup/` | Does it protect data belonging to other services? |
+| `business/` | Is a company needed for this to be useful at all? (issuing invoices, customer helpdesk, compliance) |
+| `apps/` | Everything else — would a homelab user *and* a company both use it? A stack that serves its own users belongs here, including a diagnostic fixture deployed to prove another stack works: that is a lifecycle property, and no category test asks about lifecycle. |
+
+The access-pattern test determines physical placement; a reader-facing topic can
+group stacks from several directories without moving them. This distinction
+addresses an earlier classification attempt: placing `business/` by analogy to
+`monitoring/` left ten existing applications without a consistent home. The
+access-pattern test explains both their placement and why navigation may group
+them differently.
+
+---
+
+## Physical layout, conceptual domains and navigation are three different layers
+
+Directory layout, conceptual grouping and website navigation answer different
+questions. Each has its own owner and reason to change:
+
+| Layer | Question it answers | Owner | Changes when |
+|---|---|---|---|
+| **Physical layout** | how does a stack access the system? | this document, the five directories | a stack's access pattern differs from every existing category |
+| **Conceptual domain** | how does a reader group this in their head? | documentation, `.ai/decisions.md` | a subject-matter grouping helps a reader, independent of any directory |
+| **Website navigation** | how does a reader find this? | `site/` | reader research shows a different grouping helps — already independent today, see the site's Infrastructure/Applications/Operations split |
+
+The physical layout is `core/apps/business/monitoring/backup`, unchanged, and is
+the only one of the three that CI knows about at all: `check-structure.py` and
+`check-coverage.py` enforce that every stack sits under one of the five roots and
+that no root goes unchecked. Which of the five a given stack belongs in is a
+judgement against the table above, not something CI can decide. A conceptual
+domain can exist purely as documentation
+and navigation vocabulary, with no stack in it, for as long as that stays
+useful to a reader — it earns a directory the same way any category does: by
+failing every test in the [Directory Structure](#directory-structure) table.
+
+**Conceptual domains today**, alongside the five that already map to a
+directory (Infrastructure → `core/`, Applications → `apps/`, Business →
+`business/`, Monitoring → `monitoring/`, Operations & Recovery → `backup/`):
+
+- **Development / Custom Applications** — has a physical home, `development/`,
+  for the patterns it owns. See below.
+- **AI & Local AI** — deployable services, in `apps/`; the engineering above them is not this repository's. See below.
+- **Document Processing** — real capabilities plus one standalone service; still no orchestrated pipeline. See below.
+
+AI & Local AI and Document Processing do not justify a new top-level directory.
+Development has one, for a different reason than the access-pattern test the
+five categories use — see below.
+
+### AI & Local AI is deployment, not engineering
+
+The line runs between running a service and doing the engineering. Deploying
+and hardening a reusable AI service — a model runtime, a gateway, a vector
+store — is this repository's problem, and it goes through the same
+categorisation test as anything else: nothing about "AI" changes which
+directory it lands in, and an observability component for it would most likely
+be `monitoring/`. The engineering above that line — model evaluation,
+retrieval architecture, prompt design, the experiments that decide whether any
+of it is worth running — belongs to a different project and is not served by
+putting a Compose file here.
+
+The first services are in `apps/`:
+
+| Part | Where it lives |
+|---|---|
+| Model runtime, simple, runs on CPU | `apps/ollama` |
+| Model serving, high throughput, NVIDIA GPU | `apps/vllm` |
+| Vector database | `apps/qdrant` |
+| Gateway with virtual keys and budgets | `apps/litellm` |
+| Chat interface | `apps/open-webui` |
+| LLM and MCP gateway | `apps/agentgateway` |
+| LLM application platform | `apps/dify` |
+| LLM observability | `monitoring/langfuse` |
+
+Ollama and vLLM both serve models and are both kept: they cover different
+deployments — one runs on any machine and pulls models by name, the other needs
+a GPU host and is built for concurrent load. Neither depends on the other or on
+Qdrant, and each is usable on its own.
+
+LiteLLM and agentgateway are both gateways and are both kept: LiteLLM adds
+virtual keys, budgets and a spend log in PostgreSQL, agentgateway is a single
+distroless binary that also routes MCP. Open WebUI is a chat interface. None of
+them requires another: each takes an OpenAI-compatible endpoint from its
+configuration, and any of the model servers above, or a hosted provider, can sit
+behind it. Pointing one at another is an operator's choice, not something the
+stacks assume.
+
+Dify is an application platform whose model providers are plugins, so it too takes
+its backend from its own console rather than from the stack. Langfuse is an
+observability service and sits in `monitoring/`: it receives traces from whatever
+instruments its code with an SDK or OpenTelemetry, and none of the other stacks
+sends to it or requires it.
+
+Two properties of these services shape the stacks. Ollama has no authentication, and vLLM's `--api-key` protects only
+its `/v1` paths, so the reverse proxy is the real access control — vLLM's route
+forwards `/v1/` only. And the model servers need outbound access to fetch weights, so their single
+service sits on the stack's proxy network — the edge network `<project>-edge` by
+default, a plain bridge with outbound access — rather than on an `internal`
+network; Qdrant ships the same way. A stack that consumes one of them by service
+name (no shipped stack does) needs both on the shared `proxy-public` instead;
+otherwise it reaches them through their route. Each
+stack's own README states what was verified; vLLM's CUDA image has not been run
+on a GPU here.
+
+Machine learning also runs inside Immich and PhotoPrism as a property of those
+applications, which is not a separate domain.
+
+### Document Processing has the capabilities, and one standalone service
+
+The domain is real and covered in four parts:
+
+| Part | Where it lives |
+|---|---|
+| Archive and ingest — OCR, indexing, search | `apps/paperless-ngx` |
+| Browser-based editing | `apps/onlyoffice`, `apps/euro-office`, `apps/collabora` |
+| Electronic signature | `business/documenso`, `business/opensign` |
+| Document understanding for AI/RAG pipelines — layout, structure, tables | `apps/docling-serve` |
+
+Apache Tika and Gotenberg still belong to Paperless-ngx as its own converters,
+not as shared services other stacks call — `docling-serve` landing did not
+give either a second consumer, so this is unchanged. `docling-serve` earns a
+standalone stack for a different reason: layout-aware document understanding
+for AI pipelines had no home in this repository at all, and multiple plausible
+callers (a workflow tool, a future RAG stack) exist for it, where Tika and
+Gotenberg still have exactly one.
+
+A general document-processing pipeline — one orchestrated path from any input
+document through every possible extraction step — still does not exist.
+`docling-serve` is one capability, consumed directly by whatever calls its
+API; it is not that pipeline. Building an orchestrated multi-step chain before
+a real case needs one remains the deliberate absence this section described
+before docling-serve existed.
+
+OCRmyPDF was evaluated for a standalone stack and excluded. Upstream describes
+its own Docker image as ephemeral — one container per OCR job, exiting like a
+command-line program, not a server — and this repository does not give a
+CLI/job tool with no independently operated service a blueprint entry. See
+[`ROADMAP.md`](../ROADMAP.md#out-of-scope-here).
+
+### Development is a Supporting-tier domain, not a sixth category
+
+The mission covers two kinds of software: existing self-hosted open-source
+projects, and applications someone builds themselves. Both go through the same
+**deploy → secure → operate → recover** model, but the first phase differs — an
+existing project starts from a published, versioned image; software someone
+builds starts from source and a build step, which
+[`standards/custom-application.md`](standards/custom-application.md) owns.
+
+**This is not what `docker-compose.local.yml` is for.** The local test stack
+([`standards/compose-structure.md`](standards/compose-structure.md)) is a
+deployment mode of an already-packaged application — the same `image:` tag,
+published without Traefik, DNS or a certificate so it can be tried on one
+machine. It answers "how do I try this app," not "how do I harden an app I
+wrote."
+
+[`development/`](../development/) is where the build phase lives as a reusable
+artifact. `development/static-site/` and `development/web-api/` are complete,
+working deployment shapes — a real build, a real hardened runtime, a
+local-validation compose file, each proven by a minimal fixture — that a real
+project copies into `apps/` or `business/` under its own name once it exists.
+They are never deployed from inside this repository, and they are not stacks
+in the access-pattern sense the five categories use: the [Directory
+Structure](#directory-structure) test asks how a running service reaches the
+system, and a pattern that is never run here has no access pattern to test.
+That is also why `development/` does not become a sixth category — it sits
+alongside `docs/`, `scripts/ci/` and `site/` as a Supporting-tier directory,
+checked by [`scripts/ci/check-structure.py`](../scripts/ci/check-structure.py)
+anyway, because unlike those three it holds real, buildable compose files
+worth the same structural and security check any stack gets.
+
+Existing examples show two image-build shapes:
+`business/vikunja` adds a layer to a published image because upstream ships
+`FROM scratch`, and `apps/caldiy` consumes a governed fork's reviewed release.
+[`standards/custom-application.md`](standards/custom-application.md) is derived
+from those two — it covers source, build, image identity and what verifies the
+image, and states that every phase after the image is unchanged. `development/`'s
+patterns are a third shape built on the same standard: a reusable starting
+point with no concrete application behind it yet, adopted by copying rather
+than by reference.
+
+`apps/_reference` still templates the hardening pattern around a pre-built,
+versioned image — its `UPSTREAM.md`, its `_FILE`-secret assumptions and the
+Trivy scan target all presume one. `development/`'s patterns hand off to it:
+once a project copied out of `development/` has its own identity, everything
+after the image — configuration, networking, backup documentation — follows
+`apps/_reference`'s structure exactly like any other stack.
+
+These patterns also give first-party applications — source with no upstream
+project — a starting point. Vikunja and Cal.diY wrap third-party software; the
+patterns address the separate need to harden and deploy an application someone
+writes themselves. They were introduced for that reusable need, rather than for
+one specific application. This supersedes the earlier decision to leave the
+shape absent until a concrete application needed it; the
+[decision record](../.ai/decisions.md) retains that history, and
+[`standards/custom-application.md`](standards/custom-application.md) owns the
+current requirements.
 
 ---
 

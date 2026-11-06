@@ -44,8 +44,8 @@ the history.
 
 | Cause | Fix |
 |---|---|
-| App only publishes floating tags | Use `main`, `latest`, or `stable` — check Docker Hub tags page |
-| Semver tag tried but doesn't exist | OpenSign only has `main` / `staging` / `docker_beta` — no `vX.Y.Z` |
+| App only publishes rolling tags | Use a supported rolling tag pinned to its image digest, following the exception in the stack's `UPSTREAM.md`; do not switch to a bare floating tag |
+| Expected version tag does not exist | Check the upstream registry's published tags and the stack's `UPSTREAM.md` before changing the pin |
 
 **Check:** `https://hub.docker.com/r/<org>/<image>/tags` before pinning a version.
 

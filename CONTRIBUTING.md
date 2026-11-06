@@ -10,7 +10,19 @@ Thanks for considering a contribution. This is an opinionated blueprint for secu
 
 ## What's welcome
 
-- **New apps** following the blueprint structure — a full `<category>/<name>/` setup with `README.md`, `UPSTREAM.md`, `.gitignore`, `docker-compose.yml`, `.env.example`. A `CONFIG.md` covering all env vars and lifecycle operations is encouraged for complex apps (see `apps/paperless-ngx/CONFIG.md` as the reference pattern) but not required for minimal single-container apps.
+**Until the v1.0 work is complete, new applications are on hold.** Please discuss
+an exception before implementing a new stack — see [Roadmap](ROADMAP.md#on-hold--after-v10-or-not-yet-needed).
+Existing-stack fixes, verification and documentation can follow the workflow
+below directly; the hold does not add an approval step for them.
+
+For an agreed new application, provide a complete `<category>/<name>/` stack:
+`README.md`, `UPSTREAM.md`, `.gitignore`, `docker-compose.yml` and `.env.example`.
+Start from [`apps/_reference/`](apps/_reference/) and the
+[new-app checklist](docs/standards/new-app-checklist.md). A `CONFIG.md` covering
+settings and operations is encouraged for complex applications, as in
+[`apps/paperless-ngx/CONFIG.md`](apps/paperless-ngx/CONFIG.md); it is not required
+for a minimal single-container application.
+
 - **Improvements to existing apps** — security hardening, upstream version bumps, bug fixes
 - **New core services** — only with prior discussion, since these affect every app
 - **Documentation fixes** — typos, clarifications, missing cross-references
@@ -47,7 +59,7 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 - Single focused topic per PR
 - Record notable changes in `CHANGELOG.md` under `## [Unreleased]`; routine wording corrections need no separate entry
 - Update relevant docs (root `README.md`, app-level `README.md` / `UPSTREAM.md`, any app-specific `CONFIG.md` that exists) if behaviour or configuration changed
-- No real data — verify with the pre-commit scan patterns listed in the go-live guide
+- Review the diff for credentials and private deployment data using [Public content](docs/standards/commit-rules.md#public-content). CI runs [gitleaks and the public-content pattern checks](docs/standards/ci.md#1--secret-scan-gitleaks); those checks do not replace review of real domains, addresses and other context they cannot recognise
 - Secrets always via Docker Secrets or `.env` (gitignored), never hardcoded
 - All CI checks must pass before merge — required by the ruleset on `dev` and on `main`
 - New apps and services must pass compose validation, structure checks, and the security baseline
@@ -59,15 +71,15 @@ The CI pipeline is the automated test suite for this configuration project. It r
 | Area | What it validates |
 |---|---|
 | Secrets and public content | No credentials in the commits a pull request adds (gitleaks, default rules), no workstation paths or password-manager references in tracked files, no `__REPLACE_ME__` left in a committed `.env` |
-| Compose | Every compose file parses and resolves; every stack has a `README.md` and a `.env.example` |
+| Compose | Compose files parse and resolve; Compose-based stacks carry a `README.md` and a `.env.example` |
 | Security baseline | `no-new-privileges:true` present, no `privileged: true`, socket proxy pattern enforced |
 | Canonical structure | No `:latest` or major-only image tags, no plaintext secrets, no datastore on the public network |
-| Status model | Owner and mirror agree on a status, `LIFECYCLE.md` is current, ✅ carries a verification date |
+| Status model | Generated lifecycle views match their sources; verification names a date and version, and pin drift is reported |
 | Checker coverage | No content directory that no checker looks at |
 | Documentation | Markdown style, internal links and anchors, and the prose register across the repository |
 | Workflow supply chain | Actions pinned by SHA, every workflow declares `permissions:` |
 
-See [`docs/standards/ci.md`](docs/standards/ci.md) for full documentation of each job.
+See the [standards guide](docs/standards/README.md) for the relevant rules and [`ci.md`](docs/standards/ci.md) for each CI job.
 
 **Documentation quality is checked.** A phrase from the
 [writing-style](docs/standards/writing-style.md) list in a reader-facing file —

@@ -6,6 +6,17 @@ plan; neither moves a pin. A pin moves through the Version Chain in
 [`../maintenance.md`](../maintenance.md#version-chain), commits grouped by purpose, verification and rollback needs, and
 the record of each move is the stack's `UPSTREAM.md` and `CHANGELOG.md`.
 
+## Historical scope
+
+The tables and batch plan below describe the inventory of **2026-10-31**.
+The subsequent image sweep and scan results shipped with
+[v0.9.7](../../CHANGELOG.md#097--2026-11-05--the-ingress-programme-verified-on-a-host).
+The old batches are not a current work queue. Use each stack's `.env.example`
+and `UPSTREAM.md` for current pins and upgrade notes, and
+[`LIFECYCLE.md`](../../LIFECYCLE.md) for verification at those pins. New version
+work follows the [Version Chain](../maintenance.md#version-chain) with fresh
+upstream evidence. The historical inventory values below are preserved.
+
 ## How the inventory was taken
 
 For each of the 201 image references `scripts/ci/list-images.sh` resolves, the
