@@ -601,7 +601,12 @@ def render(rows: list[dict]) -> str:
         "- **State** — `scaffolded` · `verified` · `baseline-aligned` · "
         + "`ops-proven`, each measured from an artefact. See "
         + "[`status-model.md`](docs/standards/status-model.md).",
-        "- **Last verified** — from the stack's `UPSTREAM.md`. A ⚠️ marks a date "
+        "- **Pinned** — the current image pin in `.env.example`; it may differ "
+        + "from the version last tested.",
+        "- **Verified version** — the version recorded in the stack's "
+        + "`UPSTREAM.md`, linked to its verification record. `—` means no version "
+        + "was recorded; the current pin is never substituted.",
+        "- **Last verified** — the date from that same record. A ⚠️ marks a date "
         + "with no version in parentheses, which names no anchor and leaves the "
         + "stack at `scaffolded`.",
         "- **Local** — whether the stack carries "
@@ -628,13 +633,18 @@ def render(rows: list[dict]) -> str:
         out += [
             f"## `{category}/`",
             "",
-            "| Stack | State | Pinned | Last verified | Local | Backup docs | Restore docs | Open findings |",
-            "|---|---|---|---|---|---|---|---|",
+            "| Stack | State | Pinned | Verified version | Last verified | Local | Backup docs | Restore docs | Open findings |",
+            "|---|---|---|---|---|---|---|---|---|",
         ]
         for r in group:
+            version = r["verified_version"]
+            verified_version = (
+                f"[`{shorten(version).replace('|', '&#124;')}`]"
+                f"({r['stack']}/UPSTREAM.md)" if version else "—"
+            )
             out.append(
                 f"| [`{r['stack']}`]({r['stack']}/) | `{r['state']}` "
-                f"| {r['pinned']} | {r['verified']} | {r['local']} "
+                f"| {r['pinned']} | {verified_version} | {r['verified']} | {r['local']} "
                 f"| {r['backup']} | {r['restore']} | {marker(r)} |"
             )
         out.append("")

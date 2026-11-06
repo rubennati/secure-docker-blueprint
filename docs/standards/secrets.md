@@ -80,12 +80,13 @@ needs. Store the issued value exactly as received — do not re-encode it.
 - **`.env.example` never carries a real value** — not even a plausible-looking
   example. Placeholder or generation instructions only. See
   [Env Structure](env-structure.md).
-- **A real secret lives in its own file under `.secrets/`**, one file per
+- **By default, a real secret lives in its own file under `.secrets/`**, one file per
   secret, wired into the container as a Docker file-based secret
-  (`security_opt`/`_FILE` pattern) or read by a custom entrypoint from
-  `/run/secrets/` — see [Security Baseline](security-baseline.md#secrets)
-  for the three patterns and which stacks use which. A secret is never placed
-  in `environment:` or `env_file:`.
+  (`_FILE` pattern) or read by a custom entrypoint from `/run/secrets/`.
+  Existing environment exceptions keep the value in a gitignored `.env` and
+  document the reason and inspection exposure in the stack's `UPSTREAM.md`;
+  see [Security Baseline](security-baseline.md#secrets) for the three patterns.
+  Keep explicit `environment:` entries; `env_file:` is not used.
 - **`.secrets/` and `volumes/` are gitignored repository-wide**
   (`**/.secrets/`, `**/volumes/` in the root `.gitignore`) — this is already
   enforced; nothing here changes it.

@@ -10,6 +10,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Changed
 
+- **Documentation: align setup, verification and reader paths.** Traefik setup
+  names network, certificate and VPN prerequisites; lifecycle tables separate
+  current pins from recorded test versions. Security exceptions, access defaults,
+  host evidence, troubleshooting and planning summaries agree with their sources.
+  Contributor guidance states the application hold and links existing checks.
+  Architecture and long READMEs lead with the system and the reader's task; a
+  standards guide and two overview diagrams aid navigation. The README header
+  retains its concrete benefits, project scope and current stack count. Category
+  and candidate decisions retain the rationale needed to understand the design.
+
 - **Repository working rules are proportional to the task.** Related changes can
   share commits, existing commit authorization needs no repeated message approval,
   and signing is recommended when available. Task-specific reading replaces the

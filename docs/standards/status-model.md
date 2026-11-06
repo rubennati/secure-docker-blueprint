@@ -81,6 +81,11 @@ the log records the archive, the scope, the result and the numbers. The log's
 `scripts/ci/lifecycle-report.py` produces [`LIFECYCLE.md`](../../LIFECYCLE.md)
 and `site/src/data/lifecycle.json`. **Neither is edited by hand.**
 
+The Markdown view shows **Pinned**, **Verified version** and **Last verified**
+separately. The first is today's configuration; the other two describe the last
+recorded test. A pin update preserves that historical version and date and does
+not establish a new verification. A missing verified version is shown as `—`.
+
 ```bash
 python3 scripts/ci/lifecycle-report.py --write
 ```

@@ -226,5 +226,27 @@ class OpenFindings(unittest.TestCase):
         self.assertTrue(lr.OPEN_FINDINGS.search("x\n## Open findings\n\ny"))
         self.assertFalse(lr.OPEN_FINDINGS.search("## Open findings and more"))
 
+
+class VerificationDisplay(unittest.TestCase):
+    def row(self, verified_version):
+        return {
+            "stack": "apps/widget", "category": "apps", "state": "scaffolded",
+            "pinned": "`APP_TAG=2.0.0`", "verified": "2026-01-01",
+            "verified_version": verified_version, "local": "—",
+            "backup": "documented", "restore": "missing", "open_findings": 0,
+        }
+
+    def test_pin_update_preserves_the_older_verification_in_markdown(self):
+        report = lr.render([self.row("v1.0.0")])
+        self.assertIn(
+            "| `APP_TAG=2.0.0` | [`v1.0.0`](apps/widget/UPSTREAM.md) | 2026-01-01 |",
+            report,
+        )
+
+    def test_missing_verified_version_is_not_replaced_with_current_pin(self):
+        report = lr.render([self.row(None)])
+        self.assertIn("| `APP_TAG=2.0.0` | — | 2026-01-01 |", report)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

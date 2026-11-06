@@ -34,7 +34,10 @@ Not deployable here yet. See [`ROADMAP.md`](../ROADMAP.md) for status.
 
 **Out of scope:** business continuity management and incident response as disciplines — business impact analysis, crisis communication, emergency manuals, insurance. Those are referenced (see [Standards](#standards)) and left to dedicated frameworks. This category stays operational.
 
-**One deliberate exception to the repository's scope:** everything else here treats the host as the operator's business and stays inside Docker. Backup does not, because backup is the one function that cannot sensibly live in a container — see below. Host-level guidance here is generic and never assumes a distro, filesystem, or provider.
+**The server-backup agent is host-installed by design.** Borgmatic needs access
+to the data it protects and must be available when Docker is down. The procedure
+below explains this choice; the [Borgmatic guide](borgmatic/README.md) gives the
+supported host prerequisites and installation steps.
 
 ---
 
@@ -57,21 +60,52 @@ The same applies to a provider's built-in backup product with a short fixed rete
 
 ## Where the backup agent belongs
 
-**On the host.** Installed as a package, scheduled by a systemd timer.
+**This blueprint installs Borgmatic on the host**, scheduled by a systemd timer:
 
-This is a deliberate exception to how everything else in this repository works, and the reasoning is specific to backup:
+- **Data access is explicit.** The agent reads the selected application data,
+  configuration and secrets. Its host permissions and backup credentials are a
+  trust boundary: it can read what those permissions grant, and the archive must
+  protect the captured secrets. A server-wide backup can read secrets across
+  stacks; keeping that reach in the host's administrative boundary avoids
+  granting it to another application container.
+- **Recovery does not depend on a running Docker daemon.** The host agent can
+  access archives and restore files while Docker is unavailable. Database dump
+  hooks and database restores still need the database to be reachable.
+- **Database consistency is handled separately.** Container-aware hooks take
+  dumps before the file backup; [the next section](#layer-1--application-consistent-database-backups)
+  describes that path and the host client requirements.
 
-- **A container cannot reach what needs backing up.** It would need `/:/host:ro` or `--privileged` to see other stacks' data, the Docker volume directory, and host configuration.
-- **That contradicts this blueprint's own security baseline.** A backup container with read access to every volume is a container that can read every secret in the deployment. The Portainer Agent's `/:/host:ro` mount is already documented as a deviation — backup should not become the second one.
-- **It has to work when Docker does not.** A containerised agent cannot run if the daemon is down, which is exactly when you may need it.
+A containerised backup agent is technically possible with mounts limited to the
+paths it protects; neither a host-root mount nor privileged mode is inherently
+required. It still gains read access to the mounted data and needs Docker to
+start. This repository keeps the server-wide Borgmatic agent on the host rather
+than maintaining both deployment paths.
 
-The one thing that genuinely belongs in the container world is the **database dump** — and Borgmatic reaches into containers for that without the agent living there (see below). That is the hybrid: host agent for files and scheduling, container-aware hooks for application consistency.
-
-> If you deliberately run a containerised agent anyway, scope its mounts to the specific volumes it must read, never mount the Docker socket, and keep `no-new-privileges` and `cap_drop: ALL`. Understand that its read access is the blast radius.
+> For a containerised agent, scope mounts to the required data, use read-only
+> mounts where possible, and keep `no-new-privileges` and `cap_drop: ALL`.
+> Never mount the Docker socket into that backup container. Use a documented
+> database-consistency mechanism rather than granting Docker control merely to
+> read files. The agent's data access and credentials define its blast radius.
 
 ---
 
 ## The five layers in practice
+
+The server-backup path documented for Borgmatic:
+
+```mermaid
+flowchart TB
+  DUMP["Consistent database dump"] --> ARCHIVE["Encrypted archive<br/>on an off-site target"]
+  FILES["Application files<br/>configuration and secrets"] --> ARCHIVE
+  ARCHIVE --> CHECK["Archive integrity check"]
+  ARCHIVE --> RESTORE["Restore into a scratch environment"]
+  RESTORE --> VERIFY["Check data and application"]
+```
+
+[Database consistency](#layer-1--application-consistent-database-backups) explains
+what must happen before archiving. [Recovery checks](#layer-4--proving-it-works)
+distinguish an intact archive from a successful restore; the
+[restore playbook](borgmatic/RESTORE.md) gives the commands.
 
 | Layer | What it does | Where it runs |
 |---|---|---|

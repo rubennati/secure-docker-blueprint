@@ -5,7 +5,7 @@ new deployment, and how to migrate an existing IPv4-only install safely.
 
 For the security middleware system (access policies, TLS, headers), see
 [Traefik Security Architecture](../../../docs/standards/traefik-security.md).
-For the general network model (`proxy-public` / `app-internal`), see
+For the general network model (ingress, per-stack edge and internal networks), see
 [Networking](../../../docs/standards/networking.md).
 
 ---
@@ -56,15 +56,15 @@ Cloudflare edge                               Tailscale / MagicDNS / Split-DNS
 │ Traefik (core/traefik) — proxy-public network                         │
 │  · Cloudflare path: forwardedHeaders.trustedIPs (traefik.yml) keeps   │
 │    the client address in X-Forwarded-For whatever the IP family;      │
-│    acc-* and rl-* evaluate the connecting address — the edge.         │
+│    access-* and limit-* evaluate the connecting address — the edge.    │
 │  · Tailscale path: ClientHost IS the real Tailscale IP already — IF   │
 │    the network can carry it end to end. IPv6 clients need IPv6 on     │
 │    proxy-public, or the source IP is lost before Traefik sees it.     │
 └───────────────────────────────────────────────────────────────────────┘
-   │ proxy-public                                 │ proxy-public
+   │ <project>-edge                               │ <project>-edge
    ▼                                               ▼
 ┌───────────────────────────────────────────────────────────────────────┐
-│ Docker app — web-facing service: proxy-public + app-internal          │
+│ Docker app — web-facing service: <project>-edge + app-internal        │
 └───────────────────────────────────────────────────────────────────────┘
    │ app-internal (internal: true)
    ▼
@@ -391,7 +391,8 @@ the per-deployment `.env`, which is already gitignored and host-specific).
 The default for new installs (DEC-063, refined by DEC-075), and what
 `.env.example` ships: modern servers increasingly have IPv6, and Tailscale
 always hands out an IPv6 address regardless. Starting dual-stack avoids a
-later migration.
+later migration. Complete [Traefik setup](../README.md#setup), including the
+certificate strategy and VPN access, alongside these network steps.
 
 ```bash
 cd core/traefik
@@ -408,7 +409,9 @@ cp .env.example .env
 bash ops/scripts/validate.sh
 bash ops/scripts/render.sh
 docker compose up -d
-bash ops/scripts/validate.sh --strict   # daemon, network and container confirmed
+# For public bindings, run the external exposure test and save its marker
+# first — see host-firewall.md, "The exposure test".
+bash ops/scripts/validate.sh --strict   # requires runtime checks and the marker
 
 # Verify it actually applied — EnableIPv6 must be true, and IPAM.Config
 # must list both subnets. This overlay only CREATES a dual-stack network;
