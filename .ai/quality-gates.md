@@ -1,9 +1,16 @@
 # Quality Gates
 
-What must pass before work is considered done. Full documentation of each CI job is
+Select local checks for the change; all required CI gates still apply before merge.
+Full documentation of each CI job is
 in [`../docs/standards/ci.md`](../docs/standards/ci.md).
 
 ## Run locally before proposing completion
+
+Use the relevant commands below. Documentation edits usually need link, Markdown
+and text checks; Compose or pin changes need the applicable structure, baseline,
+rendering and generated-view checks. Run focused tests when changing a checker.
+Report checks that could not run and their limits. Repeat or broaden validation
+when a change, failure or unresolved risk warrants it, not after every edit.
 
 ```bash
 python3 scripts/ci/check-baseline.py         # security baseline per container

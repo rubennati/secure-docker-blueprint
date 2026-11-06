@@ -47,7 +47,7 @@ Four models describe documentation in this repository, each answering one questi
 | AI entry point and rule precedence | `AGENTS.md` | `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/00-project.mdc` — pointers only, never a rule of their own |
 | Working context for AI sessions | `.ai/` | Mirrors the owners above in condensed form; `.ai/domains/*.md` restate `docs/standards/` and lose to them on any disagreement |
 
-**Category README structure rule**: tables show `🛡️` / `✅` / `🚧` only. `📋` planned items appear as inline `Planned: X, Y, Z` lines — never as table rows. `🛡️` is listed in every status legend but appears in no table yet; the first stack earns it with the v0.7.0 restore.
+**Category README structure rule**: tables list existing stacks and their status. Planned candidates are listed separately. Status definitions and evidence follow [`standards/status-model.md`](standards/status-model.md).
 
 **The root README is an entry point, not an inventory.** All five categories carry their own README with the stacks in that category; the root links to them and to `LIFECYCLE.md`, and does not reproduce either. A status claim in the root README would be a third copy of a fact the stack already owns and the generator already presents. Everything derived from these owners is regenerated, not retyped:
 
@@ -117,14 +117,12 @@ A chain is a defined sequence of files to check and update for a specific trigge
 
 ### Session Chain
 
-**Trigger**: any work session, regardless of what was changed.
+**Trigger**: work changes release information, plans, handoff context or produces
+significant operational evidence.
 
-| Step | File | Action |
-|---|---|---|
-| 1 | `CHANGELOG.md` | Is `[Unreleased]` up to date with what was done? |
-| 2 | `ROADMAP.md` | Did anything complete or become irrelevant? Update if yes. |
-| 3 | `docs/maintenance-log.md` | Add a row. |
-| 4 | `.ai/state.md` | Does phase, snapshot and the open-decision list still match reality? A decision resolved at its owner is struck here. |
+Update the affected owner only: `CHANGELOG.md` for notable changes, `ROADMAP.md`
+for changed plans, `.ai/state.md` for active context. A host or maintenance record
+is useful for significant evidence or incidents. Routine sessions need no log row.
 
 ---
 
@@ -140,8 +138,8 @@ A chain is a defined sequence of files to check and update for a specific trigge
 | 4 | `<app>/README.md` | Setup + verify steps accurate and tested |
 | 5 | `<app>/UPSTREAM.md` | Image source, license, changelog link current; `Last verified: YYYY-MM-DD (vX.Y.Z)` updated |
 | 6 | `<app>/.gitignore` | Covers `volumes/`, `.secrets/`, `.env` |
-| 7 | Category README | Status is current and honest → status definitions in root `README.md` |
-| 8 | Root `README.md` | Table row matches category README (status, description) |
+| 7 | Category README | Listing and status follow `docs/standards/status-model.md` |
+| 8 | Root `README.md` | Update the overview only if its scope, examples or navigation change; do not duplicate the category inventory |
 | 9 | `CHANGELOG.md` | Change documented |
 
 ---
@@ -154,12 +152,12 @@ A chain is a defined sequence of files to check and update for a specific trigge
 |---|---|---|
 | 1 | Release notes | Read changelog — any breaking changes, removed features, required migrations? |
 | 2 | Security advisories | Check the upstream GitHub repo for open CVEs or security advisories against the current and new version (`Security` tab → `Advisories`) |
-| 3 | `<app>/.env.example` | Bump image tag — test on clean install first, then commit |
+| 3 | `<app>/.env.example` | Move the pin after upstream review and relevant checks; state whether a clean install or upgrade was tested |
 | 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
-| 5 | `<app>/UPSTREAM.md` | Update version reference and release notes link |
+| 5 | `<app>/UPSTREAM.md` | Update version reference, release notes and migration requirements; preserve `Last verified` unless a new host test establishes it |
 | 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
 | 7 | Image scan | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — with an `## Open findings` section in each stack README. `trivy-gate.py --prune` removes what the scan no longer finds |
-| 8 | `docs/bugfixes/` | If anything broke during upgrade, document it here |
+| 8 | `docs/bugfixes/` | Record significant incidents, recovery steps or reusable lessons; routine corrections need no incident file |
 | 9 | `CHANGELOG.md` | Version bump documented |
 
 Step 4 exists because its absence was the whole defect: the chain named only
@@ -191,9 +189,9 @@ not an evaluation of this repository.
 | Step | File | Action |
 |---|---|---|
 | 1 | All category READMEs | Every directory has a row; every `🚧` entry has files on disk |
-| 2 | Root `README.md` | Tables mirror category READMEs; `Planned:` lines match category planned items |
+| 2 | Root `README.md` | Overview and links agree with category listings; the root does not duplicate inventories |
 | 3 | All `.env.example` | No real hostnames or vendor values as defaults — `example.com` or empty |
-| 4 | All `docker-compose.yml` + scripts | `grep -r "__REPLACE_ME__"` returns nothing |
+| 4 | All `docker-compose.yml` + scripts | Unresolved placeholders do not reach deployed configuration; documented template sentinels remain valid |
 | 5 | `ROADMAP.md` | Direction items still reflect intent; shipped items removed from Direction |
 | 6 | `docs/architecture.md` | Still accurate — new category? changed networking? |
 | 7 | `CHANGELOG.md` + `ROADMAP.md` | Version comparison links correct |

@@ -24,7 +24,7 @@ itself stays unversioned — this gate constrains the tag, not the content.
 3. `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z]`, comparison links updated
 4. `ROADMAP.md`: milestone moved to Shipped, "Last updated" bumped
 5. `README.md`: version badge
-6. `docs/maintenance-log.md`: add a row
+6. Record significant release verification in the relevant host or maintenance record, when new evidence exists
 7. Every `🚧` re-checked for honesty; every `✅` re-checked against dependency updates
 8. Tag, then `gh release create vX.Y.0 --draft` for minor versions — patch versions
    are git tags only

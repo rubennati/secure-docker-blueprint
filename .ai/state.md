@@ -97,10 +97,10 @@
 - **Definition of done for v0.10.0:** every `✅` stack's limits come from a
   measurement on a real install rather than from the derivation rule
   (`docs/resource-measurement.md`).
-- **The one thing to know first:** nothing structural is broken. The
-  checkers, the generated views and the site catalogue agree with the tree. What
-  is left needs a host, or a decision that is written down and waiting. C1, the missing
-  Trivy gate, is closed: `.trivy-baseline.json` records the CRITICAL findings that
+- **Prior audit status:** the recorded stabilization findings below describe
+  their own audit scope, not a blanket assessment of the current tree. Check the
+  implementation and relevant evidence for a new task. C1, the missing Trivy gate,
+  is closed: `.trivy-baseline.json` records the CRITICAL findings that
   exist and `scripts/ci/trivy-gate.py` fails the scan on any that is not recorded.
   **No finding of the stabilization audit is marked FIX BEFORE V1 any more** —
   everything else open there is evidence, a recorded decision, or standing research

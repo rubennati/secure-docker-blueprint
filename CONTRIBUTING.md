@@ -45,7 +45,7 @@ See [`docs/standards/commit-rules.md`](docs/standards/commit-rules.md) for the d
 ## Pull request expectations
 
 - Single focused topic per PR
-- Update `CHANGELOG.md` under the `## [Unreleased]` section
+- Record notable changes in `CHANGELOG.md` under `## [Unreleased]`; routine wording corrections need no separate entry
 - Update relevant docs (root `README.md`, app-level `README.md` / `UPSTREAM.md`, any app-specific `CONFIG.md` that exists) if behaviour or configuration changed
 - No real data — verify with the pre-commit scan patterns listed in the go-live guide
 - Secrets always via Docker Secrets or `.env` (gitignored), never hardcoded
