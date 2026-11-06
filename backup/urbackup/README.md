@@ -10,6 +10,12 @@ This is the other half of [`backup/`](../README.md). [Borgmatic](../borgmatic/) 
 | Runs | on the host | in Docker, here |
 | Restore | files and databases | files, plus whole-disk on Windows |
 
+## Open findings
+
+The pinned image, `uroni/urbackup-server:2.5.x`, ships with 4 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and perl. The newest build, of 2026-08-30 (2.5.38), has not been rebuilt by upstream.
+
+**Risk:** neither package is part of the backup protocol; brotli matters only if the server decompresses brotli data from a hostile server. Watch for the next build.
+
 ## Try it locally
 
 Runs on `http://localhost:55414` without Traefik, DNS or a certificate.

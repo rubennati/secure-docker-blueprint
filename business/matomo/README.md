@@ -2,12 +2,18 @@
 
 Self-hosted web analytics platform — privacy-respecting, GDPR-compatible alternative to Google Analytics. Two-service stack: PHP/Apache app + MariaDB.
 
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `matomo-app` | `matomo:5.13.0-apache` | Tracking endpoint + reporting UI |
-| `db` | `mariadb:11.4` | Raw visits, aggregated reports, users, settings |
+| `matomo-app` | `matomo:5.14.2-apache` | Tracking endpoint + reporting UI |
+| `db` | `mariadb:12.3.3` | Raw visits, aggregated reports, users, settings |
 
 ## Try it locally
 
@@ -107,7 +113,7 @@ policy before assuming the defaults in `backup/borgmatic/` fit this stack.
 - **Database table prefix** — change `DB_TABLES_PREFIX=mtm_` before the first setup. The default `matomo_` collides with other Matomo installs sharing a DB, and can be scanned for.
 - **Archive cron** — by default, Matomo archives reports on-demand when a report is viewed. For high-traffic sites, add a cron container running `php /var/www/html/console core:archive` every hour. Not configured here.
 - **GeoIP database not shipped** — download MaxMind's `GeoLite2-City.mmdb` manually and place in `volumes/matomo/misc/` for location reports.
-- **`APP_TAG=5-apache` pins major version 5** — patch updates come in on rebuild. Pin to a specific version for stricter reproducibility.
+- **`APP_TAG` is an exact version (`5.14.2-apache`)** — a new Matomo release arrives only when the pin moves. On an existing install a new tag alone updates PHP and the OS, not Matomo: `./volumes/matomo` holds the application files, and the image copies its own only into an empty directory. The upgrade checklist in [UPSTREAM.md](UPSTREAM.md) has the step that moves the code.
 
 ## Details
 

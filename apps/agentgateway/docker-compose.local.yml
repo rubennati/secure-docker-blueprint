@@ -13,7 +13,7 @@
 services:
 
   agentgateway:
-    image: cr.agentgateway.dev/agentgateway:${APP_TAG:-v1.5.0}
+    image: cr.agentgateway.dev/agentgateway:${APP_TAG:-v1.7.0}
     container_name: agentgateway-local-app
     restart: unless-stopped
     security_opt: [no-new-privileges:true]

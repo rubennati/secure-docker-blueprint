@@ -13,13 +13,13 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git
-- **Based on version:** `v1.0.56`
+- **Based on version:** `v1.0.57`
 - **Last checked:** 2026-04-16
 
 ## What we use
 
 - Official `fnsys/dockhand` image, pinned tag
-- `postgres:16-alpine` as backend database
+- `postgres:16.15-alpine` as backend database
 - `tecnativa/docker-socket-proxy` with a restricted permission set for Docker API access
 
 ## What we changed and why
@@ -44,6 +44,16 @@
   raises docker-compose to 5.6.0-r2 for CVE fixes and Node.js to 24.22.1; v1.0.52's
   PUID change was reverted in v1.0.53. The releases live at
   https://github.com/finsys/dockhand/releases; Docker Hub shows no notes.
+- Moved to `v1.0.57` on 2026-11-05 (released 2026-11-04), not run on a host at
+  this tag. No breaking change, new variable or migration in the notes. The
+  release is a security hardening one: path-write guards, filtering of the
+  environment passed to deployments, origin checks on requests and framing
+  headers, with no advisory ID given; the notes do not say what the origin check
+  compares against, so a request through Traefik that the UI now refuses is the
+  first thing to look at on a host. Also: OIDC back-channel logout, conversion
+  of a stack between local and git management, nodemailer and undici updated.
+  No Hawser version requirement is stated.
+  https://github.com/Finsys/dockhand/releases/tag/v1.0.57
 
 ## Upgrade checklist
 
@@ -57,7 +67,7 @@
 
 ## Related images to keep in sync
 
-- `postgres:16-alpine` — upgrade within minor versions is safe; major upgrades (15 → 16) require a manual `pg_upgrade` procedure, not covered here
+- `postgres:16.15-alpine` — upgrade within minor versions is safe; major upgrades (15 → 16) require a manual `pg_upgrade` procedure, not covered here
 - `tecnativa/docker-socket-proxy` — safe to update within the same major version
 
 ## Useful commands

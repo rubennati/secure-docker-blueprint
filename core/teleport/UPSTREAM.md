@@ -14,7 +14,7 @@
 - **Origin:** USA · Gravitational, Inc. · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Access through short-lived certificates instead of standing credentials
-- **Based on version:** `18.11.0`
+- **Based on version:** `18.11.8`
 - **Verification snapshot:** 2026-09-19 — clean start and hardening under full
   container isolation; no real client connection, no join token exercised
 
@@ -41,7 +41,7 @@ enforce or verify.
 
 ## What we use
 
-- `public.ecr.aws/gravitational/teleport-distroless:18.11.0`, single
+- `public.ecr.aws/gravitational/teleport-distroless:18.11.8`, single
   container, `auth` and `proxy` roles combined — the realistic single-node
   shape for what this repository targets, not a production Teleport
   cluster's separated-role, HA topology
@@ -74,6 +74,27 @@ enforce or verify.
   session, the web UI login flow, any auth connector (local users only —
   OIDC/SAML are Enterprise-only, see README.md), a real ACME certificate,
   backup/restore, or behavior across a restart or upgrade.
+
+## Version notes
+
+- Moved `public.ecr.aws/gravitational/teleport-distroless` to `18.11.8` on
+  2026-11-05 (released 2026-10-29), patch releases on the 18.11 line, not run on
+  a host at this tag; the image scan could not pull this registry before, so
+  whether the findings of `18.11.0` are gone needs the next scan. Public ECR
+  carries no 18.12 or 19.x tag. 18.11.3 and 18.11.5 are private security
+  releases whose details upstream does not publish; 18.11.6 moves the Go
+  toolchain to 1.26.10; 18.11.7 stops Teleport Connect accepting certificates
+  involved in CVE-2026-111943 (eMudhra); 18.11.8 fixes automatic Access Request
+  review approving requests whose deny rule failed to evaluate and updates
+  Brotli (GHSA-c9gr-gmg4-2vqv). Changes that could touch an operator: the
+  `tctl detections` flags `--format`, `--from` and `--to` now go after the `ls`
+  or `get` subcommand (18.11.8); `tctl auth crl` also exports CA override CRLs
+  (18.11.1); `cluster_auth_preference` and `teleport.yaml` gain an optional
+  `human_private_key_policy` (18.11.5); the tbot `terraform` field is deprecated
+  for `terraform_cloud` (18.11.2). None changes the `teleport.yaml` this stack
+  generates or the compose configuration. The GitHub repository's tags and
+  CHANGELOG stop at 18.11.1, so the notes come from the documentation changelog.
+  Source: https://goteleport.com/docs/changelog/
 
 ## Upgrade checklist
 

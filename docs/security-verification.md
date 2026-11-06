@@ -376,14 +376,22 @@ document restates their coverage, severity or exit behavior — it points here.
 - Trivy's own exit code stays 0 on every image, at every severity: the scan
   reports rather than judges. **What blocks is a separate gate.**
   `scripts/ci/trivy-gate.py` fails the job on a CRITICAL finding that is not
-  recorded in `.trivy-baseline.json`, so a finding the repository has accounted
-  for passes and a new one does not. Making the scan itself blocking was
+  listed under an image exception in `.trivy-baseline.json`. A finding is fixed
+  by moving the pin to an upstream release that no longer carries it; only where
+  no such release exists does it become an exception, written by hand per image
+  with the stacks that use it, why the pin cannot move and the risk. An
+  exception missing any of these fails the gate as well, and there is no way to
+  record a scan's findings in bulk. Each stack named in an exception carries an
+  `## Open findings` section in its README and an *Open findings* mark in
+  `LIFECYCLE.md` and on the site, which `lifecycle-report.py --check` enforces.
+  Making the scan itself blocking was
   rejected in `.ai/decisions.md` (2026-09-20): the blueprint does not build
   these images, the findings that exist sit in layers upstream ships, and a gate
   that fails every pull request on its first day is one people learn to ignore.
 - The baseline is keyed by image repository rather than by tag, so bumping a pin
   surfaces what is new instead of re-presenting everything. An entry whose
-  finding has gone is reported as prunable and does not fail the gate.
+  finding has gone is reported, removed with `trivy-gate.py --prune`, and does
+  not fail the gate.
 - **Coverage can only shrink deliberately.** An unscanned image contributes no
   findings, so it can never fail the CVE half of the gate; it fails on its own
   unless `.trivy-baseline.json` acknowledges it with a reason. Three images are

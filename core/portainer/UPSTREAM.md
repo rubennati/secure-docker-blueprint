@@ -12,7 +12,7 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
 - **Domain:** Infrastructure
 - **Role:** Docker management web interface, reaching Docker through a filtered socket proxy
-- **Based on version:** `2.39.7` (Community Edition)
+- **Based on version:** `2.45.3` (Community Edition)
 - **Last checked:** 2026-04-16
 
 Note: this setup uses Portainer **CE** (Community Edition). Portainer Business Edition (`portainer/portainer-ee`) is a different paid product with additional features and a different license — not used here.
@@ -49,6 +49,36 @@ If you prefer `tecnativa/docker-socket-proxy`, replace the image and consult its
 - `SOCKET_PROXY_TAG` moved from `3.2.15` to `3.4.4` in the same step —
   `linuxserver/socket-proxy` had two minor lines of drift and this stack's whole point is
   the filter in front of the Docker API.
+- Moved `portainer/portainer-ce` to `2.45.3` on 2026-11-05 (released 2026-10-21, the
+  current LTS line), from the 2.39 LTS line across the STS releases 2.40 to 2.44, not
+  run on a host at this tag. Breaking changes: 2.41 replaced the CSRF protection —
+  entries in the trusted-origins list must be full URLs with scheme, and a browser
+  request whose origin does not match gets `403 Forbidden` with `CSRF check failed` in
+  the log; 2.42 removed the `legacy-csrf` fallback flag. This stack sets no trusted
+  origins and Traefik passes the original `Host`, so the browser origin and the
+  request host are the same; if state-changing actions return 403 after the move, that
+  is where to look. 2.45.3 no longer trusts certificates issued by eMudhra (emSign)
+  after the compromise of eight intermediate CAs (CVE-2026-111943): an OAuth/OIDC or
+  LDAPS provider, registry or Git host presenting such a certificate fails, and only
+  the initial admin can then sign in. 2.45.0 fixed another Docker proxy authorization
+  bypass through unrecognised API version prefixes such as `/v1.47.0/`; 2.45.3 rejects
+  `volumes_from` in stacks of non-administrators when bind mounts are hidden from
+  them, restricts kubeconfig tokens to the Kubernetes proxy, and moves the Go
+  toolchain to 1.26.10 (CVE-2026-56857 and CVE-2026-78663, both critical, among
+  others). 2.42 ported Swarm stack deployment to libstack and removed the embedded
+  Docker binary from the image; 2.43 removed the "Provision KaaS Cluster" feature,
+  which this stack does not use. The database migrates on first start and is one-way:
+  back up `./volumes/data/` first. No compose change; the socket proxy's permission set
+  is unchanged. The agent in `core/portainer-agent/` moves to `2.45.3` in the same step.
+  Sources: https://github.com/portainer/portainer/releases/tag/2.45.3,
+  https://github.com/portainer/portainer/releases/tag/2.45.0,
+  https://github.com/portainer/portainer/releases/tag/2.42.0,
+  https://github.com/portainer/portainer/releases/tag/2.41.0
+- Moved `lscr.io/linuxserver/socket-proxy` to `3.4.7` on 2026-11-05 (LinuxServer build
+  `3.4.7-r0-ls104` of 2026-10-27), patch releases of the HAProxy 3.4 package it is
+  built on, not run on a host at this tag. The LinuxServer builds 3.4.5 to 3.4.7 list
+  no changes of their own, only the package update, so the permission variables are
+  unchanged. Source: https://github.com/linuxserver/docker-socket-proxy/releases
 
 ## Upgrade checklist
 

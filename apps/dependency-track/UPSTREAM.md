@@ -10,17 +10,17 @@
 - **Origin:** OWASP Foundation project · United States (OWASP Foundation) · non-EU
 - **Domain:** Security operations
 - **Role:** Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio
-- **Based on version:** `5.1.0`
+- **Based on version:** `5.2.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted, all
   three services healthy, real Docker Secrets and migrations exercised
   against a live container; not yet run behind a real Traefik host
 
 ## What we use
 
-- `dependencytrack/apiserver:5.1.0` + `dependencytrack/frontend:5.1.0` —
+- `dependencytrack/apiserver:5.2.1` + `dependencytrack/frontend:5.2.1` —
   the v5 "Hyades" architecture, where API server and frontend are separate
   images (v4's bundled image no longer exists)
-- `postgres:16-alpine` — the only supported database in v5; H2, MySQL and
+- `postgres:18.6-alpine` — the only supported database in v5; H2, MySQL and
   SQL Server were dropped upstream, confirmed against the docs
 
 ## The `latest` tag is a trap on this image specifically
@@ -31,7 +31,7 @@ assumed: **`latest` on both `dependencytrack/apiserver` and
 upstream states reaches end-of-life in December 2026. Anyone pulling
 `latest` today gets v4, not v5 — this is called out as a known trap in
 upstream's own documentation, not an inference. This stack pins the full
-`5.1.0` tag, as upstream's own production guidance requires regardless of
+`5.2.1` tag, as upstream's own production guidance requires regardless of
 this trap.
 
 ## What we changed vs. upstream's documented example
@@ -49,7 +49,8 @@ this trap.
 
 - `docker inspect dependencytrack/apiserver:5.1.0` — confirmed `User:
   "1000"`, `tini` entrypoint, and the image's own baked-in `HEALTHCHECK`
-  (`curl ... http://127.0.0.1:9000/health`).
+  (`curl ... http://127.0.0.1:9000/health`). From 5.2.0 the image drops
+  `curl` and runs its check with `wget`; the compose healthcheck followed.
 - `docker inspect dependencytrack/frontend:5.1.0` — confirmed `User:
   "101"` (nginx-unprivileged pattern).
 - Read `docs/guides/administration/deploying-to-production.md`,
@@ -75,6 +76,41 @@ this trap.
   through the UI, OIDC sign-in against Authentik or Keycloak, TLS/Traefik
   behind a real domain across two subdomains, and multi-instance file
   storage (the `s3` provider).
+
+## Version notes
+
+- Moved to `5.2.1` on 2026-11-05 (released 2026-10-25), API server and
+  frontend together, not run on a host at this tag. Upstream's upgrade notes
+  for 5.2.0: the API server image no longer contains `curl` (the healthcheck
+  here now uses `wget -q -Y off -T 3`, upstream's own form) nor the Google
+  Cloud SQL socket factory; usernames starting with `svc:` are reserved for
+  the new service accounts and the migration fails if such a user exists
+  (`SELECT "USERNAME" FROM "USER" WHERE "USERNAME" ILIKE 'svc:%';` finds them);
+  outbound connections follow `DT_OUTBOUND_ALLOWED_DESTINATIONS`, default
+  `external,private`, so Docker networks stay reachable and a `localhost`
+  integration needs an entry; the `allow-local-connections` properties are
+  gone and the server refuses to start if one is set (none is set here); BOM
+  and VEX uploads are capped at 100 MiB by default; the Cargo resolver reads
+  `index.crates.io`. The image now runs as `1000:0` and no longer installs
+  `tzdata`. 5.1.1 purges the GitHub Advisories and OSV watermarks, so the next
+  mirror run of each is a full one. 5.2.1 fixes an ineffective ACL check on
+  `/v1/finding/project/{uuid}/analyze` and removes the distrusted eMudhra root
+  from the image's CA store; no GHSA published. The frontend has no breaking
+  change.
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
+  host at this tag. PostgreSQL 18 support: "The lowest supported version is 11.
+  You are encouraged to use the newest available version."
+  (https://dependencytrack.github.io/hyades/latest/operations/database). The 18
+  image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
+  /var/lib/postgresql/data` in both compose files keeps it on the existing
+  mount. A new major does not read the old cluster, so existing data moves by
+  dump and restore: before the tag changes, `docker compose exec db sh -c
+  'pg_dumpall -U "$POSTGRES_USER"' > dump.sql`; `docker compose down`; move
+  `./volumes/postgres` aside; set the new tag; `docker compose up -d db`;
+  `docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d postgres' <
+  dump.sql` (errors that the bootstrap role and database already exist are
+  expected); then `docker compose up -d`. A return to the old major is only a
+  restore of that dump.
 
 ## Upgrade checklist
 

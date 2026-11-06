@@ -10,7 +10,7 @@
 - **Origin:** UK · linuxserver.io community · non-EU
 - **Domain:** Dashboards
 - **Role:** Application launcher with widgets
-- **Based on version:** `2.8.3`
+- **Based on version:** `2.8.4`
 - **Last verified:** 2026-11-02 (2.8.3) — step 8 lab host behind Traefik 3.7.17: healthy; the `basic` posture's gate answered 401 without and with wrong credentials, and with right ones the dashboard and its settings page loaded (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
@@ -44,6 +44,20 @@ LinuxServer.io images get frequent minor bumps (weekly). Major upgrades infreque
 3. Bump `APP_TAG`
 4. `docker compose pull && docker compose up -d`
 5. First start after upgrade may run DB migrations (Laravel); watch logs
+
+## Version notes
+
+- Moved to `2.8.4` on 2026-11-05 (Heimdall v2.8.4 released 2026-10-29; the tag
+  resolves to the LinuxServer build `v2.8.4-ls371` of 2026-10-30), a patch release on
+  the same line, not run on a host at this tag. The automatic proposal `2021.11.28`
+  is an old date-style LinuxServer tag, not a newer release. Heimdall updates its
+  Composer packages to clear audit advisories (#1619), and the LinuxServer rebuild
+  brings a newer Alpine base; the release lists no specific CVEs, so whether the
+  CRITICAL image finding of the `2.8.3` pin is gone needs the next image scan. Other
+  changes: a missing roles header no longer returns 500, the side-nav pin list and
+  "add item" are admin-only, `artisan register:app` is fixed, SVG icon uploads work
+  again. No breaking changes, no migration steps, no compose change. Source:
+  https://github.com/linuxserver/Heimdall/releases/tag/v2.8.4
 
 ## Useful commands
 

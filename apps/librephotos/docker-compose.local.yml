@@ -13,6 +13,7 @@ services:
     container_name: librephotos-local-db
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    shm_size: 256mb
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
@@ -37,6 +38,7 @@ services:
     security_opt: [no-new-privileges:true]
     environment:
       FEATURE_REVERSE_GEOCODING: "false"
+      UPDATE_CHECK: "false"
       TZ: ${TZ}
       SECRET_KEY: ${SECRET_KEY}
       BACKEND_HOST: backend

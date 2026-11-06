@@ -4,7 +4,9 @@
 #   ops/setup.sh           docker-compose.yml, reads .env
 #   ops/setup.sh --local   docker-compose.local.yml, reads .env.local
 #
-# APP_BAN_HOURS=24 ops/setup.sh   # how long an automatic ban lasts
+# APP_BAN_HOURS=24 ops/setup.sh       # how long an automatic ban lasts
+# APP_FORWARDED_HOPS=1 ops/setup.sh   # proxies that append to X-Forwarded-For:
+#                                     # 1 = Traefik alone, 2 = Cloudflare + Traefik
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -29,6 +31,8 @@ DOMAIN=$(val APP_MAIL_DOMAIN)
 if [ "$LOCAL" = 1 ]; then HOST="mail.$DOMAIN"; else HOST=$(val APP_TRAEFIK_HOST); fi
 [ -n "$DOMAIN" ] && [ -n "$HOST" ] || { echo "APP_MAIL_DOMAIN and APP_TRAEFIK_HOST must be set in $ENV_FILE" >&2; exit 1; }
 BAN_MS=$(( ${APP_BAN_HOURS:-24} * 3600000 ))
+HOPS=${APP_FORWARDED_HOPS:-1}
+case "$HOPS" in [1-9]|1[0-6]) ;; *) echo "APP_FORWARDED_HOPS must be 1 to 16" >&2; exit 1 ;; esac
 
 api() {  # $1 user:password   $2 JMAP method calls
   "${COMPOSE[@]}" exec -T stalwart curl -fsS -u "$1" -H 'Content-Type: application/json' \
@@ -52,7 +56,7 @@ wait_up
 
 # 2. The setup wizard's fields. Certificates are requested separately — README.
 OUT=$(api "admin:$BOOT_PW" "[[\"x:Bootstrap/set\",{\"update\":{\"singleton\":{
-  \"serverHostname\":\"$HOST\",
+  \"defaultHostname\":\"$HOST\",
   \"defaultDomain\":\"$DOMAIN\",
   \"requestTlsCertificate\":false,
   \"generateDkimKeys\":true,
@@ -69,11 +73,12 @@ wait_up
 
 # 4. Security settings.
 #    - Automatic bans expire; upstream's default keeps them until removed by hand.
-#    - Behind Traefik the client address comes from X-Forwarded-For. Without it
-#      every ban and every HTTP rate limit lands on the proxy's address.
+#    - Behind Traefik the client address comes from X-Forwarded-For, taken
+#      $HOPS entries from the right. Without it every ban and every HTTP rate
+#      limit lands on the proxy's address.
 CALLS="[\"x:Security/set\",{\"update\":{\"singleton\":{\"authBanPeriod\":$BAN_MS,\"abuseBanPeriod\":$BAN_MS,\"loiterBanPeriod\":$BAN_MS,\"scanBanPeriod\":$BAN_MS}}},\"c1\"]"
 if [ "$LOCAL" = 0 ]; then
-  CALLS="$CALLS,[\"x:Http/set\",{\"update\":{\"singleton\":{\"useXForwarded\":true}}},\"c2\"]"
+  CALLS="$CALLS,[\"x:Http/set\",{\"update\":{\"singleton\":{\"clientIpSource\":\"xForwardedFor\",\"forwardedHops\":$HOPS}}},\"c2\"]"
 fi
 OUT=$(api "$ADMIN:$ADMIN_PW" "[$CALLS]")
 case "$OUT" in

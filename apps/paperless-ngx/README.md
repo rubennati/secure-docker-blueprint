@@ -4,6 +4,16 @@
 
 Self-hosted document archive: scan → OCR → searchable PDF archive. Optimised for paperless offices with a "consume folder" + mobile scan workflow.
 
+## Open findings
+
+The pinned Tika image, `apache/tika:3.3.3.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). The fix is only in Tika 4, which Paperless-ngx does not yet support, so Tika stays on the newest 3.x release.
+
+**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on. Move to Tika 4 once Paperless-ngx supports it.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Five services:
@@ -11,8 +21,8 @@ Five services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `paperless-app` | `ghcr.io/paperless-ngx/paperless-ngx` | Django web app + Celery workers + consumer |
-| `db` | `postgres:16.14` | Primary data store (documents, tags, correspondents, users) |
-| `redis` | `redis:7.4-alpine` | Celery broker + worker heartbeat |
+| `db` | `postgres:18.6` | Primary data store (documents, tags, correspondents, users) |
+| `redis` | `redis:8.10.3-alpine` | Celery broker + worker heartbeat |
 | `gotenberg` | `gotenberg/gotenberg` | Converts HTML/Office documents to PDF |
 | `tika` | `apache/tika` | Text extraction from scanned PDFs, Office files, emails |
 
@@ -217,23 +227,24 @@ postgresql_databases:
       container: paperless-db
       username: paperless_user
       password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
-      # The client's major version must be the server's: postgres 16 (DB_TAG)
-      pg_dump_command: /usr/lib/postgresql/16/bin/pg_dump
-      pg_restore_command: /usr/lib/postgresql/16/bin/pg_restore
-      psql_command: /usr/lib/postgresql/16/bin/psql
+      # The client's major version must be the server's: postgres 18 (DB_TAG)
+      pg_dump_command: /usr/lib/postgresql/18/bin/pg_dump
+      pg_restore_command: /usr/lib/postgresql/18/bin/pg_restore
+      psql_command: /usr/lib/postgresql/18/bin/psql
 ```
 
-**The PostgreSQL client on the host has to be version 16, the server's.**
-borgmatic runs `pg_dump` and `pg_restore` on the host. With Debian 13's
-`postgresql-client`, version 17, the backup ran, but its restore into
-`postgres:16` stopped on `SET transaction_timeout = 0`, a setting 16 does not
-know (step 8 lab host). Install 16 beside it from the PostgreSQL project's
+**The PostgreSQL client on the host has to be version 18, the server's.**
+borgmatic runs `pg_dump` and `pg_restore` on the host. A client newer than the
+server writes settings the server does not know: with Debian 13's
+`postgresql-client`, version 17, the backup of a `postgres:16` server ran, but
+its restore stopped on `SET transaction_timeout = 0`, a setting 16 does not
+know (step 8 lab host). Install 18 beside it from the PostgreSQL project's
 repository and name its programs in the entry, as above — `pg_dump` on the
 `PATH` stays the newest installed version:
 
 ```bash
 sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh   # from Debian's postgresql-common
-sudo apt install postgresql-client-16
+sudo apt install postgresql-client-18
 ```
 
 When `DB_TAG` moves to another major version, the three paths move with it.

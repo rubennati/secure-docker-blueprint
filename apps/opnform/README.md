@@ -4,19 +4,29 @@
 
 Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop editor, conditional logic, file uploads, webhooks. Laravel API + Nuxt UI.
 
+## Open findings
+
+The API image, `jhumanj/opnform-api:2.8.4`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1, listed by CISA as exploited). It is the newest release, and upstream has not rebuilt the image.
+
+**Risk:** the library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint could in principle reach it. Limit webhooks to endpoints you trust and move to the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Seven services — `opnform-nginx` is the single Traefik entry point:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `opnform-nginx` | `nginx:1.29` | HTTP entry point — routes `/api/*` to php-fpm, everything else to Nuxt |
-| `api` | `jhumanj/opnform-api:2.5.0` | Laravel backend — php-fpm on port 9000 |
+| `opnform-nginx` | `nginx:1.31.8` | HTTP entry point — routes `/api/*` to php-fpm, everything else to Nuxt |
+| `api` | `jhumanj/opnform-api:2.8.4` | Laravel backend — php-fpm on port 9000 |
 | `api-worker` | same | `artisan queue:work` — processes async jobs (notifications, webhooks) |
 | `api-scheduler` | same | `artisan schedule:work` — runs scheduled tasks |
-| `ui` | `jhumanj/opnform-client:2.5.0` | Nuxt SSR frontend on port 3000 |
-| `db` | `postgres:16-alpine` | Primary store (forms, responses, users, workspaces) |
-| `redis` | `redis:7.4-alpine` | Cache, queue, sessions |
+| `ui` | `jhumanj/opnform-client:2.8.4` | Nuxt SSR frontend on port 3000 |
+| `db` | `postgres:16.15-alpine` | Primary store (forms, responses, users, workspaces) |
+| `redis` | `redis:8.10.3-alpine` | Cache, queue, sessions |
 
 Traefik routes to **`opnform-nginx` only** (port 80). It handles path-based routing internally.
 

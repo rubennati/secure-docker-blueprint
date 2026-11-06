@@ -12,12 +12,12 @@
 - **Origin:** Open WebUI · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload
-- **Based on version:** `v0.11.3`
+- **Based on version:** `v0.13.0`
 - **Last verified:** 2026-09-21 (v0.11.3) — behind Traefik with TLS: sign-in and an answer from an attached document in a browser, LiteLLM as a second backend, offline mode, a restart, and a restore
 
 ## What we use
 
-- `ghcr.io/open-webui/open-webui:v0.11.3` — the standard image with a versioned
+- `ghcr.io/open-webui/open-webui:v0.13.0` — the standard image with a versioned
   tag. The `-cuda` and `-ollama` variants are not used: the bundled Ollama is
   what this stack avoids assuming.
 - SQLite and the built-in vector store in `/app/backend/data`; no PostgreSQL,
@@ -99,6 +99,21 @@ container (`smollm2:135m`) as the OpenAI-compatible backend at `/v1`:
   Hugging Face
 - The production stack: login from a peer container, no published port, the
   secret values absent from the configured environment
+
+## Version notes
+
+- Moved to `v0.13.0` on 2026-11-05, not run on a host at this tag; `Last verified`
+  stays at `v0.11.3`. Back up `volumes/data` first: `v0.12.1` and `v0.13.0` change
+  the database schema. `v0.12.4` moves the image to Python 3.12 on Debian 13, so
+  tools and functions installed with pip need versions that support 3.12; with
+  Direct Integrations off, the default, tool and terminal connections saved in
+  user settings are no longer used. `v0.13.0` lifts the sub-agent limits
+  (`SUBAGENTS_MAX_*`) to none by default. `start.sh`, `/health` and the variables
+  this stack sets are unchanged. Advisories fixed: GHSA-vpq8-f445-hcq7,
+  GHSA-f9xp-mfmq-x6cg, GHSA-qpqv-xwg8-cqpj, GHSA-q46m-r89w-j74p (high) and further
+  medium ones (`v0.11.4`), GHSA-3vvh-g22g-jq6r (`v0.12.2`); `v0.12.4`, `v0.12.5`
+  and `v0.13.0` state further security fixes not yet published.
+  https://github.com/open-webui/open-webui/releases
 
 ## Upgrade checklist
 

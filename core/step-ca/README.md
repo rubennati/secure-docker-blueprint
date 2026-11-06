@@ -4,6 +4,12 @@ Internal PKI: X.509 certificates, ACME, and optionally an SSH certificate
 authority, for machines and services *inside* this installation. Not a
 public-facing service.
 
+## Open findings
+
+The pinned image, `smallstep/step-ca:0.30.2`, ships with 4 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver in the `step` CLI, and Alpine's OpenSSL and brotli. 0.30.2 is the newest release, from March 2026.
+
+**Risk:** this stack uses the built-in badger database, the OpenSSL issue affects only 32-bit systems, and the CA does not use brotli. Watch for the next release.
+
 ## Public Web TLS vs. internal trust — read this first
 
 ```text

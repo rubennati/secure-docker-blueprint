@@ -8,7 +8,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `heimdall-app` | `lscr.io/linuxserver/heimdall:2.8.3` | LinuxServer.io build of Heimdall on Apache + PHP |
+| `heimdall-app` | `lscr.io/linuxserver/heimdall:2.8.4` | LinuxServer.io build of Heimdall on Apache + PHP |
 
 Data (SQLite DB, uploaded icons, config) lives in `./config/`, managed by Heimdall's web UI.
 

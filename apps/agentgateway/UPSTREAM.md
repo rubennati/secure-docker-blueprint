@@ -10,12 +10,12 @@
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
-- **Based on version:** `v1.5.0`
+- **Based on version:** `v1.7.0`
 - **Last verified:** 2026-09-21 (v1.5.0) — behind Traefik with TLS: both routes, a provider credential from a Docker Secret, an MCP target under `/mcp`, a restart, and a restore
 
 ## What we use
 
-- `cr.agentgateway.dev/agentgateway:v1.5.0` — a versioned tag of upstream's own
+- `cr.agentgateway.dev/agentgateway:v1.7.0` — a versioned tag of upstream's own
   registry. Distroless, uid 65532, no shell.
 - The simplified `llm:` and `ui:` configuration modes (and an optional `mcp:` mode)
   rather than the full binds/listeners/routes schema.
@@ -82,6 +82,33 @@ serving `smollm2:135m` as the backend:
   `data.db` in `volumes/data`; the key does not appear in the container environment
 
 - Production `docker-compose.yml` on a throwaway `proxy-public` network, without Traefik: Docker Secret mounted, `/v1` `401`/`200`, UI `401`/`308`, metrics port unreachable from a peer container, no published ports
+
+## Version notes
+
+- Moved to `v1.7.0` on 2026-11-05 (released 2026-10-27), across v1.6.0, not run
+  on a host at this tag. Breaking in v1.6.0: Anthropic Messages requests now
+  prefer the OpenAI Responses format over Chat Completions; a provider base URL
+  without a path now means `/` (the template's `http://ollama:11434/v1` already
+  carries its path); the standalone `llm` mode matches standard LLM paths only
+  exactly; a built-in model catalog now prices requests, so USD budgets and
+  `llm.cost` expressions can start to apply; unquoted YAML values such as `no`
+  stay strings; `AGENTGATEWAY_LEGACY_LLM_USAGE_TOKEN_SEMANTICS` is removed.
+  Breaking in v1.7.0: standalone always encrypts MCP sessions, generating the
+  key into the config file or the database, whichever is writable (here the
+  database under `/data`); prompt guards inspect tool outputs by default; CEL
+  header lookups return a list for a repeated header; dynamic backends refuse
+  loopback and link-local destinations; error responses no longer carry
+  internal details; `AGENTGATEWAY_MESSAGES_PREFER_COMPLETIONS` is removed. The
+  SQLite request log gains analytics columns, backfilled at the first start.
+  Advisories fixed: GHSA-h7hp-2f8r-9g9c (v1.6.0), GHSA-qm3r-hhvc-62cp and
+  GHSA-7hv4-jgp9-mgx2 (v1.7.0), all MCP-related and medium.
+- Upstream's recommendation since v1.6.0, not applied to the template: use the
+  `openAI` provider only for the OpenAI API, and reach other OpenAI-compatible
+  servers, such as the template's Ollama backend, through a custom provider
+  that advertises only the formats the server implements — Chat Completions
+  only if it lacks `/v1/responses` or clients need extended-thinking history.
+  The template still routes `*` through `provider: openAI`; it affects clients
+  that send Anthropic Messages, which are now converted to Responses.
 
 ## Upgrade checklist
 

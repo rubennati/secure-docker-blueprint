@@ -218,8 +218,11 @@ services:
       - app-internal
 
     # --- Health & Observability ---
+    # The worker listens on the container's hostname address. HOSTNAME is the
+    # variable Docker sets; the image (UBI 9 micro at 4.75.0) has no `hostname`
+    # binary.
     healthcheck:
-      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$(hostname):3030/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://$$HOSTNAME:3030/api/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -260,6 +263,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/shlink.
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/PG_PASSWORD
@@ -268,9 +275,9 @@ services:
       - PG_PASSWORD
 
     # --- Storage ---
-    # PostgreSQL 17 keeps its cluster in /var/lib/postgresql/data, the image's
-    # VOLUME. A mount one level up leaves the cluster in an anonymous volume,
-    # and the next `down` + `up` starts on an empty one.
+    # PGDATA above keeps the cluster in /var/lib/postgresql/data, this mount.
+    # The 18 image's VOLUME is /var/lib/postgresql: without PGDATA the cluster
+    # lands in /var/lib/postgresql/18/docker, outside this bind mount.
     volumes:
       - ./volumes/postgres:/var/lib/postgresql/data
 

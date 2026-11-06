@@ -49,6 +49,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/shlink.
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
@@ -90,7 +94,8 @@ services:
     # Quarkus application at every boot and writes into /opt/keycloak/lib/quarkus,
     # and a tmpfs there hides the four files it builds from. Upstream's answer
     # is a custom image built with `kc.sh build` and started with `--optimized`,
-    # which is not the official image. Verified against 26.7.3 on 2026-09-07.
+    # which is not the official image. Verified against 26.7.3 on 2026-09-07;
+    # not yet verified on 26.8.1.
     security_opt:
       - no-new-privileges:true
     cap_drop:

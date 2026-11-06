@@ -2,15 +2,35 @@
 
 Self-hosted electronic signature platform — DocuSign / Adobe Sign alternative. Upload PDF/DOCX, define signing roles, send to signers, audit trail, certificates. GDPR-friendly since everything stays on your infrastructure.
 
+## Open findings
+
+The OpenSign images ship with 29 CRITICAL vulnerabilities (web image) and 26
+(server image) that have published fixes. Both are built on an early-2025 Node
+22 Debian base and carry outdated ImageMagick, GnuTLS, OpenSSL, Brotli, Perl and
+`tar`, and the server image Next.js 16.2.3 and `proxy-addr`. Upstream publishes
+only rolling `main` builds, and the newest one still uses that base (upstream
+issue OpenSignLabs/OpenSign#2323). The MongoDB image carries one finding in its
+`gosu` start-up helper (CVE-2025-68121, Go TLS), which opens no TLS connection.
+
+**Risk:** the server converts uploaded documents, so parser flaws may be
+reachable; which packages OpenSign actually calls has not been checked. Keep
+OpenSign behind authentication, limit who can upload, and watch for a build on
+a current Node base.
+
+Separately from the image scan, upstream has an open report of a file
+authorisation flaw in the application itself (CVE-2026-72688,
+OpenSignLabs/OpenSign#2324, reproduced on v3.0.1); check its status before
+exposing the stack.
+
 ## Architecture
 
 Three-service stack with Traefik path-based split (same pattern as OpnForm):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `opensign-ui` | `opensign/opensign:main` | React frontend |
-| `opensign-api` | `opensign/opensignserver:main` | Parse Server backend + PDF signing engine |
-| `db` | `mongo:8.0` | Documents, templates, users, audit log |
+| `opensign-ui` | `opensign/opensign:main` (digest-pinned) | React frontend |
+| `opensign-api` | `opensign/opensignserver:main` (digest-pinned) | Parse Server backend + PDF signing engine |
+| `db` | `mongo:8.0.34` | Documents, templates, users, audit log |
 
 Traefik routes `PathPrefix(/app)` to the API (priority 100), everything else to the UI (priority 1). No `/api` prefix — Traefik routes directly to Parse's mount path without stripping (unlike Caddy in the upstream default).
 
@@ -116,7 +136,7 @@ Without a working mail config, signature request emails do not go out and the fl
 ## Known Issues
 
 - **No semver tags on Docker Hub** — OpenSign only publishes `main`, `staging`, `docker_beta`. There are no `vX.Y.Z` release tags; upstream does not version its Docker images.
-- **`APP_TAG=main` is a floating tag** — rebuild with `docker compose pull` to get updates. Cannot pin to a specific release.
+- **`main` is a floating tag** — `APP_TAG` and `SERVER_TAG` pin it by digest, so `docker compose pull` does not change the images. To update, re-pin both digests (see [UPSTREAM.md](UPSTREAM.md#upgrade-checklist)). There is no release tag to pin to.
 - **`APP_ID` is fixed as `opensign`** — it is deprecated upstream and hardcoded in the compose. Do not generate a random value; the React client and Parse Server must agree on this literal string.
 - **`MONGODB_URI` has no `_FILE` support** — password embedded inline in DSN. Use alphanumeric-only password to avoid DSN-breaking characters (`@`, `:`, `/`, `?`, `#`).
 - **`MASTER_KEY` in `.env`** — Parse Server has no `_FILE` convention. Move to Docker Secret + entrypoint wrapper for higher security.

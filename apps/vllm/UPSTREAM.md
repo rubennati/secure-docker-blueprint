@@ -11,7 +11,7 @@
 - **Origin:** United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU
 - **Domain:** AI and local AI
 - **Role:** High-throughput OpenAI-compatible model serving on an NVIDIA GPU
-- **Based on version:** `v0.30.0`
+- **Based on version:** `v0.33.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
 below for exactly what has been exercised and what has not. The field
@@ -20,14 +20,16 @@ behind Traefik. This stack stays `scaffolded` until that happens.
 
 ## What we use
 
-- Official image, pinned tag: `vllm/vllm-openai:v0.30.0` — CUDA 13.0.2, `amd64`
+- Official image, pinned tag: `vllm/vllm-openai:v0.33.0`. The figures in this
+  item were read for `v0.30.0`: CUDA 13.0.2, `amd64`
   and `arm64`, 8.73 GB compressed for `amd64`. Read from the registry
   (`docker buildx imagetools inspect`), **never pulled or run here**: it is
   larger than the free disk of the test VM and needs a GPU.
 - From that config: no `USER` (root), entrypoint `vllm serve`, workdir
   `/vllm-workspace`, no exposed ports declared, `NVIDIA_VISIBLE_DEVICES=all`,
   `TORCH_CUDA_ARCH_LIST=7.5 8.0 8.6 8.9 9.0 10.0 12.0`.
-- Local validation runs `vllm/vllm-openai-cpu:v0.30.0` (2.28 GB compressed):
+- Local validation ran `vllm/vllm-openai-cpu:v0.30.0` (2.28 GB compressed);
+  `.env.local.example` now pins `v0.33.0`, not yet run:
   the same release and entrypoint, root by default, Python 3.12, with `curl`,
   `wget` and `bash`. It reports `0.30.0+cpu`.
 - Configuration is by `vllm serve` arguments and `VLLM_*` variables. The API
@@ -128,6 +130,35 @@ served runs passed the key as an environment variable), downloading a gated
 model with a token, Traefik with the repository's real middlewares and TLS, models
 larger than 0.5B, concurrent requests, and the local compose file's first-start
 duration on other hardware.
+
+## Version notes
+
+- Moved to `v0.33.0` on 2026-11-05 (image pushed 2026-11-02), not run on a host
+  or on the CPU build at this tag; v0.31.0 and v0.32.0 lie between. The git tag
+  and the Docker Hub images exist; upstream's GitHub release entry still
+  carries the name `v0.33.0rc3` while its text is the v0.33.0 notes. The
+  arguments this stack passes are unchanged. Changes to check:
+  - v0.33.0: PyTorch 2.14; CUDA 12.9 images are no longer published (this stack
+    uses the default CUDA 13.0 image); the OpenAI-compatible `/v1/decisions`
+    endpoint is on by default and lies under the `/v1/` route Traefik forwards;
+    requests while generation is paused get HTTP 503; Medusa and the MLP
+    speculator are removed.
+  - v0.32.0: Python 3.10 dropped; CORS no longer allows every origin by
+    default; `max_tokens` is no longer reserved from the context window; the
+    `/v1/systemone` endpoint is served by default; Responses API reasoning
+    stream events renamed.
+  - v0.31.0: per-request `mm_processor_kwargs` and `media_io_kwargs` are
+    rejected unless `--trust-request-mm-kwargs` is set; `tokenizer_mode="slow"`
+    removed.
+  - Re-run the CPU validation (uid 1000, read-only root, caches under `/cache`)
+    and the check of which paths answer without the key.
+
+  Advisories fixed — v0.31.0: GHSA-894j-wg8m-63h8, GHSA-w4cg-mhc7-mgw3,
+  GHSA-vxqj-p4gw-9h4c, GHSA-9g3c-x747-c6wr, GHSA-m9fg-w9qh-67pc,
+  GHSA-4m6g-h9mv-wqjc; v0.32.0: CVE-2026-115911 to CVE-2026-115918 (among them
+  GHSA-6757-hggm-hp2w and GHSA-h3rc-j82p-2c3h, high), CVE-2026-94624,
+  GHSA-4hhp-h66f-j5j7; v0.33.0: GHSA-q9v9-qpjp-fc24 and GHSA-5r3c-5x4v-8gjh
+  (high), GHSA-qrj2-j723-m6w8.
 
 ## Upgrade checklist
 

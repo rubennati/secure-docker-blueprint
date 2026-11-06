@@ -131,6 +131,9 @@ services:
       # there is no refresh flow, so that is a bearer token with three months
       # of life. A week is the compromise here — see README.
       TOKEN_TTL: ${APP_TOKEN_TTL}
+      # Since v3.13.0 upstream sends an anonymous daily telemetry heartbeat by
+      # default (with a count of monitors by type since v3.13.1). Off here.
+      TELEMETRY_ENABLED: "false"
       TZ: ${TZ}
     secrets:
       - DB_CONNECTION_STRING

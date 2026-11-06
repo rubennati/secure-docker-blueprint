@@ -16,6 +16,16 @@ access. Run one, not several, unless you are comparing them.
 Every feature is in the open-source build: no monitor limit, no paid tier, no
 paid support.
 
+## Open findings
+
+The image, `ghcr.io/bluewave-labs/checkmate:v3.13.1`, carries 5 CRITICAL findings in bundled libraries: DOMPurify, handlebars (2), `proxy-addr` and the Go runtime of the esbuild build tool. It is the newest release.
+
+**Risk:** each needs a specific use (user-supplied templates, a mis-written proxy subnet, a particular sanitizer mode, or a build step) that Checkmate is not known to make; this has not been checked in its code. Move to the next release.
+
+The MongoDB image, `mongo`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text
@@ -110,8 +120,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## What leaves the host
 
-Upstream states plainly that Checkmate has no phone-home and no telemetry, and
-nothing in the image contradicts that. Three features do send data outward
+Since v3.13.0 Checkmate has anonymous telemetry, on by default: a daily
+heartbeat, with a count of monitors by type since v3.13.1. This stack sets
+`TELEMETRY_ENABLED: "false"`, so it is off. Three features do send data outward
 **when you choose them**:
 
 | Feature | Goes to | What |

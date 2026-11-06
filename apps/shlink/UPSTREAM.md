@@ -16,7 +16,7 @@
 ## What we use
 
 - `ghcr.io/shlinkio/shlink:5.1.7` — the server, RoadRunner with PHP workers.
-- `ghcr.io/shlinkio/shlink-web-client:4.8.1` — the browser interface, static
+- `ghcr.io/shlinkio/shlink-web-client:4.9.0` — the browser interface, static
   files behind nginx. Optional; the API works without it.
 - `postgres:18.6-alpine`. Shlink's own default is SQLite, which upstream states
   is not supported for production.
@@ -70,6 +70,10 @@ README.
   one change is the image base, Alpine 3.24, so PHP security updates arrive
   again, among them CVE-2026-109618 and CVE-2026-109619. Changed, added, removed
   and deprecated all read "nothing"; no variable or migration.
+- The web client moved to `4.9.0` on 2026-11-05, not run on a host at this
+  tag. The one addition is forward support for Mercure 1.0, used once the
+  server exposes it, plus dependency updates; deprecated, removed and fixed
+  read "nothing". No variable, path or port change, no advisory.
 
 ## Upgrade checklist
 

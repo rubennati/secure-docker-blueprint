@@ -27,7 +27,7 @@ the design rather than neglect.
 
 - `ghcr.io/plausible/community-edition:v3.2.1`, one container.
 - `postgres:18.6-alpine` for accounts, sites and settings.
-- `clickhouse/clickhouse-server:26.8.10.6-alpine` for the events.
+- `clickhouse/clickhouse-server:26.10.3.7-alpine` for the events.
 - Four ClickHouse configuration files from the community-edition repository
   (MIT), vendored under `config/clickhouse/` so the stack does not depend on a
   checkout of it:
@@ -45,7 +45,7 @@ the design rather than neglect.
 |--------|--------|
 | The first account is created by `ops/create-admin.sh` | Until one exists, Plausible sends `/login` and `/sites` to `/register` whatever `DISABLE_REGISTRATION` says, and that form makes whoever completes it the owner |
 | `DISABLE_REGISTRATION=true` | Upstream's CE default is `invite_only`. Once the owner exists, further accounts are invited from a site's settings, so nothing needs the sign-up form again |
-| ClickHouse `26.8` instead of upstream's `24.12` | Upstream's compose pins a December 2024 release that is out of support, while upstream's own CI runs `25.11` — so the pin is stale rather than a requirement. Verified here against the migrations and an ingested event |
+| ClickHouse `26.10` instead of upstream's `24.12` | Upstream's compose pins a December 2024 release that is out of support, while upstream's own CI runs `25.11` — so the pin is stale rather than a requirement. Verified here on 26.8 against the migrations and an ingested event; 26.10 not yet |
 | `postgres:18.6-alpine` with `PGDATA` set | Upstream pins `16-alpine`. Same `PGDATA` pattern as `apps/defectdojo` |
 | Docker Secrets named `SECRET_KEY_BASE`, `DATABASE_URL`, `CLICKHOUSE_DATABASE_URL`, `TOTP_VAULT_KEY` | Plausible reads each setting from `/run/secrets/<NAME>` before the environment (`CONFIG_DIR`, default `/run/secrets`), so no wrapper and no `_FILE` suffix is needed. Upstream's compose passes all four as environment variables |
 | `read_only: true`, `cap_drop: ALL`, `no-new-privileges` | Upstream's compose sets none of them. The image already runs as uid 999 and writes only to its data volume and `/tmp` |
@@ -101,6 +101,35 @@ What a host run still has to establish: the route through `core/traefik`,
 `limit-standard` against the dashboard, a browser completing the LiveView sign-in,
 the two-router split for a public website, a mail path for invitations and
 password resets, and a restore from the volumes.
+
+## Version notes
+
+- Moved `clickhouse/clickhouse-server` from `26.8.10.6-alpine` to
+  `26.10.3.7-alpine` on 2026-11-05 (released 2026-10-26), not run on a host at
+  this tag; the migrations and an ingested event were verified on 26.8 (above),
+  not on 26.10. 26.8 is ClickHouse's LTS line, 26.10 the newest stable release.
+  Plausible names no upper bound: its compose still pins 24.12 and its CI runs
+  25.11.5.8 (https://github.com/plausible/analytics,
+  `.github/workflows/elixir.yml`), and `config/runtime.exs` at v3.2.1 sets no
+  analyzer or compatibility setting, only `readonly`, `join_algorithm`,
+  async-insert and `materialized_views_ignore_errors`. Backward-incompatible
+  changes in 26.9 and 26.10 that touch this stack
+  (https://clickhouse.com/docs/whats-new/changelog): the pre-analyzer query path
+  is removed (the analyzer has been the default since 24.3); 26.9 moves the
+  default compression for larger MergeTree parts and network traffic to ZSTD(3),
+  which costs some CPU on this one-thread profile; system log tables are
+  configured through `system_tables.*`, with some falling back to a default TTL.
+  `config/clickhouse/logs.xml` keeps its own `query_log` engine (partitioned on
+  `event_date`, which is not the column 26.10 renames) and removes `metric_log`
+  and six other log tables with `remove="remove"`; upstream does not say whether
+  that form is still honoured everywhere, so after the first start `SHOW TABLES
+  FROM system LIKE '%_log'` should list `query_log` and not the removed ones.
+  The server also installs a seccomp filter at start (`trap` in the image's
+  `config.xml`): the container keeps Docker's default seccomp profile, which
+  allows the call, and `no-new-privileges` is set; if the server refuses to
+  start in a sandbox that blocks it, upstream's fix is `seccomp` set to `log` or
+  `disabled` in a `config.d` file. ClickHouse upgrades its data in place at the
+  first start; the way back is a restore of `volumes/`.
 
 ## Upgrade checklist
 

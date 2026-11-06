@@ -93,6 +93,8 @@ services:
       # agent would show its own interface counters as host bandwidth.
       NICS: ${AGENT_NICS:--*}
       EXTRA_FILESYSTEMS: ${EXTRA_FILESYSTEMS}
+      # No registry requests for image update checks (see docker-compose.yml).
+      DOCKER_IMAGE_CHECK: "false"
     # Both, because the agent is the only consumer of both services: the hub on
     # the application network, the socket proxy on the internal one.
     networks: [beszel-local, beszel-socket]

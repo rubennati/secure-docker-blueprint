@@ -43,6 +43,22 @@ https://github.com/go-vikunja/vikunja/releases
 | `VIKUNJA_SERVICE_IPEXTRACTIONMETHOD: xff` | Required for correct client IP behind Traefik. |
 | Rate limiting enabled | `VIKUNJA_RATELIMIT_ENABLED: true` — not enabled by default upstream. |
 
+## Version notes
+
+- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05, not run on a
+  host at this tag. PostgreSQL 18 support: upstream's CI tests PostgreSQL 18 and
+  its full Docker example uses `postgres:18`
+  (https://vikunja.io/docs/installing/). The 18 image keeps its cluster under
+  `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both
+  compose files keeps it on the existing mount. A new major does not read the
+  old cluster, so existing data moves by dump and restore: before the tag
+  changes, `docker compose exec db sh -c 'pg_dumpall -U "$POSTGRES_USER"' >
+  dump.sql`; `docker compose down`; remove the `db_data` volume once the dump is
+  checked; set the new tag; `docker compose up -d db`; `docker compose exec -T
+  db sh -c 'psql -U "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the
+  bootstrap role and database already exist are expected); then `docker compose
+  up -d`. A return to the old major is only a restore of that dump.
+
 ## Upgrade checklist
 
 1. Read the release notes for breaking changes or migration steps

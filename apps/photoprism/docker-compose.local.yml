@@ -75,7 +75,7 @@ services:
       PHOTOPRISM_DISABLE_SETTINGS: "false"
       PHOTOPRISM_DISABLE_TENSORFLOW: "false"
       PHOTOPRISM_DISABLE_FACES: "false"
-      PHOTOPRISM_DISABLE_CLASSIFICATION: "false"
+      PHOTOPRISM_DISABLE_MCP: "true"
       PHOTOPRISM_DISABLE_RAW: "false"
       PHOTOPRISM_SIDECAR_YAML: "true"
       PHOTOPRISM_BACKUP_ALBUMS: "true"
@@ -92,7 +92,7 @@ services:
       PHOTOPRISM_DATABASE_NAME: ${DB_NAME}
       PHOTOPRISM_DATABASE_USER: ${DB_USER}
       PHOTOPRISM_DATABASE_PASSWORD: ${DB_PASSWORD}
-      PHOTOPRISM_INIT: "tensorflow"
+      PHOTOPRISM_INIT: ""
     volumes:
       - ${ORIGINALS_PATH}:/photoprism/originals
       - ./volumes/local/storage:/photoprism/storage

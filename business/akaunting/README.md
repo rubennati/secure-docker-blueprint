@@ -4,6 +4,25 @@ Accounting for small businesses: invoices, bills, customers, vendors, bank
 accounts and reports. Laravel on Apache, with MariaDB. Upstream:
 [Akaunting](https://github.com/akaunting/akaunting).
 
+## Open findings
+
+The pinned image, `akaunting/akaunting:3.3.0-v`, carries 1 CRITICAL finding
+the image scan reports, CVE-2026-99083 in Debian's kernel headers package. A
+second one sits inside the application archive the image unpacks at start,
+which the scanner does not read: Laravel 10.50.3 (CVE-2026-114509, an API token
+authentication bypass), fixed only in Laravel 12 and 13. Akaunting 3.3.0 is the
+newest release and is still built on Laravel 10.
+
+**Risk:** nothing in the container runs the kernel headers. The Laravel flaw
+concerns the `token` API guard, which Akaunting defines; whether any route uses
+it has not been checked, so treat it as possibly reachable. Keep the stack on
+the shipped `access-vpn` default and watch for an Akaunting release on a newer
+Laravel.
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Licence limit — read this first
 
 Akaunting is under the Business Source License, not an open-source licence. Its
@@ -74,11 +93,14 @@ only what changes:
 | `volumes/storage` → `storage/` | Uploads, logs, sessions, caches |
 | `volumes/app.env` → `.env` | The application key and the installed flag |
 
-Everything else — the application code — stays in the image, so the pinned
-`APP_TAG` is what runs, and upgrading means changing the tag. The trade-off:
-modules installed from Akaunting's in-app store write into the code directory,
-which is read-only here, so **in-app module installation does not work**. The two
-modules the image ships (offline payments, PayPal Standard) are present.
+Everything else — the application code — comes from the image. The pinned image
+carries it as an archive, and `config/entrypoint.sh` unpacks it on every start
+into a webroot held in memory (a tmpfs, about 300 MiB), owned by root and
+read-only for the web server. So the pinned `APP_TAG` is what runs, and upgrading
+means changing the tag. The trade-off: modules installed from Akaunting's in-app
+store write into the code directory, which the web server cannot write and which
+is rebuilt at every start, so **in-app module installation does not work**. The
+two modules the image ships (offline payments, PayPal Standard) are present.
 
 ## Security notes
 
@@ -97,6 +119,9 @@ modules the image ships (offline payments, PayPal Standard) are present.
 - **Replaced entrypoint.** The image's own entrypoint enables `mod_rewrite` and
   runs `chown -R` over the webroot on every start; a read-only filesystem refuses
   both. `config/rewrite.load` enables the module as a mounted file instead.
+- **PHP settings.** `config/php-overrides.ini` sends temporary files to the
+  `/var/tmp` tmpfs (`/tmp` holds the image's archive and stays read-only) and
+  switches off upload progress, an attack path of CVE-2026-109619.
 - **Network.** The database has no route out.
 
 ## Status
@@ -105,6 +130,8 @@ Run behind Traefik with TLS on 2026-09-22 (3.1.21): the install, the login and
 company wizard, a customer, the reports, a restart, and the restore below. The
 pages that create records stayed closed without an akaunting.com API key — see
 above. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
+The current pin, 3.3.0, has not been run on a host; see
+[`UPSTREAM.md`](UPSTREAM.md#version-notes).
 
 ## Try it locally
 

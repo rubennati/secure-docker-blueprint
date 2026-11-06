@@ -6,6 +6,12 @@ Standalone — any OpenAI-compatible backend (Ollama, vLLM, a hosted provider) c
 be listed in `config/config.yaml`; none is required. Upstream:
 [LiteLLM](https://github.com/BerriAI/litellm).
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text
@@ -68,7 +74,8 @@ curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" \
 - **Network.** The database has no route out. The proxy is on `proxy-public` to
   reach Traefik and its backends; every container on that network can reach port
   4000, where a key is still required.
-- **Telemetry.** `litellm_settings.telemetry: false` is set.
+- **Telemetry.** None to switch off: the `telemetry` setting has been a no-op since
+  upstream removed its telemetry code in 2024, and it is no longer set here.
 
 ## Status
 

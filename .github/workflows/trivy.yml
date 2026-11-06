@@ -32,8 +32,9 @@ name: Trivy
 #     this job produces. That is not a claim it is safe to ignore — only that no
 #     fix exists yet for a pin change to apply.
 #   - Trivy's own exit code stays 0 on every image. The gate is a separate step:
-#     trivy-gate.py fails the job on a CRITICAL absent from .trivy-baseline.json,
-#     so findings recorded as known pass and new ones do not.
+#     trivy-gate.py fails the job on a CRITICAL that is not listed under an
+#     image exception in .trivy-baseline.json, each with its stacks, reason and
+#     risk. A finding with a fixed upstream release is fixed by the pin instead.
 
 on:
   pull_request:

@@ -4,6 +4,12 @@ UI-driven uptime monitoring. Single container, SQLite backend, rich probe types 
 
 Modern successor to Statping — more active (weekly releases), better UI, wider probe support.
 
+## Open findings
+
+The image, `louislam/uptime-kuma:2.5.9`, carries 7 CRITICAL findings that have published fixes: Chromium (2), libbrotli1, protobufjs, the Go runtime of the healthcheck helper (2) and node-tar. It is the newest release, and upstream has not rebuilt it.
+
+**Risk:** Chromium only runs for "Real Browser" monitors and protobufjs only for gRPC monitors, so avoid pointing those at untrusted targets. The `-slim` image drops Chromium if you do not need browser monitors.
+
 ## Architecture
 
 | Service | Image | Purpose |

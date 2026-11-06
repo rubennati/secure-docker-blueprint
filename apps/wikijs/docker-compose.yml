@@ -2,9 +2,10 @@ services:
 
   # --------------------------------------------------------
   # DATABASE (PostgreSQL)
-  # Wiki.js 2 keeps pages, users and settings here; the data volume holds only
-  # caches and uploads. 3.0 supports PostgreSQL alone, which is why this stack
-  # starts on it rather than on one of the engines 2.5 still accepts.
+  # Wiki.js keeps pages, files, users and settings here, in the schema `wiki`;
+  # the data volume holds only caches. 3.x supports PostgreSQL alone (17 or 18)
+  # and installs the ltree and pg_trgm extensions itself at its first start —
+  # the official image ships both, and POSTGRES_USER may create them.
   # --------------------------------------------------------
   wikijs-db:
     # --- Identity ---
@@ -70,8 +71,9 @@ services:
 
   # --------------------------------------------------------
   # WIKI.JS
-  # One Node process. The first request opens a setup wizard that creates the
-  # administrator — see README before the router is opened to anyone.
+  # One Node process with worker threads. The first start creates the root
+  # administrator from ADMIN_EMAIL and the ADMIN_PWD secret — see README before
+  # the router is opened to anyone.
   # --------------------------------------------------------
   wikijs-app:
     # --- Identity ---
@@ -92,6 +94,10 @@ services:
       - /tmp
     # No `user:` — the image already runs as uid 1000 (`node`), which is what
     # ./volumes/data has to belong to.
+    # Wiki.js reads the initial administrator password only from ADMIN_PASS;
+    # the wrapper sets it from the secret and then starts the image's own
+    # command (tini in front of node).
+    entrypoint: ["/bin/sh", "/entrypoint.sh"]
 
     # --- Resources ---
     memswap_limit: 1g            # == memory: no swap
@@ -106,29 +112,31 @@ services:
           memory: 256m
 
     # --- Configuration ---
-    # DB_PASS_FILE is read by Wiki.js itself and trimmed, so no wrapper is
-    # needed. Everything else here is non-sensitive.
+    # DB_PASS_FILE is read by Wiki.js itself and trimmed. Everything else here
+    # is non-sensitive. 2.x's DB_TYPE, SSL_ACTIVE and HA_ACTIVE are gone in 3.x:
+    # PostgreSQL is the only engine, TLS stays off unless config.yml turns it on
+    # (Traefik terminates it), and replicas always coordinate through the
+    # database.
     environment:
-      DB_TYPE: postgres
       DB_HOST: wikijs-db
       DB_PORT: "5432"
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASS_FILE: /run/secrets/DB_PWD
       DB_SSL: "false"
-      # Traefik terminates TLS; Wiki.js must not try to obtain its own.
-      SSL_ACTIVE: "false"
-      HA_ACTIVE: "false"
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
       LOG_LEVEL: ${APP_LOG_LEVEL}
       TZ: ${TZ}
     secrets:
       - DB_PWD
+      - ADMIN_PWD
 
     # --- Storage ---
-    # Caches, upload staging and the optional git content mirror. Pages
-    # themselves live in the database.
+    # Caches and the optional Git content mirror. Pages and uploaded files
+    # live in the database.
     volumes:
       - ./volumes/data:/wiki/data
+      - ./ops/entrypoint.sh:/entrypoint.sh:ro
 
     # --- Networking ---
     networks:
@@ -153,10 +161,11 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=3000"
 
     # --- Health & Observability ---
-    # /healthz answers without a session and is what upstream's own
-    # (commented-out) healthcheck uses. curl is in the image.
+    # /_ready answers 200 without a session once the server has finished
+    # starting (graceful-server readiness endpoint; 3.x has no /healthz).
+    # curl is in the image.
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/healthz || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/_ready || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -180,3 +189,5 @@ networks:
 secrets:
   DB_PWD:
     file: ./.secrets/db_pwd.txt
+  ADMIN_PWD:
+    file: ./.secrets/admin_pwd.txt

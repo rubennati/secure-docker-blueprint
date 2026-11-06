@@ -11,12 +11,12 @@
 - **Origin:** Germany · Eugen Pankov Softwareentwicklung · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Lightweight access proxy for SSH, HTTPS, databases, Kubernetes, RDP and VNC
-- **Based on version:** `0.29.0`
+- **Based on version:** `0.30.4`
 - **Verification snapshot:** 2026-09-19 — hardening only (see below), not a full clean-install run
 
 ## What we use
 
-- `ghcr.io/warp-tech/warpgate:0.29.0`, single container, no separate database
+- `ghcr.io/warp-tech/warpgate:0.30.4`, single container, no separate database
 - The image's own embedded SQLite for users, sessions and the audit log
 - The image's own `warpgate healthcheck` subcommand
 
@@ -51,6 +51,25 @@ stack, not assumed from the README:
   real target, the admin UI behind Traefik with
   `http.trust_x_forwarded_headers: true`, and anything beyond a single
   clean start — no restart, no upgrade, no host reboot.
+
+## Version notes
+
+- Moved to `0.30.4` on 2026-11-05, not run on a host at this tag; the
+  verification below was against `0.29.0`. Since 0.30.0 the runtime image is
+  distroless (`gcr.io/distroless/cc`): no shell, no package manager, so the
+  `bash`/`wget`/`cat` noted below are gone. The `warpgate` user (UID 1000),
+  `/data`, the entrypoint `/usr/local/bin/warpgate` and the exec-form image
+  healthcheck `warpgate healthcheck` stay, so this stack's healthcheck and the
+  `run --rm … unattended-setup` setup need no shell. The session cookie is now
+  always `Secure`, and `X-Forwarded-For`/`-Host`/`-Proto` use the last value.
+  Schema migrations run on start. Advisories fixed: GHSA-qcwp-cwqv-g428,
+  GHSA-fhwh-r27p-hvg5, GHSA-rm54-2mgh-59g9, GHSA-2cwg-f83j-xjgx,
+  GHSA-g5wc-qprw-44ph (0.30.0); GHSA-hp22-gfvj-7m8r, GHSA-cj29-mv44-r3g2,
+  GHSA-rccx-x2f2-qggp, GHSA-wv8f-pg5h-j86g, GHSA-9cmw-ff3v-ggc9,
+  GHSA-2xj4-4766-4xwx, GHSA-jgwh-2q6f-w7g6, GHSA-4434-xwvf-cvq7 (0.30.1);
+  GHSA-hhq8-x2xc-95qx, GHSA-fxfw-2m4j-xmc8, GHSA-r7rf-j762-2xxv (0.30.4).
+  GHSA-r7rf-j762-2xxv advises an explicit TLS mode (enabled or disabled)
+  instead of "Preferred" on MySQL and PostgreSQL targets.
 
 ## Upgrade checklist
 

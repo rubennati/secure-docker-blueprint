@@ -11,12 +11,12 @@
 - **Origin:** Windmill Labs · no country stated in its published terms · no country
 - **Domain:** Automation and data
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
-- **Based on version:** `1.814.0`
+- **Based on version:** `1.862.0`
 - **Last verified:** 2026-09-23 (1.814.0) — behind Traefik with TLS: the bootstrap behind `acc-deny`, jobs on both workers, the UI under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
 
 ## What we use
 
-- Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.814.0`. Upstream's
+- Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.862.0`. Upstream's
   own `.env` defaults to the floating `:main` tag; not used here.
 - `postgres:18.6` — Windmill's own requirement (upstream's compose moved from 16
   to 18). Debian-based, not the `-alpine` variant most other stacks here pin,
@@ -239,6 +239,19 @@ Traefik:
 - The Python job failed on `app-internal` alone and passed once the workers
   joined `app-egress`; the database has no route out
 - The default-administrator replacement above
+
+## Version notes
+
+- Moved to `1.862.0` on 2026-11-05, not run on a host at this tag; the
+  verification sections below were run against `1.814.0`. Upstream's changelog
+  marks no breaking change from 1.815.0 to 1.862.0; database migrations run on
+  start. The nsjail changes in the range (dependency resolution, builds and
+  Bun/npm installs under nsjail, a real nsjail start-up probe) apply only when
+  job sandboxing is on, which this stack does not use. New low-code and raw
+  apps are sandboxed by default (UI only), the bundled DuckDB moves to 2.0.0
+  LTS, and `DISABLE_RT_SYNC` is a new optional variable. The worker image pins
+  Node 24.22.1 for CVE-2026-111497. GHSA-2jfj-x8j7-7mfh is fixed in 1.782.0,
+  before the previous pin. No variable this stack sets changed.
 
 ## Upgrade checklist
 

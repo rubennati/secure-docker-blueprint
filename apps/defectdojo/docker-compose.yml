@@ -24,6 +24,9 @@ x-dd-env: &dd-env
   DD_SECRET_KEY_FILE: /run/secrets/DD_SECRET_KEY
   DD_CREDENTIAL_AES_256_KEY_FILE: /run/secrets/DD_CREDENTIAL_AES_256_KEY
   DD_DATABASE_READINESS_TIMEOUT: "60"
+  # Since 3.4.300 the interface asks established users to star the project on
+  # GitHub; off here, as nothing in the interface should point users off-site.
+  DD_GITHUB_STAR_PROMPT_ENABLED: "False"
   TZ: ${TZ}
 
 x-dd-secrets: &dd-secrets

@@ -6,6 +6,12 @@ Rspamd, with an administration interface and Roundcube webmail. Upstream:
 directory is named after its maintainer because
 [`apps/docker-mailserver`](../docker-mailserver/) is a different product.
 
+## Open findings
+
+The MySQL image, `mysql`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu. MySQL images also bundle certifi 2026.2.25 in MySQL Shell (GHSA-6q48-6c7w-9gw2), which the database server does not use.
+
 ## Architecture
 
 ```text

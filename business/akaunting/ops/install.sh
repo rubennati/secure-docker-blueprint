@@ -65,7 +65,7 @@ docker compose exec -T --user www-data \
 # secret — so the copy in the file is removed. Inside the container, as the
 # file's owner, and rewritten in place: the file is a bind mount.
 docker compose exec -T --user www-data akaunting-app sh -c '
-  grep -v "^DB_PASSWORD=" .env > /tmp/app.env && cat /tmp/app.env > .env && rm -f /tmp/app.env'
+  grep -v "^DB_PASSWORD=" .env > "$TMPDIR/app.env" && cat "$TMPDIR/app.env" > .env && rm -f "$TMPDIR/app.env"'
 if [ "$(docker compose exec -T --user www-data akaunting-app sh -c 'grep -c "^DB_PASSWORD=" .env || true')" != 0 ]; then
   echo "the database password is still in .env — remove the DB_PASSWORD line from volumes/app.env" >&2
   exit 1

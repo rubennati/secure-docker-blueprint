@@ -6,6 +6,16 @@ a URL, and the answers land in this installation's own database.
 AGPL-3.0 · [heyform/heyform](https://github.com/heyform/heyform) ·
 image `heyform/community-edition`
 
+## Open findings
+
+The image, `heyform/community-edition:v3.0.6`, carries 13 CRITICAL findings in bundled Node.js packages. It is the newest release.
+
+**Risk:** most belong to build and test tools (vitest, tinypool, esbuild, shell-quote, tar) that the running server does not use, and `proxy-addr` does not apply because the proxy is trusted by hop count. Whether handlebars, form-data and sha.js are reached has not been checked. Move to the next release.
+
+The MongoDB image, `mongo`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 Three containers.

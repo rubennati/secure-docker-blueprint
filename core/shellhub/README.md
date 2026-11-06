@@ -6,6 +6,12 @@ nothing on the target needs an inbound port, a public IP, or a firewall
 change. See the [PAM/bastion comparison](../README.md#privileged-access--bastion-alternatives)
 for how it differs from Warpgate, JumpServer, Teleport and Orion Belt.
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
@@ -129,10 +135,10 @@ For the general PostgreSQL restore procedure and verification checklist, see
 
 ## Known Issues
 
-- **`server` has no stable Docker Hub tag as of this writing** — this
-  deployment pins the newest release candidate; see
-  [UPSTREAM.md](UPSTREAM.md#known-limitations) and check for a stable
-  release before every deploy.
+- **Usage telemetry is switched off.** Upstream sends a daily usage report
+  to `telemetry.shellhub.io` by default since v0.28.0; this stack sets
+  `SHELLHUB_TELEMETRY=false` on the server. See
+  [UPSTREAM.md](UPSTREAM.md#version-notes).
 - **Not yet exercised beyond a clean start** — no agent registered, no SSH
   session proxied, no restart or upgrade tested.
 - **OIDC-in-Community-Edition status unconfirmed** — see Security Model.

@@ -11,7 +11,7 @@
 - **Origin:** Brot & Games · no country stated · no country
 - **Domain:** Monitoring
 - **Role:** HTTP checks on a cron schedule with a dashboard, webhook notifications and TLS expiry warnings
-- **Based on version:** `1.10.1`
+- **Based on version:** `1.12.0`
 
 ## Origin, stated precisely
 
@@ -22,12 +22,13 @@ The project publishes no imprint and the GitHub account states its location as
 
 1 981 stars, 20 commits in the twelve months to 2026-07-16, newest release
 1.10.1 on that date. One person wrote 263 of the commits and the next
-contributor 7, so the project is effectively single-maintainer. The image is
-published on Docker Hub only; there is no copy on another registry.
+contributor 7, so the project is effectively single-maintainer. Up to 1.11.1
+the image was published on Docker Hub only; from 1.12.0 it is also on
+`ghcr.io/brotandgames/ciao`.
 
 ## What we use
 
-- `brotandgames/ciao:1.10.1` — Ruby 4.0 and Rails 8.1, one container.
+- `brotandgames/ciao:1.12.0` — Ruby 4.0 and Rails 8.1, one container.
 - SQLite in `/app/db/sqlite`, which is the image's own volume path. Upstream
   ships no database service and the application needs none.
 
@@ -67,6 +68,18 @@ What a host run still has to establish: the route behind Traefik with TLS, a
 refused client outside the access policy, a check actually firing on its cron
 and a webhook arriving, and the restore in the README.
 
+## Version notes
+
+- Moved to `1.12.0` on 2026-11-05 (released 2026-10-25), not run on a host at
+  this tag. 1.11.0 removed `GET /checks/jobs/recreate` (jobs are recreated at
+  boot) and replaced the admin page's "Recreate jobs" with "Check now"; 1.11.1
+  made `/checks/check`, `/checks/tls/check` and `/checks/notifications/test`
+  POST-only. 1.12.0 adds a response-time column through `db:migrate`, which the
+  image's `start.sh` runs at start, an optional `CIAO_BASE_URL` for the
+  `__check_absolute_url__` webhook placeholder, and stops building
+  `linux/arm/v7`. User, command and port are unchanged. No CVE or GHSA named;
+  the move clears CRITICAL findings in the image scan.
+
 ## Upgrade checklist
 
 1. Read the release notes — https://github.com/brotandgames/ciao/releases
@@ -83,9 +96,9 @@ in the README and in `helm-chart/`.
 
 ```bash
 # What the image sets by default — user, command, volume, port
-docker image inspect brotandgames/ciao:1.10.1 --format '{{json .Config}}'
+docker image inspect brotandgames/ciao:1.12.0 --format '{{json .Config}}'
 
 # The environment variables this version reads
-docker run --rm --entrypoint sh brotandgames/ciao:1.10.1 -c \
+docker run --rm --entrypoint sh brotandgames/ciao:1.12.0 -c \
   'grep -rhoE "ENV[.\[][\"'\'']?[A-Z_]+" /app/app /app/config /app/config.ru | sort -u'
 ```

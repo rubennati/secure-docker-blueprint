@@ -39,7 +39,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 30s
-    image: postgres:15.14-alpine
+    image: postgres:15.19-alpine
     networks:
     - dify-local
     restart: unless-stopped
@@ -123,7 +123,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 2m0s
-    image: langgenius/dify-api:1.17.1
+    image: langgenius/dify-api:1.19.0
     networks:
     - dify-local
     read_only: true
@@ -166,7 +166,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 1m0s
-    image: langgenius/dify-web:1.17.1
+    image: langgenius/dify-web:1.19.0
     networks:
     - dify-local
     read_only: true
@@ -256,7 +256,7 @@ services:
       SERVER_KEY__FILE: /run/secrets/PLUGIN_DAEMON_KEY
       SERVER_PORT: '5002'
       TZ: UTC
-    image: langgenius/dify-plugin-daemon:0.6.10-local
+    image: langgenius/dify-plugin-daemon:0.6.14-local
     networks:
     - dify-local
     read_only: true
@@ -288,7 +288,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 10s
-    image: redis:7.4-alpine
+    image: redis:8.10.3-alpine
     networks:
     - dify-local
     read_only: true
@@ -432,7 +432,7 @@ services:
       UV_CACHE_DIR: /tmp/.uv-cache
       VECTOR_STORE: pgvector
       APP_API_URL: http://localhost:5001
-    image: langgenius/dify-api:1.17.1
+    image: langgenius/dify-api:1.19.0
     networks:
     - dify-local
     read_only: true
@@ -511,7 +511,7 @@ services:
       UV_CACHE_DIR: /tmp/.uv-cache
       VECTOR_STORE: pgvector
       APP_API_URL: http://localhost:5001
-    image: langgenius/dify-api:1.17.1
+    image: langgenius/dify-api:1.19.0
     networks:
     - dify-local
     read_only: true

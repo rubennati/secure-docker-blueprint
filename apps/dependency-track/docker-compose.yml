@@ -54,6 +54,10 @@ services:
 
     # --- Configuration ---
     environment:
+      # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
+      # refuses to start when a volume sits on the old path without this. Same
+      # pattern as apps/shlink.
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD_FILE: /run/secrets/DB_PWD
@@ -175,11 +179,12 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}-api.loadbalancer.server.port=8080"
 
     # --- Health & Observability ---
-    # The image's own baked-in healthcheck, confirmed against a live
-    # container — real readiness/liveness reporting (database migrations,
-    # the workflow engine, the task scheduler), not a shallow port check.
+    # The image's own baked-in healthcheck — real readiness/liveness reporting
+    # (database migrations, the workflow engine, the task scheduler), not a
+    # shallow port check. From 5.2.0 the image carries no curl; upstream's own
+    # check uses wget, as here.
     healthcheck:
-      test: ["CMD", "/bin/sh", "-c", "curl -f -s --max-time 3 --noproxy '*' -o /dev/null http://127.0.0.1:9000/health"]
+      test: ["CMD", "/bin/sh", "-c", "wget -q -Y off -T 3 -O /dev/null http://127.0.0.1:9000/health"]
       interval: 30s
       timeout: 10s
       retries: 5

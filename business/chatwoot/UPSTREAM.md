@@ -12,7 +12,7 @@
 - **Domain:** Business operations
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox
 - **Edition gating:** everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
-- **Based on version:** `v4.18.0`
+- **Based on version:** `v4.19.1`
 - **Last verified:** 2026-09-22 (v4.18.0) — behind Traefik with TLS: the onboarding, the dashboard and its websocket, the API, a website widget, a restart, and the README's restore
 
 The origin comes from the governing-law clause of Chatwoot's terms of service
@@ -20,12 +20,12 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 
 ## What we use
 
-- `chatwoot/chatwoot:v4.18.0` for web and worker. Upstream's production compose pins
+- `chatwoot/chatwoot:v4.19.1` for web and worker. Upstream's production compose pins
   `:latest`; not used here. A `-ce` tag also exists; this stack uses the tag upstream's
   compose names.
 - `pgvector/pgvector:0.8.1-pg16` — upstream's production compose uses
   `pgvector/pgvector:pg16`.
-- `redis:7.4-alpine` — upstream's uses `redis:alpine`.
+- `redis:8.10.3-alpine` — upstream's uses `redis:alpine`.
 - Local file storage, upstream's default.
 
 ## What we changed and why
@@ -97,6 +97,40 @@ enterprise features; backup and restore; an upgrade across versions.
   0.8.4 fix index corruption and a repair error with HNSW vacuuming, 0.8.2, 0.8.6
   and 0.8.7 fix buffer overflows. After the image moves, upstream's upgrade note
   applies per database: `ALTER EXTENSION vector UPDATE;`.
+- Moved to `v4.19.1` on 2026-11-05 (released 2026-10-24), web and worker
+  together, not run on a host at this tag. v4.19.0 retires Captain V1:
+  installations with V1 assistant instructions must migrate them to V2 before
+  upgrading (upstream's `docs/captain_v1_sunset.md`); this stack has not
+  exercised Captain. New optional variables only — `SEARCH_TIME_RANGE_LIMIT_DAYS`,
+  `WEB_CONCURRENCY`, `AUTO_RESOLVE_MIN_MINUTES`, `AUTO_RESOLVE_CRON`,
+  `SIDEKIQ_ALIVE_HOST` and `SIDEKIQ_ALIVE_PORT` (still 7433 by default, so the
+  worker healthcheck is unchanged); upstream's production compose did not
+  change; the web service migrates at start. Both releases recommend upgrading
+  for security hardening (Twilio webhook verification, CSS sanitization) and
+  v4.19.1 moves the build stage to Node.js 24.22.1 (CVE-2026-111497, build only).
+  No GHSA named.
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. Chatwoot recommends Redis 6 or newer for production and names no
+  upper limit. This service starts as UID 999 through its own
+  `config/redis-entrypoint.sh`, which execs `redis-server` directly, so the image
+  entrypoint's privilege handling and module loading do not apply; no compose
+  change. Sources: https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
+  https://developers.chatwoot.com/self-hosted
 
 ## Upgrade checklist
 

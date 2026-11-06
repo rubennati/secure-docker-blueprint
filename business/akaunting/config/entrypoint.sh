@@ -2,10 +2,18 @@
 set -e
 
 # Replaces the image's own entrypoint, which on every start enables an Apache
-# module and recursively chowns the whole webroot — both writes into the image,
-# which a read-only root filesystem refuses. The module is enabled by a mounted
-# file instead (rewrite.load), and ownership is already right where it matters:
-# storage/ is the bind mount, bootstrap/cache/ is a tmpfs.
+# module, unpacks the application into the webroot only if it is missing, and
+# recursively chowns the whole webroot — writes a read-only root filesystem
+# refuses, and a webroot that keeps old code across image changes. The module is
+# enabled by a mounted file instead (rewrite.load).
+
+# The image carries the application as /tmp/akaunting.zip; the webroot is a
+# tmpfs, so the code is unpacked from the pinned image on every start. As root,
+# so www-data can read it but not change it. storage/ is a bind mount and
+# bootstrap/cache/ its own tmpfs: neither is taken from the archive.
+if [ ! -f /var/www/html/index.php ]; then
+  unzip -q /tmp/akaunting.zip -d /var/www/html -x 'storage/*' 'bootstrap/cache/*'
+fi
 
 # Laravel reads real environment variables first; .env does not override them.
 # The database password therefore comes from the Docker Secret and never has to

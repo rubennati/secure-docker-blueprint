@@ -13,13 +13,13 @@
 - **Origin:** US · Documenso Inc · non-EU (development largely from Hamburg, Germany)
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with your own certificate
-- **Based on version:** `v2.20.0`
+- **Based on version:** `v2.21.1`
 - **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
 
 ## What we use
 
-- `documenso/documenso:v2.20.0` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
-- `postgres:16-alpine`
+- `documenso/documenso:v2.21.1` (Remix app; CMD `sh start.sh` runs Prisma migrations on boot)
+- `postgres:16.15-alpine`
 - Custom `config/entrypoint.sh` to inject secrets from Docker Secret files (no `_FILE` support)
 
 ## What we changed vs. upstream compose
@@ -34,6 +34,18 @@
 | Postgres pinned to `16-alpine` | Upstream sample uses `postgres:15`; blueprint prefers a current line |
 | DB password generated as hex | URL-safe in the connection URL |
 | Signing `.p12` mounted `:ro`, passphrase as Docker Secret | Keep the signing key off `.env` and out of git |
+
+## Version notes
+
+- Moved to `v2.21.1` on 2026-11-05 (released 2026-10-22), not run on a host at
+  this tag. No breaking change and no Docker change; one Prisma migration
+  (`add_embed_signature`), applied by `start.sh` at start. Upstream's
+  `.env.example` adds the optional `NEXT_PRIVATE_SHOW_NEW_ACCOUNT_EMAIL_WARNING`
+  and empties its S3 placeholder values; the stack uses the database upload
+  transport. v2.21.0 stores a placeholder instead of the SSO client secret in
+  forms and can disable reported accounts; v2.21.1 keeps passkeys when a user is
+  disabled. No CVE or GHSA in this range; GHSA-3494-9j87-fj64 was fixed before
+  v2.20.0.
 
 ## Upgrade checklist
 

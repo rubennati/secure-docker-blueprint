@@ -12,14 +12,14 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Documents and e-signature
 - **Role:** Document management with OCR, tagging and full-text search
-- **Based on version:** `3.1.3`
+- **Based on version:** `3.4.2`
 - **Last verified:** 2026-11-02 (3.1.3) — with postgres 16.14, redis 7.4-alpine, gotenberg 8.21 and tika 3.3.3.0; step 8 lab host on its edge network behind a loopback-only test router: the README's setup run again in a fresh instance, upload through the UI and the API, the consume folder and IMAP mail import; OCR of scans and images (`deu+ron` included), Tika and Gotenberg for DOCX and e-mail, full-text search, metadata, owner and object permissions, SMTP; dependency failures and the healthchecks; borgmatic backup with the README's entry and the PostgreSQL 16 client, restored into a throwaway instance (backup/borgmatic/RESTORE.md). Lab scripts and headless Chromium, no mobile app; `sso.yml` not run (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (v2.20.13)
 
 ## What we use
 
 - Official `paperless-ngx` image, pinned tag
-- `postgres:16` as primary backend (upstream also supports MariaDB + SQLite; Postgres is the recommended production path)
-- `redis:7.4-alpine` for the Celery broker
+- `postgres:18` as primary backend (upstream also supports MariaDB + SQLite; Postgres is the recommended production path)
+- `redis:8.10.3-alpine` for the Celery broker
 - Official `gotenberg/gotenberg` image and `apache/tika` for document conversion + text extraction
 - Native `_FILE` secret support (`PAPERLESS_DBPASS_FILE`, `PAPERLESS_SECRET_KEY_FILE`)
 
@@ -49,6 +49,73 @@
   3.x line is unchanged.
 - Run at these tags on the step 8 lab host on 2026-11-02; that run does not
   replace the change-note check above.
+- Moved to `3.4.2` on 2026-11-05, not run on a host at this tag. No breaking
+  change, renamed `PAPERLESS_*` variable or manual step is listed from 3.2.0 to
+  3.4.2; Django migrations run on start as before. 3.3.2 fixes
+  GHSA-c8f3-pqr2-rr24 (cross-user information disclosure in AI classification
+  workflows on ownerless documents); 3.3.4 updates Pillow, aiohttp and the CA
+  bundle for the eMudhra / emSign certificate incident.
+- Gotenberg moved to `8.39` on 2026-11-05, not run on a host at this tag
+  (upstream Paperless ships 8.38 at this time). Behaviour changes in the range:
+  8.30 ships a smaller font set (Noto, DejaVu, Liberation, Carlito, Caladea);
+  8.31 blocked private addresses by default and 8.32 reverted that; 8.37 warns
+  at start about unanchored allow-list patterns, so `--chromium-allow-list` is
+  now anchored (`^file:///tmp/.*`) in both compose files, as upstream Paperless
+  did; 8.38 gives every Chromium conversion its own browser context and counts
+  the raw request body against `--api-body-limit`; 8.39 rejects non-HTTP
+  schemes on the URL routes, which Paperless does not call. Security fixes in
+  the range include the ExifTool arbitrary file write (8.29), SSRF and DNS
+  rebinding hardening (8.31–8.32), Chromium CVE-2026-87654 (8.38.1), and the
+  ExifTool `j` alias, the `devtools://` scheme and the eMudhra roots (8.39).
+- Gotenberg moved to `8.40.0` on 2026-11-05 (released the same day), not run on
+  a host at this tag. Upstream calls it the final Gotenberg 8 release; the next
+  is Gotenberg 9. It updates Chromium to 156.0.8078.79, which removes the two
+  critical Chromium findings of 8.39 (CVE-2026-118333, CVE-2026-118337): 2
+  critical image findings before, 0 after. Security fixes: QPDF encryption
+  passwords can no longer inject options, the `*_DENY_PRIVATE_IPS` checks refuse
+  every special-purpose range, Chromium distrusts the eMudhra roots from the
+  first request. Behaviour changes concern `--chromium-host-resolver-rules`,
+  `--chromium-proxy-server` and the `linux/386` image, none of which this stack
+  uses; no compose change
+  (https://github.com/gotenberg/gotenberg/releases/tag/v8.40.0).
+- Moved `postgres` from `16.14` to `18.6` on 2026-11-05, not run on a host at
+  this tag. PostgreSQL 18 support: upstream's own compose file ships
+  `postgres:18`
+  (https://github.com/paperless-ngx/paperless-ngx/blob/main/docker/compose/docker-compose.postgres.yml);
+  the docs name no version range. The borgmatic entry in the README now names
+  the 18 client. The 18 image keeps its cluster under
+  `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both
+  compose files keeps it on the existing mount. A new major does not read the
+  old cluster, so existing data moves by dump and restore: before the tag
+  changes, `docker compose exec db sh -c 'pg_dumpall -U "$POSTGRES_USER"' >
+  dump.sql`; `docker compose down`; move `./volumes/postgres` aside; set the new
+  tag; `docker compose up -d db`; `docker compose exec -T db sh -c 'psql -U
+  "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
+  database already exist are expected); then `docker compose up -d`. A return to
+  the old major is only a restore of that dump.
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
+  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+  2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
+  choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
+  series and probabilistic data types as modules, which the image's entrypoint loads
+  at start on amd64 and arm64; this stack uses none of them. 8.x reads the 7.4 data
+  files in place, but Redis does not load files written by a newer version, so a
+  rollback needs the backup of the Redis data. The one potentially breaking change
+  upstream lists: `GETRANGE` with an out-of-range negative end returns an empty
+  string. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1, heap write when
+  loading a Count-min sketch from an RDB file), queued `MULTI` commands keeping
+  access to keys whose ACL permission was revoked (8.10.2), and a cluster-bus
+  overflow that needs cluster mode (8.10.3). The 7.4 line still receives fixes
+  (7.4.12, 2026-10-26); the move is to the newest stable line, not away from an
+  unmaintained one. No Redis version requirement was found for Paperless-ngx. The
+  image's entrypoint now drops to the `redis` user only when SETUID and SETGID are
+  in the capability bounding set, empties that set while dropping, and fixes
+  ownership only of `*.rdb` files and `appendonlydir` in `/data`. This service
+  starts as root with Docker's default capabilities, so it drops to UID 999 as
+  before; no compose change. Sources:
+  https://github.com/redis/redis/releases/tag/8.0.0,
+  https://github.com/redis/redis/releases/tag/8.10.3,
+  https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh
 
 ## Upgrade checklist
 
@@ -87,8 +154,8 @@ Paperless's Django migrations are forward-only. Rollback = restore the SQL dump 
 
 ## Related images to keep in sync
 
-- `postgres:16` — safe to update within 16.x
-- `redis:7.4-alpine` — safe to update within 7.x
+- `postgres:18` — safe to update within 18.x
+- `redis:8.10.3-alpine` — safe to update within 8.x
 - `gotenberg/gotenberg` — independent; follow its release cadence. Bump conservatively; new majors can change HTTP APIs that Paperless calls.
 - `apache/tika` — pinned in `.env.example` (`TIKA_TAG`); review its change notes before the next bump.
 

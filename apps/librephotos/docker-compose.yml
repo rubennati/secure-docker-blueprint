@@ -15,6 +15,9 @@ services:
 
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
+    # shm_size as in upstream's compose (1.5.0): with Docker's default 64 MB
+    # /dev/shm, large libraries fail with "could not resize shared memory segment".
+    shm_size: 256mb
     memswap_limit: 1G          # == memory: no swap
     deploy:
       resources:
@@ -83,6 +86,10 @@ services:
       # OpenStreetMap's Nominatim, one request per photo. Off here; the cost is
       # that place names no longer appear. Set true to accept the trade.
       FEATURE_REVERSE_GEOCODING: "false"
+      # From 1.5.0 the backend asks GitHub once a day whether a newer release
+      # exists (upstream default true). Off here: pins move through this
+      # repository, not through an in-app notice.
+      UPDATE_CHECK: "false"
       TZ: ${TZ}
       SECRET_KEY: ${SECRET_KEY}
       BACKEND_HOST: backend

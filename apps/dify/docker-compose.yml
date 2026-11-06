@@ -353,7 +353,8 @@ services:
     user: "1001:1001"
 
     # --- Security ---
-    # Runs as root in the image; see UPSTREAM.md.
+    # Since 0.6.12 the image runs as its own `dify` user; the uid is set here
+    # explicitly so the volume ownership does not depend on it. See UPSTREAM.md.
     security_opt:
       - no-new-privileges:true
     cap_drop:

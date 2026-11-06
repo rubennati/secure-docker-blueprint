@@ -5,6 +5,16 @@ and messaging inboxes in one shared queue, with agents, teams, canned responses
 and automation. Rails and Sidekiq from one image, with PostgreSQL (pgvector) and
 Redis. Upstream: [Chatwoot](https://github.com/chatwoot/chatwoot).
 
+## Open findings
+
+The Chatwoot image, `chatwoot/chatwoot:v4.19.1`, carries 3 CRITICAL findings in Ruby gems: Active Storage (file read and write through ImageMagick image analysis), net-imap (command injection) and zlib. v4.19.1 is the newest release, and the Active Storage fix needs a newer Rails than Chatwoot uses.
+
+**Risk:** attachments from customers may reach the vulnerable code; which image processor Chatwoot uses has not been checked. Watch for the next release.
+
+The PostgreSQL (pgvector) image, `pgvector/pgvector`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text

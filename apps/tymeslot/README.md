@@ -6,12 +6,18 @@ links for Meet, Teams, Zoom or your own room, and the confirmation and reminder
 mail that goes with it. Elixir/Phoenix LiveView with PostgreSQL. AGPL-3.0,
 published by Diletta Luna OÜ (Tallinn, Estonia).
 
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `tymeslot-app` | `luka1thb/tymeslot:<version>-slim` | Web UI and job queue in one BEAM, port 4000 |
-| `db` | `postgres:17.11-alpine` | Database, on `app-internal` only |
+| `db` | `postgres:18.6-alpine` | Database, on `app-internal` only |
 
 The `-slim` tag carries no PostgreSQL server. The plain tag bundles one inside
 the application container, which would put the database on `proxy-public`;
@@ -56,7 +62,8 @@ seconds on an empty database. The healthcheck allows two minutes.
 
 **The first account to register becomes the instance admin.** Register, then
 close registration: `REGISTRATION_ENABLED=false` in `.env` and
-`docker compose up -d`, or toggle it at `/admin`, which overrides the file.
+`docker compose up -d`. The toggle at `/admin` does not override it: since
+1.26.0 a set environment variable outranks the saved setting.
 
 ## Verify
 

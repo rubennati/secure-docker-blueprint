@@ -73,6 +73,8 @@ services:
       DATABASE_URL: file:/app/database/hemmelig.db
       BETTER_AUTH_URL: https://${APP_TRAEFIK_HOST}
       HEMMELIG_BASE_URL: https://${APP_TRAEFIK_HOST}
+      # Forwarded client IP headers are trusted only from these (v7.5.0+).
+      HEMMELIG_TRUSTED_PROXIES: ${HEMMELIG_TRUSTED_PROXIES}
       NODE_ENV: production
       TZ: ${TZ}
     secrets:

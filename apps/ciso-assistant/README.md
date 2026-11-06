@@ -6,6 +6,16 @@ remediation plans. Backend, task worker and frontend, with PostgreSQL — upstre
 own PostgreSQL + Traefik template. Upstream:
 [CISO Assistant](https://github.com/intuitem/ciso-assistant-community).
 
+## Open findings
+
+The pinned backend image, `ciso-assistant-community/backend:v4.2.1`, ships with 1 CRITICAL vulnerability that has a published fix, in Debian's kernel headers package. v4.2.1 is the newest release.
+
+**Risk:** nothing in the container runs these headers; the kernel in use is the host's. Watch for the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+
 ## Architecture
 
 ```text

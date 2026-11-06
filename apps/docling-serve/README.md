@@ -34,8 +34,10 @@ curl -X POST "https://$(grep APP_TRAEFIK_HOST .env | cut -d= -f2)/v1/convert/sou
   -d '{"sources": [{"kind": "http", "url": "https://arxiv.org/pdf/2501.17887"}]}'
 ```
 
-The full API reference is at `/docs` on the running instance; the interactive
-`/ui` playground is off by default (`DOCLING_ENABLE_UI=0`) and gated by
+The API reference pages (`/docs`, `/openapi.json`) are off in this stack: upstream
+serves them without the API key, so `DOCLING_SERVE_ENABLE_API_DOCS` is `false`
+in `docker-compose.yml`. The local stack keeps them on at
+`http://127.0.0.1:8099/docs`. The interactive `/ui` playground is off by default (`DOCLING_ENABLE_UI=0`) and gated by
 `APP_TRAEFIK_ACCESS`, which defaults to `access-trusted-vpn`.
 
 ## Status

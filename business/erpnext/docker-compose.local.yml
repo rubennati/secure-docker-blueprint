@@ -145,7 +145,7 @@ services:
         fc set-config -g redis_queue "redis://:$${pw}@redis-queue:6379";
         fc set-config -g redis_socketio "redis://:$${pw}@redis-queue:6379";
         fc set-config -gp socketio_port 9000;
-        fc set-config -g chromium_path /usr/bin/chromium-headless-shell;
+        fc set-config -g chromium_path /usr/lib/chromium/chromium-headless-shell;
     depends_on:
       db:
         condition: service_healthy
@@ -183,6 +183,9 @@ services:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci
       - --skip-character-set-client-handshake
+      # MariaDB 11.8 turns snapshot isolation on by default, which surfaces
+      # error 1020 in Frappe background jobs; frappe_docker turns it off too.
+      - --innodb-snapshot-isolation=OFF
     # A named volume rather than volumes/mysql: Frappe needs case-sensitive table
     # names, and on a bind mount from a case-insensitive filesystem MariaDB folds
     # them (lower_case_table_names=2) and the site install fails.

@@ -171,6 +171,8 @@ services:
       SHELLHUB_LOG_LEVEL: ${SHELLHUB_LOG_LEVEL}
       SHELLHUB_LOG_FORMAT: ${SHELLHUB_LOG_FORMAT}
       SHELLHUB_SSH_PORT: 2222
+      # Upstream defaults to a daily usage report to telemetry.shellhub.io.
+      SHELLHUB_TELEMETRY: "false"
       SHELLHUB_DOMAIN: ${APP_TRAEFIK_HOST}
       TZ: ${TZ}
     secrets:
