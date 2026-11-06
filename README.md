@@ -4,7 +4,7 @@
 
 **Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
 
-Hardened deployment configurations for **121 self-hosting stacks** — a consistent
+Hardened deployment configurations for **120+ self-hosting stacks** — a consistent
 security baseline, file-based secret patterns, Traefik routing and network
 isolation, with CrowdSec available as an optional security layer.
 
