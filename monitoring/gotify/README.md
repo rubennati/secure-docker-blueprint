@@ -9,11 +9,7 @@ It is the second receiver in this category beside [ntfy](../ntfy/); which one
 fits depends on where the receiver runs, which
 [monitoring/README.md](../README.md#where-the-receiver-runs) covers.
 
-## Open findings
-
-The pinned image, `ghcr.io/gotify/server:3.1.1`, ships with 2 CRITICAL vulnerabilities that have published fixes, both in the pgx PostgreSQL driver. 3.1.1 is the newest release; the fix is merged upstream but not yet released.
-
-**Risk:** this stack uses SQLite, so pgx is never used. Move to the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -131,3 +127,9 @@ sqlite_databases:
 Restore: stop the container, put the data directory back, make sure it still
 belongs to `APP_UID:APP_GID`, start it. Tokens keep working, because they live in
 that database — which is also why it is worth encrypting the archive.
+
+## Open findings
+
+The pinned image, `ghcr.io/gotify/server:3.1.1`, ships with 2 CRITICAL vulnerabilities that have published fixes, both in the pgx PostgreSQL driver. 3.1.1 is the newest release; the fix is merged upstream but not yet released.
+
+**Risk:** this stack uses SQLite, so pgx is never used. Move to the next release.

@@ -4,6 +4,8 @@
 
 Open-source Airtable alternative. Turns any SQL database into a spreadsheet-like UI with views, forms, and a REST + GraphQL API. Commonly paired with **n8n** for low-code automation.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single-container deployment with NocoDB's built-in SQLite:

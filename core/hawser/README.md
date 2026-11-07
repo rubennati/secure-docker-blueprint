@@ -2,6 +2,8 @@
 
 Remote Docker agent for [Dockhand](https://github.com/Finsys/dockhand). Deploy on each host that Dockhand should manage.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Mode
 
 **Edge Mode** (default): Agent connects outbound to Dockhand via WebSocket. No port opening needed, works behind NAT/Firewall/Tailscale.

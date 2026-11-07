@@ -20,6 +20,8 @@ Host-installed backup for the stacks in this blueprint. Borg does the deduplicat
 
 ---
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Requirements
 
 - **Borgmatic ≥ 2.0.8** — earlier versions have no `container:` option for databases, and the v2 configuration format differs from v1. Check with `borgmatic --version`.

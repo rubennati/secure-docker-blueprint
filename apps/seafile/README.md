@@ -2,18 +2,7 @@
 
 Self-hosted file sync + team collaboration server. This setup runs Seafile Community Edition 13 as a **multi-container stack**, split across five compose files so optional components can be toggled on or off without touching the core.
 
-## Open findings
-
-SeaDoc 2.0.11 and the thumbnail server 13.0.29, the newest images for Seafile 13,
-bundle PyJWT 2.10.1 (CVE-2026-102268); SeaDoc also bundles `proxy-addr` 2.0.7
-(CVE-2026-90711). MariaDB 10.11 carries one finding in its `gosu` start-up helper
-(CVE-2025-68121, Go TLS), as does every newer MariaDB line.
-
-**Risk:** the PyJWT flaw concerns tokens signed with a public key, while Seafile
-signs with a shared secret, so it is most likely not reached (not verified in
-code). `proxy-addr` can let a client spoof the IP address that is logged. `gosu`
-only drops privileges at start and opens no TLS connection. The fixes arrive
-with newer Seafile component images.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -545,6 +534,19 @@ If applying this fix to a running deployment:
 - **First boot is slow** (2–4 min). The main server's healthcheck uses `start_period: 180s` for this reason.
 - **`seahub_custom.py` is always skipped on first boot.** `seahub_settings.py` doesn't exist when `entrypoint.sh` runs; Seafile generates it after `exec` exits into the init system. After first startup completes, run `docker compose up -d --force-recreate seafile` (setup step 7) to inject the block. See [config/README.md](config/README.md).
 - **Env var naming is inconsistent with the rest of the repo.** `.env.example` still uses `APP_IMAGE=…:tag` (not split into `*_TAG`) and `TIMEZONE` (not `TZ`). Unifying this would touch all five YAMLs simultaneously — left for a dedicated refactor with testing, not mixed into a documentation pass.
+
+## Open findings
+
+SeaDoc 2.0.11 and the thumbnail server 13.0.29, the newest images for Seafile 13,
+bundle PyJWT 2.10.1 (CVE-2026-102268); SeaDoc also bundles `proxy-addr` 2.0.7
+(CVE-2026-90711). MariaDB 10.11 carries one finding in its `gosu` start-up helper
+(CVE-2025-68121, Go TLS), as does every newer MariaDB line.
+
+**Risk:** the PyJWT flaw concerns tokens signed with a public key, while Seafile
+signs with a shared secret, so it is most likely not reached (not verified in
+code). `proxy-addr` can let a client spoof the IP address that is logged. `gosu`
+only drops privileges at start and opens no TLS connection. The fixes arrive
+with newer Seafile component images.
 
 ## Details
 

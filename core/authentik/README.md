@@ -2,15 +2,7 @@
 
 Self-hosted identity provider. Acts as a central SSO endpoint for other apps in the stack via **Forward-Auth** (Traefik middleware) or **OAuth2 / OIDC / SAML** (app-native clients).
 
-## Open findings
-
-The server image, `ghcr.io/goauthentik/server:2026.8.5`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497, fixed in 1.1.0-2+deb13u1). It is the newest release.
-
-**Risk:** nothing in the image links the library, and upstream has confirmed it is not reachable. The fix is announced for 2026.8.6; move to it when it is released.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -375,6 +367,16 @@ Two files outside the database are required for a working restore:
 - **Email flows depend on SMTP.** Password reset, invitation, and event notifications silently fail if SMTP is misconfigured. Test with a real account after setup.
 - **Worker volumes are shared with server.** Both mount `./volumes/data` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.
 - **Legacy `/media` mount.** Authentik has migrated from `/media` to `/data`. If you are upgrading a pre-2025 install: stop the stack, move `volumes/media` to `volumes/data`, run `up -d` — the init container will re-chown.
+
+## Open findings
+
+The server image, `ghcr.io/goauthentik/server:2026.8.5`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497, fixed in 1.1.0-2+deb13u1). It is the newest release.
+
+**Risk:** nothing in the image links the library, and upstream has confirmed it is not reachable. The fix is announced for 2026.8.6; move to it when it is released.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

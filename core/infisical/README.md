@@ -8,11 +8,7 @@ network (CLI / machine identity). An optional, central alternative to per-server
 > a central secret store must not sit on the public internet. Other servers reach it over
 > Tailscale. Exposing it publicly (`access-public`) is a deliberate, high-risk decision.
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -104,6 +100,12 @@ This config follows the standard but has **not** been run on a server yet. Confi
 - [ ] Secrets injected — no `ENCRYPTION_KEY`/`AUTH_SECRET`/`DB_*` values in `docker inspect infisical-app`
 - [ ] `GET /api/status` returns 200 (healthcheck); UI loads over VPN and first account can be created
 - [ ] A machine identity / CLI on another server can authenticate and read a secret
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

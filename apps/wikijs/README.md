@@ -10,15 +10,7 @@ It sits beside [BookStack](../bookstack/) as the second wiki here. BookStack
 organises by shelf, book and chapter; Wiki.js organises by path and keeps an
 optional Git mirror of the content.
 
-## Open findings
-
-The image, `ghcr.io/requarks/wiki:3.1.0`, carries one CRITICAL finding in `linux-libc-dev` (CVE-2026-99083). It is the newest release, built before Debian's fix.
-
-**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -121,3 +113,13 @@ postgresql_databases:
 Restore: database first, then the data directory, then start the application —
 Wiki.js reads its configuration from the database at boot. Keep the ownership
 of `volumes/data` at uid 1000.
+
+## Open findings
+
+The image, `ghcr.io/requarks/wiki:3.1.0`, carries one CRITICAL finding in `linux-libc-dev` (CVE-2026-99083). It is the newest release, built before Debian's fix.
+
+**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

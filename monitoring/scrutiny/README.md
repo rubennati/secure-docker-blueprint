@@ -8,6 +8,8 @@ It is the one axis in [`monitoring/`](../README.md) nothing else here covers.
 A disk that is about to fail answers pings, serves HTTP and reports a healthy
 container — right up until it does not.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

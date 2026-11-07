@@ -4,15 +4,7 @@
 
 Self-hosted document archive: scan → OCR → searchable PDF archive. Optimised for paperless offices with a "consume folder" + mobile scan workflow.
 
-## Open findings
-
-The pinned Tika image, `apache/tika:3.3.3.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). The fix is only in Tika 4, which Paperless-ngx does not yet support, so Tika stays on the newest 3.x release.
-
-**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on. Move to Tika 4 once Paperless-ngx supports it.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -277,6 +269,16 @@ plain text unless it is given `--passphrase`; it says so in its output.
 - **A mail account's connection test answers 500** instead of a message when the IMAP server cannot be reached — unknown host, closed port, TLS on a plain port (3.1.3, step 8 lab host).
 - **Notes are not found by full-text search** — a note's text gave no hit, also after `document_index reindex` (3.1.3, step 8 lab host, two instances).
 - **Gotenberg's PID limit bounds Chromium.** At 100 PIDs Chromium could not start: every e-mail and HTML document failed with 503 while both health endpoints answered 200. 300 is the measured peak (149) with room (step 8 lab host).
+
+## Open findings
+
+The pinned Tika image, `apache/tika:3.3.3.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). The fix is only in Tika 4, which Paperless-ngx does not yet support, so Tika stays on the newest 3.x release.
+
+**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on. Move to Tika 4 once Paperless-ngx supports it.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

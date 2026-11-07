@@ -5,6 +5,8 @@ and payments. One self-contained binary — PHP and a web server embedded — wi
 SQLite in the configuration volume. Upstream:
 [SolidInvoice](https://github.com/SolidInvoice/SolidInvoice).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

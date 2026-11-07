@@ -4,11 +4,7 @@
 
 WordPress CMS with MariaDB database, PHP security hardening, and Apache .htaccess protection.
 
-## Open findings
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Try it locally
 
@@ -277,6 +273,12 @@ The salts in `wp-config.php` invalidate all sessions when they change. They are
 generated on first start, so a restore that regenerates them logs everyone out.
 
 **Restore order:** database first, then the app.
+
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

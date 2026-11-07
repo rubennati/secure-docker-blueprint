@@ -6,11 +6,7 @@ links for Meet, Teams, Zoom or your own room, and the confirmation and reminder
 mail that goes with it. Elixir/Phoenix LiveView with PostgreSQL. AGPL-3.0,
 published by Diletta Luna OÜ (Tallinn, Estonia).
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -188,6 +184,12 @@ docker compose logs tymeslot-app --since 10m | grep -v ecto_sql
 - **A booking end to end has not been exercised here.** Registration, the
   dashboard and the verification mail have; the guest side of a booking is the
   next thing to try on a real install.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

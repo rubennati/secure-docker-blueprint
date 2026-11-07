@@ -6,7 +6,7 @@ Generated 2026-11-07 from the sources named in [`docs/standards/status-model.md`
 
 121 stacks: 2 ops-proven · 9 baseline-aligned · 110 scaffolded. 111 carry a local test stack. 80 ship with open CRITICAL findings.
 
-This is the maintainer's view: what has been established about each stack. It makes no statement about whether a stack suits a given deployment.
+Each state says what the maintainer has done with a stack: `scaffolded` is built to the standards and not yet run at its current pin, `verified` ran at the pinned version, `baseline-aligned` also holds the security baseline, `ops-proven` also had its data restored. A lower state is not a defect, and no state says whether a stack suits a given deployment.
 
 Whether upstream has published a newer version, when each image was published, and what the pinned images carry today: the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status), written by `scripts/ci/upstream-status.py`.
 

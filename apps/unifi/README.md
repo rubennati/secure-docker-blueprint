@@ -2,17 +2,7 @@
 
 Controller for Ubiquiti UniFi access points, switches, and gateways. Runs as an on-prem alternative to UniFi Cloud. Two-service stack: LSIO-built UniFi controller + MongoDB 4.4.
 
-## Open findings
-
-UniFi Network Application 10.6.109 ships its own Tomcat 10.1.54, Spring Web MVC
-6.2.18 and Bouncy Castle 1.84, with 11 CRITICAL vulnerabilities between them
-that have published fixes. They are inside Ubiquiti's application, and no newer
-release exists yet. The MongoDB image carries one finding in its `gosu` start-up
-helper (CVE-2025-68121, Go TLS), which opens no TLS connection.
-
-**Risk:** Tomcat serves the controller's web interface and API, so treat its
-flaws as reachable on that port. Keep the controller off the public internet,
-reach it over VPN, and watch for the next UniFi Network Application release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -127,6 +117,18 @@ database is the configuration and history, not the network.
   - Use L2 adoption over a VPN (Tailscale subnet router, ZeroTier, etc.)
 - **First boot can take 2-3 minutes** — MongoDB init + Java startup.
 - **`APP_TAG=latest`** — LSIO publishes rolling builds; pin to `version-X.Y.Z` for reproducibility.
+
+## Open findings
+
+UniFi Network Application 10.6.109 ships its own Tomcat 10.1.54, Spring Web MVC
+6.2.18 and Bouncy Castle 1.84, with 11 CRITICAL vulnerabilities between them
+that have published fixes. They are inside Ubiquiti's application, and no newer
+release exists yet. The MongoDB image carries one finding in its `gosu` start-up
+helper (CVE-2025-68121, Go TLS), which opens no TLS connection.
+
+**Risk:** Tomcat serves the controller's web interface and API, so treat its
+flaws as reachable on that port. Keep the controller off the public internet,
+reach it over VPN, and watch for the next UniFi Network Application release.
 
 ## Details
 

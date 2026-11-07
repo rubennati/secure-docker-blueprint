@@ -4,6 +4,8 @@
 
 Highly-configurable self-hosted dashboard. File-based YAML configuration — one file per concern (services, bookmarks, widgets, settings). Rich set of service integrations and info widgets.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:

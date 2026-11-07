@@ -29,12 +29,6 @@ that builds its own image adds a `Dockerfile` and a `build:` block above `image:
 and changes nothing else here — see
 [`custom-application.md`](../../docs/standards/custom-application.md).
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
-
 ## Four lenses
 
 Every file here is meant to hold up under all four. The same lenses drive
@@ -121,3 +115,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 | `app` | `nginx` | Images **without** `_FILE` → `config/entrypoint.sh` wrapper |
 
 Both secret patterns appear in one place, so a new stack can copy whichever one its image needs.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

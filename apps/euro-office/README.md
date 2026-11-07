@@ -11,6 +11,8 @@ Because it forks the same Document Server, it is a **drop-in replacement** for
 [`apps/onlyoffice/`](../onlyoffice/) — same JWT + iframe integration, same API path. Run one or the
 other, not both, per consuming app.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 | Service | Image | Purpose |

@@ -2,11 +2,7 @@
 
 Self-hosted helpdesk / ticketing / customer support. Multi-channel (email, web form, Twitter, Telegram, SMS), SLA tracking, time accounting, knowledge base.
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -141,3 +137,9 @@ Agents typically configure an inbound IMAP mailbox (Admin → Channels → Email
 
 For "customer opens ticket → added to marketing list" workflows, route via n8n:
 Zammad webhook (Admin → Triggers) → n8n → Listmonk API `POST /api/subscribers`.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

@@ -2,11 +2,7 @@
 
 AI-powered self-hosted photo manager with ONNX-based classification, face recognition, and location enrichment. Go-based server with MariaDB backend.
 
-## Open findings
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -128,6 +124,12 @@ cache. Exclude the cache subdirectory, keep the sidecars.
 - **Activation code** — PhotoPrism has a [membership program](https://www.photoprism.app/kb/activation) to unlock some features. Store any activation code in `.env` (gitignored) — never commit it.
 - **PhotoPrism uses date-based tags** (e.g. `260305` = 2026-03-05) — update `APP_TAG` in `.env.example` when upgrading. Use `photoprism/photoprism:preview` to test preview builds.
 - **Ollama + Watchtower dropped** — the upstream compose included optional Ollama (vision LLM) and Watchtower (auto-update) profiles. Not imported here; add back if wanted.
+
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

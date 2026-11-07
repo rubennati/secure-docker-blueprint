@@ -8,15 +8,7 @@ It sits beside [`apps/agentgateway`](../agentgateway/), which routes to MCP
 servers you run yourself. obot **starts them for you**, and that is the whole
 difference — in what it can do, and in what it costs you to run it.
 
-## Open findings
-
-The pinned image, `ghcr.io/obot-platform/obot:v0.27.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: the CA bundle still trusts revoked eMudhra intermediates, and brotli. v0.27.0 is the newest release.
-
-**Risk:** the CA issue lets someone holding those keys intercept Obot's outbound TLS from an on-path position; whether brotli decoding is used was not checked. Watch for the next release.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## The deviation this stack carries
 
@@ -175,3 +167,13 @@ Restore: put the volumes back with `volumes/data` owned by `1000:1000`, restore
 the secrets, start the database, load the dump, then start obot. Stored
 credentials come back encrypted with whatever encryption provider was
 configured — `None` by default, which means they are readable in the database.
+
+## Open findings
+
+The pinned image, `ghcr.io/obot-platform/obot:v0.27.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: the CA bundle still trusts revoked eMudhra intermediates, and brotli. v0.27.0 is the newest release.
+
+**Risk:** the CA issue lets someone holding those keys intercept Obot's outbound TLS from an on-path position; whether brotli decoding is used was not checked. Watch for the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

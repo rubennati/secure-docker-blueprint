@@ -171,8 +171,10 @@ stack is checked against.
 
 **Pre-1.0** — paths, variable names and defaults can still change.
 
-Verification depth varies by stack. [`LIFECYCLE.md`](LIFECYCLE.md) records what has been
-run, against which version, and what remains unverified.
+Verification depth varies by stack. [`LIFECYCLE.md`](LIFECYCLE.md) records what the
+maintainer has done with each stack — run it, against which version, restored its
+data — and the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status)
+shows what upstream has published since.
 
 ## Documentation
 

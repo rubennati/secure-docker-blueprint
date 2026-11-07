@@ -4,15 +4,7 @@ Invoicing, accounting and inventory for small businesses, extended through
 plugins. PHP on Apache, with MariaDB. Upstream:
 [FacturaScripts](https://github.com/NeoRazorX/facturascripts).
 
-## Open findings
-
-The pinned image, `facturascripts/facturascripts:2026.7`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and kernel headers. 2026.7 is upstream's current stable image; the newer 2026.72 is published as beta.
-
-**Risk:** nothing in the container runs the kernel headers, and brotli matters only if a process decompresses brotli data from a hostile server. Move when 2026.72 or later becomes the stable image.
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Updates run inside the application — read this first
 
@@ -150,3 +142,13 @@ The webroot is the installed version, so restore the database and the webroot
 from the same point in time. Restore into an empty database with `mariadb`,
 unpack the archive, restore the `33:33` ownership on `volumes/facturascripts`,
 and run `docker compose up -d`.
+
+## Open findings
+
+The pinned image, `facturascripts/facturascripts:2026.7`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and kernel headers. 2026.7 is upstream's current stable image; the newer 2026.72 is published as beta.
+
+**Risk:** nothing in the container runs the kernel headers, and brotli matters only if a process decompresses brotli data from a hostile server. Move when 2026.72 or later becomes the stable image.
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

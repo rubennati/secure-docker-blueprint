@@ -6,11 +6,7 @@ Standalone — any OpenAI-compatible backend (Ollama, vLLM, a hosted provider) c
 be listed in `config/config.yaml`; none is required. Upstream:
 [LiteLLM](https://github.com/BerriAI/litellm).
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -109,3 +105,9 @@ Restore into an empty database with `psql`, place `litellm_salt_key.txt` and
 `litellm_master_key.txt` back unchanged, then `docker compose up -d`. Without the
 original salt key, stored provider credentials cannot be decrypted. `config/config.yaml`
 is tracked in git.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

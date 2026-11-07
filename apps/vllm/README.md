@@ -15,6 +15,8 @@ tool for a machine with no GPU.
 > hardening was tested against the **CPU build of the same release**. See
 > [What has and has not been verified](#what-has-and-has-not-been-verified).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Requirements
 
 - An NVIDIA GPU of the Turing generation or newer (the image is built for

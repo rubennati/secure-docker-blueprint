@@ -7,6 +7,8 @@ output to live: a self-built image (the `business/vikunja` /
 or an artifact you deliberately mirror rather than pull fresh from Docker
 Hub/GHCR every time.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What this is not
 
 Not a replacement for Docker Hub, GHCR or any other upstream image source —

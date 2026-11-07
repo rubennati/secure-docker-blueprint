@@ -5,11 +5,7 @@ query arguments and bodies, and returns chosen status codes, redirects, delays a
 payloads. This stack runs the [Python Software Foundation's
 fork](https://github.com/psf/httpbin) of httpbin, which publishes versioned images.
 
-## Open findings
-
-The image, `ghcr.io/psf/httpbin:0.10.4`, carries 4 CRITICAL findings: brotlicffi (CVE-2026-111497) and Perl (3). It is the newest release.
-
-**Risk:** httpbin only compresses with brotli for its `/brotli` endpoint and never decodes, which is where the flaw lies, and Perl is not used by the app. It is a test service: keep it internal and move to the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -67,3 +63,9 @@ The port binds to `127.0.0.1`; Traefik is not used.
 ## Backup
 
 Nothing to back up: the service keeps no state. `.env` is the only file to keep.
+
+## Open findings
+
+The image, `ghcr.io/psf/httpbin:0.10.4`, carries 4 CRITICAL findings: brotlicffi (CVE-2026-111497) and Perl (3). It is the newest release.
+
+**Risk:** httpbin only compresses with brotli for its `/brotli` endpoint and never decodes, which is where the flaw lies, and Perl is not used by the app. It is a test service: keep it internal and move to the next release.

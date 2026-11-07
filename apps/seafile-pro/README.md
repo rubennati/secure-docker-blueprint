@@ -2,18 +2,7 @@
 
 Cloud file storage with collaboration, search, and antivirus scanning.
 
-## Open findings
-
-The findings of the community edition apply here too: PyJWT CVE-2026-102268 and
-`proxy-addr` CVE-2026-90711 in SeaDoc 2.0.11, PyJWT in the thumbnail server
-13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The optional
-Seafile AI image 13.0.10 carries 21 CRITICAL vulnerabilities, among them LiteLLM
-authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13
-build of it exists, and Seafile 14 is not yet stable.
-
-**Risk:** as in `apps/seafile` for the core images. Seafile AI is off by default
-and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave
-it off unless you need it, and watch for a stable Seafile 14.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Services
 
@@ -158,6 +147,19 @@ GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
 SQL
 docker compose up -d
 ```
+
+## Open findings
+
+The findings of the community edition apply here too: PyJWT CVE-2026-102268 and
+`proxy-addr` CVE-2026-90711 in SeaDoc 2.0.11, PyJWT in the thumbnail server
+13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The optional
+Seafile AI image 13.0.10 carries 21 CRITICAL vulnerabilities, among them LiteLLM
+authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13
+build of it exists, and Seafile 14 is not yet stable.
+
+**Risk:** as in `apps/seafile` for the core images. Seafile AI is off by default
+and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave
+it off unless you need it, and watch for a stable Seafile 14.
 
 ## Details
 

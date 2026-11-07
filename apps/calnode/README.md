@@ -5,11 +5,7 @@ interface, and a REST API with its own keys. One Go binary with SQLite in the
 data volume — upstream needs no database service, no cache and no separate API
 server. Upstream: [Calnode](https://github.com/Calnode/calnode).
 
-## Open findings
-
-The pinned image, `ghcr.io/calnode/calnode:0.13.0`, ships with 3 CRITICAL vulnerabilities that have published fixes, all in the bundled Litestream binary (gRPC and an old Go runtime). 0.13.0 is the newest release.
-
-**Risk:** Litestream starts only when `LITESTREAM_REPLICA_URL` is set, which this stack does not do. Leave it unset and watch for a release with a newer Litestream.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -139,3 +135,9 @@ Restore by unpacking both back into place, restoring the `1000:1000` ownership o
 `volumes/data`, and running `docker compose up -d`. Without the original
 encryption key the stored calendar credentials cannot be decrypted. Litestream is
 upstream's own continuous alternative to this and is not exercised here.
+
+## Open findings
+
+The pinned image, `ghcr.io/calnode/calnode:0.13.0`, ships with 3 CRITICAL vulnerabilities that have published fixes, all in the bundled Litestream binary (gRPC and an old Go runtime). 0.13.0 is the newest release.
+
+**Risk:** Litestream starts only when `LITESTREAM_REPLICA_URL` is set, which this stack does not do. Leave it unset and watch for a release with a newer Litestream.

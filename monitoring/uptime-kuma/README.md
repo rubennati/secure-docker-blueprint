@@ -4,11 +4,7 @@ UI-driven uptime monitoring. Single container, SQLite backend, rich probe types 
 
 Modern successor to Statping — more active (weekly releases), better UI, wider probe support.
 
-## Open findings
-
-The image, `louislam/uptime-kuma:2.5.9`, carries 7 CRITICAL findings that have published fixes: Chromium (2), libbrotli1, protobufjs, the Go runtime of the healthcheck helper (2) and node-tar. It is the newest release, and upstream has not rebuilt it.
-
-**Risk:** Chromium only runs for "Real Browser" monitors and protobufjs only for gRPC monitors, so avoid pointing those at untrusted targets. The `-slim` image drops Chromium if you do not need browser monitors.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -107,3 +103,9 @@ For the general SQLite restore procedure and verification checklist, see
 - **The container runs as root.** Measured on 2.5.3: `dumb-init` and the server are uid 0, and the compose file drops no capability, so the data directory needs no particular owner and the server creates root-owned files in it (`docker-tls/`). A `user:` line would be the hardening step; it needs the data directory chowned to that user first and is not done here — the stack was verified as shipped.
 - **No built-in backup** — stop the app, `cp -r volumes/data/` to backup target, start again. Do NOT `pg_dump`-style-dump a running SQLite DB.
 - **Heavy monitor counts (>500)** can cause SQLite contention. Switch to MariaDB if that becomes a problem (env: `UPTIME_KUMA_DB_TYPE=mariadb`).
+
+## Open findings
+
+The image, `louislam/uptime-kuma:2.5.9`, carries 7 CRITICAL findings that have published fixes: Chromium (2), libbrotli1, protobufjs, the Go runtime of the healthcheck helper (2) and node-tar. It is the newest release, and upstream has not rebuilt it.
+
+**Risk:** Chromium only runs for "Real Browser" monitors and protobufjs only for gRPC monitors, so avoid pointing those at untrusted targets. The `-slim` image drops Chromium if you do not need browser monitors.

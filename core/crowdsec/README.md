@@ -8,6 +8,8 @@ serves those decisions. Where they are enforced is a separate choice.
 whatever asks. Without a remediation component attached, CrowdSec is a detector: you get
 visibility, and nothing is refused.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Choose your task
 
 | Task | Read |

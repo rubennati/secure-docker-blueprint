@@ -6,11 +6,7 @@ nothing on the target needs an inbound port, a public IP, or a firewall
 change. See the [PAM/bastion comparison](../README.md#privileged-access--bastion-alternatives)
 for how it differs from Warpgate, JumpServer, Teleport and Orion Belt.
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -142,6 +138,12 @@ For the general PostgreSQL restore procedure and verification checklist, see
 - **Not yet exercised beyond a clean start** — no agent registered, no SSH
   session proxied, no restart or upgrade tested.
 - **OIDC-in-Community-Edition status unconfirmed** — see Security Model.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

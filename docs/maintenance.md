@@ -156,7 +156,7 @@ is useful for significant evidence or incidents. Routine sessions need no log ro
 | 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
 | 5 | `<app>/UPSTREAM.md` | Update version reference, release notes and migration requirements; preserve `Last verified` unless a new host test establishes it |
 | 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 7 | Image scan | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — with an `## Open findings` section in each stack README. `trivy-gate.py --prune` removes what the scan no longer finds |
+| 7 | Image scan | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — with an `## Open findings` section in each stack README, after its operating sections and before a closing `## Details`. `trivy-gate.py --prune` removes what the scan no longer finds |
 | 8 | `docs/bugfixes/` | Record significant incidents, recovery steps or reusable lessons; routine corrections need no incident file |
 | 9 | `CHANGELOG.md` | Version bump documented |
 

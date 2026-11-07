@@ -2,25 +2,7 @@
 
 Self-hosted electronic signature platform — DocuSign / Adobe Sign alternative. Upload PDF/DOCX, define signing roles, send to signers, audit trail, certificates. GDPR-friendly since everything stays on your infrastructure.
 
-## Open findings
-
-The OpenSign images ship with 29 CRITICAL vulnerabilities (web image) and 26
-(server image) that have published fixes. Both are built on an early-2025 Node
-22 Debian base and carry outdated ImageMagick, GnuTLS, OpenSSL, Brotli, Perl and
-`tar`, and the server image Next.js 16.2.3 and `proxy-addr`. Upstream publishes
-only rolling `main` builds, and the newest one still uses that base (upstream
-issue OpenSignLabs/OpenSign#2323). The MongoDB image carries one finding in its
-`gosu` start-up helper (CVE-2025-68121, Go TLS), which opens no TLS connection.
-
-**Risk:** the server converts uploaded documents, so parser flaws may be
-reachable; which packages OpenSign actually calls has not been checked. Keep
-OpenSign behind authentication, limit who can upload, and watch for a build on
-a current Node base.
-
-Separately from the image scan, upstream has an open report of a file
-authorisation flaw in the application itself (CVE-2026-72688,
-OpenSignLabs/OpenSign#2324, reproduced on v3.0.1); check its status before
-exposing the stack.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -178,3 +160,23 @@ Without a working mail config, signature request emails do not go out and the fl
 
 - **Zammad → OpenSign**: customer service request triggers an NDA or contract signing. Zammad webhook → n8n → OpenSign REST API (`POST /api/contract`).
 - **Kimai → OpenSign**: end-of-project sign-off on hours delivered. Manual export from Kimai + upload to OpenSign template.
+
+## Open findings
+
+The OpenSign images ship with 29 CRITICAL vulnerabilities (web image) and 26
+(server image) that have published fixes. Both are built on an early-2025 Node
+22 Debian base and carry outdated ImageMagick, GnuTLS, OpenSSL, Brotli, Perl and
+`tar`, and the server image Next.js 16.2.3 and `proxy-addr`. Upstream publishes
+only rolling `main` builds, and the newest one still uses that base (upstream
+issue OpenSignLabs/OpenSign#2323). The MongoDB image carries one finding in its
+`gosu` start-up helper (CVE-2025-68121, Go TLS), which opens no TLS connection.
+
+**Risk:** the server converts uploaded documents, so parser flaws may be
+reachable; which packages OpenSign actually calls has not been checked. Keep
+OpenSign behind authentication, limit who can upload, and watch for a build on
+a current Node base.
+
+Separately from the image scan, upstream has an open report of a file
+authorisation flaw in the application itself (CVE-2026-72688,
+OpenSignLabs/OpenSign#2324, reproduced on v3.0.1); check its status before
+exposing the stack.

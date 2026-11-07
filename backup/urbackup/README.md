@@ -10,11 +10,7 @@ This is the other half of [`backup/`](../README.md). [Borgmatic](../borgmatic/) 
 | Runs | on the host | in Docker, here |
 | Restore | files and databases | files, plus whole-disk on Windows |
 
-## Open findings
-
-The pinned image, `uroni/urbackup-server:2.5.x`, ships with 4 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and perl. The newest build, of 2026-08-30 (2.5.38), has not been rebuilt by upstream.
-
-**Risk:** neither package is part of the backup protocol; brotli matters only if the server decompresses brotli data from a hostile server. Watch for the next build.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Try it locally
 
@@ -161,3 +157,9 @@ Restore from a bootable Debian-based CD/USB, for Windows clients only.
 - **Whole-disk image backup is Windows-only.** macOS and Linux clients back up files.
 - **The container image is author-maintained, not an official release** — the project distributes packages, not containers. See [`UPSTREAM.md`](UPSTREAM.md).
 - **Rolling upstream tags.** `2.5.x` moves, so the pin is a digest and must be re-resolved on each upgrade.
+
+## Open findings
+
+The pinned image, `uroni/urbackup-server:2.5.x`, ships with 4 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and perl. The newest build, of 2026-08-30 (2.5.38), has not been rebuilt by upstream.
+
+**Risk:** neither package is part of the backup protocol; brotli matters only if the server decompresses brotli data from a hostile server. Watch for the next build.

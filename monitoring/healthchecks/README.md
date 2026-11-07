@@ -2,6 +2,8 @@
 
 Self-hosted cron / scheduled-task monitoring. Each monitored job gets a unique URL — the job pings that URL on schedule, and Healthchecks alerts you (email, webhook, Slack, Discord, ntfy, etc.) when an expected ping doesn't arrive.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:

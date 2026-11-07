@@ -7,15 +7,7 @@ worker and scheduler, a one-shot initializer, PostgreSQL and Valkey — the seve
 services of upstream's compose. Upstream:
 [DefectDojo](https://github.com/DefectDojo/django-DefectDojo).
 
-## Open findings
-
-The pinned image, `defectdojo/defectdojo-django:3.5.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: certifi still trusts revoked eMudhra intermediates, and Debian's kernel headers. 3.5.0 is the newest release.
-
-**Risk:** nothing runs the kernel headers; the certifi issue lets someone holding those keys intercept DefectDojo's outbound HTTPS from an on-path position. Watch for the next release.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -121,3 +113,13 @@ Valkey holds the task queue and a cache. Restore into an empty database with
 and run `docker compose up -d`; the initializer finds the schema in place. Without
 the original `dd_credential_aes_256_key.txt`, stored integration credentials cannot
 be decrypted.
+
+## Open findings
+
+The pinned image, `defectdojo/defectdojo-django:3.5.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: certifi still trusts revoked eMudhra intermediates, and Debian's kernel headers. 3.5.0 is the newest release.
+
+**Risk:** nothing runs the kernel headers; the certifi issue lets someone holding those keys intercept DefectDojo's outbound HTTPS from an on-path position. Watch for the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

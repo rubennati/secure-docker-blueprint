@@ -5,11 +5,7 @@ can extend and a GraphQL and REST API for all of it. Server and worker from one
 image, with PostgreSQL and Redis — the four services upstream's own compose runs.
 Upstream: [Twenty](https://github.com/twentyhq/twenty).
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -124,3 +120,9 @@ Redis holds only queues and caches. Restore into an empty database with `psql`,
 unpack the archive, restore the `1000:1000` ownership on `volumes/storage`, and run
 `docker compose up -d`. Without the original encryption key, stored connection
 credentials cannot be decrypted.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

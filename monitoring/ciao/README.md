@@ -9,11 +9,7 @@ It sits beside [Uptime Kuma](../uptime-kuma/) and [Gatus](../gatus/) as the
 smallest of the three: checks are created in the interface like Kuma's, while
 the whole stack stays one container.
 
-## Open findings
-
-The pinned image, `brotandgames/ciao:1.12.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: Rails Active Storage, the Ruby json gem, and Debian's perl. 1.12.0 is the newest release.
-
-**Risk:** Ciao does not handle file attachments, which the Active Storage issue needs; the json issue needs a parse option whose use here was not checked. Keep the stack on `access-vpn` and watch for the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -146,3 +142,9 @@ sqlite_databases:
 Restore: stop the container, put `volumes/db` back, keep it owned by uid 1000,
 start it. The signing key lives in `.secrets/`, not in the database — restore
 both, or every session cookie issued before the restore stops working.
+
+## Open findings
+
+The pinned image, `brotandgames/ciao:1.12.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: Rails Active Storage, the Ruby json gem, and Debian's perl. 1.12.0 is the newest release.
+
+**Risk:** Ciao does not handle file attachments, which the Active Storage issue needs; the json issue needs a parse option whose use here was not checked. Keep the stack on `access-vpn` and watch for the next release.

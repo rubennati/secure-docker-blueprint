@@ -8,6 +8,8 @@ It is the receiving end of the alerting chain described in
 [`../README.md`](../README.md#alerting) — every service in this category can
 reach it, which is what makes it usable as the single channel across all of them.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Where to run this
 
 **Not next to the services it receives from.** When the monitored host stops, its

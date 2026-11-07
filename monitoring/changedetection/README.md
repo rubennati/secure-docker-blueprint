@@ -2,11 +2,7 @@
 
 Self-hosted website content change detection. Different axis from uptime monitoring — answers "what changed on this page" instead of "is it up". Good for: restock alerts, price drops, ToS/policy diff tracking, external-dependency defacement detection.
 
-## Open findings
-
-The image, `ghcr.io/dgtlmoon/changedetection.io:0.70.1`, carries one CRITICAL finding in the Rust `zip` library bundled with Selenium's driver manager (CVE-2026-115905). It is the newest release.
-
-**Risk:** that tool only unpacks downloaded browser drivers, which this stack does not use. Move to the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -134,3 +130,9 @@ configure.
 - **Diff storage grows fast** with high-churn pages — set "Max snapshots" per watch.
 - **JS-heavy sites need the optional browser service** — without it, you get the raw HTML which may be a near-empty SPA shell.
 - **Respect rate limits + ToS** — watching sites at high frequency can get you blocked or violate their ToS. Default interval is hours, not seconds, for a reason.
+
+## Open findings
+
+The image, `ghcr.io/dgtlmoon/changedetection.io:0.70.1`, carries one CRITICAL finding in the Rust `zip` library bundled with Selenium's driver manager (CVE-2026-115905). It is the newest release.
+
+**Risk:** that tool only unpacks downloaded browser drivers, which this stack does not use. Move to the next release.

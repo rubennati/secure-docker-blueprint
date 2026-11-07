@@ -2,6 +2,8 @@
 
 Standalone Beszel agent for remote hosts. Deploy this on each additional host that a central [Beszel hub](../beszel/) should monitor.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## When you need this
 
 - Beszel hub runs on Host A, you want to monitor Host B, C, D

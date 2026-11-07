@@ -3,6 +3,8 @@
 Security-focused edge gateway for Docker-first servers.
 Secure defaults, composable policies, fast incident response.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Choose your task
 
 | Task | Read |

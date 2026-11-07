@@ -4,24 +4,7 @@ Accounting for small businesses: invoices, bills, customers, vendors, bank
 accounts and reports. Laravel on Apache, with MariaDB. Upstream:
 [Akaunting](https://github.com/akaunting/akaunting).
 
-## Open findings
-
-The pinned image, `akaunting/akaunting:3.3.0-v`, carries 1 CRITICAL finding
-the image scan reports, CVE-2026-99083 in Debian's kernel headers package. A
-second one sits inside the application archive the image unpacks at start,
-which the scanner does not read: Laravel 10.50.3 (CVE-2026-114509, an API token
-authentication bypass), fixed only in Laravel 12 and 13. Akaunting 3.3.0 is the
-newest release and is still built on Laravel 10.
-
-**Risk:** nothing in the container runs the kernel headers. The Laravel flaw
-concerns the `token` API guard, which Akaunting defines; whether any route uses
-it has not been checked, so treat it as possibly reachable. Keep the stack on
-the shipped `access-vpn` default and watch for an Akaunting release on a newer
-Laravel.
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Licence limit — read this first
 
@@ -172,3 +155,22 @@ docker compose up -d
 Without the original `APP_KEY` the encrypted values in the database cannot be
 read — which is why `ops/install.sh` refuses a second run: the installer writes a
 new key every time.
+
+## Open findings
+
+The pinned image, `akaunting/akaunting:3.3.0-v`, carries 1 CRITICAL finding
+the image scan reports, CVE-2026-99083 in Debian's kernel headers package. A
+second one sits inside the application archive the image unpacks at start,
+which the scanner does not read: Laravel 10.50.3 (CVE-2026-114509, an API token
+authentication bypass), fixed only in Laravel 12 and 13. Akaunting 3.3.0 is the
+newest release and is still built on Laravel 10.
+
+**Risk:** nothing in the container runs the kernel headers. The Laravel flaw
+concerns the `token` API guard, which Akaunting defines; whether any route uses
+it has not been checked, so treat it as possibly reachable. Keep the stack on
+the shipped `access-vpn` default and watch for an Akaunting release on a newer
+Laravel.
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

@@ -7,6 +7,8 @@ either drops every message silently or refuses to start, and with a sink in
 place the confirmation, the password reset and the reminder become readable
 instead of vanishing.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:
