@@ -167,8 +167,10 @@ def split_ref(image: str) -> tuple[str, str, str]:
 # Tag shapes
 # ---------------------------------------------------------------------------
 
+# Each repetition of the prefix group ends in a separator, so a run of letters
+# can be split only one way and matching stays linear (no nested `+…*`).
 SHAPE = re.compile(
-    r"^(?P<prefix>(?:[A-Za-z]+[-_.]?)*)(?P<core>\d+(?:\.\d+)*)(?P<suffix>.*)$")
+    r"^(?P<prefix>(?:[A-Za-z]+[-_.])*[A-Za-z]*)(?P<core>\d+(?:\.\d+)*)(?P<suffix>.*)$")
 HASH_SUFFIX = re.compile(r"^-[0-9a-f]{7,40}$")
 REVISION_SUFFIX = re.compile(r"^-(\d+)$")
 
@@ -495,24 +497,24 @@ def render_markdown(rows: list[dict], now: datetime, scanned: bool) -> str:
     lines = [
         "# Stack status",
         "",
-        f"Generated {now.strftime('%Y-%m-%d %H:%M')} UTC by "
-        "[`scripts/ci/upstream-status.py`]"
-        f"({REPO_URL}/blob/main/scripts/ci/upstream-status.py) in the weekly Trivy run. "
-        "This issue is overwritten on every run; it reports and decides nothing.",
+        (f"Generated {now.strftime('%Y-%m-%d %H:%M')} UTC by "
+         "[`scripts/ci/upstream-status.py`]"
+         f"({REPO_URL}/blob/main/scripts/ci/upstream-status.py) in the weekly Trivy run. "
+         "This issue is overwritten on every run; it reports and decides nothing."),
         "",
-        f"{len(rows)} stacks · {behind} with a newer upstream version · "
-        f"{undetermined} not determinable · "
-        + (f"{with_critical} with fixable CRITICAL findings" if scanned
-           else "findings not available in this run"),
+        (f"{len(rows)} stacks · {behind} with a newer upstream version · "
+         f"{undetermined} not determinable · "
+         + (f"{with_critical} with fixable CRITICAL findings" if scanned
+            else "findings not available in this run")),
         "",
-        "- **Pinned** — the tag of the stack's primary image in `main`, and when that "
-        "image was published.",
-        "- **Newest** — the newest upstream tag in the same shape as the pin "
-        "(same prefix, number of parts and suffix), and when it was published. "
-        "Official images rebuilt for a base update carry the build date.",
-        "- **CRITICAL · HIGH** — findings with a published fix, in every image of the "
-        "stack. A linked count means the stack README assesses the CRITICAL ones "
-        "under *Open findings*.",
+        ("- **Pinned** — the tag of the stack's primary image in `main`, and when that "
+         "image was published."),
+        ("- **Newest** — the newest upstream tag in the same shape as the pin "
+         "(same prefix, number of parts and suffix), and when it was published. "
+         "Official images rebuilt for a base update carry the build date."),
+        ("- **CRITICAL · HIGH** — findings with a published fix, in every image of the "
+         "stack. A linked count means the stack README assesses the CRITICAL ones "
+         "under *Open findings*."),
         "",
     ]
     for cat in lifecycle.CATEGORIES:

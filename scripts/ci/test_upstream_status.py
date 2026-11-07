@@ -67,6 +67,11 @@ class Shape(unittest.TestCase):
         self.assertEqual(status.newest("alpine-7.0.32", ["alpine-7.0.32", "alpine-8.0.0", "ubuntu-8.0.0"]),
                          "alpine-8.0.0")
 
+    def test_a_long_letter_run_does_not_backtrack(self):
+        """CodeQL py/redos: a prefix of many letters must fail fast, not exponentially."""
+        self.assertIsNone(status.shape("A" * 5000 + "!"))
+        self.assertIsNone(status.shape("a-" * 3000 + "x"))
+
     def test_no_version_is_not_comparable(self):
         self.assertIsNone(status.newest("latest", ["latest", "1.0.0"]))
         self.assertIsNone(status.newest("main", ["main"]))
