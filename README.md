@@ -2,11 +2,14 @@
 
 # Secure Docker Blueprint
 
-**Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
+**Self-host on Docker — secure from the first start.**
 
-Hardened deployment configurations for **120+ self-hosting stacks** — a consistent
-security baseline, file-based secret patterns, Traefik routing and network
-isolation, with CrowdSec available as an optional security layer.
+Pick the apps you need from **120+ ready-made setups**. Each one runs behind the same
+protection: HTTPS and access control through Traefik, isolated networks, secrets in
+files, and CrowdSec if you want it.
+
+The protection sits around the apps, not inside them — the images stay as upstream
+ships them. Every default can be changed.
 
 For applications you build yourself, [`development/`](development/) provides two
 deployment patterns: a **static site** and a **web API**, following the same
