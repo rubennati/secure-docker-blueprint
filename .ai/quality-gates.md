@@ -81,8 +81,9 @@ protection leaves every pull request waiting on a check that can never report.
 
 All ten jobs above are required on a pull request into **either** protected
 branch, `Checker coverage`, `Docs QA` and `Workflow supply chain` included; `main`
-requires two more, the IaC config scan and the image CVE scan of `trivy.yml` —
-twelve in all ([`decisions.md`](decisions.md#dec-070)). Both rulesets also require
+requires one more, the IaC config scan of `trivy.yml` — eleven in all
+([`decisions.md`](decisions.md#dec-079)). The image CVE scan runs on a pull request
+into `main` and reports; a finding in an upstream image does not block. Both rulesets also require
 the branch to be up to date before merging, so the run that
 gates a merge is the run against the integration that lands. Neither has a
 standing bypass actor.

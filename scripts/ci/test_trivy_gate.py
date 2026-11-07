@@ -1,8 +1,10 @@
-"""Tests for the CRITICAL gate over Trivy's per-image reports.
+"""Tests for the CRITICAL report over Trivy's per-image reports.
 
-The gate exists because the scan blocked nothing. Its whole value is that a
-finding nobody has accounted for cannot pass, so the cases below are mostly
-about what must *fail*: an unrecorded CVE, and a report that could not be read.
+A finding in an upstream image is reported and never blocks (DEC-079): an
+unrecorded CVE and an image that stopped scanning are named, and the script
+exits 0. What still fails is what the repository itself got wrong or cannot
+vouch for: an exception without its reason, a report that could not be read,
+and an image that left no trace at all.
 """
 
 import importlib.util
@@ -104,7 +106,7 @@ class Baseline(unittest.TestCase):
 
 
 class Gate(unittest.TestCase):
-    """What must fail: an unrecorded finding, and an exception without its reason."""
+    """An unrecorded finding is reported; an exception without its reason fails."""
 
     def _run(self, tmp, exceptions, *extra):
         import subprocess
@@ -117,11 +119,12 @@ class Gate(unittest.TestCase):
                "--results-dir", str(res), "--baseline", str(base), *extra]
         return subprocess.run(cmd, capture_output=True, text=True), base
 
-    def test_an_unrecorded_finding_fails(self):
+    def test_an_unrecorded_finding_is_reported_not_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:
             r, _ = self._run(tmp, {})
-            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertEqual(r.returncode, 0, r.stdout)
             self.assertIn("`postgres` — CVE-1", r.stdout)
+            self.assertIn("not recorded — reported, not blocking", r.stdout)
 
     def test_a_recorded_exception_passes(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -176,10 +179,10 @@ class Reach(unittest.TestCase):
             cmd += ["--images-total", str(images_total)]
         return subprocess.run(cmd, capture_output=True, text=True)
 
-    def test_an_unacknowledged_unscanned_image_fails(self):
+    def test_an_unacknowledged_unscanned_image_is_reported_not_blocking(self):
         with tempfile.TemporaryDirectory() as tmp:
             r = self._run(tmp, failures="registry.example.com/app:1\tunauthorized\n")
-            self.assertEqual(r.returncode, 1, r.stdout)
+            self.assertEqual(r.returncode, 0, r.stdout)
             self.assertIn("not acknowledged", r.stdout)
 
     def test_an_acknowledged_one_passes_and_is_still_named(self):

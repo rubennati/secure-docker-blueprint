@@ -106,9 +106,9 @@ reach `main` through a pull request from `dev`. Both branches carry an active
 ruleset that rejects direct pushes and requires the ten repository CI jobs to
 pass against the current state of the target branch before a merge is possible,
 so work-in-progress lives on the short-lived branch rather than on either
-protected branch. `main` requires two checks more — Trivy's IaC config scan and
-its image CVE scan — so a pull request from `dev` cannot land with a red image
-scan.
+protected branch. `main` requires one check more, Trivy's IaC config scan. Its
+image CVE scan runs on the pull request from `dev` as well and reports; a finding
+in an upstream image does not block the merge (DEC-079).
 
 Neither ruleset has a standing bypass actor. CodeQL runs on both branches as a
 reporting check: it surfaces findings and does not block a merge.

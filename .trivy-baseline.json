@@ -1,5 +1,5 @@
 {
-  "_comment": "CRITICAL findings that stay in a pinned image because no upstream release removes them yet. One entry per image repository, written by hand: the stacks that use it, why the pin cannot move, the risk, and the findings. Every other CRITICAL fails the scan (scripts/ci/trivy-gate.py). The goal is an empty list.",
+  "_comment": "CRITICAL findings that stay in a pinned image because no upstream release removes them yet. One entry per image repository, written by hand: the stacks that use it, why the pin cannot move, the risk, and the findings. Every other CRITICAL is reported by the scan (scripts/ci/trivy-gate.py). The goal is an empty list.",
   "exceptions": {
     "adminer": {
       "stacks": [

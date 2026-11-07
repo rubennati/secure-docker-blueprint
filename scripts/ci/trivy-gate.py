@@ -1,14 +1,22 @@
 #!/usr/bin/env python3
-"""Fail the image scan on a CRITICAL finding that is not a recorded exception.
+"""Report CRITICAL findings against the recorded exceptions; block on none of them.
 
 The repository does not build the images it pins, so a finding is fixed by
 moving the pin to an upstream release that no longer carries it. Where no such
 release exists, the finding stays — and then it is an exception, recorded per
 image in `.trivy-baseline.json` with the stacks that use the image, the reason
-the pin cannot move and the risk of running it as it is. The gate fails on
+the pin cannot move and the risk of running it as it is.
+
+A finding in an upstream image is information for whoever uses or updates the
+stack, not a defect in this repository (DEC-079), so this script reports
 
 - a CRITICAL finding that is not listed under its image's exception, and
-- an exception without its stacks, its reason or its risk.
+- an image that stopped being scannable and is not acknowledged,
+
+and exits 0 for both. It fails only on what the repository itself got wrong or
+cannot vouch for: an exception without its stacks, reason, risk or findings —
+the baseline is written by hand here — a report that could not be read, and an
+image that discovery resolved and that left neither a report nor a failure.
 
 There is no way to record what a scan found in bulk: an exception is a
 judgement about one image, written by hand. `--prune` only removes what the
@@ -24,13 +32,13 @@ README, and `lifecycle-report.py` marks it in LIFECYCLE.md, so whoever installs
 the stack from the blueprint sees that it ships with known findings.
 
 Usage:
-  trivy-gate.py --results-dir DIR              # gate: exit 1 on unrecorded
+  trivy-gate.py --results-dir DIR              # report; exit 1 only on own errors
   trivy-gate.py --results-dir DIR --prune      # drop findings the scan no longer finds
   trivy-gate.py --results-dir DIR --out FILE   # also write a GitHub summary
 
-HIGH findings are counted by the summariser and are deliberately not gated
-here. The decision names CRITICAL as the line, and a gate that fires on
-everything is one nobody reads.
+HIGH findings are counted by the summariser and by upstream-status.py, not
+compared against exceptions here. The decision names CRITICAL as the line, and
+a list that names everything is one nobody reads.
 """
 
 import argparse
@@ -112,7 +120,7 @@ def render_baseline(exceptions: dict[str, dict], unscanned: dict[str, str]) -> s
             "CRITICAL findings that stay in a pinned image because no upstream release "
             "removes them yet. One entry per image repository, written by hand: the "
             "stacks that use it, why the pin cannot move, the risk, and the findings. "
-            "Every other CRITICAL fails the scan (scripts/ci/trivy-gate.py). The goal "
+            "Every other CRITICAL is reported by the scan (scripts/ci/trivy-gate.py). The goal "
             "is an empty list."
         ),
         "exceptions": {
@@ -122,7 +130,7 @@ def render_baseline(exceptions: dict[str, dict], unscanned: dict[str, str]) -> s
         },
         # Repositories the scanner cannot reach, each with why. An unscanned image
         # contributes no findings, so one that is not listed here would silently
-        # shrink what the gate covers — it fails instead.
+        # shrink what the scan covers — it is reported instead.
         "unscanned": dict(sorted(unscanned.items())),
     }
     return json.dumps(payload, indent=2, sort_keys=False, ensure_ascii=False) + "\n"
@@ -196,7 +204,7 @@ def main() -> int:
             if line.strip():
                 unscanned.append(line.split("\t", 1)[0])
 
-    lines = ["## Trivy CRITICAL gate", ""]
+    lines = ["## Trivy CRITICAL findings", ""]
     lines.append(f"{total_found} CRITICAL finding(s) in this scan · "
                  f"{sum(len(c) for c in known.values())} recorded as exceptions · "
                  f"**{total_new} not recorded**")
@@ -223,10 +231,10 @@ def main() -> int:
     if unexpected:
         lines.append("### An image stopped being scannable")
         lines.append("")
-        lines.append("An unscanned image contributes no findings, so leaving this to a "
-                     "summary line would let the gate quietly cover less than it did "
-                     "yesterday. Fix the access, or record it under `unscanned` in "
-                     "`.trivy-baseline.json` with the reason.")
+        lines.append("An unscanned image contributes no findings, so the counts above "
+                     "cover less than they did. Fix the access, or record it under "
+                     "`unscanned` in `.trivy-baseline.json` with the reason. Reported, "
+                     "not blocking.")
         lines.append("")
         lines += [f"- `{image}`" for image in unexpected]
         lines.append("")
@@ -249,12 +257,13 @@ def main() -> int:
         lines.append("")
 
     if new:
-        lines.append("### Not recorded — this is what fails the gate")
+        lines.append("### Not recorded")
         lines.append("")
         lines.append("Each is a CRITICAL with a published fix that the repository has not "
                      "yet accounted for. Raise the pin to an upstream release that "
                      "removes it. Only if none exists, list it under the image's "
-                     "exception with the reason and the risk, and mark the stack's README.")
+                     "exception with the reason and the risk, and mark the stack's README. "
+                     "Reported, not blocking.")
         lines.append("")
         for repo, cves in sorted(new.items()):
             lines.append(f"- `{repo}` — {', '.join(cves)}")
@@ -263,7 +272,7 @@ def main() -> int:
     if stale:
         lines.append("### Recorded but no longer found")
         lines.append("")
-        lines.append("Remove them with `--prune`. These do not fail the gate.")
+        lines.append("Remove them with `--prune`.")
         lines.append("")
         for repo, cves in sorted(stale.items()):
             lines.append(f"- `{repo}` — {', '.join(cves)}")
@@ -282,15 +291,15 @@ def main() -> int:
         print(f"  ❌ {unaccounted} image(s) produced neither a report nor a failure — "
               "discovery and scanning disagree, so coverage cannot be established")
         return 1
-    if unexpected:
-        print(f"  ❌ {len(unexpected)} image(s) did not scan and are not acknowledged")
-        return 1
     if bad:
         print(f"  ❌ {len(bad)} exception(s) without stacks, reason, risk or findings")
         return 1
+    if unexpected:
+        print(f"  ⚠️ {len(unexpected)} image(s) did not scan and are not acknowledged — "
+              "reported, not blocking")
     if new:
-        print(f"  ❌ {total_new} CRITICAL finding(s) not recorded")
-        return 1
+        print(f"  ⚠️ {total_new} CRITICAL finding(s) not recorded — reported, not blocking")
+        return 0
     if unscanned:
         print(f"  ✅ every CRITICAL finding is a recorded exception ({total_found}) — "
               f"across the images that scanned; {len(unscanned)} did not")
