@@ -213,7 +213,8 @@ Run the full Consistency Chain first, then:
 | 5 | All `✅` entries | Were any broken by dependency updates since last test? |
 | 6 | Secret scan | Run CI by `workflow_dispatch` on `dev`: gitleaks scans the whole history. A finding is removed, or listed by fingerprint in `.gitleaksignore` with its reason, before the tag |
 | 7 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
-| 8 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
+| 8 | `dev` | After the release pull request into `main` is merged, merge `main` back into `dev` through a pull request. `main` requires a pull request branch to be up to date with it, and without this the next release pull request from `dev` shows as out of date because of the previous release's merge commit |
+| 9 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 
 ---
 
