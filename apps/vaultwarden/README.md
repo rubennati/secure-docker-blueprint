@@ -81,7 +81,7 @@ sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 ### Step 4: Generate Admin Token (Argon2 Hash)
 
 ```bash
-docker run --rm -it vaultwarden/server:1.37.0 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.37.5 /vaultwarden hash
 ```
 
 Enter a strong password when prompted. Copy the `$argon2id$...` output.
@@ -276,12 +276,18 @@ mariadb_databases:
       password: "{credential file /srv/docker/apps/vaultwarden/.secrets/db_pwd.txt}"
 ```
 
-**The credential file does not exist yet.** This stack holds `DB_PASSWORD` in
-`.env`. Vaultwarden does support `_FILE`, so this is not an upstream dead end —
-the obstacle is that the password sits inside `DATABASE_URL`, a connection
-string, so the secret would have to carry the whole URL or an entrypoint would
-have to assemble it. Until that happens, supply the value to borgmatic another
-way rather than letting two systems read the same password from `.env`.
+**Write the credential file before the first backup.** This stack holds
+`DB_PASSWORD` in `.env`, not in `.secrets/`: the password sits inside
+`DATABASE_URL`, a connection string, so a secret would have to carry the whole URL
+or an entrypoint would have to assemble it. Borgmatic reads credentials from a
+file, not from a `.env` entry, so write one from `.env` in the stack directory (the
+variable is not set in your shell, so a `printf` of it writes an empty file):
+
+```bash
+mkdir -p .secrets && grep '^DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\n' > .secrets/db_pwd.txt && chmod 600 .secrets/db_pwd.txt
+```
+
+Write it again whenever `DB_PASSWORD` changes.
 
 **`volumes/data/rsa_key.*` signs the authentication tokens.** A database restored
 without those files leaves every client unable to log in, with vaults that are
