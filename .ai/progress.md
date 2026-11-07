@@ -27,6 +27,7 @@ session-level detail is in
 | v0.9.5 | 2026-10-30 | The middleware model — four positions on every router, the migration from v0.9.4 run once on a test installation; Traefik published on IPv4 unless the network carries IPv6 |
 | v0.9.6 | 2026-10-31 | Current pins, a recorded baseline, the update programme — npm advisories closed, seven pins at the newest patch release (111 recorded CRITICAL pairs removed), the inventory of all 201 pins with seven batches; no host run |
 | v0.9.7 | 2026-11-05 | The ingress programme, verified on a host — bindings per address family, an edge network per stack, declared trusted ranges, the auth posture of every stack and the rendered host ruleset, measured on a dual-stack lab host; fourteen stacks `ops-proven` |
+| v0.9.8 | 2026-11-07 | Hosts carry only their stacks — a partial checkout with a stack list and `scripts/stacks.sh`, the VPN as a recommendation, a plain README headline; no stack or pin changed, no host run |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
