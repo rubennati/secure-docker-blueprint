@@ -29,6 +29,12 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Changed
 
+- **A VPN is recommended, not required.** The README requirements and the Traefik setup
+  no longer read as if a VPN were a prerequisite. Stack defaults are unchanged — most
+  start on `access-vpn` — and the shipped configuration uses Tailscale; without a VPN, operators
+  admit their own networks through `TRUSTED_RANGES` and `access-trusted`. The Traefik
+  dashboard stays on `access-vpn` and is then closed, which no setup step depends on.
+
 - **Documentation: align setup, verification and reader paths.** Traefik setup
   names network, certificate and VPN prerequisites; lifecycle tables separate
   current pins from recorded test versions. Security exceptions, access defaults,
