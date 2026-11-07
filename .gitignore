@@ -9,6 +9,11 @@ inbox/
 archive/
 
 # -----------------------------------------
+# Host stack selection (scripts/stacks.sh; stacks.example is the template)
+# -----------------------------------------
+/stacks
+
+# -----------------------------------------
 # Environment files (contain secrets)
 # -----------------------------------------
 .env

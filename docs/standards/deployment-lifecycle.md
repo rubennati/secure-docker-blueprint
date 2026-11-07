@@ -99,32 +99,40 @@ real path.
 sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker   # an empty directory you own
 git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
 cd /srv/docker
-git sparse-checkout set core/traefik apps/whoami docs/standards scripts
 git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+git sparse-checkout set scripts docs/standards
+cp stacks.example stacks
 ```
 
-The four paths are the base every host needs:
+At this point the host holds the files at the repository root, the scripts and the
+standards. `stacks` is the host's own list of stacks, one path per line; Git ignores it,
+so it survives every update. The template starts with the base most hosts need:
 
 | Path | Why |
 |---|---|
 | `core/traefik` | HTTPS ingress for every stack that publishes a domain |
+| `core/crowdsec` | threat detection; it blocks nothing until a remediation is enabled |
 | `apps/whoami` | the test target the Traefik and CrowdSec checks run against |
-| `docs/standards` | the rules the stack documentation links to |
-| `scripts` | `overview.sh` and `host-files.sh` |
 
-The files at the repository root — `README.md`, `CHANGELOG.md`, `LIFECYCLE.md` and the
-rest — are always included. Add the stacks this host runs, now or later:
+Edit the list, then check it out:
 
 ```bash
-git sparse-checkout add core/crowdsec apps/vaultwarden backup/borgmatic
-git sparse-checkout list                 # what this host carries
+scripts/stacks.sh apply                  # check out what stacks lists
+scripts/stacks.sh status                 # release, and where file and checkout differ
 ```
 
-**Taking a stack out deletes its directory, including `.env`, `.secrets/` and
-`volumes/`.** Git removes a directory that leaves the partial checkout together with the
-files it ignores, and `volumes/` holds the stack's data. Before removing a path from the
-list, stop the stack and back up or move its data; a stack that is merely unused can
-stay in the list.
+`scripts` and `docs/standards` are always checked out: the first holds `stacks.sh`,
+`overview.sh` and `host-files.sh`, the second the rules the stack documentation links
+to. Every other line is a choice, the template's included. A path that does not exist in
+the checked-out release is refused, and nothing changes.
+
+**Removing a line removes the stack's directory.** Git deletes a directory that leaves
+the partial checkout together with the files it ignores — `.env`, `.secrets/` and
+`volumes/`, which holds the stack's data. `stacks.sh apply` therefore refuses while a
+stack it would remove still has such files, lists them and changes nothing. Stop the
+stack, back up or move its data, delete it, then apply again. A stack that is merely
+unused can stay in the list. Plain Git offers no such check: `git sparse-checkout set`
+or `add` with a shorter list deletes without asking.
 
 Deploy from a tag, not from the default branch. The default branch is where work lands
 between releases: it is checked by CI on every change, but the combination of stacks on it
@@ -194,14 +202,22 @@ stacks need a dump rather than a file copy.
 ```bash
 git fetch --tags
 git tag --sort=-v:refname | head -n5                              # newest releases
-git log --oneline "$(git describe --tags --abbrev=0)"..<target>   # what it changes
-git diff --stat HEAD..<target> -- $(git sparse-checkout list)       # what changes in the stacks on this host
-git checkout <target>
+scripts/stacks.sh update <target>                                 # preview, confirm, take it
 ```
 
-On a full clone, drop the `-- $(git sparse-checkout list)` part; the diff then covers
-the whole repository. `git diff HEAD..<target> -- <stack>` shows one stack's change in
-full.
+`stacks.sh update` shows the files the release changes in the stacks on this host and
+nothing else, names any listed stack the release no longer contains — its directory
+and data stay — and asks before it checks the release out; `--yes` skips the question.
+It refuses while the checkout does not match `stacks` (run `apply` first) or while
+tracked files have been edited in place. `git diff HEAD..<target> -- <stack>` shows one
+stack's change in full.
+
+On a full clone the same steps are plain Git:
+
+```bash
+git log --oneline "$(git describe --tags --abbrev=0)"..<target>   # what it changes
+git checkout <target>
+```
 
 `.env`, `.secrets/` and `volumes/` are ignored by Git and survive the checkout. What
 changes underneath them is the compose files, the middleware and the defaults, so read

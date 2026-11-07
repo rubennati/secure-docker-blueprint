@@ -18,6 +18,15 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   Removing a path from a partial checkout deletes its directory including `.env`,
   `.secrets/` and `volumes/`; the deployment lifecycle warns about it.
 
+- **Stack list for hosts.** `stacks` at the repository root (template: `stacks.example`,
+  ignored by Git) lists the stacks a host runs, one path per line. `scripts/stacks.sh
+  apply` checks out exactly those paths plus `scripts` and `docs/standards`, refuses a
+  path the release does not contain, and refuses to remove a stack that still has
+  `.env`, `.secrets/`, `volumes/` or other local files. `scripts/stacks.sh update <tag>`
+  shows the changes to those stacks, names listed stacks the release no longer contains,
+  and asks before taking the release; `status` shows where file and checkout differ.
+  Covered by `scripts/ci/test_stacks.py`.
+
 ### Changed
 
 - **Documentation: align setup, verification and reader paths.** Traefik setup

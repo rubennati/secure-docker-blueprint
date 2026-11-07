@@ -80,24 +80,26 @@ resolver uses Cloudflare; HTTP-01 and TLS-ALPN-01 work with other DNS providers.
 The dashboard is VPN-only by default, so prepare a working VPN and DNS resolution
 from its clients before expecting dashboard access.
 
-A host checks out only the stacks it runs. The base is Traefik, the `whoami` test
-target, the standards and the scripts; `/srv/docker` is the recommended location, not a
-required one:
+A host checks out only the stacks it runs. `/srv/docker` is the recommended location,
+not a required one:
 
 ```bash
 sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker   # an empty directory you own
 git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
 cd /srv/docker
-git sparse-checkout set core/traefik apps/whoami docs/standards scripts
 git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+git sparse-checkout set scripts docs/standards
+cp stacks.example stacks                 # the stacks on this host, one per line
+scripts/stacks.sh apply                  # check out what stacks lists
 cd core/traefik
 cp .env.example .env
 ```
 
-Further stacks join with `git sparse-checkout add <path>`. Removing a path deletes its
-directory together with `.env` and `volumes/`; the
-[partial checkout](docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks)
-section explains this and how to preview an update for just these stacks.
+`stacks` starts with Traefik, CrowdSec and the `whoami` test target; add or remove lines
+and apply again. Apply refuses to remove a stack that still has `.env` or data, because
+Git would delete them with the directory. `scripts/stacks.sh update <tag>` previews a
+release for just these stacks before taking it — see
+[stacks on a host](docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks).
 
 Deploy from a tag rather than the default branch: `main` is where work lands between
 releases, and the combination of stacks on it at any moment is not one anybody has
@@ -128,7 +130,7 @@ monitoring/   monitoring and observability
 backup/       backup and recovery
 development/  reusable patterns for software you build yourself
 docs/         architecture and standards
-scripts/      CI checks and the overview script
+scripts/      CI checks, the overview script and the stack list tool
 site/         SecDockBlue source
 ```
 
