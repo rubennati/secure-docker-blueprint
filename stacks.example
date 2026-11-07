@@ -1,0 +1,21 @@
+# =============================================
+# Secure Docker Blueprint – stacks on this host
+# =============================================
+# Copy to `stacks` (ignored by Git) and keep one stack path per line.
+# `scripts/stacks.sh apply` checks out exactly these paths; `scripts/stacks.sh
+# update <tag>` previews and takes a release for them.
+#
+# `scripts` and `docs/standards` are always checked out and need no line.
+# Removing a line removes the stack from this host; apply refuses while the
+# stack still has .env, .secrets/, volumes/ or other local files.
+# =============================================
+
+core/traefik
+core/crowdsec
+apps/whoami
+
+# Examples — remove the # to add a stack:
+# apps/vaultwarden
+# apps/nextcloud
+# backup/borgmatic
+# monitoring/uptime-kuma
