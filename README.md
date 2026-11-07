@@ -80,13 +80,24 @@ resolver uses Cloudflare; HTTP-01 and TLS-ALPN-01 work with other DNS providers.
 The dashboard is VPN-only by default, so prepare a working VPN and DNS resolution
 from its clients before expecting dashboard access.
 
+A host checks out only the stacks it runs. The base is Traefik, the `whoami` test
+target, the standards and the scripts; `/srv/docker` is the recommended location, not a
+required one:
+
 ```bash
-git clone https://github.com/rubennati/secure-docker-blueprint.git
-cd secure-docker-blueprint
+sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker   # an empty directory you own
+git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
+cd /srv/docker
+git sparse-checkout set core/traefik apps/whoami docs/standards scripts
 git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
 cd core/traefik
 cp .env.example .env
 ```
+
+Further stacks join with `git sparse-checkout add <path>`. Removing a path deletes its
+directory together with `.env` and `volumes/`; the
+[partial checkout](docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks)
+section explains this and how to preview an update for just these stacks.
 
 Deploy from a tag rather than the default branch: `main` is where work lands between
 releases, and the combination of stacks on it at any moment is not one anybody has
