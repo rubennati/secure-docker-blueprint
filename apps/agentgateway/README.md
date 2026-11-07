@@ -5,6 +5,8 @@ providers and MCP servers, with routing, a web UI and a request log. Standalone 
 it needs no other stack, and any OpenAI-compatible or MCP backend can sit behind
 it. Upstream: [agentgateway](https://github.com/agentgateway/agentgateway).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

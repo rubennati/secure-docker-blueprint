@@ -7,6 +7,8 @@ comparison](../README.md#privileged-access--bastion-alternatives) for how
 it differs from Warpgate, JumpServer, ShellHub and Orion Belt — and read
 the license section below before choosing it.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## License — read this first
 
 Community Edition's compiled images (this one included) are under a

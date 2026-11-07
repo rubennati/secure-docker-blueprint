@@ -9,6 +9,8 @@ Where [vLLM](../vllm/) is built for throughput on a GPU host, Ollama is the
 simple option: one binary, models pulled by name, sensible defaults, and it
 works on a machine with no GPU at all.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

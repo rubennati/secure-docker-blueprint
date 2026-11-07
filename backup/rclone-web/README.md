@@ -5,6 +5,8 @@ sync jobs, serves and transfer statistics. `rclone gui` serves the interface —
 [Rclone Web](https://github.com/rclone/rclone-web), embedded in the rclone binary
 at build time — and rclone's remote control API beside it.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

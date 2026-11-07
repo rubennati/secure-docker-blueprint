@@ -8,6 +8,8 @@ This is the general-purpose end of [`monitoring/`](../README.md). Beszel gives
 you host and container figures with no configuration; this gives you every
 metric anything exposes, and asks you to say which.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

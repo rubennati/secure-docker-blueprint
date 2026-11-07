@@ -4,6 +4,8 @@ Docker management UI — the community edition of Portainer. Connects to the Doc
 
 Good fit for: visual inspection of containers, logs, volumes, networks; quick restart/exec/stop operations; image management. Less suited as the primary declarative deployment tool — for Git-driven stacks see [Dockhand](../dockhand/) instead.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Two services:

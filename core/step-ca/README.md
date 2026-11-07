@@ -4,11 +4,7 @@ Internal PKI: X.509 certificates, ACME, and optionally an SSH certificate
 authority, for machines and services *inside* this installation. Not a
 public-facing service.
 
-## Open findings
-
-The pinned image, `smallstep/step-ca:0.30.2`, ships with 4 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver in the `step` CLI, and Alpine's OpenSSL and brotli. 0.30.2 is the newest release, from March 2026.
-
-**Risk:** this stack uses the built-in badger database, the OpenSSL issue affects only 32-bit systems, and the CA does not use brotli. Watch for the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Public Web TLS vs. internal trust — read this first
 
@@ -168,6 +164,12 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [ ] The production compose's healthcheck against a real, DNS-resolvable `STEPCA_DNS_NAMES` — see UPSTREAM.md's known limitation; the local test used `localhost`, which trivially resolves and is not representative
 - [ ] The hardened offline-root init path, end to end
 - [ ] An actual client bootstrap and certificate issuance (X.509 and, if enabled, SSH) against a real host
+
+## Open findings
+
+The pinned image, `smallstep/step-ca:0.30.2`, ships with 4 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver in the `step` CLI, and Alpine's OpenSSL and brotli. 0.30.2 is the newest release, from March 2026.
+
+**Risk:** this stack uses the built-in badger database, the OpenSSL issue affects only 32-bit systems, and the CA does not use brotli. Watch for the next release.
 
 ## Details
 

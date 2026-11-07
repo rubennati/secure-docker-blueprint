@@ -2,11 +2,7 @@
 
 Open-source task management with kanban boards, to-do lists, Gantt views, and table view. Trello / Microsoft Planner alternative. Single binary image (API + frontend combined).
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Services
 
@@ -226,3 +222,9 @@ every active session — recoverable, but users are logged out without explanati
 - **DNS on self-hosted servers**: the container must be able to resolve the Authentik hostname. On a server with public DNS this works automatically. On test servers, add the hostname to `/etc/hosts` on the Docker host. See `docs/bugfixes/vikunja-openproject-2026-05-06.md` Bug 5.
 - **Authentik policy binding required**: the Vikunja application in Authentik must have at least one Group/User binding — without it Authentik returns 403 on the login endpoint.
 - **Postgres version**: pinned to `18-alpine`, the version upstream's CI tests and its Docker example uses. The move from 17 needs a dump and restore (UPSTREAM.md, Version notes).
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

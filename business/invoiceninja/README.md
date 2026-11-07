@@ -2,17 +2,7 @@
 
 Self-hosted invoicing, quotes, expenses, and time-tracking (Laravel / PHP-FPM).
 
-## Open findings
-
-The Invoice Ninja 5.13.53 image carries linux-libc-dev 6.12.113
-(CVE-2026-99083, the kernel's SMB server), and MySQL 8.4 carries CVE-2025-68121
-in its `gosu` start-up helper and certifi 2026.2.25 in MySQL Shell
-(GHSA-6q48-6c7w-9gw2). Each is the newest build of its line.
-
-**Risk:** linux-libc-dev holds kernel header files that nothing in the container
-runs; the running kernel is the host's. `gosu` opens no TLS connection, and the
-database server does not use MySQL Shell. These clear with upstream's next
-rebuilds.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Minimum requirements
 
@@ -393,6 +383,18 @@ docker compose logs mysql --tail=20         # DB startup and errors
 ```bash
 docker compose exec mysql mysql -u ninja -p ninja
 ```
+
+## Open findings
+
+The Invoice Ninja 5.13.53 image carries linux-libc-dev 6.12.113
+(CVE-2026-99083, the kernel's SMB server), and MySQL 8.4 carries CVE-2025-68121
+in its `gosu` start-up helper and certifi 2026.2.25 in MySQL Shell
+(GHSA-6q48-6c7w-9gw2). Each is the newest build of its line.
+
+**Risk:** linux-libc-dev holds kernel header files that nothing in the container
+runs; the running kernel is the host's. `gosu` opens no TLS connection, and the
+database server does not use MySQL Shell. These clear with upstream's next
+rebuilds.
 
 ## Details
 

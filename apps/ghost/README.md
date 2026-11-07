@@ -2,16 +2,7 @@
 
 Headless Node.js CMS focused on publishing, newsletters, and paid memberships. This setup runs Ghost with a dedicated MySQL 8 database and an external SMTP relay for member emails. ActivityPub (Fediverse/Mastodon integration) is optional via a separate overlay file.
 
-## Open findings
-
-The Ghost image and its MySQL 8.4 database both carry CVE-2025-68121 in the
-`gosu` start-up helper, built with Go 1.24.6. MySQL 8.4 also bundles certifi
-2026.2.25 in MySQL Shell (GHSA-6q48-6c7w-9gw2, distrusted emSign roots). Both
-are the newest builds of their lines, and MySQL 9.7 carries the same two.
-
-**Risk:** `gosu` only drops privileges when the container starts and opens no
-TLS connection, so the Go TLS flaw is not reached. The database server does not
-use MySQL Shell's Python. Both clear when upstream rebuilds with gosu 1.20.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -157,6 +148,17 @@ theme, which reads as a broken site rather than a partial restore.
 - **Email deliverability.** Ghost uses the `Mail-From` domain as-is. SPF/DKIM/DMARC for `GHOST_MAIL_FROM` must be configured at your DNS provider, otherwise member emails end up in spam.
 - **ActivityPub redirect loop may persist in existing browser sessions.** Browsers can cache redirect chains. If the ActivityPub UI shows redirect errors after a config change, open a fresh private/incognito window to verify — if it works there, clear the browser cache for the domain.
 - **ActivityPub startup error on boot.** If Ghost starts before the ActivityPub service is fully ready, a `No webhook secret found` warning appears in the log. With `depends_on: condition: service_healthy` this should not occur in normal operation.
+
+## Open findings
+
+The Ghost image and its MySQL 8.4 database both carry CVE-2025-68121 in the
+`gosu` start-up helper, built with Go 1.24.6. MySQL 8.4 also bundles certifi
+2026.2.25 in MySQL Shell (GHSA-6q48-6c7w-9gw2, distrusted emSign roots). Both
+are the newest builds of their lines, and MySQL 9.7 carries the same two.
+
+**Risk:** `gosu` only drops privileges when the container starts and opens no
+TLS connection, so the Go TLS flaw is not reached. The database server does not
+use MySQL Shell's Python. Both clear when upstream rebuilds with gosu 1.20.
 
 ## Details
 

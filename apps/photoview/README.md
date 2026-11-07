@@ -2,11 +2,7 @@
 
 Self-hosted photo gallery focused on RAW processing, EXIF-driven organization, and face recognition. Go-based server with MariaDB backend.
 
-## Open findings
-
-The pinned image, `photoview/photoview:2.4.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver and an old Go 1.19 runtime compiled into the server. 2.4.0 is the newest release, from 2024.
-
-**Risk:** this stack uses MariaDB, so pgx is not used, but the Go runtime serves every request and its affected functions were not checked. Consider `access-vpn` instead of the shipped `access-public` until a newer release exists.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -121,6 +117,12 @@ cache.
 - **SQLite and PostgreSQL drivers are not wired up here** — upstream compose supported three backends. Only MySQL/MariaDB is imported. To switch, see upstream `docker-compose.yml` for `PHOTOVIEW_SQLITE_PATH` / `PHOTOVIEW_POSTGRES_URL`.
 - **Watchtower dropped** — blueprint policy: explicit `APP_TAG` bumps.
 - **Hardware transcoding requires device passthrough** — uncomment the `devices:` block in `docker-compose.yml` if using `qsv`/`vaapi`/`nvenc`.
+
+## Open findings
+
+The pinned image, `photoview/photoview:2.4.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver and an old Go 1.19 runtime compiled into the server. 2.4.0 is the newest release, from 2024.
+
+**Risk:** this stack uses MariaDB, so pgx is not used, but the Go runtime serves every request and its affected functions were not checked. Consider `access-vpn` instead of the shipped `access-public` until a newer release exists.
 
 ## Details
 

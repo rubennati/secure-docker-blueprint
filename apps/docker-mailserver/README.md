@@ -4,11 +4,7 @@ Postfix, Dovecot and Rspamd in one container, configured by files and
 environment variables: no database, no web interface. Upstream:
 [docker-mailserver/docker-mailserver](https://github.com/docker-mailserver/docker-mailserver).
 
-## Open findings
-
-The pinned image, `docker-mailserver:16.0.1`, ships with 8 CRITICAL vulnerabilities that have published fixes, in Debian 13 packages: libunbound (three, including remote code execution), glib, brotli and perl. 16.0.1 is the newest release, and upstream has not rebuilt it (docker-mailserver#4822).
-
-**Risk:** in this image only OpenDKIM uses libunbound, and this stack runs Rspamd with OpenDKIM, Amavis and SpamAssassin turned off. Keep those off and watch for the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -209,3 +205,9 @@ source_directories:
 
 Restore: put the directories back and start the container. Stop it before
 copying `mail-state`, or the queue is copied mid-write.
+
+## Open findings
+
+The pinned image, `docker-mailserver:16.0.1`, ships with 8 CRITICAL vulnerabilities that have published fixes, in Debian 13 packages: libunbound (three, including remote code execution), glib, brotli and perl. 16.0.1 is the newest release, and upstream has not rebuilt it (docker-mailserver#4822).
+
+**Risk:** in this image only OpenDKIM uses libunbound, and this stack runs Rspamd with OpenDKIM, Amavis and SpamAssassin turned off. Keep those off and watch for the next release.

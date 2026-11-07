@@ -6,15 +6,7 @@ tools. Standalone — model providers are plugins installed from its own console
 any OpenAI-compatible endpoint (or a hosted provider) can be the backend; no other
 stack is required or assumed. Upstream: [Dify](https://github.com/langgenius/dify).
 
-## Open findings
-
-The sandbox image, `langgenius/dify-sandbox:0.2.15`, carries 5 CRITICAL findings that have published fixes: Perl from its Debian base and the Python packages anyio and certifi, both affecting outbound TLS verification. 0.2.15 is the newest sandbox release.
-
-**Risk:** sandboxed code runs in Python and Node, not Perl, and reaches the network only through the stack's proxy. Watch for the next release.
-
-The PostgreSQL (pgvector) image, `pgvector/pgvector`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -164,3 +156,13 @@ docker compose up -d
 
 The first start of `db` creates both `dify` and `dify_plugin`, so the dumps load
 into existing, empty databases.
+
+## Open findings
+
+The sandbox image, `langgenius/dify-sandbox:0.2.15`, carries 5 CRITICAL findings that have published fixes: Perl from its Debian base and the Python packages anyio and certifi, both affecting outbound TLS verification. 0.2.15 is the newest sandbox release.
+
+**Risk:** sandboxed code runs in Python and Node, not Perl, and reaches the network only through the stack's proxy. Watch for the next release.
+
+The PostgreSQL (pgvector) image, `pgvector/pgvector`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

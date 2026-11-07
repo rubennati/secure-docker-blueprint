@@ -2,11 +2,7 @@
 
 Self-hosted wiki / knowledge base. Three-level structure: Shelves → Books → Chapters → Pages. Built on Laravel (PHP) with a MariaDB backend.
 
-## Open findings
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -114,6 +110,12 @@ broken images — technically recovered, practically not.
 - **`DB_PWD_INLINE` duplicates the DB password** — BookStack's `DB_PASSWORD` env var has no `_FILE` support. The DB service reads `MYSQL_PASSWORD_FILE` from a Docker Secret (`.secrets/db_pwd.txt`), but BookStack needs the same value inline in `.env`. Setup step 4 syncs them. Mismatch = BookStack can't connect to DB.
 - **First boot is slow** — Laravel migrations run on first start (~60-90 seconds). Second start is fast.
 - **Upstream LSIO tag format** — `version-vXX.XX` tracks BookStack's semver (e.g. `v26.09.2` = BookStack 26.09.2). Alternatively `latest` for rolling updates (not recommended for reproducibility).
+
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

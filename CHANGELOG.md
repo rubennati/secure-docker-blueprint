@@ -8,6 +8,19 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Changed
+
+- **Stack READMEs open with the application.** Each README starts with what the
+  application is and a pointer to `UPSTREAM.md` for the project, source, licence
+  and origin. `## Open findings` moved from the top to after the operating
+  sections, before a closing `## Details`. Only the order changed, and one line was
+  added.
+- **The status reads as what the maintainer has done.** `status-model.md`,
+  `LIFECYCLE.md` and the root README describe each state as a hint of how far a
+  stack has been taken; `scaffolded` is a stack built to the standards and not yet
+  run at its current pin, not a defect. The states and how they are measured are
+  unchanged.
+
 ### Added
 
 - **Stack status.** A weekly job lists, per stack, the pinned tag of the primary

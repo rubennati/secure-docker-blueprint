@@ -2,6 +2,8 @@
 
 Self-hosted homelab dashboard. Config-driven via a single YAML file; the UI re-builds when the config changes.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:

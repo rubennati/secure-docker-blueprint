@@ -6,6 +6,8 @@ at. One container: it keeps a small database of what it changed and renders the
 prompts it uses, and everything else lives in Paperless-ngx.
 Upstream: [icereed/paperless-gpt](https://github.com/icereed/paperless-gpt).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

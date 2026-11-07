@@ -4,11 +4,7 @@ Client-side encrypted secret sharing with a built-in secret-request
 workflow: someone can generate a link that asks a third party for a
 credential, without that person needing an account.
 
-## Open findings
-
-The image, `hemmeligapp/hemmelig:v7.6.1`, carries 7 CRITICAL findings that have published fixes: better-auth, GnuTLS (2), Perl (3) and the npm CLI's `tar`. **The upstream project is archived, so this stack is unmaintained** and no fixed release will follow.
-
-**Risk:** the better-auth flaw needs the Magic Link sign-in, which Hemmelig does not use, and npm does not run in the container; Perl and GnuTLS were not checked. Plan a replacement.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## License — read this first
 
@@ -123,6 +119,12 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [ ] A full secret-request round trip (request created, secret submitted, key sent back out of band, secret viewed) through the actual web UI
 - [ ] TLS and the router's four middleware positions (`APP_TRAEFIK_ACCESS`, `APP_TRAEFIK_LIMIT`, `APP_TRAEFIK_HEADERS`, `APP_TRAEFIK_AUTH`) confirmed against a real domain
 - [ ] Restart the container and confirm SQLite state and uploaded files survive
+
+## Open findings
+
+The image, `hemmeligapp/hemmelig:v7.6.1`, carries 7 CRITICAL findings that have published fixes: better-auth, GnuTLS (2), Perl (3) and the npm CLI's `tar`. **The upstream project is archived, so this stack is unmaintained** and no fixed release will follow.
+
+**Risk:** the better-auth flaw needs the Magic Link sign-in, which Hemmelig does not use, and npm does not run in the container; Perl and GnuTLS were not checked. Plan a replacement.
 
 ## Details
 

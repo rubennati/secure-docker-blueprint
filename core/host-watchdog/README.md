@@ -15,6 +15,8 @@ either today; `docker inspect --format '{{.State.OOMKilled}} {{.RestartCount}}'`
 from [`docs/resource-measurement.md`](../../docs/resource-measurement.md) is a
 manual command, not an automated response.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What this is not
 
 - **Not a general auto-heal mechanism.** `business/openproject` already

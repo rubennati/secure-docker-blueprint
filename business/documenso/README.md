@@ -3,11 +3,7 @@
 Open-source document-signing platform — a self-hosted **DocuSign alternative**. Sibling e-sign
 option: [`business/opensign/`](../opensign/).
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -118,6 +114,12 @@ Config follows the standard but has not been run here. Confirm:
 - [ ] Secrets injected — no secret values in `docker inspect documenso-app`
 - [ ] `cert.p12` mounted and the signing passphrase matches — a document can be signed
 - [ ] UI loads over HTTPS; first account created; a signature request email is delivered
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

@@ -12,11 +12,7 @@ No feature is held back from the Community Edition. What the hosted service
 adds is infrastructure, support, the Looker Studio connector, and continuous
 releases instead of two a year.
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -177,3 +173,9 @@ restore the secrets, start the databases, load the PostgreSQL dump, then start
 the application. Sites and accounts come back from PostgreSQL; the statistics
 come back from ClickHouse, and one without the other is a dashboard with no
 numbers or numbers with no dashboard.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

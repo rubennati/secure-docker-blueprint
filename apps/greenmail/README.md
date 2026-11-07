@@ -11,11 +11,7 @@ log in as the recipient and assert on what arrived.
 | Read mail with | a browser | any IMAP or POP3 client, per recipient |
 | Typical caller | a person looking at what a stack would have sent | an automated test that connects as the recipient |
 
-## Open findings
-
-The image, `greenmail/standalone:2.1.15`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497). It is the newest release, and upstream has not rebuilt it.
-
-**Risk:** only the font library depends on it, and GreenMail renders no fonts. It is a test mail server: keep it on the internal network and move to the next release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -74,3 +70,9 @@ reach `127.0.0.1:3025` and `127.0.0.1:3143` directly.
 
 No state to protect. Test mail is held in memory and discarded on restart —
 that is the correct behaviour for an integration-test double, not a gap.
+
+## Open findings
+
+The image, `greenmail/standalone:2.1.15`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497). It is the newest release, and upstream has not rebuilt it.
+
+**Risk:** only the font library depends on it, and GreenMail renders no fonts. It is a test mail server: keep it on the internal network and move to the next release.

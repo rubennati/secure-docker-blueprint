@@ -2,6 +2,8 @@
 
 Lightweight server monitoring with a hub + agent architecture. Go-based, ~20 MB RAM per agent.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 The **agent connects out to the hub**. Nothing connects in: the agent opens no

@@ -17,6 +17,8 @@ the machines being monitored and are not part of this stack — deploying,
 enrolling and updating them is a separate, per-platform task this stack's
 scope does not cover.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What security problem this solves
 
 Ongoing, queryable visibility into a real fleet of endpoints during a

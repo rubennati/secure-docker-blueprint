@@ -13,12 +13,6 @@ go through a relationship-based policy (ReBAC) and can require approval.
 See the [PAM/bastion comparison](../README.md#privileged-access--bastion-alternatives)
 for how it differs from Warpgate, JumpServer, ShellHub and Teleport.
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
-
 ## Architecture
 
 | Service | Image | Purpose |
@@ -147,6 +141,12 @@ For the general PostgreSQL restore procedure and verification checklist, see
   unbuilt `ORION_CONFIG_FILE` path that could close this.
 - **Not yet run on a live host beyond a clean start** — no agent
   registered, no SSH session proxied, no restart or upgrade tested.
+
+## Open findings
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

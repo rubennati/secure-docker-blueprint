@@ -2,11 +2,7 @@
 
 Open-source ERP / CRM — invoicing, bookkeeping, project management, HR, inventory. Two-service stack: dolibarr/dolibarr app + MariaDB.
 
-## Open findings
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -104,6 +100,12 @@ produces an ERP whose documents are all missing links.
 - **Custom modules** — stored in `volumes/custom/`. Install via the UI → the module tarball is unpacked here. Back up together with the documents volume.
 - **Document attachments** — PDFs, scanned invoices, etc. go into `volumes/documents/`. Can grow large; plan backups and storage accordingly.
 - **Upgrades run on first boot after a version bump** — Dolibarr detects the version difference and triggers a schema migration through a web wizard at `/install/`. Do not clear browser cookies during the migration.
+
+## Open findings
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

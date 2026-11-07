@@ -2,15 +2,7 @@
 
 Self-hosted time-tracking for freelancers and small teams. Project/customer hierarchy, timesheet approval, invoicing via plugins, REST API. PHP/Symfony app with MariaDB.
 
-## Open findings
-
-The pinned image, `kimai/kimai2:2.71.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Debian 12's brotli library. 2.71.0 is the newest release.
-
-**Risk:** brotli matters only if a process decompresses brotli data from a hostile server. Watch for the next release.
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -111,3 +103,13 @@ Kimai exports timesheets as CSV/JSON per project. Typical flow:
 Via n8n for automation:
 
 - Kimai webhook (Admin → Webhooks) → n8n → Invoice Ninja API
+
+## Open findings
+
+The pinned image, `kimai/kimai2:2.71.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Debian 12's brotli library. 2.71.0 is the newest release.
+
+**Risk:** brotli matters only if a process decompresses brotli data from a hostile server. Watch for the next release.
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

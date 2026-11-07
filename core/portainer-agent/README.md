@@ -18,6 +18,8 @@ Remote Docker agent for [Portainer](../portainer/). Runs on each additional host
 - Portainer and Docker are on the same host → [`core/portainer/`](../portainer/) alone is enough
 - You haven't committed to Portainer yet → Dockhand + Hawser is the cleaner multi-host path
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Counterpart
 
 Parallel to [`core/hawser/`](../hawser/) (the Dockhand agent). Pick whichever UI stack you use:

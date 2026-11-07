@@ -20,6 +20,7 @@ a host can establish.
 | | `License`, `Origin`, `Domain`, `Role` in `UPSTREAM.md` | `sovereignty-report.py --check`, `site-catalogue.py --check` |
 | | A row in the category `README.md` linking the directory | `check-coverage.py` (`unlisted-stack`) |
 | | A `## Backup` section, or `n/a` with the reason | `lifecycle-report.py --check` |
+| | The README opens with what the application is and a pointer to `UPSTREAM.md` (project, source, licence, origin); assessments such as `## Open findings` come after the operating sections, before a closing `## Details` | review |
 | **Conditional** | Ships `docker-compose.local.yml` → the README needs a `## Try it locally` section with the command, the URL and any credential step | review |
 | | Ships an opt-in overlay → it must merge and stay inside the baseline | `check-overlays.py` |
 | | Reachable over the network → Traefik labels, an access policy and a security chain | `traefik-security.md` |

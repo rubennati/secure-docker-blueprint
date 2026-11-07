@@ -4,15 +4,7 @@
 
 Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop editor, conditional logic, file uploads, webhooks. Laravel API + Nuxt UI.
 
-## Open findings
-
-The API image, `jhumanj/opnform-api:2.8.4`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1, listed by CISA as exploited). It is the newest release, and upstream has not rebuilt the image.
-
-**Risk:** the library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint could in principle reach it. Limit webhooks to endpoints you trust and move to the next release.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -145,6 +137,16 @@ with it; a queue restored mid-flight simply retries.
 | `artisan cache:clear` | `docker compose exec api php artisan cache:clear` | Clear application cache |
 | `artisan config:clear` | `docker compose exec api php artisan config:clear` | Clear config cache |
 | `artisan queue:work` | handled by `api-worker` container | Process queued jobs |
+
+## Open findings
+
+The API image, `jhumanj/opnform-api:2.8.4`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1, listed by CISA as exploited). It is the newest release, and upstream has not rebuilt the image.
+
+**Risk:** the library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint could in principle reach it. Limit webhooks to endpoints you trust and move to the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

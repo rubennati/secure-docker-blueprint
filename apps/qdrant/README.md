@@ -8,6 +8,8 @@ generation, usable by any client that speaks its REST or gRPC API.
 Independent of the other AI stacks here: nothing needs Ollama or vLLM to use
 it, and it does not call them.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

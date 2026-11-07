@@ -3,11 +3,7 @@
 Lightweight deception: fake FTP, Telnet, HTTP, MySQL and RDP services that
 do nothing except look real and log every connection attempt against them.
 
-## Open findings
-
-The pinned image, `thinkst/opencanary:0.9.10`, ships with 8 CRITICAL vulnerabilities that have published fixes, in certifi, the `uv` tool and Debian 12 packages (ImageMagick, brotli, perl, kernel headers). 0.9.10 is the newest release, and upstream has not rebuilt it.
-
-**Risk:** the canary's listeners are Python services that do not use these packages; the certifi CA bundle matters only if you send alerts over HTTPS. Watch for the next OpenCanary release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## What security problem this solves
 
@@ -157,6 +153,12 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [ ] The production compose's own sub-1024 port bindings on a real Linux host — this test host's Docker Desktop did not bind them the same way the local (high-port) stack did; see UPSTREAM.md
 - [ ] A webhook/Slack/Teams alert handler actually delivering a notification
 - [ ] SMB module enabled against a real Samba audit log
+
+## Open findings
+
+The pinned image, `thinkst/opencanary:0.9.10`, ships with 8 CRITICAL vulnerabilities that have published fixes, in certifi, the `uv` tool and Debian 12 packages (ImageMagick, brotli, perl, kernel headers). 0.9.10 is the newest release, and upstream has not rebuilt it.
+
+**Risk:** the canary's listeners are Python services that do not use these packages; the certifi CA bundle matters only if you send alerts over HTTPS. Watch for the next OpenCanary release.
 
 ## Details
 

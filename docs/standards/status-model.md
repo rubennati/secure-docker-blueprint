@@ -1,7 +1,11 @@
 # Status Model
 
-One lifecycle, for one reader: a maintainer deciding what to work on. It answers
-*what has been established about this stack*, and nothing else.
+One lifecycle. It records *what the maintainer has done with a stack* — run it
+against a named version, held it to the security baseline, restored its data —
+and nothing else. A maintainer reads it to decide what to work on; anyone else
+reads it as a hint of how far the maintainer has taken a stack. A lower state is
+not a defect: `scaffolded` is a stack built to the repository's standards that
+the maintainer has not yet run at its current pin.
 
 It carries no promise to an operator. Whether a stack suits a deployment is a
 question the repository cannot answer, because it does not know the deployment.
@@ -20,6 +24,15 @@ Four states. Each is **measured from an artefact**, never typed into a table.
 | `verified` | it ran, against a named version | `Last verified: DATE (vX.Y.Z)` in `<stack>/UPSTREAM.md` |
 | `baseline-aligned` | `verified`, and the security baseline holds | `check-baseline.py` and `check-structure.py` report no failure for that stack |
 | `ops-proven` | `baseline-aligned`, and its data came back | the stack appears in the rehearsal log of [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log) |
+
+What each state tells a reader:
+
+- `scaffolded` — built to the standards; not yet run by the maintainer at the
+  current pin.
+- `verified` — the maintainer ran it, at the pinned version.
+- `baseline-aligned` — run at the pinned version, and it holds the security
+  baseline.
+- `ops-proven` — all of that, and a backup of its data was restored.
 
 A date without a version does not reach `verified`. Which version was checked is
 what makes the claim usable a year later; a bare date says only that someone

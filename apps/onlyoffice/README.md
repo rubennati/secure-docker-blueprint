@@ -4,6 +4,8 @@ Browser-based office document editor. Runs as a shared backend that other apps (
 
 One OnlyOffice instance serves many consumers. Each consumer authenticates with the same JWT secret.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:

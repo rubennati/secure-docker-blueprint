@@ -2,11 +2,7 @@
 
 Self-hosted photo management with face recognition, object detection, location data, and similarity search. Fork of OwnPhotos. Four-service stack: nginx proxy, Django backend with ML workers, React frontend, and PostgreSQL.
 
-## Open findings
-
-The PostgreSQL (pgautoupgrade) image, `pgautoupgrade/pgautoupgrade`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -121,6 +117,12 @@ Plan for it rather than discovering it.
 - **Initial scan is slow** — LibrePhotos processes each photo through multiple ML pipelines (~1-2 seconds per photo). A 10 000-photo library takes several hours on a CPU-only machine.
 - **MAPBOX_API_KEY is optional** — the map view is disabled if empty; no error is raised.
 - **Proxy serves on port 80 inside container** — Traefik `server.port=80`.
+
+## Open findings
+
+The PostgreSQL (pgautoupgrade) image, `pgautoupgrade/pgautoupgrade`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

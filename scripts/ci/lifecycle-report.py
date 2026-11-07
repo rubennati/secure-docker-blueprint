@@ -6,8 +6,9 @@ Derives the per-stack lifecycle defined in docs/standards/status-model.md and
 writes it to LIFECYCLE.md. Every state is measured from an artefact. Nothing is
 typed into a table, and LIFECYCLE.md is never hand-edited.
 
-The lifecycle serves a maintainer deciding what to work on. It carries no
-promise to an operator — that belongs on the site, as evidence and named gaps.
+The lifecycle records what the maintainer has done with each stack: a
+maintainer reads it to decide what to work on, anyone else as a hint of how
+far a stack has been taken. It carries no promise to an operator — that belongs on the site, as evidence and named gaps.
 
 States, and what establishes each:
   scaffolded        a compose file exists, or the stack is host-installed
@@ -592,9 +593,12 @@ def render(rows: list[dict]) -> str:
         + f"{sum(1 for r in rows if r['open_findings'])} ship with open CRITICAL "
         + "findings.",
         "",
-        "This is the maintainer's view: what has been established about each "
-        + "stack. It makes no statement about whether a stack suits a given "
-        + "deployment.",
+        "Each state says what the maintainer has done with a stack: "
+        + "`scaffolded` is built to the standards and not yet run at its current "
+        + "pin, `verified` ran at the pinned version, `baseline-aligned` also "
+        + "holds the security baseline, `ops-proven` also had its data restored. "
+        + "A lower state is not a defect, and no state says whether a stack suits "
+        + "a given deployment.",
         "",
         "Whether upstream has published a newer version, when each image was "
         + "published, and what the pinned images carry today: the weekly "

@@ -5,6 +5,8 @@ and WebDAV, with spam filtering and a web interface for administration and for
 each account's own settings. Upstream:
 [stalwartlabs/stalwart](https://github.com/stalwartlabs/stalwart).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

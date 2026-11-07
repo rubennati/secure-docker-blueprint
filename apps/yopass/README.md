@@ -10,6 +10,8 @@ password, API key or token — instead of pasting it into chat, email or a
 ticket. **What this is not:** a place to store anything long-term, and not an
 account system — nobody logs in.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Sender-initiated vs. requested secrets
 
 Yopass's normal flow is **sender-initiated**: you create the secret, you get

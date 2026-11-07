@@ -11,6 +11,8 @@ network capability for the installation rather than for users of its own. That
 is the same axis [`access-vpn`](../traefik/) already sits on — and if you run
 this, it is the tailnet that policy means.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

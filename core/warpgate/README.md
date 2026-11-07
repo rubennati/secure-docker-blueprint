@@ -6,6 +6,8 @@ admin UI — no client-side software or SSH wrapper needed. See the [PAM/bastion
 comparison](../README.md#privileged-access--bastion-alternatives) for how it
 differs from JumpServer, ShellHub, Teleport and Orion Belt.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 | Service | Image | Purpose |

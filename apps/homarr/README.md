@@ -2,6 +2,8 @@
 
 Modern self-hosted dashboard focused on integrations — widget-based UI that can show live status of media servers, torrent clients, reverse proxies, Proxmox nodes, weather, calendars, and dozens more.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:

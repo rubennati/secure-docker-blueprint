@@ -5,15 +5,7 @@ flows, APIs, scheduled jobs and internal apps, with Postgres as the entire
 state including the job queue. Aimed at developers and data teams; a
 different shape from [n8n](../n8n/)'s node-based editor.
 
-## Open findings
-
-The image, `ghcr.io/windmill-labs/windmill:1.862.0`, carries one CRITICAL finding in `linux-libc-dev` (CVE-2026-99083). It is the newest release, built before Debian's fix.
-
-**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -178,3 +170,13 @@ in the database, so a restored instance keeps it;
 `.secrets/windmill_admin_pwd.txt` is its password and belongs in the same
 backup as `db_pwd.txt`. Full architecture:
 [`backup/README.md`](../../backup/README.md).
+
+## Open findings
+
+The image, `ghcr.io/windmill-labs/windmill:1.862.0`, carries one CRITICAL finding in `linux-libc-dev` (CVE-2026-99083). It is the newest release, built before Debian's fix.
+
+**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

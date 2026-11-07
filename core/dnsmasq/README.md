@@ -2,6 +2,8 @@
 
 Lightweight DNS forwarder and cache for internal and Tailscale-based environments.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What it does
 
 - Resolves wildcard DNS zones (`*.test.lab.example.com` → `100.100.100.10`)

@@ -5,6 +5,8 @@ export, aimed at RAG and other AI-pipeline consumers. Standalone: no other
 stack in this repository calls it, and Paperless-ngx keeps its own embedded
 Tika and Gotenberg unchanged.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text

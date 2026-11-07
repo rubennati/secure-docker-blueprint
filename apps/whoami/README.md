@@ -4,6 +4,8 @@ Tiny HTTP debug service from Traefik Labs. Echoes the full HTTP request back to 
 
 Used to verify that Traefik routing, TLS termination, and middleware chains work as expected. Not a production service — deploy temporarily, test, then disable.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What it shows
 
 A response like:

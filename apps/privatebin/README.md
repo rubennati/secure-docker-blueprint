@@ -5,6 +5,8 @@ recovery codes, configuration fragments — anything short-lived that needs to
 move between two people without landing in chat history or email. Optional
 burn-after-read and expiration.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What this is, and what it is not
 
 The flow is **sender-initiated**, the same direction as Yopass: you write

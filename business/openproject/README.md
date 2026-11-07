@@ -6,15 +6,7 @@ Full project management platform — Gantt charts, kanban boards, work packages,
 
 Uses the **slim image** (recommended for production) with separate PostgreSQL and memcached containers. The upstream proxy service is omitted — Traefik terminates TLS and routes directly to the web container.
 
-## Open findings
-
-The pinned image, `openproject/openproject:17.9.6-slim`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Rails Active Storage and the Ruby json gem. 17.9.6 is the newest release; 18.0 is still a release candidate.
-
-**Risk:** whether OpenProject reaches either code path has not been checked. Keep the stack on `access-vpn` and move to the next release.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Services
 
@@ -152,3 +144,13 @@ schema gets written over the restore.
 - **Autoheal** (from upstream compose) is omitted — it requires a direct Docker socket mount. OpenProject restarts via `restart: unless-stopped` on failure.
 - **Hocuspocus** (real-time collaborative editing) is omitted. Enable by adding the `hocuspocus` service from the upstream compose when needed.
 - **Plugins** require building a custom image on top of `openproject/openproject:17.9.6-slim`. See upstream docs.
+
+## Open findings
+
+The pinned image, `openproject/openproject:17.9.6-slim`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Rails Active Storage and the Ruby json gem. 17.9.6 is the newest release; 18.0 is still a release candidate.
+
+**Risk:** whether OpenProject reaches either code path has not been checked. Keep the stack on `access-vpn` and move to the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

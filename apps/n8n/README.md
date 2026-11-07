@@ -2,11 +2,7 @@
 
 Workflow automation — visual builder for chaining HTTP calls, webhooks, scheduled jobs, and a large library of third-party integrations (Slack, Airtable, OpenAI, databases, etc.). Free self-hosted Community Edition.
 
-## Open findings
-
-The image, `n8nio/n8n:2.46.6`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). It is the newest stable release, and upstream has not rebuilt it.
-
-**Risk:** n8n's own HTTP requests run through Node.js, which carries its own brotli; the Alpine library serves curl and freetype, so a workflow that runs curl against an untrusted server could reach it. Avoid such workflows and move to the next stable release.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -102,6 +98,12 @@ excluding the directory.
 - **`APP_TAG=latest` is not reproducible** — pin to a specific version for stable deployments. n8n has frequent breaking changes in minor bumps.
 - **Queue mode / horizontal scaling not configured** — this is a single-executor deployment. For high-throughput workflows, add Redis + a worker service (see upstream docs).
 - **SQLite lock contention** — under heavy webhook load, SQLite can bottleneck. Switch to Postgres by setting `DB_TYPE=postgresdb` + related env vars; requires adding a `db:` service.
+
+## Open findings
+
+The image, `n8nio/n8n:2.46.6`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). It is the newest stable release, and upstream has not rebuilt it.
+
+**Risk:** n8n's own HTTP requests run through Node.js, which carries its own brotli; the Alpine library serves curl and freetype, so a workflow that runs curl against an untrusted server could reach it. Avoid such workflows and move to the next stable release.
 
 ## Details
 

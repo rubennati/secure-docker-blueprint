@@ -2,6 +2,8 @@
 
 Self-hosted application dashboard — a pretty launcher for your homelab apps, with optional widgets that show status / stats per service.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:

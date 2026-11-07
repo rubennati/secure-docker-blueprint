@@ -5,6 +5,8 @@ a slot on, and availability read from a CalDAV calendar you already run. One
 container with SQLite — upstream ships no database service and needs none.
 Upstream: [calrs](https://github.com/olivierlambert/calrs).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text
