@@ -96,11 +96,16 @@ it; [`scripts/host-files.sh`](../../scripts/host-files.sh) renders host files wi
 real path.
 
 ```bash
-sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker   # an empty directory you own
+# An empty directory you own
+sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker
+
+# Clone without files, then take the newest release
 git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
 cd /srv/docker
-git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+git checkout "$(git tag --sort=-v:refname | head -n1)"
 git sparse-checkout set scripts docs/standards
+
+# The host's own list of stacks
 cp stacks.example stacks
 ```
 
@@ -117,8 +122,11 @@ so it survives every update. The template starts with the base most hosts need:
 Edit the list, then check it out:
 
 ```bash
-scripts/stacks.sh apply                  # check out what stacks lists
-scripts/stacks.sh status                 # release, and where file and checkout differ
+# Check out what the file lists
+scripts/stacks.sh apply
+
+# The release, and where file and checkout differ
+scripts/stacks.sh status
 ```
 
 `scripts` and `docs/standards` are always checked out: the first holds `stacks.sh`,
@@ -200,9 +208,12 @@ stacks need a dump rather than a file copy.
 ## 7 — Update the Blueprint
 
 ```bash
+# The newest releases
 git fetch --tags
-git tag --sort=-v:refname | head -n5                              # newest releases
-scripts/stacks.sh update <target>                                 # preview, confirm, take it
+git tag --sort=-v:refname | head -n5
+
+# Preview the release for these stacks, confirm, take it
+scripts/stacks.sh update <target>
 ```
 
 `stacks.sh update` shows the files the release changes in the stacks on this host and
@@ -215,7 +226,10 @@ stack's change in full.
 On a full clone the same steps are plain Git:
 
 ```bash
-git log --oneline "$(git describe --tags --abbrev=0)"..<target>   # what it changes
+# What the release changes
+git log --oneline "$(git describe --tags --abbrev=0)"..<target>
+
+# Take it
 git checkout <target>
 ```
 
