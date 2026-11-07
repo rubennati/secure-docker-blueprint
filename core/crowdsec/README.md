@@ -8,6 +8,21 @@ serves those decisions. Where they are enforced is a separate choice.
 whatever asks. Without a remediation component attached, CrowdSec is a detector: you get
 visibility, and nothing is refused.
 
+## Choose your task
+
+| Task | Read |
+|---|---|
+| First installation | [Core prerequisites](#prerequisites) → [Setup](#setup) → [Verify](#verify) |
+| Block requests at Traefik | [Reverse-proxy remediation](#reverse-proxy-remediation--traefik-bouncer-plugin) |
+| Block traffic at the host | [Host-firewall remediation](#host-firewall-remediation--nftables-bouncer); a separate, optional host installation |
+| Inspect requests with AppSec | [AppSec guide](docs/appsec.md) |
+| Migrate an existing installation | [Network migration](#migrating-an-existing-installation), including rollback |
+| Operate, diagnose or recover | [Maintenance](#maintenance--monthly-or-as-needed), [community blocklist](#the-community-blocklist--what-you-get-what-you-send), [runbook](docs/runbook.md), [Backup](#backup) |
+
+A new installation starts with Core setup and verification. Then choose the
+remediation that fits the [exposure](#choosing); without it the engine does not
+block anything. The migration section is for an existing deployment.
+
 ---
 
 ## Architecture

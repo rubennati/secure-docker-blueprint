@@ -79,13 +79,68 @@ internet reaches is measured from another machine with `scripts/exposure-test.sh
 and kernel or `sysctl` expectations. A deployment works without them being written
 down; it is simply not this repository that says what they should be.
 
-## 2 — Choose a release
+## 2 — Choose a release and the stacks
+
+A host carries only the stacks it runs. A Git partial checkout (sparse checkout) gives
+it exactly those directories and keeps them a Git checkout, so the release stays
+identifiable and an update can be previewed per stack. A full clone is for working on
+the repository itself. Copying stack directories out of a clone also works, but loses
+the release identity, and `core/crowdsec` finds Traefik's logs by a relative path
+(`../traefik/volumes/logs`) that expects the same layout.
+
+The recommended location is `/srv/docker`, with each stack at
+`/srv/docker/<category>/<stack>`. It is a default, not a requirement: any other path
+works, for example `/srv/<category>/<stack>`. Paths in examples elsewhere in the
+repository — backup sources, logrotate stanzas — assume `/srv/docker` and change with
+it; [`scripts/host-files.sh`](../../scripts/host-files.sh) renders host files with the
+real path.
 
 ```bash
-git clone https://github.com/rubennati/secure-docker-blueprint.git
-cd secure-docker-blueprint
-git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+# An empty directory you own
+sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker
+
+# Clone without files, then take the newest release
+git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
+cd /srv/docker
+git checkout "$(git tag --sort=-v:refname | head -n1)"
+git sparse-checkout set scripts docs/standards
+
+# The host's own list of stacks
+cp stacks.example stacks
 ```
+
+At this point the host holds the files at the repository root, the scripts and the
+standards. `stacks` is the host's own list of stacks, one path per line; Git ignores it,
+so it survives every update. The template starts with the base most hosts need:
+
+| Path | Why |
+|---|---|
+| `core/traefik` | HTTPS ingress for every stack that publishes a domain |
+| `core/crowdsec` | threat detection; it blocks nothing until a remediation is enabled |
+| `apps/whoami` | the test target the Traefik and CrowdSec checks run against |
+
+Edit the list, then check it out:
+
+```bash
+# Check out what the file lists
+scripts/stacks.sh apply
+
+# The release, and where file and checkout differ
+scripts/stacks.sh status
+```
+
+`scripts` and `docs/standards` are always checked out: the first holds `stacks.sh`,
+`overview.sh` and `host-files.sh`, the second the rules the stack documentation links
+to. Every other line is a choice, the template's included. A path that does not exist in
+the checked-out release is refused, and nothing changes.
+
+**Removing a line removes the stack's directory.** Git deletes a directory that leaves
+the partial checkout together with the files it ignores — `.env`, `.secrets/` and
+`volumes/`, which holds the stack's data. `stacks.sh apply` therefore refuses while a
+stack it would remove still has such files, lists them and changes nothing. Stop the
+stack, back up or move its data, delete it, then apply again. A stack that is merely
+unused can stay in the list. Plain Git offers no such check: `git sparse-checkout set`
+or `add` with a shorter list deletes without asking.
 
 Deploy from a tag, not from the default branch. The default branch is where work lands
 between releases: it is checked by CI on every change, but the combination of stacks on it
@@ -153,9 +208,28 @@ stacks need a dump rather than a file copy.
 ## 7 — Update the Blueprint
 
 ```bash
+# The newest releases
 git fetch --tags
-git tag --sort=-v:refname | head -n5                              # newest releases
-git log --oneline "$(git describe --tags --abbrev=0)"..<target>   # what it changes
+git tag --sort=-v:refname | head -n5
+
+# Preview the release for these stacks, confirm, take it
+scripts/stacks.sh update <target>
+```
+
+`stacks.sh update` shows the files the release changes in the stacks on this host and
+nothing else, names any listed stack the release no longer contains — its directory
+and data stay — and asks before it checks the release out; `--yes` skips the question.
+It refuses while the checkout does not match `stacks` (run `apply` first) or while
+tracked files have been edited in place. `git diff HEAD..<target> -- <stack>` shows one
+stack's change in full.
+
+On a full clone the same steps are plain Git:
+
+```bash
+# What the release changes
+git log --oneline "$(git describe --tags --abbrev=0)"..<target>
+
+# Take it
 git checkout <target>
 ```
 
@@ -220,13 +294,11 @@ git describe --tags                   # the nearest release plus the drift
 git status --porcelain                # local modifications
 ```
 
-A deployment that is not a Git checkout cannot answer this question, and neither can one
-whose working tree has been edited in place. Both are reported rather than guessed at.
+A partial checkout answers it the same way as a full clone. A deployment that is not a
+Git checkout cannot answer this question, and neither can one whose working tree has
+been edited in place. Both are reported rather than guessed at.
 
 ## What this document does not decide
 
 - **Host hardening outside Docker** — firewall, updates, the account the stacks run under.
-- **Whether a deployment must remain a Git checkout.** Everything above assumes it is,
-  because that is what makes the release identifiable. Copying the directory instead
-  works and loses that.
 - **Staged or multi-host deployment.** One host, one checkout.

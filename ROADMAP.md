@@ -1,6 +1,6 @@
 # Roadmap
 
-Direction reviewed 2026-10-31.
+Planning overview. See [current evidence and shipped work](#current-evidence-and-shipped-work) for status sources.
 
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
@@ -18,34 +18,11 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-**Latest tag: v0.9.7 — The ingress programme, verified on a host
-(2026-11-05).** How traffic reaches a stack — bindings per address family, an
-edge network per stack, access policies, the auth posture, the rendered host
-ruleset — was rebuilt in eight steps and measured on a dual-stack host; the
-faults that run found are fixed, and fourteen stacks are `ops-proven`. The
-programme that brings every stack to its current upstream release is
-[`docs/audits/upstream-version-inventory-2026-10-31.md`](docs/audits/upstream-version-inventory-2026-10-31.md);
-batches 1 and 2 of seven are done, none of them run on a host. What has and has
-not been established per stack is in [`LIFECYCLE.md`](LIFECYCLE.md).
-
-### v0.10.0 — Measured resource limits
-
-Every production service carries a memory, PID and swap ceiling, and states a
-healthcheck or why it has none; `python3 scripts/ci/check-structure.py` fails on
-any that does not. What remains is the values: the ceilings in place are derived
-by rule, generously, and several compose files say so. Turning them into measured
-values needs a running install per stack — the procedure is
-[`docs/resource-measurement.md`](docs/resource-measurement.md), the target values
-and the derivation rule are in
-[`docs/standards/compose-structure.md`](docs/standards/compose-structure.md).
-
-**Done when** every `✅` stack's limits come from a measurement on a real install
-rather than from the derivation rule.
+Current verification belongs to [`LIFECYCLE.md`](LIFECYCLE.md), which compares
+current pins with recorded test versions. A release's successful host run does
+not verify image pins changed afterwards. Work that remains is listed below.
 
 ### v1.0 — Complete and hand-off ready
-
-The criterion: someone else could fork this and deploy it without needing this
-conversation.
 
 **v1.0.0 is not tagged until both surfaces are ready — this repository and the
 [SecDockBlue](https://secdockblue.rubennati.at) operator site.** The site has been
@@ -103,6 +80,21 @@ Open on the operator site:
 Site work does not otherwise wait for a version — see
 [Continuous](#continuous--not-tied-to-a-version).
 
+### v0.10.0 — Measured resource limits
+
+Every production service carries a memory, PID and swap ceiling, and states a
+healthcheck or why it has none; `python3 scripts/ci/check-structure.py` fails on
+any that does not. What remains is the values: the ceilings in place are derived
+by rule, generously, and several compose files say so. Turning them into measured
+values needs a running install per stack — the procedure is
+[`docs/resource-measurement.md`](docs/resource-measurement.md), the target values
+and the derivation rule are in
+[`docs/standards/compose-structure.md`](docs/standards/compose-structure.md).
+
+**Done when** the stacks presented as verified have limits based on measurements
+from real installations rather than on the derivation rule. The verification
+states are defined in the [status model](docs/standards/status-model.md).
+
 ---
 
 ## Continuous — not tied to a version
@@ -152,78 +144,13 @@ itself stands: this concerns the site only.
 
 ---
 
-## Added — the held candidates
-
-The candidates this file held until 2026-09-22, and two proposed that day, were
-narrowed to open-source products and added by 2026-09-24 — sixteen stacks, each
-landing `scaffolded`. What each one is belongs to
-[`CHANGELOG.md`](CHANGELOG.md). It was a second deliberate exception to the hold
-below and changed nothing v1.0 requires; the reasoning is in
-[`.ai/decisions.md`](.ai/decisions.md) and the evidence for each product in
-[`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md).
-
-Moving those sixteen from `scaffolded` to `baseline-aligned` is part of the
-verification backlog, not of this section.
-Each category README owns what it still plans: [`apps/`](apps/README.md),
-[`business/`](business/README.md), [`monitoring/`](monitoring/README.md),
-[`backup/`](backup/README.md), [`core/`](core/README.md).
-
-Two of them were capabilities rather than applications. Both were decided on
-2026-09-24, and neither became a stack:
-
-- **Web application firewall — Coraza. Not a stack: the capability is already
-  here.** CrowdSec's AppSec engine *is* Coraza, so a Coraza WAF with the OWASP Core
-  Rule Set needs no second piece of software — the Core Rule Set installs as the hub
-  collections `crowdsecurity/crs` and `crowdsecurity/crs-inband`. The condition this
-  entry set for a separate stack, a maintained Traefik integration, is not met:
-  Coraza's own README lists the WASM extension as "experimental, needs a maintainer"
-  and its newest release is v0.3.0 from 2024-10-29, while Traefik's native
-  integration belongs to the commercial Traefik Hub. What was missing was
-  documentation, not software, and it is now in
-  [`core/crowdsec/docs/appsec.md`](core/crowdsec/docs/appsec.md) — including why the
-  CRS collections are not installed by default, their rule files still identifying as
-  a 4.0.0 release candidate.
-- **Network IDS — Suricata. Not a stack yet: two questions still need a disposable
-  host.** A passive IDS sees packets, flows and protocol anomalies that log-driven
-  detection cannot, and two of the four open questions now have answers. On one
-  Docker host the physical interface carries TLS to Traefik, so inspecting payloads
-  means capturing the Docker bridges — which carry the plaintext traffic between
-  Traefik and each application, cookies and form data included. And
-  `crowdsecurity/suricata` bans a source on a single severity-1 alert, so the alerts
-  reach CrowdSec without that scenario or not at all. The two that remain — the cost
-  under deep packet inspection and the false-positive load — cannot be measured on a
-  host carrying live services, which is what adding the stack would require next.
-  Passive only when it comes: inline IPS drops traffic when the engine is down, the
-  failure mode this blueprint avoids elsewhere.
-
----
-
-## Added — mail servers
-
-Three mail servers were added, each landing `scaffolded`, with the mail ports
-published by an opt-in overlay: [`apps/stalwart`](apps/stalwart/),
-[`apps/docker-mailserver`](apps/docker-mailserver/) and
-[`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/). Mailu meets the
-requirements and waits for a release that carries a published security fix. It
-was a third deliberate exception to the hold below and changed nothing v1.0
-requires — reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in
-[`docs/audits/candidate-evaluation-2026-10-03.md`](docs/audits/candidate-evaluation-2026-10-03.md).
-
-Moving the three from `scaffolded` to `baseline-aligned` is part of the
-verification backlog.
-
----
-
 ## On hold — after v1.0 or not yet needed
 
-No application is added while the v1.0 items above are open. Three exceptions were
-made: on 2026-09-21 twelve proposed products that publish a versioned image went in
-as stacks so they can be tried, on 2026-09-22 the candidates this section held
-were narrowed and added — see [Added](#added--the-held-candidates) — and on
-2026-10-03 three mail servers were added — see
-[Added — mail servers](#added--mail-servers). None changes what v1.0 requires;
-reasoning in [`.ai/decisions.md`](.ai/decisions.md), evidence in the three
-evaluations under [`docs/audits/`](docs/audits/).
+**New applications are on hold while the v1.0 items above are open.** Discuss a
+proposed exception before implementing a new stack. Improvements, security fixes,
+verification and documentation for existing stacks remain welcome.
+The [candidate](#added--the-held-candidates) and [mail-server](#added--mail-servers)
+additions below record past exceptions; they do not lift the hold.
 
 Concepts with no timeline, picked up app by app as they are re-verified:
 
@@ -236,6 +163,18 @@ Concepts with no timeline, picked up app by app as they are re-verified:
 - **Alternative container runtimes** — Podman, Docker Swarm, K3s.
 - **MCP connectors** — the blueprint defines the pattern; individual servers live
   in their own repositories.
+- **Network IDS — Suricata. Not a stack yet: two questions still need a disposable
+  host.** A passive IDS sees packets, flows and protocol anomalies that log-driven
+  detection cannot, and two of the four open questions now have answers. On one
+  Docker host the physical interface carries TLS to Traefik, so inspecting payloads
+  means capturing the Docker bridges — which carry the plaintext traffic between
+  Traefik and each application, cookies and form data included. And
+  `crowdsecurity/suricata` bans a source on a single severity-1 alert, so the alerts
+  reach CrowdSec without that scenario or not at all. The two that remain — the cost
+  under deep packet inspection and the false-positive load — cannot be measured on a
+  host carrying live services, which is what adding the stack would require next.
+  Passive only when it comes: inline IPS drops traffic when the engine is down, the
+  failure mode this blueprint avoids elsewhere.
 
 ---
 
@@ -264,3 +203,67 @@ Concepts with no timeline, picked up app by app as they are re-verified:
   in [`docs/audits/candidate-evaluation-2026-09-22.md`](docs/audits/candidate-evaluation-2026-09-22.md#decided-on-2026-09-22).
 - The mail servers evaluated on 2026-10-03 and not added — each is named with its
   reason in [`docs/audits/candidate-evaluation-2026-10-03.md`](docs/audits/candidate-evaluation-2026-10-03.md#decided-on-2026-10-03).
+
+---
+
+## Current evidence and shipped work
+
+- **Verification at current pins:** [`LIFECYCLE.md`](LIFECYCLE.md). Historical
+  test results do not carry forward automatically after a pin change.
+- **Shipped changes:** [`CHANGELOG.md`](CHANGELOG.md). The v0.9.7 record includes
+  the ingress host run and the later image updates; those updates left many
+  stacks awaiting verification at their new pins.
+- **Version-update history:** the [2026-10-31 inventory and batch plan](docs/audits/upstream-version-inventory-2026-10-31.md)
+  describes the starting point. The later sweep is recorded in the v0.9.7
+  changelog and each stack's `UPSTREAM.md`; the old batch table is not a current
+  backlog. New version work starts from the actual pins and current upstream
+  evidence, following the [Version Chain](docs/maintenance.md#version-chain).
+- **Active follow-ups:** [GitHub Issues](https://github.com/rubennati/secure-docker-blueprint/issues)
+  and [the remaining local task list](.ai/tasks.md). Detailed historical findings
+  remain in the [v1 readiness audit](docs/v1-readiness-audit.md).
+
+### Added — the held candidates
+
+**Historical decision, September 2026.** The candidate rounds were exceptions to
+the application hold, not a change to the v1.0 goals. The September 22 candidates
+were narrowed to open-source products, and sixteen stacks were added by September
+24, each initially `scaffolded`. The [September 21](docs/audits/candidate-evaluation-2026-09-21.md)
+and [September 22](docs/audits/candidate-evaluation-2026-09-22.md) evaluations
+retain the product-by-product evidence; the [decision record](.ai/decisions.md)
+explains the exceptions. Verification at current pins belongs to the backlog
+above and `LIFECYCLE.md`.
+
+Two candidates represented capabilities rather than applications:
+
+- **Coraza — use the capability already present.** CrowdSec's AppSec engine uses
+  Coraza. Its optional OWASP Core Rule Set is installed through the hub
+  collections `crowdsecurity/crs` and `crowdsecurity/crs-inband`; it does not need
+  a second standalone WAF stack. At the September 24 evaluation, the community
+  Traefik integration was experimental and lacked a maintainer, while the native
+  integration belonged to commercial Traefik Hub. That was the reason to document
+  the existing capability instead of adding another implementation. The
+  [AppSec guide](core/crowdsec/docs/appsec.md) owns installation and the reasons
+  the CRS is not enabled by default; the evaluation's upstream observations are
+  historical, not a fresh support assessment.
+- **Suricata — questions still needing a disposable host.** The unanswered load
+  and false-positive questions remain [on hold above](#on-hold--after-v10-or-not-yet-needed),
+  along with the network visibility and failure-mode reasoning.
+
+Each category README owns its planned products: [apps](apps/README.md),
+[business](business/README.md), [monitoring](monitoring/README.md),
+[backup](backup/README.md) and [core](core/README.md).
+
+### Added — mail servers
+
+**Historical decision, October 3, 2026.** [Stalwart](apps/stalwart/),
+[docker-mailserver](apps/docker-mailserver/) and
+[mailserver-jeboehm](apps/mailserver-jeboehm/) were added as a third exception to
+the hold, each initially `scaffolded`, with mail ports published through an opt-in
+overlay. The v1.0 requirements stayed the same.
+
+At that evaluation Mailu met the selection requirements but was held until a
+release carried the recorded security fix. The
+[evaluation](docs/audits/candidate-evaluation-2026-10-03.md) owns that reason and
+the other candidates not added; a new evaluation needs current upstream evidence.
+The [decision record](.ai/decisions.md) preserves why the exception was made.
+Verification at current pins belongs to `LIFECYCLE.md` and the backlog above.

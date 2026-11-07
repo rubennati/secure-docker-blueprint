@@ -26,8 +26,9 @@ generated from the repository.
 | [Traefik](traefik/) | Reverse proxy with socket proxy, the middleware model (access, rate limit, headers, auth per router), 3 TLS profiles |
 | [CrowdSec](crowdsec/) | Threat detection engine — log analysis, scenarios, decisions. Enforcement is a separate choice: reverse-proxy or host-firewall remediation |
 
-Planned: **Suricata** (network IDS) and **Coraza** (web application firewall), two
-capabilities beside CrowdSec, each with a design question open in
+**Coraza** (web application firewall) is already here: it is the engine of
+CrowdSec's [AppSec component](crowdsec/docs/appsec.md), opt-in and disabled by
+default. Planned: **Suricata** (network IDS), with a design question open in
 [`ROADMAP.md`](../ROADMAP.md#added--the-held-candidates).
 
 ### Shared identity

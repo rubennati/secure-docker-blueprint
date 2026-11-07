@@ -157,14 +157,14 @@ Two things carry the state, and one of them is not in a volume:
 
 ```yaml
 source_directories:
-    - /srv/blueprint
+    - /srv/docker
     - /var/lib/docker/volumes/invoiceninja_app_storage/_data
 
 mysql_databases:
     - name: ninja
       container: invoiceninja-mysql
       username: ninja
-      password: "{credential file /srv/blueprint/business/invoiceninja/.secrets/db_pwd.txt}"
+      password: "{credential file /srv/docker/business/invoiceninja/.secrets/db_pwd.txt}"
       tls: false
 ```
 

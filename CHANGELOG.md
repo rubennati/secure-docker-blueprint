@@ -8,6 +8,64 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.9.8] — 2026-11-07 — Hosts carry only their stacks
+
+A host now checks out only the stacks it runs. A Git sparse checkout keeps the release identifiable, and `stacks` — a file of stack paths, one per line, from the template `stacks.example` — says which stacks a host carries; `scripts/stacks.sh` checks them out, refuses to remove a stack that still has `.env`, `.secrets/` or `volumes/`, and previews a release for just those stacks before taking it. `/srv/docker` is the recommended location, not a required one, and the README, the deployment lifecycle and the site's server setup describe the same commands. A VPN is described as the recommended way in rather than a prerequisite, the README opens with a plain headline, and reader-facing errors are corrected. An existing host on a full clone keeps working unchanged; the partial checkout is for a new host or a fresh clone into a new directory, with no automatic conversion. No stack, image pin or default changes, and nothing in this release was run on a host.
+
+### Added
+
+- **Partial checkout for hosts.** A host checks out only the stacks it runs with a Git
+  sparse checkout: a base of `core/traefik`, `apps/whoami`, `docs/standards` and
+  `scripts`, plus the chosen stacks. It stays a Git checkout, so the release remains
+  identifiable, and an update can be previewed for just those stacks before it is
+  taken. `/srv/docker` is documented as the recommended location, not a required one.
+  Removing a path from a partial checkout deletes its directory including `.env`,
+  `.secrets/` and `volumes/`; the deployment lifecycle warns about it.
+
+- **Stack list for hosts.** `stacks` at the repository root (template: `stacks.example`,
+  ignored by Git) lists the stacks a host runs, one path per line. `scripts/stacks.sh
+  apply` checks out exactly those paths plus `scripts` and `docs/standards`, refuses a
+  path the release does not contain, and refuses to remove a stack that still has
+  `.env`, `.secrets/`, `volumes/` or other local files. `scripts/stacks.sh update <tag>`
+  shows the changes to those stacks, names listed stacks the release no longer contains,
+  and asks before taking the release; `status` shows where file and checkout differ.
+  Covered by `scripts/ci/test_stacks.py`.
+
+### Changed
+
+- **A VPN is recommended, not required.** The README requirements and the Traefik setup
+  no longer read as if a VPN were a prerequisite. Stack defaults are unchanged — most
+  start on `access-vpn` — and the shipped configuration uses Tailscale; without a VPN, operators
+  admit their own networks through `TRUSTED_RANGES` and `access-trusted`. The Traefik
+  dashboard stays on `access-vpn` and is then closed, which no setup step depends on.
+
+- **Documentation: align setup, verification and reader paths.** Traefik setup
+  names network, certificate and VPN prerequisites; lifecycle tables separate
+  current pins from recorded test versions. Security exceptions, access defaults,
+  host evidence, troubleshooting and planning summaries agree with their sources.
+  Contributor guidance states the application hold and links existing checks.
+  Architecture and long READMEs lead with the system and the reader's task; a
+  standards guide and two overview diagrams aid navigation. The README header
+  retains its concrete benefits, project scope and current stack count. Category
+  and candidate decisions retain the rationale needed to understand the design.
+
+- **Repository working rules are proportional to the task.** Related changes can
+  share commits, existing commit authorization needs no repeated message approval,
+  and signing is recommended when available. Task-specific reading replaces the
+  mandatory startup bundle; small documentation corrections need no purpose form
+  or session log. Pin updates preserve actual host-verification records. Conflicting
+  maintenance instructions are corrected and the older security assessment is
+  marked historical. Technical CI gates and branch protection are unchanged.
+
+### Fixed
+
+- **Reader-facing corrections.** `core/README.md` no longer lists Coraza as planned: it
+  is the engine of CrowdSec's opt-in AppSec component. Vaultwarden's admin-token hash
+  command uses the pinned image, 1.37.5, instead of 1.37.0. Vaultwarden's backup section
+  shows how to write the credential file its Borgmatic snippet reads, instead of a
+  snippet pointing at a file the stack does not create. The site's start page uses the
+  README's new headline.
+
 ## [0.9.7] — 2026-11-05 — The ingress programme, verified on a host
 
 Traefik's ingress is rebuilt and measured on a dual-stack host: the published ports bind per address family, every stack reaches Traefik on an edge network of its own, `access-trusted` admits only the ranges an installation declares, every stack states its auth posture, and the repository renders a host ruleset the operator loads. The host run found and fixed faults in the tools that check this — the exposure test, `validate.sh`, the CrowdSec middleware, Debian's `nftables.service` — and a hardening round followed the security audit of that host. Every image pin then moves to its newest stable release, and the CRITICAL findings the newest images still carry — 332, from 920 — stay only as exceptions per image with their reason and risk, shown in each affected stack's README; PostgreSQL 18 in fifteen stacks, MariaDB 12.3, MySQL 9.7 and ten application majors are breaking (see Security). The host run brought fourteen stacks to `ops-proven`, up from one; no host has run the new pins yet, so two stay `ops-proven`, nine are `baseline-aligned` and 110 of 121 are `scaffolded` until they are verified at those pins. A configuration written outside the repository needs the router order headers, access, limit, auth, `access-trusted` instead of `access-lan`, the bindings per family and its stack on an edge network. Not verified on a host: `access-trusted` admitting a declared range (the test host had no LAN), IPv6-only operation, CrowdSec's blocking in the host firewall. Open: the PostgreSQL client for backups (FA-03) — a `pg_dump` of another major version than the server's fails; the interim rule is the server's major version.
@@ -1021,7 +1079,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.7...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.8...HEAD
+[0.9.8]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.5...v0.9.6
 [0.9.5]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.4...v0.9.5

@@ -1,7 +1,8 @@
 # Risks
 
 Known risks carried deliberately, with what would reduce them. Not a threat model
-for deployments — that is `docs/security-verification.md`.
+for deployments. Current requirements are in `docs/standards/security-baseline.md`;
+measured host behavior is in the relevant host and lab records.
 
 | Risk | Impact | Current mitigation | What would close it |
 |---|---|---|---|

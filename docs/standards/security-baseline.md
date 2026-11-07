@@ -146,7 +146,11 @@ workload.
 
 ### Rule
 
-Passwords, tokens, and API keys **never** in `environment:` — always via Docker Secrets.
+Use file-based Docker Secrets for passwords, tokens and API keys: `_FILE`
+variables where supported, otherwise a custom entrypoint reading `/run/secrets/`.
+Do not put secret values directly in Compose `environment:`. Existing deviations
+use Pattern 3 and must be documented in the stack's `UPSTREAM.md` with the reason
+and the limitation. File-based delivery remains the target for those stacks.
 
 ### Pattern 1: Image supports `_FILE`
 
@@ -200,10 +204,15 @@ volumes:
   - ./config/entrypoint.sh:/config/entrypoint.sh:ro
 ```
 
-### Pattern 3: No secret possible
+### Pattern 3: Documented environment exception
 
-When the value is embedded in a JSON string (e.g. Paperless SSO `PAPERLESS_SOCIALACCOUNT_PROVIDERS`):
-Keep as env var in `.env` — it's gitignored, so acceptable.
+Some stacks still pass a secret through Compose environment interpolation, for
+example credentials embedded in a JSON object or connection string where no
+file-based delivery or assembly wrapper is implemented. Keep the value in the
+stack's gitignored `.env`, never in `.env.example` or a committed Compose file,
+and record the reason in `UPSTREAM.md`. Gitignore prevents accidental commits;
+it does not hide the resolved value from Docker container inspection. This is an
+accepted limitation, not the same isolation as Patterns 1 and 2.
 
 ## Docker Socket
 
@@ -255,7 +264,7 @@ itself is owned by [`networking.md`](networking.md).
 
 - [ ] `no-new-privileges:true` on every service
 - [ ] `read_only: true` where possible
-- [ ] Secrets via `secrets:` block, never in `environment:`
+- [ ] Secrets via `secrets:` block; any environment exception follows Pattern 3 and is documented
 - [ ] Secret files generated without trailing newlines (`| tr -d '\n'`)
 - [ ] Docker socket only through socket proxy
 - [ ] Config mounts with `:ro`

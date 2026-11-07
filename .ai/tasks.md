@@ -257,24 +257,35 @@ Every box was checked against the tree and git on 2026-10-16: a closed item name
 evidence, an open item its owner. An item whose state could not be established would
 be marked *for review*; none needed it.
 
-### 11. Upstream versions — the programme of 2026-10-31
+### 11. Upstream versions — after the v0.9.7 sweep
 
-Inventory and batches:
-[`../docs/audits/upstream-version-inventory-2026-10-31.md`](../docs/audits/upstream-version-inventory-2026-10-31.md).
-One pull request and one commit per batch, each move recorded in the
-stack's `UPSTREAM.md`; a full image scan of the tree with the new pins measures
-it (today a run started by hand on `dev`; the trigger is an open CI decision),
-the baseline record follows, and `dev` reaches `main` when the maintainer
-decides, not per batch.
+The [2026-10-31 inventory and batch plan](../docs/audits/upstream-version-inventory-2026-10-31.md)
+is historical. The later image sweep and its scan results are recorded in the
+[v0.9.7 changelog](../CHANGELOG.md#097--2026-11-05--the-ingress-programme-verified-on-a-host)
+and each stack's `UPSTREAM.md`. The former batch checklist is not a list of
+remaining pin updates; do not restart batches from its old versions or counts.
 
-- [x] Batch 1 — seven patch releases with the most recorded CRITICAL pairs (#292, 2026-10-31; none run on a host)
-- [x] Batch 2 — 26 of the 28 patch releases moved on 2026-10-31, none run on a host; `apps/greenmail` fell to `scaffolded`, the three other `baseline-aligned` stacks moved a side image only and keep their state. Held, with the reason in `UPSTREAM.md`: Dify's plugin daemon (moves with the next Dify release) and SeaSearch (no notes past 1.0.4, pairing stated only in the Seafile manual)
-- [ ] Batch 3 — 60 minor releases of applications, release notes per stack
-- [ ] Batch 4 — 9 minor releases of database and infrastructure images, one pull request per family
-- [ ] Batch 5 — 20 major releases of applications, a decision per stack
-- [ ] Batch 6 — 23 major releases of databases: PostgreSQL 18 across 12 stacks with one procedure, then Valkey 9, MariaDB 11.8, nginx 1.31
-- [ ] Batch 7 — floating, release-candidate, date and distribution tags, and the six registries the inventory could not reach
-- [ ] The inventory is retaken before each batch until the Renovate decision (`docs/renovate-proposal.md`) is made
+For further version work, compare the actual pins with current upstream evidence
+through the [Version Chain](../docs/maintenance.md#version-chain). Consult the
+stack's upgrade notes and `.trivy-baseline.json` for held releases, migrations
+and remaining findings. Verification at the current pins is still open for many
+stacks — [Lifecycle](../LIFECYCLE.md); the host-verification work is tracked in
+section 2 above. Image updates do not change the recorded test version or date.
+
+#### Historical batch checklist — October 31, 2026
+
+The boxes below preserve the progress record of the original plan. Unchecked
+items describe that plan, not today's remaining work; the v0.9.7 sweep happened
+later. Use the current-pin and verification sources above before selecting work.
+
+> - [x] Batch 1 — seven patch releases with the most recorded CRITICAL pairs (#292, 2026-10-31; none run on a host)
+> - [x] Batch 2 — 26 of the 28 patch releases moved on 2026-10-31, none run on a host; `apps/greenmail` fell to `scaffolded`, the three other `baseline-aligned` stacks moved a side image only and keep their state. Held, with the reason in `UPSTREAM.md`: Dify's plugin daemon (moves with the next Dify release) and SeaSearch (no notes past 1.0.4, pairing stated only in the Seafile manual)
+> - [ ] Batch 3 — 60 minor releases of applications, release notes per stack
+> - [ ] Batch 4 — 9 minor releases of database and infrastructure images, one pull request per family
+> - [ ] Batch 5 — 20 major releases of applications, a decision per stack
+> - [ ] Batch 6 — 23 major releases of databases: PostgreSQL 18 across 12 stacks with one procedure, then Valkey 9, MariaDB 11.8, nginx 1.31
+> - [ ] Batch 7 — floating, release-candidate, date and distribution tags, and the six registries the inventory could not reach
+> - [ ] The inventory is retaken before each batch until the Renovate decision (`docs/renovate-proposal.md`) is made
 
 ### 12. The ingress programme — decided 2026-10-31
 

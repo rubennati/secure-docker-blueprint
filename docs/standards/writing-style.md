@@ -8,8 +8,13 @@ section contracts, relevance and information ownership — *whether* a sentence
 belongs in a given document. This file owns *how* it reads once it does. A
 sentence has to pass both; neither file overrides the other.
 
-`scripts/ci/check-prose.py` covers part of what is below —
-[Checking](#checking) states which part.
+The wording advice below guides review; it does not require a form or separate
+approval for each paragraph. State factual criticism and correct errors directly.
+Avoid personal attacks and support evaluations with evidence.
+
+`scripts/ci/check-prose.py` currently enforces some wording choices as well as
+retired technical names. [Checking](#checking) describes that existing behavior;
+changing those gates requires a separate checker change.
 
 ---
 

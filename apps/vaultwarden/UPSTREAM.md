@@ -59,7 +59,7 @@ sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
 sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 
 # 3. Generate Argon2 admin token
-docker run --rm -it vaultwarden/server:1.37.0 /vaultwarden hash
+docker run --rm -it vaultwarden/server:1.37.5 /vaultwarden hash
 # Enter a strong password, copy the $argon2id$... output
 # In .env: replace every $ with $$ then paste as VW_ADMIN_TOKEN
 

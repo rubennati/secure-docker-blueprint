@@ -20,11 +20,13 @@ it to start; diff against it to find drift.
 - Traefik labels are grouped with `# Router`, `# TLS`, `# Middlewares`, `# Service`.
 - Secrets live in `.secrets/` — a dotfolder, gitignored.
 - `TZ`, not `TIMEZONE`.
-- Explicit `environment:` maps, never `env_file:` — every value stays visible.
-- Comments in English. `.gitignore` per app, not one at the root.
+- Prefer explicit `environment:` maps so each value stays visible.
+- Comments in English. Per-app `.gitignore` files protect app data alongside the root safeguards.
 - Healthchecks are app-specific: use what the image actually ships.
 
-Deviating from any of these needs a reason and approval.
+Use the canonical standards to distinguish requirements from recommendations.
+Explain material deviations. Ask only when the change needs a decision or
+consequence outside the authorized scope.
 
 ## Block order in every service
 

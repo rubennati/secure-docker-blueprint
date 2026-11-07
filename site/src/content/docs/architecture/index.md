@@ -14,7 +14,7 @@ before *changing* something.
 ```text
                      internet / VPN
                            │
-   host firewall (optional, operator-installed, not verified on a host)
+   host firewall (optional, installed by the operator)
                            │  ports 80/443, published on proxy-public
                            ▼
    ┌───────────────────────────────────┐
@@ -63,6 +63,11 @@ An application that gets compromised cannot reach another application's
 database, because there is no network path to it. Not a rule someone has to
 remember — an absent route.
 
+The optional [host firewall](/security/host/) is rendered with the proxy
+configuration and installed separately. Host tests on 2026-11-03/04 covered its
+rules, VPN access over both address families and a reboot. Those results describe
+that deployment; a new server still needs its own exposure and access checks.
+
 ## Who is allowed to reach what
 
 Each service picks an access policy, and the proxy enforces it before the request
@@ -76,18 +81,12 @@ reaches the container. In practice this is one variable in that service's `.env`
 | `access-trusted-vpn` | the declared ranges and your VPN |
 | `access-blocked` | nothing — the route exists but answers no one |
 
-**The defaults differ per service, and are not all restrictive.** Most services
-with a guide here ship `access-vpn` — Vaultwarden, Paperless-ngx and Invoice Ninja
-among them. Nextcloud, Seafile and Seafile Pro ship `access-trusted-vpn`, the file
-hosts because their office servers reach them over the Docker network. OnlyOffice
-and the publishing tools — Ghost, WordPress, BookStack, Immich and others — ship
-`access-public`, because they are built to be reached by people who are not on
-your VPN. **This is an open contradiction:** the project's decided direction is
-private by default — `access-vpn` as the default, `access-public` only as an
-operator's explicit choice — but 26 stack examples still ship `access-public`.
-Bringing them in line is a separate, not yet done piece of work. Check the value in that service's
-`.env.example` rather than assuming; it is one line, and it decides who can
-reach the thing.
+**Check each service's default before starting it.** Vaultwarden, Paperless-ngx,
+Invoice Ninja and Ghost ship `access-vpn`. Nextcloud, Seafile and Seafile Pro ship
+`access-trusted-vpn`, which admits the VPN and the additional client ranges you
+configure; it does not automatically admit Docker networks. WordPress, BookStack
+and Immich ship `access-public`. Read `APP_TRAEFIK_ACCESS` in the service's
+`.env.example`, then set the policy in your `.env` for the audience you intend.
 
 :::caution
 An access policy is a proxy setting, not a firewall. `access-public` removes the

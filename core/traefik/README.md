@@ -3,6 +3,21 @@
 Security-focused edge gateway for Docker-first servers.
 Secure defaults, composable policies, fast incident response.
 
+## Choose your task
+
+| Task | Read |
+|---|---|
+| First installation | [Prerequisites](#prerequisites) → [Setup](#setup); this path includes configuration, startup and verification |
+| Network or certificate choice | [IPv4 / dual-stack](#ipv4-only-vs-dual-stack-networking), [certificate strategies](#certificate-strategy--wildcard-vs-per-domain), [Cloudflare](#behind-cloudflare) |
+| Access, headers or TLS policy | [Middleware model](#the-middleware-model), [TLS profiles](#tls-profiles) |
+| Optional integrations | [CrowdSec](#crowdsec-bouncer-plugin-optional), [Authentik](#authentik-forward-auth-optional); enable each only when needed |
+| Operate or diagnose | [Incident commands](#incident-quickmoves), [logging](#logging--logrotate), [host exposure checks](docs/host-firewall.md#the-exposure-test), [troubleshooting](../../TROUBLESHOOTING.md) |
+| Recover or migrate | [Backup and restore order](#backup), [IPv4-to-dual-stack migration](docs/ipv6-dual-stack.md#migration-guide--existing-ipv4-only-deployment), [shared-to-edge migration](docs/edge-networks.md) |
+
+New installations use Setup. Existing deployments use the migration for the
+specific change; optional integration and migration sections are not extra
+first-installation steps.
+
 ## Prerequisites
 
 - `docker` + `docker compose`
@@ -15,43 +30,48 @@ Secure defaults, composable policies, fast incident response.
 cp .env.example .env
 ```
 
-Edit `.env` — at minimum change these:
+Complete these choices in `.env` **before validation or startup**:
 
-| Variable | What to set |
-|----------|-------------|
-| `ACME_EMAIL` | Your real email for Let's Encrypt |
-| `TRAEFIK_DASHBOARD_HOST` | FQDN for the Traefik dashboard (e.g. `traefik.yourdomain.com`) |
-| `CF_DNS_API_TOKEN` | Cloudflare API token (Zone:Read + DNS:Edit) — only needed for DNS-01 |
-| `ACME_WILDCARD_DOMAIN` | Uncomment and set if you want a wildcard certificate (optional) |
-| `TAILSCALE_CIDR_V4` | Your Tailscale IPv4 CIDR (default: `100.64.0.0/10`) |
-| `TAILSCALE_CIDR_V6` | Your Tailscale IPv6 CIDR (default: `fd7a:115c:a1e0::/48`) |
-| `TRUSTED_RANGES` | The client networks `access-trusted` admits — your LAN's prefixes; empty admits nobody |
-| `EDGE_NETWORKS` | The edge network of every stack you install (`<project>-edge`, each stack's `TRAEFIK_NETWORK`); `COMPOSE_FILE` applies the rendered file — [`docs/edge-networks.md`](docs/edge-networks.md) |
+| Setting | What to configure |
+|---|---|
+| Dashboard | Set `ACME_EMAIL` and `TRAEFIK_DASHBOARD_HOST` to your email and dashboard FQDN. Arrange DNS so VPN clients resolve that name to an address they can reach on this host. |
+| Network | Choose [IPv4-only or dual-stack](#ipv4-only-vs-dual-stack-networking). For dual-stack, complete the [Docker daemon prerequisites](docs/ipv6-dual-stack.md#docker-daemon-prerequisites) and replace `PUBLIC_NETWORK_SUBNET_V6` with [your own ULA subnet](docs/ipv6-dual-stack.md#choosing-a-ula-prefix); the shipped documentation prefix is invalid for deployment. For IPv4-only, remove `network-dual-stack.yml` from `COMPOSE_FILE` and empty `TRAEFIK_BIND_V6`. Keep both rendered config files in `COMPOSE_FILE`. |
+| Certificate | Choose [one certificate strategy](#certificate-strategy--wildcard-vs-per-domain): a Cloudflare DNS-01 wildcard covering the dashboard (`ACME_WILDCARD_DOMAIN` and a real `CF_DNS_API_TOKEN`, dashboard resolver empty), or per-domain certificates with `TRAEFIK_DASHBOARD_CERT_RESOLVER` set. Per-domain DNS-01 also needs the token; HTTP-01 needs public port 80; TLS-ALPN-01 needs public TCP 443 without a TLS-terminating proxy in front. Neither strategy is selected in the example. |
+| Access | A VPN is the recommended way in; the shipped configuration uses Tailscale. With Tailscale, confirm `TAILSCALE_CIDR_V4` and `TAILSCALE_CIDR_V6`. `TRUSTED_RANGES` names the client networks that `access-trusted` admits — without a VPN, the networks you administer from; empty admits nobody. The dashboard uses `access-vpn`, so without a VPN it stays closed; no setup step needs it. |
+| Applications | Add each installed stack's `TRAEFIK_NETWORK` to `EDGE_NETWORKS` — [edge networks](docs/edge-networks.md). This can stay empty while installing Traefik alone. |
+
+With Tailscale on this host, complete
+[the host-side routing and DNS steps](docs/host-firewall.md#reaching-the-routers-over-tailscale-on-the-host).
+In particular, `sudo tailscale set --snat-subnet-routes=false` preserves VPN
+client addresses on this path. If the host is also a subnet router, read the
+consequences there before changing that setting.
 
 ```bash
-# 2. Validate environment variables
+# From core/traefik, after editing .env:
 bash ops/scripts/validate.sh
-
-# 3. Render templates (.tmpl -> config files)
 bash ops/scripts/render.sh
-
-# 4. Validate rendered output (checks for unresolved variables)
 bash ops/scripts/validate.sh
-
-# 5. Start
 docker compose up -d
-
-# 6. Verify
 docker compose ps
-bash ops/scripts/validate.sh --strict   # published addresses, against the running container
-# Dashboard should be reachable at https://<TRAEFIK_DASHBOARD_HOST>
-# (only from Tailscale/VPN by default)
 ```
 
-With Tailscale on this host, run `sudo tailscale set --snat-subnet-routes=false`
-unless the host routes subnets for the tailnet: by default `tailscaled` masquerades
-the requests it forwards to Docker, every VPN client reaches Traefik as the Docker
-gateway, and `access-vpn` answers 403 — [host-firewall.md](docs/host-firewall.md#reaching-the-routers-over-tailscale-on-the-host).
+These checks validate configuration; they do not establish that the deployed
+service or its firewall works. Open `https://<TRAEFIK_DASHBOARD_HOST>` from a VPN
+client and check that the certificate is valid. Without a VPN, check the certificate
+on [whoami](../../apps/whoami/) instead, with its `APP_TRAEFIK_ACCESS` set to
+`access-trusted`. For public bindings, run the
+[external exposure test](docs/host-firewall.md#the-exposure-test) and save its
+successful marker as described there. Then confirm the running deployment:
+
+```bash
+bash ops/scripts/validate.sh --strict
+```
+
+`--strict` must finish without `PENDING` or `NOT VERIFIED`; a public binding also
+needs the matching exposure marker. Review the protection layers it reports and
+follow [the host firewall and management-access guide](docs/host-firewall.md)
+when preparing the host. The rendered firewall is installed by the operator;
+starting Traefik does not apply it.
 
 ## Structure
 
@@ -106,7 +126,7 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-A new installation is **dual-stack**: the example `.env` applies `network-dual-stack.yml`, which gives `proxy-public` (the network Traefik and every routed app share) an IPv6 subnet, and publishes Traefik on both families (DEC-063, refined by DEC-075). Without the overlay `proxy-public` is IPv4-only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+A new installation is **dual-stack**: the example `.env` applies `network-dual-stack.yml`, which gives `proxy-public` (Traefik’s ingress network; applications normally use their own edge networks) an IPv6 subnet, and publishes Traefik on both families (DEC-063, refined by DEC-075). Without the overlay `proxy-public` is IPv4-only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
 **A new installation — dual-stack from day one, as the example ships it:**
 

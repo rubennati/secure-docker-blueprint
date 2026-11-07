@@ -531,7 +531,7 @@ directory.
 - [ ] Image name hardcoded in compose, only tag via `${APP_TAG}` / `${DB_TAG}`
 - [ ] Container names derived from `${COMPOSE_PROJECT_NAME}`
 - [ ] Explicit `environment:` blocks (no `env_file:`)
-- [ ] Secrets via Docker Secrets in `.secrets/`, never in `environment:`
+- [ ] Secrets via Docker Secrets in `.secrets/`; any environment exception follows [Security Baseline, Pattern 3](security-baseline.md#pattern-3-documented-environment-exception)
 - [ ] Config mounts with `:ro`
 - [ ] Database only in `app-internal` network
 - [ ] `traefik.docker.network=${TRAEFIK_NETWORK}` label on every service with `traefik.enable=true`

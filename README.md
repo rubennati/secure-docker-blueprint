@@ -2,31 +2,47 @@
 
 # Secure Docker Blueprint
 
-**Security-hardened Docker Compose patterns for self-hosted software — deploy, secure, operate, recover — for existing open-source projects and applications you build yourself.**
+**Self-host on Docker — secure from the first start.**
 
-Hardened configurations for 80+ services — standardized security baseline, Docker Secrets, Traefik routing and network isolation out of the box; CrowdSec as an optional layer (its AppSec component opt-in, shipped without the OWASP Core Rule Set — see [`core/crowdsec/docs/appsec.md`](core/crowdsec/docs/appsec.md)). For software you build yourself, [`development/`](development/) holds two deployment patterns — a static site and a web API.
+Pick the apps you need from **120+ ready-made setups**. Each one runs behind the same
+protection: HTTPS and access control through Traefik, isolated networks, secrets in
+files, and CrowdSec if you want it.
+
+The protection sits around the apps, not inside them — the images stay as upstream
+ships them. Every default can be changed.
+
+For applications you build yourself, [`development/`](development/) provides two
+deployment patterns: a **static site** and a **web API**, following the same
+**deploy → secure → operate → recover** approach.
 
 [![CI](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/ci.yml)
 [![Trivy](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml/badge.svg)](https://github.com/rubennati/secure-docker-blueprint/actions/workflows/trivy.yml)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.9.7-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.8-blue)](CHANGELOG.md)
 
 **[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
 </div>
 
-Run self-hosted software without getting the security details wrong each time. Every
-stack shares one hardened baseline: credentials as Docker Secrets instead of environment
-variables, datastores isolated on internal networks with no published port, pinned image
-versions, memory and PID limits, and Traefik in front handling TLS and access control.
+Run self-hosted software without getting the security details wrong each time.
+The shared security baseline uses file-based Docker Secrets where supported,
+isolates datastores on internal networks without published ports, pins images,
+and sets memory and PID limits. Traefik handles TLS and access control. Each stack
+records deviations from the baseline in its own documentation.
 
-Quick Navigation: [Getting started](#getting-started) · [Repository layout](#repository-layout)
+[CrowdSec](core/crowdsec/) adds optional threat detection. Its
+[AppSec component](core/crowdsec/docs/appsec.md) is opt-in and ships without the
+OWASP Core Rule Set.
+
+Quick Navigation: [Stacks](#stacks) · [Getting started](#getting-started) · [Overview](#how-the-pieces-fit) · [Repository layout](#repository-layout)
 
 ## Stacks
 
-121 stacks in five categories. Each category below links to its full list.
+121 stacks in five categories. Each stack groups the configuration for an
+application or infrastructure component; it may contain several containers or
+run as a host tool. Each category below links to its full list.
 
 | Browse | Stacks | Examples |
 |---|---|---|
@@ -38,22 +54,65 @@ Quick Navigation: [Getting started](#getting-started) · [Repository layout](#re
 
 Where several tools solve the same problem, more than one is included.
 
+## How the pieces fit
+
+A typical HTTPS application follows this path. Traefik applies the stack's access
+policy; the database or cache, where needed, stays on its internal network.
+
+```mermaid
+flowchart LR
+  CLIENT["Browser / VPN client"] --> PROXY["Traefik<br/>HTTPS and access policy"]
+  PROXY --> APP["Application<br/>own edge network"]
+  APP --> DATA["Database / cache<br/>(where needed; internal network)"]
+```
+
+[Architecture](docs/architecture.md) covers optional integrations, host controls
+and the boundaries between them.
+
 ## Getting started
 
-Traefik goes up first — every stack reachable over the network routes through it.
-Each stack is then installed from its own README.
+Install Traefik before the application stacks that use its HTTPS routing.
+Each stack is then installed from its own README. Services with additional
+protocols, such as [mail](apps/docker-mailserver/README.md#architecture), may
+publish their own ports through an opt-in overlay; their guides describe those
+ports and prerequisites.
 
 **Requirements:** Docker Engine 28.0+ with Compose 2.33.1+, a Linux host (tested on Debian 12/13),
-`envsubst` (`gettext-base`), and a domain on a
-[DNS provider Traefik supports](https://doc.traefik.io/traefik/https/acme/#providers).
+`envsubst` (`gettext-base`), and a domain whose DNS you control. The shipped DNS-01
+resolver uses Cloudflare; HTTP-01 and TLS-ALPN-01 work with other DNS providers.
+Most stacks start closed, reachable over the VPN only; those built to be reached from
+the internet, such as sign-in or link sharing, start public. A VPN is the recommended
+way in, and the shipped configuration uses Tailscale. Without one, admit your own
+networks through `TRUSTED_RANGES` and `access-trusted`; the Traefik dashboard then
+stays closed, and no setup step needs it.
+
+A host checks out only the stacks it runs. `/srv/docker` is the recommended location,
+not a required one:
 
 ```bash
-git clone https://github.com/rubennati/secure-docker-blueprint.git
-cd secure-docker-blueprint
-git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+# An empty directory you own
+sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker
+
+# Clone without files, then take the newest release
+git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
+cd /srv/docker
+git checkout "$(git tag --sort=-v:refname | head -n1)"
+git sparse-checkout set scripts docs/standards
+
+# The stacks on this host, one per line; check out what the file lists
+cp stacks.example stacks
+scripts/stacks.sh apply
+
+# Start with Traefik
 cd core/traefik
 cp .env.example .env
 ```
+
+`stacks` starts with Traefik, CrowdSec and the `whoami` test target; add or remove lines
+and apply again. Apply refuses to remove a stack that still has `.env` or data, because
+Git would delete them with the directory. `scripts/stacks.sh update <tag>` previews a
+release for just these stacks before taking it — see
+[stacks on a host](docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks).
 
 Deploy from a tag rather than the default branch: `main` is where work lands between
 releases, and the combination of stacks on it at any moment is not one anybody has
@@ -61,23 +120,18 @@ operated. [`docs/standards/deployment-lifecycle.md`](docs/standards/deployment-l
 covers the rest of the cycle — deployment order, updating the blueprint as against
 updating an upstream image, rollback, and how a host states which release it runs.
 
-Set `ACME_EMAIL`, `TRAEFIK_DASHBOARD_HOST`, and the DNS token for your certificate
-resolver — `CF_DNS_API_TOKEN` ships as `__REPLACE_ME__`, and DNS-01 fails until it holds
-a real token. [`core/traefik/README.md`](core/traefik/README.md#setup) documents every
-variable.
+Continue with **[Traefik setup](core/traefik/README.md#setup)** before starting
+containers. It covers the required choices: IPv4-only or dual-stack (including a
+real IPv6 subnet and Docker daemon prerequisites), certificate strategy, and VPN
+access. The example intentionally leaves the certificate strategy unselected and
+uses an IPv6 documentation prefix that validation refuses.
 
-```bash
-bash ops/scripts/validate.sh    # required variables present
-bash ops/scripts/render.sh      # .tmpl → config files
-bash ops/scripts/validate.sh    # nothing left unresolved
-docker compose up -d
-```
-
-The dashboard answers at `https://<TRAEFIK_DASHBOARD_HOST>`, over the VPN only by
-default. Then pick a stack — [Vaultwarden](apps/vaultwarden/README.md) and
-[Nextcloud](apps/nextcloud/README.md) are straightforward first ones. On a 403 or 404,
+Once Traefik is running and its checks are complete, install an application from
+its own README — for example [Vaultwarden](apps/vaultwarden/README.md) or
+[Nextcloud](apps/nextcloud/README.md). On a 403 or 404,
 [TROUBLESHOOTING.md](TROUBLESHOOTING.md) maps the symptom to its cause.
-`./scripts/overview.sh` lists what is configured and running.
+Run `./scripts/overview.sh` **from the repository root** to list what is configured
+and running.
 
 ## Repository layout
 
@@ -89,20 +143,23 @@ monitoring/   monitoring and observability
 backup/       backup and recovery
 development/  reusable patterns for software you build yourself
 docs/         architecture and standards
-scripts/      CI checks and the overview script
+scripts/      CI checks, the overview script and the stack list tool
 site/         SecDockBlue source
 ```
 
-Each stack directory holds `docker-compose.yml`, `.env.example`, a `README.md` with the
-setup procedure, and an `UPSTREAM.md` recording the pinned version and upgrade path.
-[`apps/_reference/`](apps/_reference/) is the structure they all follow.
+Compose-based stacks normally contain `docker-compose.yml`, `.env.example`, a
+`README.md` with setup instructions, and an `UPSTREAM.md` recording image pins,
+upgrade notes and verification. [`apps/_reference/`](apps/_reference/) provides
+the application template. Host-installed components such as
+[Borgmatic](backup/borgmatic/) and the optional [Host Watchdog](core/host-watchdog/)
+have their own installation layout.
 
 ## Deploy → secure → operate → recover
 
 Four phases, and the repository covers all of them:
 
-- **Deploy** — one Compose shape across every stack, with every value that has to be set named in `.env.example`
-- **Secure** — `no-new-privileges`, no direct Docker socket access, secrets as files, datastores unreachable from the host network, memory, PID and swap limits — checked on every pull request; capabilities dropped and a read-only root filesystem wherever the image allows it
+- **Deploy** — a shared structure for Compose stacks, with configurable values documented in `.env.example`; host-installed tools have their own setup guides
+- **Secure** — `no-new-privileges`, Docker socket proxies, file-based secrets with documented exceptions, datastores unreachable from the host network, memory, PID and swap limits — checked on every pull request; capabilities dropped and a read-only root filesystem wherever the image allows it
 - **Operate** — healthchecks, resource and swap limits, monitoring stacks, and a recorded version each stack was last verified against
 - **Recover** — Borgmatic with database-aware dumps, and restore playbooks per persistence pattern
 

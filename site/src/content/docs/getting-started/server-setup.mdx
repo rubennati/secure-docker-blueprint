@@ -116,14 +116,29 @@ traffic over IPv4 and leaves the IPv6 path untested.
 
 <Steps>
 
-1. Clone into its own directory and check out the newest release:
+1. Check out the newest release with only the stacks this server runs.
+   `/srv/docker` is the recommended location, not a required one:
 
    ```bash
-   sudo mkdir -p /srv/blueprint && sudo chown "$USER" /srv/blueprint
-   cd /srv/blueprint
-   git clone https://github.com/rubennati/secure-docker-blueprint.git .
-   git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+   # An empty directory you own
+   sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker
+
+   # Clone without files, then take the newest release
+   git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
+   cd /srv/docker
+   git checkout "$(git tag --sort=-v:refname | head -n1)"
+   git sparse-checkout set scripts docs/standards
+
+   # The stacks on this server, one per line; check out what the file lists
+   cp stacks.example stacks
+   scripts/stacks.sh apply
    ```
+
+   `stacks` starts with Traefik, CrowdSec and `whoami`, which is all this page
+   needs. Add a line per application later and run `scripts/stacks.sh apply`
+   again; the
+   [deployment lifecycle](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks)
+   covers removing stacks and previewing updates.
 
    :::note
    Use a fresh directory. Cloning over an older copy mixes old and new
@@ -258,7 +273,7 @@ Traefik writes access logs to disk, and Docker's own rotation does not cover the
 
 ```bash
 sudo cp core/traefik/config/logrotate/traefik /etc/logrotate.d/traefik
-sudo sed -i 's|/path/to/secure-docker-blueprint|/srv/blueprint|' /etc/logrotate.d/traefik
+sudo sed -i 's|/path/to/secure-docker-blueprint|/srv/docker|' /etc/logrotate.d/traefik
 sudo logrotate -d /etc/logrotate.d/traefik
 ```
 

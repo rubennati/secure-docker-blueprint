@@ -71,7 +71,7 @@ For **high-stakes production environments** (critical infrastructure, financial 
 ## Security Principles This Blueprint Follows
 
 - **Least privilege** — `cap_drop: ALL`, `no-new-privileges`, read-only filesystems where supported
-- **Secret isolation** — Docker Secrets via `_FILE` env vars or entrypoint wrappers, never in `environment:`
+- **Secret isolation** — file-based Docker Secrets via `_FILE` variables or entrypoint wrappers by default; [documented exceptions](docs/standards/security-baseline.md#secrets) keep credentials in a gitignored `.env` when file-based delivery is not implemented
 - **Network segmentation** — databases and backends in internal networks, no internet exposure
 - **Socket proxy pattern** — no direct Docker socket mounts on app containers
 - **Pinned versions** — every image tagged with a specific version, never `:latest`
@@ -86,7 +86,7 @@ See [`docs/standards/security-baseline.md`](docs/standards/security-baseline.md)
 
 ## Known Accepted Risks
 
-- **Git author identity** — commits are signed with the maintainer's GitHub account; this is intentional for a public Open Source project
+- **Commit signing** — recommended when available, not required repository-wide. Signing identifies provenance; it does not establish that the configuration is correct or tested. See [commit rules](docs/standards/commit-rules.md#signing).
 - **`access-vpn` and self-loopback requests** — some applications (WordPress, Paperless-ngx) may log self-request failures when behind IP allowlist; this is documented and does not affect user-facing security
 
 See per-service `Known Issues` sections in each app's `README.md`.
