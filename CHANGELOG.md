@@ -53,6 +53,15 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   maintenance instructions are corrected and the older security assessment is
   marked historical. Technical CI gates and branch protection are unchanged.
 
+### Fixed
+
+- **Reader-facing corrections.** `core/README.md` no longer lists Coraza as planned: it
+  is the engine of CrowdSec's opt-in AppSec component. Vaultwarden's admin-token hash
+  command uses the pinned image, 1.37.5, instead of 1.37.0. Vaultwarden's backup section
+  shows how to write the credential file its Borgmatic snippet reads, instead of a
+  snippet pointing at a file the stack does not create. The site's start page uses the
+  README's new headline.
+
 ## [0.9.7] — 2026-11-05 — The ingress programme, verified on a host
 
 Traefik's ingress is rebuilt and measured on a dual-stack host: the published ports bind per address family, every stack reaches Traefik on an edge network of its own, `access-trusted` admits only the ranges an installation declares, every stack states its auth posture, and the repository renders a host ruleset the operator loads. The host run found and fixed faults in the tools that check this — the exposure test, `validate.sh`, the CrowdSec middleware, Debian's `nftables.service` — and a hardening round followed the security audit of that host. Every image pin then moves to its newest stable release, and the CRITICAL findings the newest images still carry — 332, from 920 — stay only as exceptions per image with their reason and risk, shown in each affected stack's README; PostgreSQL 18 in fifteen stacks, MariaDB 12.3, MySQL 9.7 and ten application majors are breaking (see Security). The host run brought fourteen stacks to `ops-proven`, up from one; no host has run the new pins yet, so two stay `ops-proven`, nine are `baseline-aligned` and 110 of 121 are `scaffolded` until they are verified at those pins. A configuration written outside the repository needs the router order headers, access, limit, auth, `access-trusted` instead of `access-lan`, the bindings per family and its stack on an edge network. Not verified on a host: `access-trusted` admitting a declared range (the test host had no LAN), IPv6-only operation, CrowdSec's blocking in the host firewall. Open: the PostgreSQL client for backups (FA-03) — a `pg_dump` of another major version than the server's fails; the interim rule is the server's major version.
