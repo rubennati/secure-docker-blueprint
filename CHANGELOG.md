@@ -8,6 +8,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **Partial checkout for hosts.** A host checks out only the stacks it runs with a Git
+  sparse checkout: a base of `core/traefik`, `apps/whoami`, `docs/standards` and
+  `scripts`, plus the chosen stacks. It stays a Git checkout, so the release remains
+  identifiable, and an update can be previewed for just those stacks before it is
+  taken. `/srv/docker` is documented as the recommended location, not a required one.
+  Removing a path from a partial checkout deletes its directory including `.env`,
+  `.secrets/` and `volumes/`; the deployment lifecycle warns about it.
+
 ### Changed
 
 - **Documentation: align setup, verification and reader paths.** Traefik setup

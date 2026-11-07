@@ -79,13 +79,52 @@ internet reaches is measured from another machine with `scripts/exposure-test.sh
 and kernel or `sysctl` expectations. A deployment works without them being written
 down; it is simply not this repository that says what they should be.
 
-## 2 — Choose a release
+## 2 — Choose a release and the stacks
+
+A host carries only the stacks it runs. A Git partial checkout (sparse checkout) gives
+it exactly those directories and keeps them a Git checkout, so the release stays
+identifiable and an update can be previewed per stack. A full clone is for working on
+the repository itself. Copying stack directories out of a clone also works, but loses
+the release identity, and `core/crowdsec` finds Traefik's logs by a relative path
+(`../traefik/volumes/logs`) that expects the same layout.
+
+The recommended location is `/srv/docker`, with each stack at
+`/srv/docker/<category>/<stack>`. It is a default, not a requirement: any other path
+works, for example `/srv/<category>/<stack>`. Paths in examples elsewhere in the
+repository — backup sources, logrotate stanzas — assume `/srv/docker` and change with
+it; [`scripts/host-files.sh`](../../scripts/host-files.sh) renders host files with the
+real path.
 
 ```bash
-git clone https://github.com/rubennati/secure-docker-blueprint.git
-cd secure-docker-blueprint
+sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker   # an empty directory you own
+git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
+cd /srv/docker
+git sparse-checkout set core/traefik apps/whoami docs/standards scripts
 git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
 ```
+
+The four paths are the base every host needs:
+
+| Path | Why |
+|---|---|
+| `core/traefik` | HTTPS ingress for every stack that publishes a domain |
+| `apps/whoami` | the test target the Traefik and CrowdSec checks run against |
+| `docs/standards` | the rules the stack documentation links to |
+| `scripts` | `overview.sh` and `host-files.sh` |
+
+The files at the repository root — `README.md`, `CHANGELOG.md`, `LIFECYCLE.md` and the
+rest — are always included. Add the stacks this host runs, now or later:
+
+```bash
+git sparse-checkout add core/crowdsec apps/vaultwarden backup/borgmatic
+git sparse-checkout list                 # what this host carries
+```
+
+**Taking a stack out deletes its directory, including `.env`, `.secrets/` and
+`volumes/`.** Git removes a directory that leaves the partial checkout together with the
+files it ignores, and `volumes/` holds the stack's data. Before removing a path from the
+list, stop the stack and back up or move its data; a stack that is merely unused can
+stay in the list.
 
 Deploy from a tag, not from the default branch. The default branch is where work lands
 between releases: it is checked by CI on every change, but the combination of stacks on it
@@ -156,8 +195,13 @@ stacks need a dump rather than a file copy.
 git fetch --tags
 git tag --sort=-v:refname | head -n5                              # newest releases
 git log --oneline "$(git describe --tags --abbrev=0)"..<target>   # what it changes
+git diff --stat HEAD..<target> -- $(git sparse-checkout list)       # what changes in the stacks on this host
 git checkout <target>
 ```
+
+On a full clone, drop the `-- $(git sparse-checkout list)` part; the diff then covers
+the whole repository. `git diff HEAD..<target> -- <stack>` shows one stack's change in
+full.
 
 `.env`, `.secrets/` and `volumes/` are ignored by Git and survive the checkout. What
 changes underneath them is the compose files, the middleware and the defaults, so read
@@ -220,13 +264,11 @@ git describe --tags                   # the nearest release plus the drift
 git status --porcelain                # local modifications
 ```
 
-A deployment that is not a Git checkout cannot answer this question, and neither can one
-whose working tree has been edited in place. Both are reported rather than guessed at.
+A partial checkout answers it the same way as a full clone. A deployment that is not a
+Git checkout cannot answer this question, and neither can one whose working tree has
+been edited in place. Both are reported rather than guessed at.
 
 ## What this document does not decide
 
 - **Host hardening outside Docker** — firewall, updates, the account the stacks run under.
-- **Whether a deployment must remain a Git checkout.** Everything above assumes it is,
-  because that is what makes the release identifiable. Copying the directory instead
-  works and loses that.
 - **Staged or multi-host deployment.** One host, one checkout.
