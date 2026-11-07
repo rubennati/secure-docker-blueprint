@@ -274,7 +274,7 @@ content unreadable.
 
    ```yaml
    source_directories:
-       - /srv/blueprint
+       - /srv/docker
        - /var/lib/docker/volumes/nextcloud_nextcloud_html/_data
    ```
 
@@ -289,7 +289,7 @@ content unreadable.
        - name: nextcloud
          container: nextcloud-db
          username: nextcloud
-         password: "{credential file /srv/blueprint/apps/nextcloud/.secrets/db_pwd.txt}"
+         password: "{credential file /srv/docker/apps/nextcloud/.secrets/db_pwd.txt}"
          tls: false
    ```
 

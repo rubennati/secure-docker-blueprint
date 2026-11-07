@@ -146,7 +146,7 @@ mariadb_databases:
     - name: myapp
       container: myapp-db
       username: myapp
-      password: "{credential file /srv/blueprint/apps/myapp/.secrets/db_pwd.txt}"
+      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
       tls: false
 ```
 
