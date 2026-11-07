@@ -2,10 +2,10 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-11-05
+**Last updated:** 2026-11-07
 
-- **Phase:** pre-1.0. Latest tag `v0.9.7` (2026-11-05), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.7..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.8` (2026-11-07), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.8..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
@@ -91,6 +91,9 @@
   LAN columns of block A, IPv6-only (block O), CrowdSec's host-firewall blocking.
   Open: FA-03 (the PostgreSQL client for backups), trusted proxies narrowed to
   the Traefik hop (`ROADMAP.md`).
+- **Released: v0.9.8** — hosts carry only their stacks: a partial checkout
+  with `stacks` and `scripts/stacks.sh`, the VPN described as a recommendation,
+  the README headline and reader corrections. No stack or pin changed; no host run.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.
