@@ -596,6 +596,12 @@ def render(rows: list[dict]) -> str:
         + "stack. It makes no statement about whether a stack suits a given "
         + "deployment.",
         "",
+        "Whether upstream has published a newer version, when each image was "
+        + "published, and what the pinned images carry today: the weekly "
+        + "[stack status](https://github.com/rubennati/secure-docker-blueprint/"
+        + "issues?q=is%3Aissue+is%3Aopen+label%3Astack-status), written by "
+        + "`scripts/ci/upstream-status.py`.",
+        "",
         "## What the columns mean",
         "",
         "- **State** — `scaffolded` · `verified` · `baseline-aligned` · "

@@ -8,6 +8,24 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **Stack status.** A weekly job lists, per stack, the pinned tag of the primary
+  image and when it was published, the newest upstream tag in the same shape and
+  when it was published, and the CRITICAL and HIGH findings in every image of the
+  stack (`scripts/ci/upstream-status.py`). It writes the table to the pinned issue
+  labelled `stack-status` and the data to a workflow artifact, and decides nothing.
+
+### Changed
+
+- **Image findings are reported, not blocking.** A CRITICAL finding in an upstream
+  image that `.trivy-baseline.json` does not record, and an image that stopped
+  being scannable, are named in the scan summary and no longer fail the job. The
+  image CVE scan leaves the required checks on `main`, which keeps the ten jobs of
+  `ci.yml` and the IaC config scan. The job still fails on the repository's own
+  errors: an exception without its reason, an unreadable report, an image that
+  left no trace.
+
 ## [0.9.8] — 2026-11-07 — Hosts carry only their stacks
 
 A host now checks out only the stacks it runs. A Git sparse checkout keeps the release identifiable, and `stacks` — a file of stack paths, one per line, from the template `stacks.example` — says which stacks a host carries; `scripts/stacks.sh` checks them out, refuses to remove a stack that still has `.env`, `.secrets/` or `volumes/`, and previews a release for just those stacks before taking it. `/srv/docker` is the recommended location, not a required one, and the README, the deployment lifecycle and the site's server setup describe the same commands. A VPN is described as the recommended way in rather than a prerequisite, the README opens with a plain headline, and reader-facing errors are corrected. An existing host on a full clone keeps working unchanged; the partial checkout is for a new host or a fresh clone into a new directory, with no automatic conversion. No stack, image pin or default changes, and nothing in this release was run on a host.

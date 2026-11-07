@@ -104,7 +104,8 @@
   their own audit scope, not a blanket assessment of the current tree. Check the
   implementation and relevant evidence for a new task. C1, the missing Trivy gate,
   is closed: `.trivy-baseline.json` records the CRITICAL findings that
-  exist and `scripts/ci/trivy-gate.py` fails the scan on any that is not recorded.
+  exist and `scripts/ci/trivy-gate.py` reports any that is not recorded; since
+  DEC-079 it no longer blocks.
   **No finding of the stabilization audit is marked FIX BEFORE V1 any more** —
   everything else open there is evidence, a recorded decision, or standing research
   coverage. The core audit of 2026-10-15 opens its own, listed in that file by phase.
@@ -144,13 +145,14 @@
   per-image table in the log. The vulnerability database is cached across runs,
   one entry per UTC day; Trivy's own staleness check still governs refreshes.
   CLI pinned to `v0.74.0`. Trivy's own exit code stays 0; `scripts/ci/trivy-gate.py`
-  fails the job on a CRITICAL finding not recorded in `.trivy-baseline.json`. Both
-  scan jobs are required checks on `main` since 2026-09-25
-  ([`decisions.md`](decisions.md#dec-070)).
+  reports a CRITICAL finding not recorded in `.trivy-baseline.json` and blocks
+  nothing. After the scan, `scripts/ci/upstream-status.py` writes the pinned and
+  newest upstream tag with their dates and the findings per stack to the
+  `stack-status` issue ([`decisions.md`](decisions.md#dec-079)).
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
-  request into `dev` and into `main`, which requires the two image-scan jobs as
-  well — twelve in all; both rulesets require the branch to be up to date before
+  request into `dev` and into `main`, which requires the IaC config scan as
+  well — eleven in all; both rulesets require the branch to be up to date before
   merging. CodeQL reports on the same pull requests and is not
   a required check.
 
