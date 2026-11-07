@@ -37,7 +37,7 @@ Complete these choices in `.env` **before validation or startup**:
 | Dashboard | Set `ACME_EMAIL` and `TRAEFIK_DASHBOARD_HOST` to your email and dashboard FQDN. Arrange DNS so VPN clients resolve that name to an address they can reach on this host. |
 | Network | Choose [IPv4-only or dual-stack](#ipv4-only-vs-dual-stack-networking). For dual-stack, complete the [Docker daemon prerequisites](docs/ipv6-dual-stack.md#docker-daemon-prerequisites) and replace `PUBLIC_NETWORK_SUBNET_V6` with [your own ULA subnet](docs/ipv6-dual-stack.md#choosing-a-ula-prefix); the shipped documentation prefix is invalid for deployment. For IPv4-only, remove `network-dual-stack.yml` from `COMPOSE_FILE` and empty `TRAEFIK_BIND_V6`. Keep both rendered config files in `COMPOSE_FILE`. |
 | Certificate | Choose [one certificate strategy](#certificate-strategy--wildcard-vs-per-domain): a Cloudflare DNS-01 wildcard covering the dashboard (`ACME_WILDCARD_DOMAIN` and a real `CF_DNS_API_TOKEN`, dashboard resolver empty), or per-domain certificates with `TRAEFIK_DASHBOARD_CERT_RESOLVER` set. Per-domain DNS-01 also needs the token; HTTP-01 needs public port 80; TLS-ALPN-01 needs public TCP 443 without a TLS-terminating proxy in front. Neither strategy is selected in the example. |
-| Access | Confirm `TAILSCALE_CIDR_V4` and `TAILSCALE_CIDR_V6` for your VPN. `TRUSTED_RANGES` names any additional client networks that `access-trusted` admits; empty admits nobody. The dashboard uses `access-vpn`. |
+| Access | A VPN is the recommended way in; the shipped configuration uses Tailscale. With Tailscale, confirm `TAILSCALE_CIDR_V4` and `TAILSCALE_CIDR_V6`. `TRUSTED_RANGES` names the client networks that `access-trusted` admits — without a VPN, the networks you administer from; empty admits nobody. The dashboard uses `access-vpn`, so without a VPN it stays closed; no setup step needs it. |
 | Applications | Add each installed stack's `TRAEFIK_NETWORK` to `EDGE_NETWORKS` — [edge networks](docs/edge-networks.md). This can stay empty while installing Traefik alone. |
 
 With Tailscale on this host, complete
@@ -57,7 +57,9 @@ docker compose ps
 
 These checks validate configuration; they do not establish that the deployed
 service or its firewall works. Open `https://<TRAEFIK_DASHBOARD_HOST>` from a VPN
-client and check that the certificate is valid. For public bindings, run the
+client and check that the certificate is valid. Without a VPN, check the certificate
+on [whoami](../../apps/whoami/) instead, with its `APP_TRAEFIK_ACCESS` set to
+`access-trusted`. For public bindings, run the
 [external exposure test](docs/host-firewall.md#the-exposure-test) and save its
 successful marker as described there. Then confirm the running deployment:
 

@@ -77,8 +77,11 @@ ports and prerequisites.
 **Requirements:** Docker Engine 28.0+ with Compose 2.33.1+, a Linux host (tested on Debian 12/13),
 `envsubst` (`gettext-base`), and a domain whose DNS you control. The shipped DNS-01
 resolver uses Cloudflare; HTTP-01 and TLS-ALPN-01 work with other DNS providers.
-The dashboard is VPN-only by default, so prepare a working VPN and DNS resolution
-from its clients before expecting dashboard access.
+Most stacks start closed, reachable over the VPN only; those built to be reached from
+the internet, such as sign-in or link sharing, start public. A VPN is the recommended
+way in, and the shipped configuration uses Tailscale. Without one, admit your own
+networks through `TRUSTED_RANGES` and `access-trusted`; the Traefik dashboard then
+stays closed, and no setup step needs it.
 
 A host checks out only the stacks it runs. `/srv/docker` is the recommended location,
 not a required one:
