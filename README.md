@@ -87,13 +87,20 @@ A host checks out only the stacks it runs. `/srv/docker` is the recommended loca
 not a required one:
 
 ```bash
-sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker   # an empty directory you own
+# An empty directory you own
+sudo mkdir -p /srv/docker && sudo chown "$USER" /srv/docker
+
+# Clone without files, then take the newest release
 git clone --sparse --no-checkout https://github.com/rubennati/secure-docker-blueprint.git /srv/docker
 cd /srv/docker
-git checkout "$(git tag --sort=-v:refname | head -n1)"   # the newest release
+git checkout "$(git tag --sort=-v:refname | head -n1)"
 git sparse-checkout set scripts docs/standards
-cp stacks.example stacks                 # the stacks on this host, one per line
-scripts/stacks.sh apply                  # check out what stacks lists
+
+# The stacks on this host, one per line; check out what the file lists
+cp stacks.example stacks
+scripts/stacks.sh apply
+
+# Start with Traefik
 cd core/traefik
 cp .env.example .env
 ```
