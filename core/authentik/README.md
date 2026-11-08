@@ -79,7 +79,7 @@ docker compose logs authentik-server --follow
 # until then. Set up akadmin here.
 ```
 
-Default values are `access-public`, `limit-standard`, `headers-standard`, `auth-none` — publicly reachable (users must be able to log in from anywhere), the standard headers and counter; the `/_static/` router carries `STATIC_TRAEFIK_LIMIT=limit-none`, because a first load of the portal fetches 100+ public chunks.
+Default values are `access-vpn`, `limit-standard`, `headers-standard`, `auth-none` — closed until the setup flow has run over the VPN, then `access-public` (users must be able to log in from anywhere), the standard headers and counter; the `/_static/` router carries `STATIC_TRAEFIK_LIMIT=limit-none`, because a first load of the portal fetches 100+ public chunks.
 
 ## Verify
 
@@ -362,7 +362,7 @@ Two files outside the database are required for a working restore:
 
 ## Known Issues
 
-- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`. Complete it immediately after the first boot; if you forget, anyone reaching it first becomes the admin. To close the window, start with `APP_TRAEFIK_ACCESS=access-vpn`, complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
+- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`; on the lab host at 2026.8.5 `/` redirected every visitor to it until it had run, and to the login afterwards. The route therefore ships at `access-vpn`: complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
 - **`AUTHENTIK_SECRET_KEY` rotation invalidates all existing sessions and API tokens.** Plan a maintenance window.
 - **Email flows depend on SMTP.** Password reset, invitation, and event notifications silently fail if SMTP is misconfigured. Test with a real account after setup.
 - **Worker volumes are shared with server.** Both mount `./volumes/data` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.
