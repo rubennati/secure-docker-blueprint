@@ -66,16 +66,18 @@ docker compose logs railsserver --follow
 # Watch for: "* Listening on http://[::]:3000"
 
 # https://<APP_TRAEFIK_HOST>
-# First visit prompts setup wizard — create admin account + organization
+# Over the VPN: the first visit prompts the setup wizard — create the admin
+# account and organization. The route ships closed (APP_TRAEFIK_ACCESS=access-vpn);
+# open it afterwards for the customer web form
 ```
 
 ## Security Model
 
-- **First-visit wizard creates the owner account** — open the UI yourself immediately after start.
+- **First-visit wizard creates the owner account** — until it has run (`/api/v1/getting_started` answers `setup_done: false` without authentication, measured on the lab host at 7.2.2), whoever opens the UI first becomes the owner. The route therefore ships at `access-vpn`: run the wizard over the VPN, then open it.
 - **`DB_PWD_INLINE` duplicates the DB password** — Zammad reads `POSTGRESQL_PASS` from env only.
 - **Elasticsearch has no auth here** — it's on `app-internal` only, not reachable from outside. If you move it off-host, add xpack.security.
 - **`no-new-privileges:true`** on all services.
-- **Default access `access-public`, with `limit-standard` and `headers-standard`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
+- **Default access `access-vpn` until the wizard has run, then `access-public`, with `limit-standard` and `headers-standard`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
 
 ## What it sends outward
 
