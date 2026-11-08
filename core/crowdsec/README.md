@@ -251,11 +251,12 @@ docker exec crowdsec cscli metrics show acquisition   # the device's requests ar
                                                         # the engine sees it; it only serves no decision against it
 ```
 
-What a host test still has to establish, and this repository has not: that a manual
-decision against an exempted address (`cscli decisions add --ip …`) is not served, that
-one added with `--bypass-allowlist` is, and that the host-firewall bouncer follows both.
-Until then the exemption is a documented mechanism with one measurement behind it —
-`firewall-bouncer.md`, "A parser whitelist is not a universal exclusion".
+Measured on the lab host (VM) on 2026-11-08 with the Traefik bouncer: a manual
+decision against an exempted address (`cscli decisions add --ip …`) is refused by
+`cscli` and never served; one added with `--bypass-allowlist` is served, and the
+device received `403` until the decision was deleted. Whether the host-firewall
+bouncer follows both is not measured — `firewall-bouncer.md`, "A parser whitelist
+is not a universal exclusion".
 
 If the engine ever bans the device anyway, the way back is in
 [`docs/runbook.md`](docs/runbook.md#locked-out-over-the-vpn), and it does not need the VPN.
