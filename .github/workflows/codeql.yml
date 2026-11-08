@@ -35,8 +35,9 @@ jobs:
   # only those doesn't need a re-scan either), and `site/**` JS/TS/Astro (10
   # .js/.ts files plus 8 .astro components — nothing outside site/ is
   # JS/TS/Astro). A change to only one language's source does not need the
-  # other language re-analysed. Schedule and manual dispatch always run both:
-  # CodeQL's own query packs change independent of this repository's commits.
+  # other language re-analysed on a push. Pull requests, schedule and manual
+  # dispatch always run both: CodeQL's own query packs change independent of
+  # this repository's commits, and Scorecard counts only analysed pull requests.
   detect-changes:
     name: Detect changed language inputs
     runs-on: ubuntu-latest
@@ -51,7 +52,11 @@ jobs:
 
       - id: diff
         run: |
-          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+          # A pull request analyses both languages as well: OpenSSF Scorecard's
+          # SAST check counts a change as checked only when the analysis ran on
+          # its pull request, and a skipped job does not count. Both jobs take
+          # about a minute.
+          if [[ "${{ github.event_name }}" == "schedule" || "${{ github.event_name }}" == "workflow_dispatch" || "${{ github.event_name }}" == "pull_request" ]]; then
             echo "${{ github.event_name }} run — analysing both languages regardless of changes." >> "$GITHUB_STEP_SUMMARY"
             echo "python=true" >> "$GITHUB_OUTPUT"
             echo "jsts=true" >> "$GITHUB_OUTPUT"
