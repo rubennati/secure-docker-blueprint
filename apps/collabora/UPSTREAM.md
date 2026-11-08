@@ -32,6 +32,8 @@
 
 ## Version notes
 
+- Moved to `26.04.6.1.1` on 2026-11-08 and run on the lab host (VM). A CODE
+  build of the same 26.04 line.
 - Moved to `26.04.5.2.1` on 2026-10-31, not run at this tag. The 26.04 line's
   update notes on collaboraoffice.com were not reachable from the session that
   moved the pin; what was read is the Helm chart's tag history (26.04.4.2.1 on

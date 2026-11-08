@@ -241,6 +241,9 @@ Traefik:
 
 ## Version notes
 
+- Moved to `1.864.1` on 2026-11-08 and run on the lab host (VM). 1.863.0 adds
+  configurable SSO email and username claims; 1.864.x are fixes; no
+  configuration change.
 - Moved to `1.862.0` on 2026-11-05, not run on a host at this tag; the
   verification sections below were run against `1.814.0`. Upstream's changelog
   marks no breaking change from 1.815.0 to 1.862.0; database migrations run on

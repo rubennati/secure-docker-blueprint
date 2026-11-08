@@ -155,6 +155,10 @@ documents, stock and reports; email; PDF printing; an image upgrade with
 
 ## Version notes
 
+- Moved to `v16.54.0` on 2026-11-08 and run on the lab host (VM). Fixes, among
+  them a migration error with Asset Depreciation Schedules on older sites; no
+  configuration change. The nginx configuration forwards `Upgrade` on the
+  `/socket.io` locations only (checked for FA-12).
 - Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28), not run on a host at
   this tag. The step from v16.37 to v16.50 is upstream's coordinated
   renumbering of Frappe, ERPNext and HRMS, not a skipped range. Breaking

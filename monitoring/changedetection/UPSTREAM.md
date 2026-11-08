@@ -43,6 +43,8 @@ Then set **"Request via browser steps"** in the watch settings for affected URLs
 
 ## Version notes
 
+- Moved to `0.70.2` on 2026-11-08 and run on the lab host (VM). A patch release;
+  no configuration change.
 - Moved to `0.60.10` on 2026-10-31, not run on a host at this tag; `Last
   verified` stays at `0.60.4`, so the stack is `scaffolded` (`pin-drifted`) until
   a host run. Between `0.60.4` and `0.60.10` upstream labels no breaking change,

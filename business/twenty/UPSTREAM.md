@@ -129,6 +129,12 @@ backup and restore; an upgrade across versions.
 
 ## Version notes
 
+- Moved to `v2.56.1` on 2026-11-08 and run on the lab host (VM) as an upgrade
+  from v2.55.0. 2.56.0 carries one breaking change — AI workflow steps run from
+  their own configuration and permission scope (upstream #29368) — and removes
+  several feature flags that are now always on; 2.56.1 fixes an upgrade that
+  stalled on workflow code steps containing NUL characters. The metadata upgrade
+  ran on the first start of 2.56.1.
 - Moved to `v2.55.0` on 2026-11-05 (released 2026-11-03), not run on a host at
   this tag. Upstream's upgrade guide allows the jump from any release from v1.23
   on straight to the latest; the server runs the migrations and upgrade

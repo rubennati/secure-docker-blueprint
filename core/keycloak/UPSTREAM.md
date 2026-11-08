@@ -46,6 +46,10 @@ Client → Traefik (TLS, 443) → keycloak-app :8080  (admin console, realms, OI
 
 ## Version notes
 
+- Moved to `26.8.2` on 2026-11-08 and run on the lab host (VM). A patch release
+  with security fixes, among them CVE-2026-107889 (stored XSS on the login page)
+  and CVE-2026-105305 (device grant bypassing a client's minimum ACR); upstream
+  points to its migration guide, which names no change for 26.8.2.
 - Moved to `26.8.1` on 2026-11-05 (released 2026-10-13), not run on a host at
   this tag; 26.7.4, 26.7.5 and 26.8.0 lie between. Every statement above marked
   "verified against 26.7.3" — no working `_FILE` variant, the rebuild into
