@@ -50,7 +50,7 @@ this file is the index and covers decisions that have no other home.
 - DEC-006 IPv6 dual-stack is opt-in (2026-06) → **DEC-063 Dual-stack is the default for new installations; IPv4-only and IPv6-only are supported variants (2026-10-16)**
 - DEC-049 The rate limits are widened until the Traefik review settles them (2026-10-03) → DEC-061 The rate limits are renamed, not changed (2026-10-15) → DEC-062 The Traefik middleware model: six functions, one variable each (2026-10-15) → **DEC-064 The middleware model as cut: eight decisions (D1–D8) (2026-10-18)**
 - DEC-070 `main` requires twelve checks: the ten jobs and both image-scan jobs (2026-09-25) → **DEC-079 Image findings are information: the scan reports, the stack status shows, nothing blocks (2026-11-07)**
-- DEC-009 One status model, two axes (2026-07) → DEC-066 One lifecycle, measured from artefacts; the public status axis retired (2026-07-30) → DEC-073 Open — the verification gate for v1.0 (stab D1) (2026-09-19) → **DEC-080 A stack shows facts, not a state; the v1.0 gate is a test date or a named gap (2026-11-08)**
+- DEC-009 One status model, two axes (2026-07) → DEC-066 One lifecycle, measured from artefacts; the public status axis retired (2026-07-30) → DEC-073 Open — the verification gate for v1.0 (stab D1) (2026-09-19) → **DEC-080 A stack shows facts, not a state; the v1.0 gate is a host run (2026-11-08)**
 
 ### By area
 
@@ -179,7 +179,7 @@ this file is the index and covers decisions that have no other home.
   ↳ supersedes DEC-009
 - **DEC-073** [Open — the verification gate for v1.0 (stab D1)](#dec-073) · 2026-09-19 · superseded 2026-11-08 by DEC-080.5 (was open since 2026-09-19, stab D1; the audit recommended keeping the gate for every stack, with a mandatory short reason per `scaffolded` stack in its UPSTREAM.md) · n/a (ROADMAP.md §v1.0 states the gate for every stack until the question is answered; LIFECYCLE.md carries the count of `scaffolded` stacks) · n/a
   ↳ inputs: docs/v1-readiness-audit.md §Decisions required (D1) and §C (S1)
-- **DEC-080** [A stack shows facts, not a state; the v1.0 gate is a test date or a named gap](#dec-080) · 2026-11-08 · decided 2026-11-08 · .1 implemented 2026-11-08 → docs/standards/status-model.md, scripts/ci/lifecycle-report.py, scripts/ci/site-catalogue.py, site/src/components/Catalogue.astro, site/src/components/StackEvidence.astro · .2 implemented 2026-11-08 → LIFECYCLE.md, site/src/data/lifecycle.json, site/src/data/catalogue.json · .3 implemented 2026-11-08 → scripts/ci/upstream-status.py (GitHub release dates, archive flag, last stable release), upstream-status.json, the `stack-status` artifact of .github/workflows/trivy.yml, docs/maintenance.md (Version Chain step 7, Release Chain step 4) · .4 implemented 2026-11-08 → the generated block under `## Open findings` in every stack README with findings · .5 implemented 2026-11-08 → ROADMAP.md §v1.0 · .6 implemented 2026-11-08 → `Based on version` removed from every UPSTREAM.md but the two host-installed components, which have no `.env.example` · mechanical — scripts/ci/test_lifecycle_report.py, scripts/ci/test_upstream_status.py, scripts/ci/test_site_catalogue.py, `lifecycle-report.py --check` · review — upstream-status.json written 2026-11-08 from the scan of 2026-11-08: 100 of 121 pins matched to an upstream release, 82 at the newest release, 8 not determinable; one upstream archived, three without a release for twelve months
+- **DEC-080** [A stack shows facts, not a state; the v1.0 gate is a host run](#dec-080) · 2026-11-08 · decided 2026-11-08 (amended 2026-11-08: .5 — no test date means not run on a host; only a particular obstacle is named, see the addendum) · .1 implemented 2026-11-08 → docs/standards/status-model.md, scripts/ci/lifecycle-report.py, scripts/ci/site-catalogue.py, site/src/components/Catalogue.astro, site/src/components/StackEvidence.astro · .2 implemented 2026-11-08 → LIFECYCLE.md, site/src/data/lifecycle.json, site/src/data/catalogue.json · .3 implemented 2026-11-08 → scripts/ci/upstream-status.py (GitHub release dates, archive flag, last stable release), upstream-status.json, the `stack-status` artifact of .github/workflows/trivy.yml, docs/maintenance.md (Version Chain step 7, Release Chain step 4) · .4 implemented 2026-11-08 → the generated block under `## Open findings` in every stack README with findings · .5 implemented 2026-11-08 → ROADMAP.md §v1.0 · .6 implemented 2026-11-08 → `Based on version` removed from every UPSTREAM.md but the two host-installed components, which have no `.env.example` · mechanical — scripts/ci/test_lifecycle_report.py, scripts/ci/test_upstream_status.py, scripts/ci/test_site_catalogue.py, `lifecycle-report.py --check` · review — upstream-status.json written 2026-11-08 from the scan of 2026-11-08: 100 of 121 pins matched to an upstream release, 82 at the newest release, 8 not determinable; one upstream archived, three without a release for twelve months
   ↳ supersedes DEC-066, DEC-073 · refines DEC-079.3 · parts .1 the four states `scaffolded`, `verified`, `baseline-aligned` and `ops-proven` are retired; a stack shows facts, each read from one artefact · .2 one row per stack — the pin and its release date, the newest stable or LTS release and its date, the date upstream was checked and a warning when upstream is archived or quiet for twelve months, the CRITICAL and HIGH findings at the pin, the date of the last test with `with restore` and the tested version where it differs; `LIFECYCLE.md` and the site catalogue generated from the same source; the stack folder is the detail page · .3 the upstream data is written into the repository at every pin move and before every release, with the date it was checked; release dates come from upstream releases, not from registry push dates; the weekly `stack-status` issue stays as the early warning · .4 `## Open findings` in a stack README lists CRITICAL and HIGH, generated from the scan, with a reason written by hand where a finding is left in place · .5 the v1.0 gate, for every stack: a test date, or a named gap in its `UPSTREAM.md` · .6 `Based on version` leaves `UPSTREAM.md`; the pin is read from `.env.example` only · inputs: the maintainer's review of 2026-11-08: who reads the per-stack information, before which decision, and what it is for
 
 #### Catalogue and scope
@@ -243,11 +243,11 @@ this file is the index and covers decisions that have no other home.
 
 ---
 
-## 2026-11-08 · A stack shows facts, not a state; the v1.0 gate is a test date or a named gap
+## 2026-11-08 · A stack shows facts, not a state; the v1.0 gate is a host run
 
 ### DEC-080
 
-- **Decision:** decided 2026-11-08 · supersedes DEC-066 · supersedes DEC-073 · refines DEC-079.3 · area: lifecycle
+- **Decision:** decided 2026-11-08 (amended 2026-11-08: .5 — no test date means not run on a host; only a particular obstacle is named, see the addendum) · supersedes DEC-066 · supersedes DEC-073 · refines DEC-079.3 · area: lifecycle
 - **Parts:** .1 the four states `scaffolded`, `verified`, `baseline-aligned` and `ops-proven` are retired; a stack shows facts, each read from one artefact · .2 one row per stack — the pin and its release date, the newest stable or LTS release and its date, the date upstream was checked and a warning when upstream is archived or quiet for twelve months, the CRITICAL and HIGH findings at the pin, the date of the last test with `with restore` and the tested version where it differs; `LIFECYCLE.md` and the site catalogue generated from the same source; the stack folder is the detail page · .3 the upstream data is written into the repository at every pin move and before every release, with the date it was checked; release dates come from upstream releases, not from registry push dates; the weekly `stack-status` issue stays as the early warning · .4 `## Open findings` in a stack README lists CRITICAL and HIGH, generated from the scan, with a reason written by hand where a finding is left in place · .5 the v1.0 gate, for every stack: a test date, or a named gap in its `UPSTREAM.md` · .6 `Based on version` leaves `UPSTREAM.md`; the pin is read from `.env.example` only
 - **Implementation:** .1 implemented 2026-11-08 → docs/standards/status-model.md, scripts/ci/lifecycle-report.py, scripts/ci/site-catalogue.py, site/src/components/Catalogue.astro, site/src/components/StackEvidence.astro · .2 implemented 2026-11-08 → LIFECYCLE.md, site/src/data/lifecycle.json, site/src/data/catalogue.json · .3 implemented 2026-11-08 → scripts/ci/upstream-status.py (GitHub release dates, archive flag, last stable release), upstream-status.json, the `stack-status` artifact of .github/workflows/trivy.yml, docs/maintenance.md (Version Chain step 7, Release Chain step 4) · .4 implemented 2026-11-08 → the generated block under `## Open findings` in every stack README with findings · .5 implemented 2026-11-08 → ROADMAP.md §v1.0 · .6 implemented 2026-11-08 → `Based on version` removed from every UPSTREAM.md but the two host-installed components, which have no `.env.example`
 - **Verification:** mechanical — scripts/ci/test_lifecycle_report.py, scripts/ci/test_upstream_status.py, scripts/ci/test_site_catalogue.py, `lifecycle-report.py --check` · review — upstream-status.json written 2026-11-08 from the scan of 2026-11-08: 100 of 121 pins matched to an upstream release, 82 at the newest release, 8 not determinable; one upstream archived, three without a release for twelve months
@@ -274,9 +274,20 @@ the pin current, is upstream still alive, what does the image carry, when did
 this last work. Then the maintainer choosing the next stack to run. Each fact is
 in one place: the row, and the stack folder behind it.
 
-**The v1.0 gate (answers DEC-073).** Every stack has a test date, or its
-`UPSTREAM.md` names why not. An empty column is then a stated fact, not an
-omission; the gap needs no particular wording and no state.
+**The v1.0 gate (answers DEC-073).** Every stack that can run on a host has a
+test date. Where something particular stands in the way, its `UPSTREAM.md` names
+it, and the reason appears in the row.
+
+**Addendum 2026-11-08 — only a particular obstacle is named.** As first written,
+.5 asked every stack without a test date to name why. Read against the stacks, 31
+of the 39 without one would have carried the same sentence — started locally, not
+run on a host — which is the ordinary case for a blueprint and tells a reader
+nothing the empty column does not. No test date now means not run on a host; a
+reason is written only where something particular stands in the way: a GPU
+(`apps/vllm`), port 25 and public DNS (the three mail servers), ports below 1024
+on a real host (`apps/opencanary`), an archived upstream (`apps/hemmelig`), a
+client to back up (`backup/urbackup`), a host of its own (`core/host-watchdog`).
+The check no longer warns on a stack without either.
 
 **Why the upstream data is committed.** DEC-079 kept the weekly table in an issue
 because a job cannot push to either branch. The maintainer writes the data with

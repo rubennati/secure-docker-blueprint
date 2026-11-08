@@ -29,18 +29,18 @@
 - **Also completed (2026-09-24):** the candidate batches H–V, decided on
   2026-09-22 as a second recorded exception to the hold
   ([`decisions.md`](decisions.md)). Sixteen stacks landed, one per pull request,
-  each `scaffolded`. Batch V added none: Coraza's condition — a maintained Traefik
+  none run on a host yet. Batch V added none: Coraza's condition — a maintained Traefik
   integration — is not met, and the capability is already here because CrowdSec's
   AppSec engine is Coraza, so what was missing was documentation; Suricata's two
   remaining questions need a host that can be flooded without consequence. Both in
   `decisions.md`, 2026-09-24. What was not added and why:
   [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
-  Moving the sixteen from `scaffolded` to `baseline-aligned` is S1, `tasks.md` §2.
+  A host run for the sixteen is S1, `tasks.md` §2.
 - **Decided (2026-10-03):** three mail servers — Stalwart, docker-mailserver and
   jeboehm/docker-mailserver — as a third recorded exception to the hold
   ([`decisions.md`](decisions.md)). Mailu is held until a release carries the fix
   for CVE-2026-86008. `apps/stalwart`, `apps/docker-mailserver` and
-  `apps/mailserver-jeboehm` are in, each `scaffolded`, with the mail ports
+  `apps/mailserver-jeboehm` are in, none run on a host yet, with the mail ports
   published by an opt-in overlay. Evidence:
   [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
   What a host still has to establish for each is `tasks.md` §8.

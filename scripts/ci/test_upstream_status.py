@@ -213,6 +213,14 @@ class Releases(unittest.TestCase):
                 "https://github.com/not/this\n")
             self.assertEqual(status.github_repo(stack), "traefik/traefik")
 
+    def test_a_releases_line_wins(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            stack = Path(tmp)
+            (stack / "UPSTREAM.md").write_text(
+                "# U\n\n## Source\n\n- **Repo:** https://github.com/portainer/agent\n"
+                "- **Releases:** https://github.com/portainer/portainer/releases\n\n")
+            self.assertEqual(status.github_repo(stack), "portainer/portainer")
+
 
 if __name__ == "__main__":
     unittest.main()

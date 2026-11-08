@@ -77,12 +77,12 @@ move on.
 
 - [ ] For each stack that passed: add `Last verified` (date, version) to `UPSTREAM.md`,
   run `python3 scripts/ci/lifecycle-report.py --write`, commit
-- [ ] For each that did not: write the reason into the stack's README status line and
-  leave it `scaffolded`
+- [ ] For each that did not: leave `Last verified` as it is and name the missing step
+  in the stack's README
 - [ ] Log the run in `docs/maintenance-log.md`
 
 ## What "done" means
 
 A stack is done when its route answers over TLS, its refused client is refused, its
 smoke test passes before and after a restart, and its restore has produced a working
-instance. Anything short of that stays `scaffolded`, with the missing step named.
+instance. Anything short of that gets no new test date, and the missing step is named.

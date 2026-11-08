@@ -4,6 +4,7 @@
 
 - **Project:** Portainer Agent
 - **Repo:** https://github.com/portainer/agent
+- **Releases:** https://github.com/portainer/portainer/releases — the agent's versions follow Portainer's; its own repository has published no release since 2020
 - **Docker Hub:** https://hub.docker.com/r/portainer/agent
 - **License:** zlib (https://github.com/portainer/agent/blob/develop/LICENSE)
 - **Decision facts checked:** not yet

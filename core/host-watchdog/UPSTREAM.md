@@ -7,6 +7,7 @@
 - **Origin:** First-party · this repository · no single jurisdiction
 - **Domain:** Infrastructure
 - **Role:** Optional host scripts that restart the Docker daemon or the proxy after a confirmed, sustained failure
+- **Last verified:** not yet — host scripts without a container; they need a host of their own
 
 No upstream project — both scripts are authored here and released as part of
 Secure Docker Blueprint, under the repository's own license.
@@ -30,8 +31,7 @@ copying a newer version of the script and its `.example` files.
 threshold actually triggers the one recovery attempt, the attempt succeeds
 where it should, the escalation path holds where it should not, and the
 Healthchecks ping sequence matches what the README describes. Neither script
-has had that rehearsal yet, so this stays at `scaffolded` — configured and
-reviewed, not exercised.
+has had that rehearsal yet — configured and reviewed, not exercised.
 
 ## Upgrade checklist
 

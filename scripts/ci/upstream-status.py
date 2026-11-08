@@ -385,7 +385,13 @@ RELEASE_PAGES = 3
 
 
 def github_repo(stack: Path) -> str | None:
-    """`owner/repo` — the first GitHub repository in UPSTREAM.md's `## Source`."""
+    """`owner/repo` whose releases name the stack's versions.
+
+    A `**Releases:**` line in UPSTREAM.md's `## Source` wins — for an image whose
+    versions are released in another repository than its source (the Portainer
+    agent follows Portainer's releases). Otherwise the first GitHub repository
+    of the section.
+    """
     path = stack / "UPSTREAM.md"
     if not path.is_file():
         return None
@@ -394,7 +400,8 @@ def github_repo(stack: Path) -> str | None:
     if len(source) < 2:
         return None
     section = source[1].split("\n## ", 1)[0]
-    m = GITHUB_REPO.search(section)
+    releases = re.search(r"\*\*Releases:\*\*\s*(\S+)", section)
+    m = GITHUB_REPO.search(releases.group(1) if releases else "") or GITHUB_REPO.search(section)
     if not m:
         return None
     name = m.group(2)

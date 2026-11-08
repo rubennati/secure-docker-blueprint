@@ -44,7 +44,9 @@ Everything else is in the stack folder, which is the detail page:
   establishes a new one; the reader sees both the pin and the version that ran.
 - **Release dates come from upstream releases,** not from the registry: an image
   tag is rebuilt and pushed again, and its push date says nothing about the
-  release.
+  release. They are read from the first GitHub repository in the `## Source`
+  section of `UPSTREAM.md`, or from the one a `**Releases:**` line there names,
+  where an image's versions are released elsewhere than its source.
 - **Newest means the same kind of tag as the pin.** A tag that cannot be compared
   is shown as not determinable, never as current.
 - **Upstream data is written into the repository** at every pin move and before
@@ -56,9 +58,11 @@ Everything else is in the stack folder, which is the detail page:
   recorded with a reason.
 - **The security baseline is not a column.** `check-baseline.py` and
   `check-structure.py` enforce it for every stack; a stack that breaks it fails CI.
-- **A stack without a test date says why.** Its `UPSTREAM.md` names the gap —
-  not yet run, needs hardware the lab does not have, deprecated — so that an empty
-  column is a stated fact, not an omission.
+- **No test date means not run on a host yet.** For a blueprint that is the
+  ordinary case and needs no sentence. Where something particular stands in the
+  way — a GPU, port 25 and public DNS, an archived upstream — the stack's
+  `UPSTREAM.md` names it (`Last verified: not yet — reason`), and the reason
+  appears in the row.
 
 ## Who owns which fact
 
@@ -70,7 +74,7 @@ disagree, the owner wins, and the derived file was generated from stale input.
 | Pinned image version | `<stack>/.env.example`; for a host-installed component, which has none, `Based on version` in its `UPSTREAM.md` |
 | Upstream release dates, newest release, archived or quiet upstream, findings at the pin | `upstream-status.json`, written by `scripts/ci/upstream-status.py` |
 | Last test date and version, and what the run established | `<stack>/UPSTREAM.md`, `Last verified` |
-| A named gap where no test date exists | `<stack>/UPSTREAM.md` |
+| What stands in the way of a host run, where something particular does | `<stack>/UPSTREAM.md` |
 | Restore evidence | `backup/borgmatic/RESTORE.md`, rehearsal log |
 | Reasons for findings left in place | `<stack>/README.md`, `## Open findings`; the exceptions in `.trivy-baseline.json` |
 | Security baseline alignment | `<stack>/docker-compose.yml`, checked by `check-baseline.py` and `check-structure.py` |
@@ -107,8 +111,7 @@ It also fails when a findings block in a stack README differs from
 `upstream-status.json`, and when a stack has findings at its pin or a recorded
 exception and its README has no `## Open findings` section.
 
-It reports without failing when a stack carries neither a `Last verified` line
-nor a named gap (`no-test-date`), when a stack still carries the pre-v0.5.1
+It reports without failing when a stack still carries the pre-v0.5.1
 `Last checked: DATE` field, which names no version (`legacy-stamp`), and when
 `upstream-status.json` was written for another pin (`not-checked`).
 
