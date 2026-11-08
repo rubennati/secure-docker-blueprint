@@ -54,7 +54,9 @@ docker compose up -d
 docker compose logs immich-app --follow
 # Watch for: "Immich Server is listening on..."
 
-# 7. Open UI and create the admin account
+# 7. Over the VPN, open the UI and create the admin account. The route ships
+#    closed (APP_TRAEFIK_ACCESS=access-vpn); switch it to access-public afterwards
+#    if the mobile apps reach it without the VPN
 # https://<APP_TRAEFIK_HOST>
 # First user to sign up becomes admin.
 ```
@@ -68,7 +70,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 
 ## Security Model
 
-- **First-user-wins admin** — the first registered account becomes admin. Register immediately after start so an attacker cannot claim it.
+- **First-user-wins admin** — until an admin exists, `POST /api/auth/admin-sign-up` makes the first caller the admin, with no setup secret; afterwards it answers `Admin setup is not available` (measured on the lab host at v3.3.6). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`DB_PASSWORD` restricted to `[A-Za-z0-9]`** — Immich does not support special characters in the DB password. Keep generation aligned (see Setup step 2).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **Postgres on `app-internal` (`internal: true`)** — only the Immich services can reach it.
