@@ -40,7 +40,7 @@ openssl rand -base64 60 | tr -d '\n='
 
 # 3. Create data directory — app runs as uid 999, must own the volume
 mkdir -p volumes/data
-chown -R 999:999 volumes/data
+sudo chown -R 999:999 volumes/data
 
 # 4. Start
 docker compose up -d
