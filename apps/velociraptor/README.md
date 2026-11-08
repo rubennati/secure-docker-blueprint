@@ -82,6 +82,9 @@ cp .env.example .env
 # right before first start), VELOCIRAPTOR_GUI_BIND, VELOCIRAPTOR_FRONTEND_BIND
 
 mkdir -p .secrets volumes/etc volumes/datastore
+# The server runs as root without capabilities (cap_drop: ALL, no DAC_OVERRIDE),
+# so root may not write into directories another user owns — hand them to root
+sudo chown 0:0 volumes/etc volumes/datastore
 openssl rand -base64 24 | tr -d '\n' > .secrets/admin_password.txt
 
 docker compose up -d
