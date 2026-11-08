@@ -8,34 +8,13 @@ this file is the short list.
 State at the v0.9.1 tag (2026-09-20): `dev` and `main` level, no open pull requests,
 no open Dependabot alerts, CI green. Everything below is what is not done.
 
-### 1. Image findings as facts — closes audit finding C1
+### 1. Image findings as facts — closed 2026-11-08
 
-Decision and reasoning: [`decisions.md`](decisions.md#2026-09-20--image-findings-are-recorded-as-facts-and-the-shipped-access-default-follows-them).
-Input data: the last full Trivy scan on `main` (2026-09-17, `trivy-image-scan-results`
-artifact; a new run started after the v0.9.1 merge and includes the 26 new images).
-Snapshot of the 2026-09-17 scan: 99 images, 59 with at least one CRITICAL finding, 1003
-CRITICAL in total, every one with a published fix, plus 11 466 HIGH; n8n could not be
-scanned (registry rate limit). Largest: `opensign/opensign` 196, `opensign/opensignserver`
-206, `louislam/uptime-kuma` 127, `cal.diy` 45, `lycheeorg/lychee` 25, `sdoc-server` 24,
-Paperless-ngx 23, OpenProject 22, Seafile 20.
-
-- [ ] Generate a per-image facts file from the scan: CRITICAL and HIGH counts, how many
-      have a fix, image age, scan date. Checked in CI for staleness like the other
-      generated files.
-- [ ] Add an `Exposure` field to `UPSTREAM.md` with a reason, first for the five images
-      above; the rest get the rule-derived value.
-- [ ] Checker: a stack whose findings mark it private-only or lab-only cannot ship
-      `APP_TRAEFIK_ACCESS=access-public`.
-- [x] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
-      Done — `scripts/ci/trivy-gate.py` against `.trivy-baseline.json`, which records
-      513 findings across 76 image repositories as of the 2026-09-21 scan of `dev`.
-      Closes audit C1. The bullets around it — the per-image facts file, the
-      `Exposure` field and the access checker — are the *decision-data* half and
-      remain open; the gate does not depend on them.
-- [ ] Catalogue page: show the facts (counts, fix available, age, licence limits) in
-      neutral wording; no judgement of the project.
-- [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
-      if so bump the pin (normal upgrade), if not record the facts.
+The facts per stack are `upstream-status.json`, the findings block in each stack
+README and the site catalogue (DEC-079, DEC-080); every stack ships closed, checked
+by `check-structure.py` `public-default` (DEC-043 addendum). Issue #249 (the
+2026-10-19 baseline pairs) is answered by the same: findings are shown per stack
+and rewritten at every pin move.
 
 ### 2. A host run for every stack (audit S1, DEC-080)
 

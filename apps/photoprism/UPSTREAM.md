@@ -43,7 +43,7 @@
 | **`PUID` / `PGID`** wired to `PHOTOPRISM_UID / GID` | Inbox had both commented out — app ran as root |
 | **Container names standardized** — `photoprism-app/db` | Project-scoped naming |
 | **Volume paths** — inbox used `./Pictures`, `./storage`, `./database` | Now `${ORIGINALS_PATH}` (default `./volumes/originals`), `./volumes/storage`, `./volumes/database` |
-| **`access-public`, `limit-standard` and `headers-standard` as shipped** | Consider `access-vpn` for family-only galleries |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | Closed by default; open the route (`access-public`) for clients outside the VPN |
 
 ## Upgrade checklist
 

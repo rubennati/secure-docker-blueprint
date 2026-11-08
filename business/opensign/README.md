@@ -65,17 +65,19 @@ docker compose logs opensign-api --follow
 # Then: "SUCCESS  Successfully run migrations."
 
 # https://<APP_TRAEFIK_HOST>
-# First account to register becomes admin (redirects to /addadmin)
+# Over the VPN: the first account to register becomes admin (redirects to /addadmin).
+# The route ships closed (APP_TRAEFIK_ACCESS=access-vpn); open it (access-public)
+# afterwards for signers outside the VPN
 ```
 
 ## Security Model
 
 - **`MASTER_KEY` grants full Parse Server bypass** — keep it off-disk after bootstrap or move to a Docker Secret with a custom entrypoint reading `/run/secrets/MASTER_KEY`. Rotating requires coordinated API + UI config changes.
-- **First-user-wins admin** — open the UI immediately after start.
+- **First-user-wins admin** — the first account to register becomes the admin, which is why the route ships at `access-vpn`: register over the VPN, then open it.
 - **DSN-safe Mongo password** — `@`, `:`, `/`, `?`, `#` break parsing. `openssl rand -hex` is safe.
 - **Signature audit log** lives in MongoDB — back up regularly.
 - **Signed PDFs** land in `volumes/api-files/` — legally binding artefacts, treat backup with care.
-- **Default access `access-public`, with `limit-standard` and `headers-standard`** — signers receive a signing URL and need to reach it from outside. Admin UI sits on the same host — gate with a second router if agents are internal-only.
+- **Shipped access `access-vpn`, `access-public` once the admin exists, with `limit-standard` and `headers-standard`** — signers receive a signing URL and need to reach it from outside. Admin UI sits on the same host — gate with a second router if agents are internal-only.
 
 ## Backup
 

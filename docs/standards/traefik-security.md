@@ -56,6 +56,14 @@ The decisions behind the model (D1–D8, 2026-10-18) are in [`.ai/decisions.md`]
 
 Controls WHO can reach a router. Pick one per router; the operator's choice.
 
+**A stack ships closed.** `.env.example` sets `access-vpn`; the operator opens a
+route to `access-public` once its first-run setup is done and only where clients
+outside the VPN need it. `access-public` ships only where the auth posture is
+`public` (a website, a share link) or a `# public by design: <reason>` line stands
+above the variable; `check-structure.py` fails anything else (`public-default`).
+The reason is the first visit: many applications make whoever completes their
+setup wizard, or registers first, the admin.
+
 | Policy | Who gets through |
 |--------|-----------------|
 | `access-public` | Everyone (no restriction) |
