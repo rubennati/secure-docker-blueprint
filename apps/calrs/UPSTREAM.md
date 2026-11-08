@@ -94,6 +94,9 @@ login; the public booking page as a guest sees it; backup and restore.
 
 ## Version notes
 
+- Moved to `1.23.0` on 2026-11-08 and run on the lab host (VM). A minor release
+  (booking directory, first day of the week, calendar selection per source,
+  `X-Robots-Tag: noindex`); no configuration change.
 - Moved to `1.22.0` on 2026-11-05, not run on a host at this tag; `Last verified`
   stays at `1.17.1`. Back up `volumes/data` first: migrations 064 to 076 add
   columns, tables and an index, and rolling back means restoring that backup with

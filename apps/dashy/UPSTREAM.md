@@ -38,6 +38,9 @@
 
 ## Version notes
 
+- Moved to `4.9.17` on 2026-11-08 and run on the lab host (VM). 4.9.16 and
+  4.9.17 fix a race in sub-page loading and bump dependencies; no configuration
+  change.
 - Moved `lissy93/dashy` to `4.9.15` on 2026-11-05 (pushed 2026-11-02), not run on
   a host at this tag. Upstream publishes a GitHub release only for each minor
   (4.9.0, 2026-10-23); the patch tags 4.8.8 to 4.9.15 are version bumps on `master`.

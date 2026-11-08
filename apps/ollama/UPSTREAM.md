@@ -102,6 +102,8 @@ Docker VM with six CPUs and 12 GB of memory and no GPU:
 
 ## Version notes
 
+- Moved to `0.40.15` on 2026-11-08 and run on the lab host (VM). A patch release
+  (a `launch` integration added); no change to the server's configuration.
 - Moved `ollama/ollama` to `0.40.14` on 2026-11-05 (released 2026-11-03), across
   0.34.3 to 0.40.14, not run on a host at this tag; the `-rc` tags of 0.40.15 are
   pre-releases and were not taken. The run-as-non-root, `read_only`, `cap_drop: ALL`

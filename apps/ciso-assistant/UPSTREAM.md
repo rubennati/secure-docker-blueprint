@@ -109,6 +109,9 @@ into an assessment; backup and restore.
 
 ## Version notes
 
+- Moved to `v4.2.2` on 2026-11-08 and run on the lab host (VM). A patch release
+  with a security hardening change (upstream #5229) and a new framework library;
+  the frontend needed 768m instead of 512m on this host (`docker-compose.yml`).
 - Moved to `v4.2.1` on 2026-11-05, backend and frontend together, not run on a
   host at this tag. `v4.2.0` moves the frontend to SvelteKit 3 and adapter-node 6,
   which drops the `ORIGIN` variable; this stack uses `PROTOCOL_HEADER` and

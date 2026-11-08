@@ -93,6 +93,9 @@ server; the MCP server; Litestream replication and restore; backup and restore.
 
 ## Version notes
 
+- Moved to `0.14.0` on 2026-11-08 and run on the lab host (VM). A responsive
+  admin and SvelteKit 2.70.4, its security release; upstream: "There are no
+  database migrations in this release."
 - Moved to `0.13.0` on 2026-11-05, not run on a host at this tag; `Last verified`
   stays at `0.9.0`. Back up `volumes/data` first: `0.12.0` adds migration `00071`,
   a table rewrite of `invite_delivery`, and the down migration is lossy. `0.12.0`
