@@ -4,7 +4,7 @@
 
 Generated 2026-11-08 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 81 pin the newest upstream release, 30 pin an older one. 65 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 81 pin the newest upstream release, 30 pin an older one. 68 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -26,16 +26,16 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`core/authentik`](core/authentik/) | `2026.8.5` · 2026-10-21 | = Pin | [2 · 47](core/authentik/README.md#open-findings) | [2026-11-08](core/authentik/UPSTREAM.md) |
 | [`core/crowdsec`](core/crowdsec/) | `v1.8.2` · 2026-10-26 | = Pin | [0 · 10](core/crowdsec/README.md#open-findings) | [2026-11-08](core/crowdsec/UPSTREAM.md) · with restore |
 | [`core/dnsmasq`](core/dnsmasq/) | `2.93` · 2026-08-20 | = Pin | 0 · 0 | [2026-04-14](core/dnsmasq/UPSTREAM.md) · no version recorded |
-| [`core/dockhand`](core/dockhand/) | `v1.0.57` · 2026-11-04 | = Pin | [1 · 33](core/dockhand/README.md#open-findings) | [2026-04-16](core/dockhand/UPSTREAM.md) · no version recorded |
-| [`core/hawser`](core/hawser/) | `0.2.53` · 2026-10-30 | = Pin | [0 · 3](core/hawser/README.md#open-findings) | [2026-04-14](core/hawser/UPSTREAM.md) · no version recorded |
+| [`core/dockhand`](core/dockhand/) | `v1.0.57` · 2026-11-04 | = Pin | [1 · 33](core/dockhand/README.md#open-findings) | [2026-11-08](core/dockhand/UPSTREAM.md) |
+| [`core/hawser`](core/hawser/) | `0.2.53` · 2026-10-30 | = Pin | [0 · 3](core/hawser/README.md#open-findings) | [2026-11-08](core/hawser/UPSTREAM.md) |
 | [`core/headscale`](core/headscale/) | `v0.29.7` · 2026-10-30 | = Pin | [0 · 4](core/headscale/README.md#open-findings) | — |
 | [`core/host-watchdog`](core/host-watchdog/) | *host-installed* | — | — | — · [host scripts without a container; they need a host of their own](core/host-watchdog/UPSTREAM.md) |
 | [`core/infisical`](core/infisical/) | `v0.167.6` · 2026-11-03 | = Pin | [1 · 33](core/infisical/README.md#open-findings) | — · [config authored 2026-07-26; not yet run on a live server](core/infisical/UPSTREAM.md) |
 | [`core/jumpserver`](core/jumpserver/) | `v5.1.1` · 2026-10-20 | = Pin | [19 · 234](core/jumpserver/README.md#open-findings) | — |
 | [`core/keycloak`](core/keycloak/) | `26.8.1` · 2026-10-13 | `26.8.2` · 2026-11-05 | [1 · 26](core/keycloak/README.md#open-findings) | [2026-09-07](core/keycloak/UPSTREAM.md) · ran `v26.7.3` |
 | [`core/orion-belt`](core/orion-belt/) | `1.4.0` · 2026-10-24 | = Pin | [1 · 27](core/orion-belt/README.md#open-findings) | — |
-| [`core/portainer`](core/portainer/) | `2.45.3` · 2026-10-21 | = Pin | [0 · 6](core/portainer/README.md#open-findings) | [2026-04-16](core/portainer/UPSTREAM.md) · no version recorded |
-| [`core/portainer-agent`](core/portainer-agent/) | `2.45.3` · 2026-10-21 | `3.0.1` · 2026-11-03 | [0 · 6](core/portainer-agent/README.md#open-findings) | [2026-05-05](core/portainer-agent/UPSTREAM.md) · ran `v2.39.1` |
+| [`core/portainer`](core/portainer/) | `2.45.3` · 2026-10-21 | = Pin | [0 · 6](core/portainer/README.md#open-findings) | [2026-11-08](core/portainer/UPSTREAM.md) |
+| [`core/portainer-agent`](core/portainer-agent/) | `2.45.3` · 2026-10-21 | `3.0.1` · 2026-11-03 | [0 · 6](core/portainer-agent/README.md#open-findings) | [2026-11-08](core/portainer-agent/UPSTREAM.md) |
 | [`core/shellhub`](core/shellhub/) | `v0.29.3` · 2026-11-05 | = Pin | [1 · 28](core/shellhub/README.md#open-findings) | — |
 | [`core/step-ca`](core/step-ca/) | `0.30.2` · 2026-03-23 | = Pin | [4 · 70](core/step-ca/README.md#open-findings) | — |
 | [`core/teleport`](core/teleport/) | `18.11.8` · 2026-11-06 | `18.11.9` · 2026-11-07 | [0 · 4](core/teleport/README.md#open-findings) | — |

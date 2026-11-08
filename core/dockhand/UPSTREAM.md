@@ -13,7 +13,7 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git
-- **Last checked:** 2026-04-16
+- **Last verified:** 2026-11-08 (v1.0.57) — lab host (VM), IPv4 LAN, the PR #340 hardening (Postgres 16 with cap_drop), after the correction of the database URL encoding: the local host through the socket proxy and the lab container through Hawser (edge) — containers listed, a log read, one stopped and started — before and after `down`/`up`, the refused client answered `403`; authentication is off on a new instance; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

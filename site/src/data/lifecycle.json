@@ -2109,10 +2109,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-04-16",
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "v1.0.57",
     "upstream": "current"
   },
   "core/hawser": {
@@ -2132,10 +2132,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-04-14",
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "0.2.53",
     "upstream": "current"
   },
   "core/headscale": {
@@ -2293,10 +2293,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-04-16",
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "2.45.3",
     "upstream": "current"
   },
   "core/portainer-agent": {
@@ -2316,10 +2316,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-05-05",
+    "tested": "2026-11-08",
     "tested_anchored": true,
-    "tested_differs": true,
-    "tested_version": "v2.39.1",
+    "tested_differs": false,
+    "tested_version": "2.45.3",
     "upstream": "behind"
   },
   "core/shellhub": {
