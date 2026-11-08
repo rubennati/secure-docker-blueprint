@@ -18,9 +18,9 @@ Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 
-Current verification belongs to [`LIFECYCLE.md`](LIFECYCLE.md), which compares
-current pins with recorded test versions. A release's successful host run does
-not verify image pins changed afterwards. Work that remains is listed below.
+What is known about each stack — its pin, what upstream has released since, the
+findings at the pin, when it last ran on a host — is in [`LIFECYCLE.md`](LIFECYCLE.md).
+Work that remains is listed below.
 
 ### v1.0 — Complete and hand-off ready
 
@@ -31,10 +31,11 @@ products with separate structures, and v1.0 is the one checkpoint they share.
 
 Open in this repository:
 
-- **Verification depth.** Every app verified at least once on a clean install, and
-  no stack left at `scaffolded` without a documented reason. Most stacks are
-  `scaffolded` today — [`LIFECYCLE.md`](LIFECYCLE.md) has the count. A state rises
-  only on evidence, so this is measured in host sessions, not in editing.
+- **A test date or a named gap, for every stack.** Each stack has run at least once
+  on a clean install, with the date in its `UPSTREAM.md`, or its `UPSTREAM.md` says
+  why not. [`LIFECYCLE.md`](LIFECYCLE.md) shows which stacks have a date. A date
+  comes only from a host session, so this is measured there, not in editing
+  ([DEC-080](.ai/decisions.md#dec-080)).
 - **Traefik middlewares, checked against the applications on a host.** The
   names and the structure are settled by the middleware model of v0.9.5: four
   positions on every router, defined once. What is not established is how the
@@ -91,25 +92,22 @@ values needs a running install per stack — the procedure is
 and the derivation rule are in
 [`docs/standards/compose-structure.md`](docs/standards/compose-structure.md).
 
-**Done when** the stacks presented as verified have limits based on measurements
-from real installations rather than on the derivation rule. The verification
-states are defined in the [status model](docs/standards/status-model.md).
+**Done when** the stacks with a test date have limits based on measurements from
+real installations rather than on the derivation rule. What a stack shows is
+defined in the [status model](docs/standards/status-model.md).
 
 ---
 
 ## Continuous — not tied to a version
 
 **App testing runs in parallel to everything above.** When there is bandwidth,
-pick a `scaffolded` app, run the App Chain, record the verified version. This
-blocks and triggers no release. The bar rises with the repository: an app
-verified today must meet the current baseline-aligned criteria in
-[`docs/maintenance.md`](docs/maintenance.md).
+pick a stack without a test date, run the App Chain, record the date and the
+version that ran. This blocks and triggers no release.
 
 - Verified before the standards moved and worth a second run: Vaultwarden,
   WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
-- Pinned to a new major in a dependency sweep and not yet run anywhere —
-  [`LIFECYCLE.md`](LIFECYCLE.md) carries the pin beside the version last verified,
-  and `lifecycle-report.py --check` warns `pin-drifted` where the two differ.
+- Moved to a new major in a dependency sweep since their last run —
+  [`LIFECYCLE.md`](LIFECYCLE.md) shows the pin beside the version that last ran.
 - Never started on a host: UrBackup, `apps/vllm`, and the security-tooling,
   PAM/bastion and secret-sharing stacks added in v0.9.1.
 
@@ -184,7 +182,7 @@ Concepts with no timeline, picked up app by app as they are re-verified:
   agents, central collection and someone to read the output. A secure Docker host
   does not require one.
 - `core/acme-certs/` — being extracted to its own repository. The blueprint stub
-  remains `scaffolded` and is no longer actively maintained here.
+  remains and is no longer actively maintained here.
 - Paperless-mcp — will live in its own repository once built.
 - The engineering above an AI deployment — model evaluation, retrieval
   architecture, prompt design. `apps/ollama`, `apps/vllm`, `apps/qdrant`, `apps/litellm`,
@@ -208,11 +206,11 @@ Concepts with no timeline, picked up app by app as they are re-verified:
 
 ## Current evidence and shipped work
 
-- **Verification at current pins:** [`LIFECYCLE.md`](LIFECYCLE.md). Historical
-  test results do not carry forward automatically after a pin change.
+- **Per-stack facts:** [`LIFECYCLE.md`](LIFECYCLE.md) — the pin, the newest upstream
+  release, the findings, the last test date.
 - **Shipped changes:** [`CHANGELOG.md`](CHANGELOG.md). The v0.9.7 record includes
-  the ingress host run and the later image updates; those updates left many
-  stacks awaiting verification at their new pins.
+  the ingress host run and the later image updates; those updates moved many
+  stacks to pins newer than the version that last ran.
 - **Version-update history:** the [2026-10-31 inventory and batch plan](docs/audits/upstream-version-inventory-2026-10-31.md)
   describes the starting point. The later sweep is recorded in the v0.9.7
   changelog and each stack's `UPSTREAM.md`; the old batch table is not a current
