@@ -3320,8 +3320,8 @@
     "quiet": false,
     "restored": true,
     "role": "Threat detection from logs, with a choice of where decisions are enforced",
-    "tested": "2026-11-01",
-    "tested_version": "v1.7.8",
+    "tested": "2026-11-08",
+    "tested_version": null,
     "upstream": "https://github.com/crowdsecurity/crowdsec",
     "upstream_status": "current",
     "version": "1.8.2"

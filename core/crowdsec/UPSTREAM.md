@@ -11,7 +11,7 @@
 - **Origin:** France · CrowdSec SAS · EU
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced
-- **Last verified:** 2026-11-01 (v1.7.8) — lab host: engine on `crowdsec-security` only, the Traefik access log acquired, the Traefik bouncer plugin v1.7.1 pulling, a `cscli` ban enforced and lifted per address family, the AppSec virtual-patching rule answering 403, fail-open with the engine stopped; no firewall bouncer (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (v1.8.2) — lab host (VM), IPv4 LAN: engine on `crowdsec-security` only, the Traefik access log acquired and parsed, the Traefik bouncer plugin v1.7.1 pulling, the administrative AllowList applied with `ops/allowlist.sh`, a manual decision against the allowlisted address refused and one with `--bypass-allowlist` enforced as `403` and lifted (docs/labs/stack-refresh/2026-11-08-results.md). The checks of 2026-11-01 at v1.7.8 — per address family, AppSec, fail-open — were not repeated
 
 ## Architecture
 

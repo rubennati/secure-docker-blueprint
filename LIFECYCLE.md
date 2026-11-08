@@ -24,7 +24,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`core/acme-certs`](core/acme-certs/) | `0.2.1` · 2026-05-04 | = Pin | [3 · 46](core/acme-certs/README.md#open-findings) | [2026-04-14](core/acme-certs/UPSTREAM.md) · no version recorded |
 | [`core/authelia`](core/authelia/) | `4.39.28` · 2026-09-17 | = Pin | [1 · 26](core/authelia/README.md#open-findings) | — |
 | [`core/authentik`](core/authentik/) | `2026.8.5` · 2026-10-21 | = Pin | [2 · 47](core/authentik/README.md#open-findings) | [2026-11-02](core/authentik/UPSTREAM.md) · ran `v2026.5.7` |
-| [`core/crowdsec`](core/crowdsec/) | `v1.8.2` · 2026-10-26 | = Pin | [0 · 10](core/crowdsec/README.md#open-findings) | [2026-11-01](core/crowdsec/UPSTREAM.md) · with restore · ran `v1.7.8` |
+| [`core/crowdsec`](core/crowdsec/) | `v1.8.2` · 2026-10-26 | = Pin | [0 · 10](core/crowdsec/README.md#open-findings) | [2026-11-08](core/crowdsec/UPSTREAM.md) · with restore |
 | [`core/dnsmasq`](core/dnsmasq/) | `2.93` · 2026-08-20 | = Pin | 0 · 0 | [2026-04-14](core/dnsmasq/UPSTREAM.md) · no version recorded |
 | [`core/dockhand`](core/dockhand/) | `v1.0.57` · 2026-11-04 | = Pin | [1 · 33](core/dockhand/README.md#open-findings) | [2026-04-16](core/dockhand/UPSTREAM.md) · no version recorded |
 | [`core/hawser`](core/hawser/) | `0.2.53` · 2026-10-30 | = Pin | [0 · 3](core/hawser/README.md#open-findings) | [2026-04-14](core/hawser/UPSTREAM.md) · no version recorded |
