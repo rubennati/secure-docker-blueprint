@@ -54,7 +54,13 @@ As shipped: `access-vpn`, `limit-standard`, `headers-standard`, and `tls-strict`
 
 ## Adding the local environment
 
-After first login, Dockhand asks you to add an environment. For the Docker daemon on the host where Dockhand itself runs, enter:
+A new instance starts **without authentication** — `/api/auth/session` answers
+`{"authenticated":false,"authEnabled":false}` (measured on the lab host at v1.0.57),
+and whoever reaches the route manages every connected Docker host. Until
+authentication is turned on in Dockhand's settings, the access policy is the only gate:
+keep `access-vpn`.
+
+On the first visit, Dockhand asks you to add an environment. For the Docker daemon on the host where Dockhand itself runs, enter:
 
 | Field | Value |
 |---|---|
