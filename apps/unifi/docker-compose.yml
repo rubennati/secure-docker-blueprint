@@ -151,7 +151,7 @@ services:
       # Service — UniFi's UI runs on 8443/HTTPS inside the container
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8443"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serversTransport=skip-verify@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serverstransport=backend-selfsigned@file"
 
 # --------------------------------------------------------
 # NETWORKS
