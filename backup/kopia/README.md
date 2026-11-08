@@ -59,7 +59,7 @@ On the machine itself, with Kopia installed there:
 
 ```bash
 kopia repository connect server \
-    --url https://kopia.example.com \
+    --url https://kopia.example.com:443 \
     --override-username laptop --override-hostname alice
 kopia snapshot create /home/alice
 ```
