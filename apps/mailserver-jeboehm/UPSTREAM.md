@@ -88,6 +88,8 @@ address Postfix and Dovecot see on a published port.
 
 ## Version notes
 
+- Moved to `8.1.2` on 2026-11-08 and run on the lab host (VM) as a new
+  installation. Patch releases of the 8.1 line.
 - Moved to `8.0.18` on 2026-10-31 (released the same day), all five images
   together, not run at this tag. 8.0.9 to 8.0.18 are dependency and bug-fix
   releases with no breaking change, variable change or migration; 8.0.15
