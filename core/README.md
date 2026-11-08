@@ -10,8 +10,11 @@ being installation-scoped because an installation can do without it. The
 categorisation test and the reasoning are in
 [`docs/architecture.md`](../docs/architecture.md#directory-structure).
 
-Only Traefik is close to unconditional: anything reachable over a network routes
-through it.
+| | Stacks | |
+|---|---|---|
+| **Required** | [Traefik](traefik/) | every stack that publishes a domain routes through it |
+| **Recommended** | [CrowdSec](crowdsec/) | detection from the logs; blocking and the AppSec component (Coraza) are opt-in |
+| **Optional** | everything else below | install when needed; several are alternatives to each other, for example Authentik, Keycloak and Authelia |
 
 ## What's here
 
