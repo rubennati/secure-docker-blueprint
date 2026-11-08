@@ -917,6 +917,50 @@ class AuthPosture(unittest.TestCase):
         self.assertIn("apps/whoami", posture_of["none"])
 
 
+class PublicDefault(unittest.TestCase):
+    """A stack ships closed: access-public needs posture public or a
+    `# public by design:` reason above the access variable."""
+
+    def _run(self, text: str) -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app = root / "apps" / "widget"
+            app.mkdir(parents=True)
+            (app / "docker-compose.yml").write_text("services:\n  app:\n    image: example/image:1.0\n")
+            (app / ".env.example").write_text("COMPOSE_PROJECT_NAME=widget\n" + text)
+            cwd = os.getcwd()
+            try:
+                os.chdir(root)
+                _reset_caches()
+                findings: list[dict] = []
+                cs.check_env(Path("apps/widget"), findings)
+                return [f["detail"] for f in findings if f["rule"] == "public-default"]
+            finally:
+                os.chdir(cwd)
+                _reset_caches()
+
+    def test_an_app_login_stack_shipped_public_fails(self):
+        found = self._run("APP_TRAEFIK_ACCESS=access-public\n# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(len(found), 1)
+        self.assertIn("ships the route open", found[0])
+
+    def test_closed_or_public_by_posture_passes(self):
+        self.assertEqual(self._run("APP_TRAEFIK_ACCESS=access-vpn\n# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=auth-none@file\n"), [])
+        self.assertEqual(self._run("APP_TRAEFIK_ACCESS=access-public\n# auth posture: public — a website\nAPP_TRAEFIK_AUTH=auth-none@file\n"), [])
+
+    def test_a_stated_reason_passes(self):
+        found = self._run("# public by design: phones subscribe without the VPN\nAPP_TRAEFIK_ACCESS=access-public\n"
+                          "# auth posture: app-login — x\nAPP_TRAEFIK_AUTH=auth-none@file\n")
+        self.assertEqual(found, [])
+
+    def test_every_catalogue_example_ships_closed_or_says_why(self):
+        for env in sorted(Path(p) for root in cs.ROOTS for p in Path(root).rglob(".env.example")):
+            findings: list[dict] = []
+            cs.check_env(env.parent, findings)
+            bad = [f["detail"] for f in findings if f["rule"] == "public-default"]
+            self.assertEqual(bad, [], str(env))
+
+
 class NetworkName(unittest.TestCase):
     """DEC-075: the proxy-public network of a stack is named through TRAEFIK_NETWORK."""
 

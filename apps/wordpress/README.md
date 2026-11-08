@@ -34,7 +34,9 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 # 3. Start
 docker compose up -d
 
-# 4. Open https://your-domain.com and run the WordPress installer
+# 4. Over the VPN, open https://your-domain.com and run the WordPress installer.
+#    The route ships closed (APP_TRAEFIK_ACCESS=access-vpn): the installer makes
+#    the first visitor the admin. Open it afterwards for your scenario below
 
 # 5. Apply .htaccess hardening (after WordPress installer finishes)
 docker compose exec wordpress-app bash -c 'cat /config/.htaccess-security >> /var/www/html/.htaccess'
@@ -60,9 +62,9 @@ Three realistic scenarios. Pick the one that fits the site:
 
 | Scenario | Frontend | wp-admin | Security Plugins | Infra |
 |----------|----------|----------|-----------------|-------|
-| **A: Public site, public admin** | Public | Public (employees, clients) | WPS Hide Login, WPS Limit Login, Turnstile, Two Factor | `access-public` (as shipped, with `limit-standard` and `headers-standard`) |
+| **A: Public site, public admin** | Public | Public (employees, clients) | WPS Hide Login, WPS Limit Login, Turnstile, Two Factor | `access-public` (after the installer, with `limit-standard` and `headers-standard`) |
 | **B: Public site, admin VPN-only** | Public | Tailscale only (single admin) | Two Factor only (rest redundant) | Two Traefik routers: `access-public` + `access-vpn` on `/wp-admin` |
-| **C: Fully internal** | Tailscale | Tailscale (e.g. MainWP Dashboard) | Two Factor only | `access-vpn` on entire site |
+| **C: Fully internal** | Tailscale | Tailscale (e.g. MainWP Dashboard) | Two Factor only | `access-vpn` on entire site (as shipped) |
 
 **Scenario A is the most common** — use this when multiple people need wp-admin access from different locations.
 

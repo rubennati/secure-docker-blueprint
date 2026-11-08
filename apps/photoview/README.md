@@ -56,7 +56,9 @@ docker compose up -d
 docker compose logs photoview-app --follow
 # Watch for: "Photoview API endpoint listening at http://0.0.0.0:80/api"
 
-# 7. Open UI and complete the initial setup wizard
+# 7. Over the VPN, open the UI and complete the initial setup wizard. The route
+#    ships closed (APP_TRAEFIK_ACCESS=access-vpn); open it (access-public)
+#    afterwards if the gallery has to be reachable without the VPN
 # https://<APP_TRAEFIK_HOST>
 # Username / Password: choose your admin credentials
 # Photo Path: /photos   ← always this value (container-internal mount point)
@@ -72,7 +74,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Security Model
 
-- **First-visit admin creation** — the setup wizard creates the admin user on first load. Open the UI yourself immediately after start so an attacker cannot claim it.
+- **First-visit admin creation** — the setup wizard creates the admin user on first load, which is why the route ships at `access-vpn`: run it over the VPN, then open it.
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **DB password restricted to `[A-Za-z0-9]`** — Photoview builds the DSN inline; `@`, `:`, `/`, `?`, `#` break parsing. Setup step 2 uses `openssl rand -hex` which is DSN-safe.
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add`.
@@ -134,7 +136,7 @@ cache.
 
 The pinned image, `photoview/photoview:2.4.0`, ships with 5 CRITICAL vulnerabilities that have published fixes: the pgx PostgreSQL driver and an old Go 1.19 runtime compiled into the server. 2.4.0 is the newest release, from 2024.
 
-**Risk:** this stack uses MariaDB, so pgx is not used, but the Go runtime serves every request and its affected functions were not checked. Consider `access-vpn` instead of the shipped `access-public` until a newer release exists.
+**Risk:** this stack uses MariaDB, so pgx is not used, but the Go runtime serves every request and its affected functions were not checked. Keep the shipped `access-vpn` until a newer release exists.
 
 ## Details
 

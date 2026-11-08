@@ -36,7 +36,7 @@
 | **`data=` path renamed to individual bind mounts** (`./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`, `./volumes/db`) | Inbox used a single `${data}` root variable that mixed DB and media; separating them makes backups and permissions cleaner |
 | **`shm_size: 256mb` on `db`** | Upstream's compose sets it from 1.5.0; with Docker's default 64 MB `/dev/shm`, large libraries fail with "could not resize shared memory segment" |
 | **`UPDATE_CHECK: "false"` on the backend** | From 1.5.0 the backend asks GitHub daily for a newer release; pins move through this repository |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Wiki-style access; consider `access-vpn` for family-only galleries |
+| **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | Closed by default; open the route (`access-public`) for clients outside the VPN |
 
 ## Version / tag notes
 
