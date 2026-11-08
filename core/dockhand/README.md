@@ -104,9 +104,11 @@ If Dockhand doesn't need a capability (e.g. no image management from the UI), se
 ```yaml
 postgresql_databases:
     - name: dockhand
-      container: dockhand-db
       username: dockhand
-      password: "{credential file /srv/docker/core/dockhand/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec dockhand-db pg_dump
+      pg_restore_command: docker exec -i dockhand-db pg_restore
+      psql_command: docker exec -i dockhand-db psql
 ```
 
 **`.secrets/encryption_key.txt` decrypts what is stored in the database.** A

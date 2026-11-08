@@ -177,9 +177,11 @@ access_control:
 ```yaml
 postgresql_databases:
     - name: authelia
-      container: authelia-db
       username: authelia
-      password: "{credential file /srv/docker/core/authelia/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec authelia-db pg_dump
+      pg_restore_command: docker exec -i authelia-db pg_restore
+      psql_command: docker exec -i authelia-db psql
 ```
 
 **The dump is useless without `storage_encryption_key.txt`** — Authelia cannot

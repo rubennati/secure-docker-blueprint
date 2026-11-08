@@ -121,9 +121,12 @@ login here.
 ```yaml
 postgresql_databases:
   - name: shellhub
-    container: shellhub-db
 source_directories:
     - /srv/docker/core/shellhub/.secrets
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec shellhub-db pg_dump
+    pg_restore_command: docker exec -i shellhub-db pg_restore
+    psql_command: docker exec -i shellhub-db psql
 ```
 
 For the general PostgreSQL restore procedure and verification checklist, see

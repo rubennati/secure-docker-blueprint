@@ -168,9 +168,11 @@ way to have two places where users exist.
 ```yaml
 postgresql_databases:
     - name: keycloak
-      container: keycloak-db
       username: keycloak
-      password: "{credential file /srv/docker/core/keycloak/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec keycloak-db pg_dump
+      pg_restore_command: docker exec -i keycloak-db pg_restore
+      psql_command: docker exec -i keycloak-db psql
 ```
 
 **Restore order:** database, then the container. Keycloak migrates the schema

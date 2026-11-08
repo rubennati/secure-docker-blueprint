@@ -91,9 +91,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 ```yaml
 postgresql_databases:
     - name: immich
-      container: immich-db
       username: immich
-      password: "{credential file /srv/docker/apps/immich/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec immich-db pg_dump
+      pg_restore_command: docker exec -i immich-db pg_restore
+      psql_command: docker exec -i immich-db psql
 ```
 
 **`UPLOAD_LOCATION` can point outside the stack directory** (the example keeps it
@@ -137,8 +139,10 @@ gunzip --stdout dump.sql.gz \
 Measured on the lab host (v3.2.0): this pipeline restored the `pg_dump` above
 with every row count and the originals intact. The upstream page's `pg_dumpall
 --clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
-block` — and the `postgresql_databases` entry under Backup fails on a host whose
-`pg_restore` is newer than the server's PostgreSQL 14 (`transaction_timeout`).
+block`. The `postgresql_databases` entry under Backup runs the server's own client
+through `docker exec`; the host's client 17 stopped on `transaction_timeout` against
+this PostgreSQL 14, the container's did not (lab host (VM), 2026-11-08: 73 tables,
+233,636 rows identical).
 
 Two preconditions upstream states, both of which invalidate a restore if missed:
 

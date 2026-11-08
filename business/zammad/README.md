@@ -102,9 +102,11 @@ off in **Settings → System → Services**.
 ```yaml
 postgresql_databases:
     - name: zammad_production
-      container: zammad-db
       username: zammad
-      password: "{credential file /srv/docker/business/zammad/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec zammad-db pg_dump
+      pg_restore_command: docker exec -i zammad-db pg_restore
+      psql_command: docker exec -i zammad-db psql
 ```
 
 **Excluding the Elasticsearch volume is deliberate, and it has a cost.** The index

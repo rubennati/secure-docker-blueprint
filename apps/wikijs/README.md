@@ -105,9 +105,11 @@ source_directories:
 
 postgresql_databases:
   - name: wikijs
-    container: wikijs-db
     username: wikijs
-    password: "${WIKIJS_DB_PASSWORD}"
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec wikijs-db pg_dump
+    pg_restore_command: docker exec -i wikijs-db pg_restore
+    psql_command: docker exec -i wikijs-db psql
 ```
 
 Restore: database first, then the data directory, then start the application —

@@ -204,9 +204,11 @@ This stack uses **named volumes**. Their host paths are
 ```yaml
 postgresql_databases:
     - name: vikunja
-      container: vikunja-db
       username: vikunja
-      password: "{credential file /srv/docker/business/vikunja/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec vikunja-db pg_dump
+      pg_restore_command: docker exec -i vikunja-db pg_restore
+      psql_command: docker exec -i vikunja-db psql
 ```
 
 `.secrets/jwt_key.txt` signs the session tokens. Restoring without it invalidates

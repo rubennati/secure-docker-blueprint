@@ -106,9 +106,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform
 ```yaml
 postgresql_databases:
     - name: opnform
-      container: opnform-db
       username: opnform
-      password: "{credential file /srv/docker/apps/opnform/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec opnform-db pg_dump
+      pg_restore_command: docker exec -i opnform-db pg_restore
+      psql_command: docker exec -i opnform-db psql
 ```
 
 Form submissions are database rows; anything a respondent uploaded is in

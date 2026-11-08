@@ -154,9 +154,11 @@ What each one needs from the network:
 ```yaml
 postgresql_databases:
     - name: tymeslot
-      container: tymeslot-db
       username: tymeslot
-      password: "{credential file /srv/docker/apps/tymeslot/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec tymeslot-db pg_dump
+      pg_restore_command: docker exec -i tymeslot-db pg_restore
+      psql_command: docker exec -i tymeslot-db psql
 ```
 
 **Restore order:** secrets, then database, then the app. The app runs its

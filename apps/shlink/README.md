@@ -137,9 +137,11 @@ serves, and upstream warns it can then be read by anyone who loads the page.
 # /etc/borgmatic/config.yaml
 postgresql_databases:
   - name: shlink
-    container: shlink-db
     username: shlink
-    password: "${SHLINK_DB_PASSWORD}"
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec shlink-db pg_dump
+    pg_restore_command: docker exec -i shlink-db pg_restore
+    psql_command: docker exec -i shlink-db psql
 ```
 
 Restore: the database alone brings back every link, visit and key. Keep

@@ -1,8 +1,9 @@
 # Which PostgreSQL client dumps and restores a stack's database — a decision paper
 
-**Status: proposal for a decision, nothing implemented** (2026-11-04). It answers the final
-audit's FA-03 for `backup/borgmatic`; the 26 `postgresql_databases` entries in the stack
-READMEs stay as they are until the decision is taken.
+**Status: decided 2026-11-08 — option C, implemented.** Every `postgresql_databases` entry in the stack
+READMEs runs `pg_dump`, `pg_restore` and `psql` through `docker exec` in the stack's database container;
+the measurements at servers 14, 16 and 18 are in `docs/labs/stack-refresh/2026-11-08-results.md`. The
+analysis below is the paper as it was proposed on 2026-11-04.
 
 ## The problem, measured
 

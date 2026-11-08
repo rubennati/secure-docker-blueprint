@@ -79,9 +79,11 @@ on the host:
 ```yaml
 postgresql_databases:
     - name: myapp
-      container: myapp-db
       username: myapp
-      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec myapp-db pg_dump
+      pg_restore_command: docker exec -i myapp-db pg_restore
+      psql_command: docker exec -i myapp-db psql
 ```
 
 **Restore order:** database first, then the app. Starting the app against an

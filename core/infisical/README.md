@@ -65,9 +65,11 @@ docker compose logs infisical-app --follow    # watch for migrations + server st
 ```yaml
 postgresql_databases:
     - name: infisical
-      container: infisical-db
       username: infisical
-      password: "{credential file /srv/docker/core/infisical/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec infisical-db pg_dump
+      pg_restore_command: docker exec -i infisical-db pg_restore
+      psql_command: docker exec -i infisical-db psql
 ```
 
 **`.secrets/encryption_key.txt` is the backup.** Everything this service stores is

@@ -53,27 +53,26 @@ A difference is not automatically a failure — see [what a quiesced backup look
 
 Restore into a throwaway database, not the live one. `--container` is the safest override: it names the target explicitly, so there is no chance of the configured one being used.
 
-PostgreSQL — the throwaway server runs the **same major version** as the live one,
-and the restore runs the `pg_restore_command` and `psql_command` of the database's
-entry, so the client that wrote the dump restores it ([README](README.md#postgresql-the-clients-major-version-is-the-servers)).
-Check the entry first; an entry without them uses the newest client on the `PATH`:
+PostgreSQL — the entries run the server's own client through `docker exec`
+([README](README.md#postgresql-the-servers-own-client-through-docker-exec)), so the
+restore runs inside a container too. Start the throwaway server from the **same image
+as the live one** and restore through a second configuration whose entry names it:
 
 ```bash
-sudo grep -A12 'name: myapp' /etc/borgmatic/config.yaml | grep -E '_command|container'
-docker exec myapp-db postgres --version     # the live server's major, e.g. 16
+IMG=$(docker inspect myapp-db --format '{{.Config.Image}}')
+docker run -d --name restore-test -e POSTGRES_USER=myapp -e POSTGRES_DB=myapp \
+  -e POSTGRES_PASSWORD="$(openssl rand -hex 16)" "$IMG"
 
-PW=$(openssl rand -hex 16)
-docker run -d --name restore-test -e POSTGRES_PASSWORD="$PW" postgres:16
-docker exec restore-test createdb -U postgres myapp
-
-sudo borgmatic restore --archive latest --database myapp \
-  --container restore-test --username postgres --password "$PW"
+# /etc/borgmatic/restore-test.yaml — a copy of the stack's entry, the commands pointed at the throwaway
+#   pg_restore_command: docker exec -i restore-test pg_restore
+#   psql_command: docker exec -i restore-test psql
+sudo borgmatic -c /etc/borgmatic/restore-test.yaml restore --archive latest --database myapp
 ```
 
-With a client of another major the restore can stop on a statement the server does
-not know — measured with client 17 against server 16 (`SET transaction_timeout = 0`,
-the Paperless entries in the [rehearsal log](#rehearsal-log)). A rehearsal that fails
-there is the finding: the backup it tested would fail the same way on the day.
+Measured on 2026-11-08 at servers 14, 16 and 18: the host's client 17 stopped on
+`transaction_timeout` (14, 16) or refused to dump at all (18); through `docker exec`
+every database came back with identical rows (the [rehearsal log](#rehearsal-log)). A
+failed restore reports only a UTF-8 decode error by default — run it again with `-v 2`.
 
 MariaDB — no published port needed, and the database has to exist first:
 

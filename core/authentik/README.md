@@ -341,9 +341,11 @@ relay and HTTPS from this network narrows that; the blueprint does not render su
 ```yaml
 postgresql_databases:
     - name: authentik
-      container: authentik-db
       username: authentik
-      password: "{credential file /srv/docker/core/authentik/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec authentik-db pg_dump
+      pg_restore_command: docker exec -i authentik-db pg_restore
+      psql_command: docker exec -i authentik-db psql
 ```
 
 **This stack is the one whose loss cascades.** Every application behind

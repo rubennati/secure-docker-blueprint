@@ -144,9 +144,11 @@ With borgmatic, `name: all` without a `format` dumps with `pg_dumpall`:
 ```yaml
 postgresql_databases:
     - name: all
-      container: windmill-db
       username: postgres
-      password: "{credential file /srv/docker/apps/windmill/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec windmill-db pg_dump
+      pg_restore_command: docker exec -i windmill-db pg_restore
+      psql_command: docker exec -i windmill-db psql
 ```
 
 By hand:

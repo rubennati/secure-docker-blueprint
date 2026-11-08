@@ -123,9 +123,12 @@ evidence.
 ```yaml
 postgresql_databases:
   - name: orionbelt
-    container: orion-belt-db
 source_directories:
     - /srv/docker/core/orion-belt/volumes/hostkey
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec orion-belt-db pg_dump
+    pg_restore_command: docker exec -i orion-belt-db pg_restore
+    psql_command: docker exec -i orion-belt-db psql
 ```
 
 For the general PostgreSQL restore procedure and verification checklist, see

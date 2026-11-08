@@ -154,9 +154,11 @@ shape. Neither has been run against the embed here.
 ```yaml
 postgresql_databases:
     - name: caldiy
-      container: caldiy-db
       username: caldiy
-      password: "{credential file /srv/docker/apps/caldiy/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec caldiy-db pg_dump
+      pg_restore_command: docker exec -i caldiy-db pg_restore
+      psql_command: docker exec -i caldiy-db psql
 ```
 
 **`.secrets/encryption_key.txt` decrypts the stored calendar credentials.** The
