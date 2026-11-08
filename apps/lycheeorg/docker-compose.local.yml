@@ -82,11 +82,9 @@ services:
       DISABLE_WEBAUTHN: "false"
       TRUSTED_PROXIES: "*"
     volumes:
-      - ./volumes/local/conf:/conf
-      - ./volumes/local/uploads:/uploads
-      - ./volumes/local/sym:/sym
-      - ./volumes/local/logs:/logs
-      - ./volumes/local/tmp:/lychee-tmp
+      - ./volumes/local/uploads:/app/public/uploads
+      - ./volumes/local/logs:/app/storage/logs
+      - ./volumes/local/tmp:/app/storage/tmp
     ports:
       - "127.0.0.1:8000:8000"
     networks: [lychee-local]

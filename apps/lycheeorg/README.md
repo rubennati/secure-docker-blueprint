@@ -43,8 +43,8 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 
 # 4. Volume ownership (Lychee entrypoint drops to PUID/PGID)
-mkdir -p volumes/{conf,uploads,sym,logs,tmp,mysql,redis}
-sudo chown -R 1000:1000 volumes/conf volumes/uploads volumes/sym volumes/logs volumes/tmp
+mkdir -p volumes/{uploads,logs,tmp,mysql,redis}
+sudo chown -R 1000:1000 volumes/uploads volumes/logs volumes/tmp
 # Redis runs as the image's own user and cannot fix ownership itself
 sudo chown 999:1000 volumes/redis
 
@@ -85,8 +85,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 |---|---|
 | **Database** | MariaDB · container `lychee-db` · database `lychee` · user `lychee` |
 | **Password** | `.secrets/db_pwd.txt` |
-| **State** | `./volumes/mysql` (database) · `./volumes/uploads` (the photos) · `./volumes/conf` |
-| **Reproducible** | `./volumes/sym` (symlinks) · `./volumes/redis` (cache) · `./volumes/logs` · `./volumes/tmp` |
+| **State** | `./volumes/mysql` (database) · `./volumes/uploads` (the photos) |
+| **Reproducible** | `./volumes/redis` (cache) · `./volumes/logs` · `./volumes/tmp` |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
 
 ```yaml

@@ -19,7 +19,7 @@
 - Official `mariadb:12.3.3` as backend
 - Official `redis:8.10.3-alpine` for cache and sessions
 - Docker Secrets for DB password, DB root password — natively consumed by both services
-- Bind-mounts under `./volumes/` for `/conf`, `/uploads`, `/sym`, `/logs`, `/lychee-tmp`
+- Bind-mounts under `./volumes/` for `/app/public/uploads`, `/app/storage/logs`, `/app/storage/tmp` — the v7 image's paths
 
 ## What we changed and why
 
@@ -103,7 +103,7 @@
      'mariadb-dump -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" lychee' \
      > lychee-db-$(date +%Y%m%d).sql
    # Uploads + conf
-   tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/ volumes/conf/
+   tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/
    ```
 
 3. Bump `APP_TAG` in `.env`
