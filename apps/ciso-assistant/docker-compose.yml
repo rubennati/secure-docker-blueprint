@@ -186,11 +186,11 @@ services:
     read_only: true
 
     # --- Resources ---
-    memswap_limit: 512m        # == memory: no swap
+    memswap_limit: 768m        # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 768m
           cpus: "1.00"
           pids: 100
         reservations:
