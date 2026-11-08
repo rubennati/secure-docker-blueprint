@@ -222,5 +222,49 @@ class Releases(unittest.TestCase):
             self.assertEqual(status.github_repo(stack), "portainer/portainer")
 
 
+class Channels(unittest.TestCase):
+    """A pre-release or another release line is not the newest version."""
+
+    T = datetime(2026, 11, 1, tzinfo=timezone.utc)
+
+    def row(self, pin, tags):
+        tags = {t: self.T for t in tags}
+        best = status.newest(pin, list(tags))
+        return {"pinned": pin, "pinned_date": self.T, "newest": best,
+                "newest_date": self.T, "_tags": tags,
+                "status": "current" if best == pin else "behind"}
+
+    def test_a_github_prerelease_is_skipped(self):
+        releases = [("n8n@3.1.0", self.T, True, ""), ("n8n@2.47.2", self.T, True, ""),
+                    ("n8n@2.46.6", self.T, False, "")]
+        row = self.row("2.46.6", ["2.46.6", "2.47.2", "3.1.0"])
+        status.step_down(row, status.release_filter(releases, "2.46.6"))
+        self.assertEqual((row["newest"], row["status"]), ("2.46.6", "current"))
+
+    def test_a_stable_release_above_the_pin_still_counts(self):
+        releases = [("3.1.0", self.T, True, ""), ("2.47.0", self.T, False, "")]
+        row = self.row("2.46.6", ["2.46.6", "2.47.0", "3.1.0"])
+        status.step_down(row, status.release_filter(releases, "2.46.6"))
+        self.assertEqual((row["newest"], row["status"]), ("2.47.0", "behind"))
+
+    def test_an_lts_pin_is_not_offered_sts(self):
+        releases = [("2.46.0", self.T, False, "Release 2.46.0 STS"),
+                    ("2.45.3", self.T, False, "Release 2.45.3 LTS"),
+                    ("2.44.0", self.T, False, "Release 2.44.0 STS")]
+        # 3.0.1 is an image tag with no release at all.
+        row = self.row("2.45.3", ["2.44.0", "2.45.3", "2.46.0", "3.0.1"])
+        status.step_down(row, status.release_filter(releases, "2.45.3"))
+        self.assertEqual((row["newest"], row["status"]), ("2.45.3", "current"))
+
+    def test_a_digit_in_the_name_is_not_the_version(self):
+        self.assertEqual(status.release_version("n8n@2.46.6"), (2, 46, 6))
+        self.assertEqual(status.release_version("v2.45.3"), (2, 45, 3))
+
+    def test_an_sts_pin_keeps_every_line(self):
+        releases = [("3.0.1", self.T, False, "Release 3.0.1 STS"),
+                    ("2.44.0", self.T, False, "Release 2.44.0 STS")]
+        self.assertTrue(status.release_filter(releases, "2.44.0")((3, 0, 1)))
+
+
 if __name__ == "__main__":
     unittest.main()
