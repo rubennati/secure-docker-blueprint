@@ -51,7 +51,7 @@ runs.
 
 Compose clears an image's `CMD` when `entrypoint` is set, so the start command
 is repeated in the compose file. Upstream's `CMD` probes three paths for the
-built server; in v3.0.3 it is at `dist/src/main.js`.
+built server; since v3.0.6 it is at `dist/main.js` (in v3.0.3 it was at `dist/src/main.js`).
 
 ## Verified on the images (2026-09-24)
 
@@ -150,7 +150,7 @@ can reach the host name can become such a member.
 1. Read the release notes and the advisory list; check whether
    GHSA-chmm-jqpm-3pwx has gained a patched version.
 2. Bump `APP_TAG`. Check whether the built server is still at
-   `dist/src/main.js` — the compose file names it directly.
+   `dist/main.js` since v3.0.6 — the compose file names it directly.
 3. Check whether any new setting needs to be a secret, and whether
    `ENABLE_GOOGLE_FONTS` and `APP_DISABLE_REGISTRATION` still default the way
    this stack assumes.
