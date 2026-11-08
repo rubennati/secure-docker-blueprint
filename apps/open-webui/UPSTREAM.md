@@ -12,7 +12,7 @@
 - **Origin:** Open WebUI · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload
-- **Last verified:** 2026-09-21 (v0.11.3) — behind Traefik with TLS: sign-in and an answer from an attached document in a browser, LiteLLM as a second backend, offline mode, a restart, and a restore
+- **Last verified:** 2026-11-08 (0.13.0) — lab host (VM), IPv4 LAN: the administrator from `ADMIN_EMAIL` and the secret file signed in through the API before and after `down`/`up`, sign-up refused (`ENABLE_SIGNUP=false`), a document uploaded, the embedding model downloaded on the first start as the README says, the refused client answered `403`; no chat with a backend (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

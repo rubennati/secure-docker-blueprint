@@ -48,7 +48,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | Stack | Pin | Newest | CRITICAL · HIGH | Last tested |
 |---|---|---|---|---|
 | [`apps/adminer`](apps/adminer/) | `6.3.0-standalone` · 2026-11-03 | = Pin | 0 · 0 | [2026-11-08](apps/adminer/UPSTREAM.md) |
-| [`apps/agentgateway`](apps/agentgateway/) | `v1.7.0` · 2026-10-27 | = Pin | 0 · 0 | [2026-09-21](apps/agentgateway/UPSTREAM.md) · ran `v1.5.0` |
+| [`apps/agentgateway`](apps/agentgateway/) | `v1.7.0` · 2026-10-27 | = Pin | 0 · 0 | [2026-11-08](apps/agentgateway/UPSTREAM.md) |
 | [`apps/bookstack`](apps/bookstack/) | `version-v26.09.2` · 2026-10-20 | not determinable | [1 · 31](apps/bookstack/README.md#open-findings) | [2026-11-08](apps/bookstack/UPSTREAM.md) |
 | [`apps/caldiy`](apps/caldiy/) | `v6.2.0-6` · 2026-03-01 | = Pin | [24 · 711](apps/caldiy/README.md#open-findings) | [2026-07-26](apps/caldiy/UPSTREAM.md) · ran `v6.2.0-3` |
 | [`apps/calnode`](apps/calnode/) | `0.14.0` | not checked at this pin | — | [2026-11-08](apps/calnode/UPSTREAM.md) |
@@ -59,9 +59,9 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/defectdojo`](apps/defectdojo/) | `3.5.0` · 2026-11-02 | = Pin | [3 · 95](apps/defectdojo/README.md#open-findings) | [2026-09-22](apps/defectdojo/UPSTREAM.md) · ran `3.3.100` |
 | [`apps/dependency-track`](apps/dependency-track/) | `5.2.1` · 2026-10-25 | = Pin | [3 · 36](apps/dependency-track/README.md#open-findings) | — |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `v2.4.29` · 2026-08-10 | = Pin | [28 · 920](apps/dfir-iris/README.md#open-findings) | — |
-| [`apps/dify`](apps/dify/) | `1.19.0` · 2026-11-04 | = Pin | [6 · 84](apps/dify/README.md#open-findings) | [2026-09-22](apps/dify/UPSTREAM.md) · ran `1.17.1` |
+| [`apps/dify`](apps/dify/) | `1.19.0` · 2026-11-04 | = Pin | [6 · 84](apps/dify/README.md#open-findings) | [2026-11-08](apps/dify/UPSTREAM.md) |
 | [`apps/docker-mailserver`](apps/docker-mailserver/) | `16.0.1` · 2026-09-04 | `17.0.0` · 2026-11-05 | [0 · 24](apps/docker-mailserver/README.md#open-findings) | — · [needs a host with port 25 open and public DNS](apps/docker-mailserver/UPSTREAM.md) |
-| [`apps/docling-serve`](apps/docling-serve/) | `v1.38.2` · 2026-10-27 | = Pin | [0 · 15](apps/docling-serve/README.md#open-findings) | [2026-09-22](apps/docling-serve/UPSTREAM.md) · ran `v1.34.0` |
+| [`apps/docling-serve`](apps/docling-serve/) | `v1.38.2` · 2026-10-27 | = Pin | [0 · 15](apps/docling-serve/README.md#open-findings) | [2026-11-08](apps/docling-serve/UPSTREAM.md) |
 | [`apps/easyappointments`](apps/easyappointments/) | `1.6.1` · 2026-10-19 | = Pin | [3 · 79](apps/easyappointments/README.md#open-findings) | [2026-11-03](apps/easyappointments/UPSTREAM.md) · with restore |
 | [`apps/euro-office`](apps/euro-office/) | `v9.3.4-hotfix.1` · 2026-08-28 | not determinable | [0 · 3](apps/euro-office/README.md#open-findings) | [2026-11-02](apps/euro-office/UPSTREAM.md) |
 | [`apps/ghost`](apps/ghost/) | `6.75.0-alpine` · 2026-11-04 | = Pin | [2 · 45](apps/ghost/README.md#open-findings) | [2026-11-08](apps/ghost/UPSTREAM.md) · with restore |
@@ -85,8 +85,8 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/nocodb`](apps/nocodb/) | `2026.10.1` · 2026-10-29 | = Pin | 0 · 0 | [2026-11-08](apps/nocodb/UPSTREAM.md) |
 | [`apps/obot`](apps/obot/) | `v0.27.0` · 2026-10-20 | `v0.28.0` · 2026-11-07 | [3 · 56](apps/obot/README.md#open-findings) | — |
 | [`apps/ollama`](apps/ollama/) | `0.40.15` | not checked at this pin | — | [2026-11-08](apps/ollama/UPSTREAM.md) |
-| [`apps/onlyoffice`](apps/onlyoffice/) | `10.0.0` · 2026-10-12 | = Pin | [0 · 2](apps/onlyoffice/README.md#open-findings) | [2026-11-02](apps/onlyoffice/UPSTREAM.md) · ran `9.4.0` |
-| [`apps/open-webui`](apps/open-webui/) | `v0.13.0` · 2026-11-03 | = Pin | [4 · 31](apps/open-webui/README.md#open-findings) | [2026-09-21](apps/open-webui/UPSTREAM.md) · ran `v0.11.3` |
+| [`apps/onlyoffice`](apps/onlyoffice/) | `10.0.0` · 2026-10-12 | = Pin | [0 · 2](apps/onlyoffice/README.md#open-findings) | [2026-11-08](apps/onlyoffice/UPSTREAM.md) |
+| [`apps/open-webui`](apps/open-webui/) | `v0.13.0` · 2026-11-03 | = Pin | [4 · 31](apps/open-webui/README.md#open-findings) | [2026-11-08](apps/open-webui/UPSTREAM.md) |
 | [`apps/opencanary`](apps/opencanary/) | `0.9.10` · 2026-09-21 | = Pin | [8 · 111](apps/opencanary/README.md#open-findings) | — · [needs a real host for the ports below 1024, which Docker Desktop cannot show](apps/opencanary/UPSTREAM.md) |
 | [`apps/opnform`](apps/opnform/) | `2.8.4` · 2026-11-05 | = Pin | [2 · 34](apps/opnform/README.md#open-findings) | [2026-11-08](apps/opnform/UPSTREAM.md) |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `v0.31.0` · 2026-10-14 | = Pin | [0 · 6](apps/paperless-gpt/README.md#open-findings) | — |
@@ -94,7 +94,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/photoprism`](apps/photoprism/) | `261029` · 2026-10-29 | = Pin | [1 · 26](apps/photoprism/README.md#open-findings) | [2026-04-17](apps/photoprism/UPSTREAM.md) · no version recorded |
 | [`apps/photoview`](apps/photoview/) | `2.4.0` · 2024-06-23 | = Pin · ⚠️ no release since 2024-06-23 | [5 · 55](apps/photoview/README.md#open-findings) | [2026-04-17](apps/photoview/UPSTREAM.md) · no version recorded |
 | [`apps/privatebin`](apps/privatebin/) | `2.1.1` · 2026-11-04 | = Pin | 0 · 0 | — |
-| [`apps/qdrant`](apps/qdrant/) | `v1.20.0-unprivileged` · 2026-10-22 | = Pin | [0 · 9](apps/qdrant/README.md#open-findings) | [2026-09-21](apps/qdrant/UPSTREAM.md) · ran `v1.19.1-unprivileged` |
+| [`apps/qdrant`](apps/qdrant/) | `v1.20.0-unprivileged` · 2026-10-22 | = Pin | [0 · 9](apps/qdrant/README.md#open-findings) | [2026-11-08](apps/qdrant/UPSTREAM.md) |
 | [`apps/seafile`](apps/seafile/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [3 · 103](apps/seafile/README.md#open-findings) | [2026-11-02](apps/seafile/UPSTREAM.md) · with restore · ran `13.0.20` |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [23 · 783](apps/seafile-pro/README.md#open-findings) | [2026-11-02](apps/seafile-pro/UPSTREAM.md) · with restore · ran `13.0.21` |
 | [`apps/shlink`](apps/shlink/) | `5.1.8` · 2026-10-21 | = Pin | [2 · 33](apps/shlink/README.md#open-findings) | — |
