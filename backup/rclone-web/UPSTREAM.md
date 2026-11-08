@@ -106,6 +106,8 @@ remote at a real storage provider; transfers of size; serves; backup and restore
 
 ## Version notes
 
+- Moved to `1.76.0` on 2026-11-08 and run on the lab host (VM). A minor release;
+  its notes name no change to the remote-control API used here.
 - Moved to `1.75.2` on 2026-10-31 (released 2026-10-09), not run at this tag. The
   GitHub release page carries no entries and points to the changelog at
   rclone.org, which was not reachable from the session that moved the pin;
