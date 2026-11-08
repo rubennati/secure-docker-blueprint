@@ -95,3 +95,16 @@ The update check is off.
 4. `docker compose exec app supervisorctl status` — the services above `RUNNING`
 5. Send a message between two accounts and read `setup fail2ban`
 6. Record the result in `Last verified` once it ran on a host
+
+## Version notes
+
+- Moved to `17.0.0` on 2026-11-08, a major release, and run on the lab host (VM)
+  as a new installation. Breaking per upstream: the Xapian FTS plugin is removed
+  (migrate to Flatcurve), the Postfix LDAP configuration is generated from
+  layered sources with renamed `POSTFIX_*_QUERY_FILTER` variables and no default
+  filters, Rspamd uses Valkey instead of Redis, `SA_SPAM_SUBJECT` is gone
+  (`SPAM_SUBJECT`), the base image is Debian 13, and `setup config dkim` writes
+  `<domain>-<selector>.private` (this stack's `ops/setup.sh` and README follow
+  it). This stack uses neither LDAP nor Xapian nor `ENABLE_RSPAMD_REDIS`. An
+  existing installation with DKIM keys from 16.x keeps them; their file names
+  differ from what `setup config dkim` now writes.
