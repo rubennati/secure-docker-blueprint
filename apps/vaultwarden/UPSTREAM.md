@@ -10,14 +10,14 @@
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
 - **Based on version:** `1.37.5`
-- **Last verified:** 2026-11-02 (1.37.4) — step 8 lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-02 (1.37.4) — lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we changed and why
 
 | Change | Reason |
 |--------|--------|
 | MariaDB instead of SQLite | More robust for concurrent access, better backup tooling |
-| Passwords in .env (not Secrets) | Phase 2 open. **Vaultwarden does support `_FILE`** — confirmed against the upstream configuration wiki on 2026-07-27; this entry previously claimed it does not, and whether that was wrong when written or went stale could not be established from the release notes. The genuine obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
+| Passwords in .env (not Secrets) | Open: moving them to Docker Secrets. **Vaultwarden does support `_FILE`** (upstream configuration wiki, checked 2026-07-27). The obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-strict` (TLS 1.3 only) | Password manager deserves strictest TLS — named by the router's `tls.options` label as a documented exception |

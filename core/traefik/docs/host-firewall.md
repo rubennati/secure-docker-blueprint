@@ -77,7 +77,7 @@ What it does:
   Tailscale installs an IPv4 drop of its own, but only on the input path
   (`ts-input`) and only while `tailscaled` runs; on the forward path — the
   published ports — a packet from a forged `100.64.0.0/10` source reached Traefik
-  with `tailscaled` running (measured 2026-11-04 on the step 8 lab host, final
+  with `tailscaled` running (measured 2026-11-04 on the lab host, final
   audit FA-20). The rendered IPv4 rule closes both. A host whose own uplink sits
   in the shared address space (`100.64.0.0/10`, some carrier-grade NAT providers)
   cannot use `TAILSCALE_CIDR_V4` unchanged: narrow it to the tailnet's own range
@@ -87,7 +87,7 @@ What it does:
   its own on the forward hook
   ([`core/crowdsec/docs/firewall-bouncer.md`](../../crowdsec/docs/firewall-bouncer.md)).
 
-Loading it — from a session that arrives over the VPN, with a way back. The step 8 lab
+Loading it — from a session that arrives over the VPN, with a way back. The lab
 host used a timer instead of the backgrounded `sleep` below, because `pkill -f` also
 matches the shell that runs it (`docs/host-baseline.md`, MUST 7):
 
@@ -105,7 +105,7 @@ host's file held `destroy table inet blueprint_ingress` and `include
 **Never `systemctl restart` or `stop` `nftables` on a running host — `reload` it.** Debian's
 unit carries `ExecStop=/usr/sbin/nft flush ruleset`, so a stop or a restart removes every
 table — Docker's and Tailscale's included — however flush-free `/etc/nftables.conf` is.
-Measured on the step 8 lab host on 2026-11-04: after `systemctl restart nftables` only
+Measured on the lab host on 2026-11-04: after `systemctl restart nftables` only
 `inet blueprint_ingress` was left; published ports and container egress had no rules until
 `systemctl restart tailscaled` and `systemctl restart docker` wrote them again (about a
 minute). `systemctl reload nftables` runs `nft -f /etc/nftables.conf` only and left every
@@ -127,7 +127,7 @@ sudo systemctl daemon-reload
 systemctl show -p ExecStop nftables     # only "nft destroy table inet blueprint_ingress"
 ```
 
-Measured on the step 8 lab host (2026-11-04, nftables 1.1.3, systemd 257, Docker and
+Measured on the lab host (2026-11-04, nftables 1.1.3, systemd 257, Docker and
 `tailscaled` in iptables-nft mode), each step compared with a snapshot of every table and
 of `iptables-save`/`ip6tables-save`, the table events recorded by `nft monitor`:
 
@@ -164,7 +164,7 @@ Docker's tables as well, and published ports stop until Docker writes them again
 Verify the forward path by result:
 a throwaway container on a bridge network still reaches an external address.
 
-Loaded on the step 8 lab host: the `direct` ruleset since 2026-11-03 (F1–F9, M2, a reboot
+Loaded on the lab host: the `direct` ruleset since 2026-11-03 (F1–F9, M2, a reboot
 with the drop-in), the `proxied` ruleset with `cloudflare-ranges.nft` on 2026-11-04 (X4,
 `docs/architecture.md`) — applied with `systemctl reload nftables` under a timed way back,
 and returned to `direct` twice, byte-identical. A change of `TRAEFIK_FORWARDED_PROXY` also
@@ -249,7 +249,7 @@ container then sees the bridge gateway as the source, over IPv4 and over IPv6.
 top of the `FORWARD` chain when they start, and nothing orders the two services. When
 Docker started last, its chains accept the forwarded connection before `ts-forward`
 marks it, and the client address survives; when `tailscaled` started last, every
-connection is marked and masqueraded. Measured on the step 8 lab host with the
+connection is marked and masqueraded. Measured on the lab host with the
 default: Docker restarted after Tailscale — the tailnet client got 200; `tailscaled`
 restarted after Docker — 403 for every VPN client. A reboot, an update of either
 package or a restart of either service decides it anew. With the fix below the order
@@ -270,7 +270,7 @@ affected — locally delivered traffic never crossed this rule. To check from th
 outside, open a VPN-only router from a tailnet client and read `ClientHost` in
 Traefik's access log: it has to be the client's tailnet address.
 
-**Measured** on the step 8 lab host (2026-11-03: Debian 13, Docker Engine 29.9.2 with
+**Measured** on the lab host (2026-11-03: Debian 13, Docker Engine 29.9.2 with
 `userland-proxy: false`, Traefik published on `0.0.0.0` and `[::]`, Tailscale 1.104.5
 from its Debian repository, `tailscale up` with SSH, exit node, routes and DNS off):
 

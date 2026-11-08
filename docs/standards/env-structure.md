@@ -52,10 +52,9 @@ variables under it configure:
 [`apps/_reference/.env.example`](../../apps/_reference/.env.example) is the worked
 example, with a comment block per section. `scripts/ci/check-structure.py` reads the
 section name and ignores the tag and the padding, so a file in the earlier short form
-(`# --- Images ---`) still passes `section-order`; the files in that form are converted
-by script in Phase 6 of the core audit
-([`../audits/core-v1-readiness-2026-10-15.md`](../audits/core-v1-readiness-2026-10-15.md)),
-not one by one.
+(`# --- Images ---`) still passes `section-order`; the files in that form are to be converted
+by script, not one by one
+([`../audits/core-v1-readiness-2026-10-15.md`](../audits/core-v1-readiness-2026-10-15.md)).
 
 ## Section Rules
 

@@ -99,7 +99,7 @@ A plain `docker compose restart` leaves the old CSP in place and the browser wil
 
 ## Network path
 
-OnlyOffice fetches each document from the consuming application and saves it back through a callback. The consuming applications ship closed routes, and a closed route refuses every container (DEC-076), so on the same host these calls go past the route:
+OnlyOffice fetches each document from the consuming application and saves it back through a callback. The consuming applications ship closed routes, and a closed route refuses every container ([DEC-076](https://github.com/rubennati/secure-docker-blueprint/blob/main/.ai/decisions.md#dec-076)), so on the same host these calls go past the route:
 
 - **Nextcloud** — its opt-in `office.yml` joins Nextcloud's nginx to this stack's edge network; the connector hands out nginx as the storage address and needs this server's secret as its setting `jwt_secret` (`apps/nextcloud/README.md`, "Office servers behind a closed route").
 - **Seafile CE and Pro** — their opt-in `onlyoffice-callback.yml` opens the two paths OnlyOffice uses.
@@ -126,7 +126,7 @@ docker compose up -d --force-recreate
 
 ### Tailscale-only or private access
 
-Set `APP_TRAEFIK_ACCESS=access-vpn` in `.env` to admit only VPN clients to the OnlyOffice server. The browser loads the editor from this route, so every user then needs the VPN. Nextcloud also calls the document server at its public name from its own container, and a closed route refuses every container (DEC-076): with `access-vpn` that call fails and the Nextcloud integration stops working.
+Set `APP_TRAEFIK_ACCESS=access-vpn` in `.env` to admit only VPN clients to the OnlyOffice server. The browser loads the editor from this route, so every user then needs the VPN. Nextcloud also calls the document server at its public name from its own container, and a closed route refuses every container ([DEC-076](https://github.com/rubennati/secure-docker-blueprint/blob/main/.ai/decisions.md#dec-076)): with `access-vpn` that call fails and the Nextcloud integration stops working.
 
 ### JWT secret rotation
 

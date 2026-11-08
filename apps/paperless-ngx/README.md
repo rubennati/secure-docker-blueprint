@@ -93,7 +93,7 @@ space-separated list: a comma-separated one is a single package name — with `d
 log said `Skipped tesseract-ocr-deu,eng: Package not found!`. German, English, French, Italian and Spanish
 ship in the image; any other pack is installed with apt **each time the container is created**,
 which needs outbound access from the stack's edge network — without it the pack is skipped, the
-container still turns healthy, and the language is missing (step 8 lab host). `PAPERLESS_OCR_LANGUAGE`
+container still turns healthy, and the language is missing (lab host). `PAPERLESS_OCR_LANGUAGE`
 sets which language Paperless picks first when the document has no language metadata; several are
 joined with `+` (`deu+eng`).
 
@@ -120,7 +120,7 @@ E-mail ships **off**: Paperless treats it as off only while `PAPERLESS_EMAIL_HOS
 `PAPERLESS_EMAIL_HOST_USER` is empty; it then reports `email_enabled: false` to the UI and the login
 page offers no password reset. An empty host does not turn it off — the password reset answers 500,
 as it does with a relay that cannot be reached; a reset posted directly with e-mail off answers 500
-too (step 8 lab host).
+too (lab host).
 
 ```bash
 echo -n 'your-smtp-password' > .secrets/email_pwd.txt
@@ -174,7 +174,7 @@ Authentik must be running with an OAuth2/OIDC provider configured for Paperless.
 
 3. `docker compose up -d` — regular login is now disabled and the login page redirects to Authentik.
 
-`sso.yml` has not been run on a host: the step 8 lab run tested the regular login only.
+`sso.yml` has not been run on a host: the lab run tested the regular login only.
 
 ## Verify
 
@@ -195,13 +195,13 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 - Default access is VPN-only (`access-vpn`)
 - **Documents from the consume folder have no owner**, and a document without an owner is visible to
   every user holding the view permission; one uploaded through the UI or API belongs to the uploader
-  and stays hidden from other users until shared (step 8 lab host). Assign an owner with a workflow
+  and stays hidden from other users until shared (lab host). Assign an owner with a workflow
   if the consume folder feeds more than one person.
 - The token endpoint allows 5 requests a minute from one client address (`PAPERLESS_TOKEN_THROTTLE_RATE`);
   beyond that it answers 429, the right password included.
 - Failed logins are logged with Traefik's address on the edge network, not the client's
   (`PAPERLESS_TRUSTED_PROXIES` is not set). The lab's probe has a loopback address, so what a real
-  client's address would look like in the log was not measured (step 8 lab host).
+  client's address would look like in the log was not measured (lab host).
 
 ## Backup
 
@@ -230,7 +230,7 @@ borgmatic runs `pg_dump` and `pg_restore` on the host. A client newer than the
 server writes settings the server does not know: with Debian 13's
 `postgresql-client`, version 17, the backup of a `postgres:16` server ran, but
 its restore stopped on `SET transaction_timeout = 0`, a setting 16 does not
-know (step 8 lab host). Install 18 beside it from the PostgreSQL project's
+know (lab host). Install 18 beside it from the PostgreSQL project's
 repository and name its programs in the entry, as above — `pg_dump` on the
 `PATH` stays the newest installed version:
 
@@ -255,7 +255,7 @@ restoring in place.
 
 **Restore order:** database first, then media, then the app. Without
 `volumes/data/index` the app rebuilt the search index during its start, and search
-answered as soon as the container was healthy (step 8 lab host).
+answered as soon as the container was healthy (lab host).
 
 The `document_exporter` writes mail-account passwords and other sensitive fields in
 plain text unless it is given `--passphrase`; it says so in its output.
@@ -266,9 +266,9 @@ plain text unless it is given `--passphrase`; it says so in its output.
 - **`user:` cannot be set on the app service.** Paperless uses s6-overlay which requires root for `/run` setup before dropping privileges. Adding `user:` breaks startup.
 - **`SSO_CLIENT_SECRET` lives in `.env`, not in `.secrets/`.** `sso.yml` builds a JSON configuration string (`PAPERLESS_SOCIALACCOUNT_PROVIDERS`) and Paperless doesn't support `_FILE` for values embedded inside a JSON env var. This is a Paperless limitation, not a blueprint choice.
 - **First OCR of a large document is slow.** Tesseract loads language data lazily; subsequent OCR on the same language is cached and fast.
-- **A mail account's connection test answers 500** instead of a message when the IMAP server cannot be reached — unknown host, closed port, TLS on a plain port (3.1.3, step 8 lab host).
-- **Notes are not found by full-text search** — a note's text gave no hit, also after `document_index reindex` (3.1.3, step 8 lab host, two instances).
-- **Gotenberg's PID limit bounds Chromium.** At 100 PIDs Chromium could not start: every e-mail and HTML document failed with 503 while both health endpoints answered 200. 300 is the measured peak (149) with room (step 8 lab host).
+- **A mail account's connection test answers 500** instead of a message when the IMAP server cannot be reached — unknown host, closed port, TLS on a plain port (3.1.3, lab host).
+- **Notes are not found by full-text search** — a note's text gave no hit, also after `document_index reindex` (3.1.3, lab host, two instances).
+- **Gotenberg's PID limit bounds Chromium.** At 100 PIDs Chromium could not start: every e-mail and HTML document failed with 503 while both health endpoints answered 200. 300 is the measured peak (149) with room (lab host).
 
 ## Open findings
 

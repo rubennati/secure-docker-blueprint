@@ -7,7 +7,7 @@ This page is general host hardening: the Docker-specific prerequisites are in
 the ingress layers in [`docs/architecture.md`](architecture.md), "Ingress paths, profiles
 and trust boundaries".
 
-It is derived from one host — the step 8 lab host, a rented virtual machine with a public
+It is derived from one host — the lab host, a rented virtual machine with a public
 IPv4 and IPv6 address, Debian 13, Docker Engine 29, Tailscale on the host — and from what
 was measured there ([`docs/labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md),
 [`docs/host-verification-ingress.md`](host-verification-ingress.md)). A measurement on one

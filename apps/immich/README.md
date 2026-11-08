@@ -130,7 +130,7 @@ gunzip --stdout dump.sql.gz \
 | `--single-transaction` | a failure rolls the whole restore back instead of leaving a half-populated database that starts and looks plausible |
 | `ON_ERROR_STOP=on` | without it `psql` continues past errors and exits 0. This is the part that turns a failed restore into one you find out about later |
 
-Measured on the step 8 lab host (v3.2.0): this pipeline restored the `pg_dump` above
+Measured on the lab host (v3.2.0): this pipeline restored the `pg_dump` above
 with every row count and the originals intact. The upstream page's `pg_dumpall
 --clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
 block` — and the `postgresql_databases` entry under Backup fails on a host whose

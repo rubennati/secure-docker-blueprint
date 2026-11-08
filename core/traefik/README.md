@@ -128,7 +128,7 @@ entrypoint list is static configuration.
 
 ## IPv4-only vs. Dual-Stack Networking
 
-A new installation is **dual-stack**: the example `.env` applies `network-dual-stack.yml`, which gives `proxy-public` (Traefik’s ingress network; applications normally use their own edge networks) an IPv6 subnet, and publishes Traefik on both families (DEC-063, refined by DEC-075). Without the overlay `proxy-public` is IPv4-only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
+A new installation is **dual-stack**: the example `.env` applies `network-dual-stack.yml`, which gives `proxy-public` (Traefik’s ingress network; applications normally use their own edge networks) an IPv6 subnet, and publishes Traefik on both families ([DEC-063](../../.ai/decisions.md#dec-063), refined by [DEC-075](../../.ai/decisions.md#dec-075)). Without the overlay `proxy-public` is IPv4-only. A port on `[::]` while `proxy-public` cannot carry IPv6 hands every IPv6 connection to Traefik from the Docker gateway — an address inside `172.16.0.0/12`, which the retired LAN policies admitted and CrowdSec's default whitelist skips. IPv6 is therefore published only when `TRAEFIK_BIND_V6` names an address, and `render.sh` refuses that unless `network-dual-stack.yml` adds the IPv6 subnet. The bindings are one variable per family, rendered into `config/published-ports.yml`; an empty variable publishes nothing for its family, so dual-stack, IPv4 only and IPv6 only are three settings of the same two variables, not modes. On an IPv4-only install an IPv6 connection is refused: a Tailscale client, which prefers its IPv6 address, needs IPv4 or dual-stack, and behind Cloudflare the origin needs `A` records — see "Behind Cloudflare", "IPv6 between Cloudflare and the origin". The access policies and rate limits evaluate the connecting address on every path — behind Cloudflare that is the edge address; see [Trusted Proxy Headers](../../docs/standards/traefik-security.md#trusted-proxy-headers-traefikyml--forwardedheaders).
 
 **A new installation — dual-stack from day one, as the example ships it:**
 
@@ -746,7 +746,7 @@ a measurement, not settled here (D2 in the core audit).
 - Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
   (above, Path C). DNS-01 sets a TXT record and never contacts the host, so a
-  proxied record does not hinder it: on the step 8 lab host a router with
+  proxied record does not hinder it: on the lab host a router with
   `tls.certresolver=cloudflare-dns` for a proxied name had its certificate 20 s
   after it appeared. Every name Cloudflare forwards needs a
   certificate here — the TLS options set `sniStrict`, so a name the stored
@@ -767,7 +767,7 @@ Cloudflare documents a preference for IPv4 there, not a guarantee. On an
 IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
 Dual-Stack Networking" above), and such a connection is refused. So in
 `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Measured on the step 8 lab
+overlay above), or the origin has `A` records only. Measured on the lab
 host in `none` mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
 clients over IPv4 and over IPv6 Cloudflare connected to the origin over IPv4
 (`X-Real-Ip` an edge IPv4 address, the client in `CF-Connecting-IP`). An origin
@@ -888,7 +888,7 @@ render again.
 1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
    `access-public`, the access log's `ClientHost` (last element), the bouncer's
    compared address (a manual decision answered `403`), Vaultwarden's lockout
-   address. In `none` mode measured on the step 8 lab host: `whoami` behind
+   address. In `none` mode measured on the lab host: `whoami` behind
    `access-public` through Cloudflare over IPv4 and IPv6 answered 200 with
    `X-Real-Ip` the edge and `CF-Connecting-IP` the client; the `cloudflare` mode
    is not.
@@ -914,8 +914,8 @@ render again.
 10. The migration guard on a real pre-switch host: `render.sh` with the switch
     absent over the installed `config/traefik.yml` from a v0.9.x release.
 
-The plan is `docs/host-verification-phase-2.md`'s shape, with a Phase 3
-section to follow.
+These checks follow the shape of `docs/host-verification-phase-2.md`; a plan of
+their own is still to be written.
 
 ## Incident Quickmoves
 
@@ -1038,7 +1038,7 @@ edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
 traefik-watchdog.timer`. They are optional in the manifest, so a host without
 the watchdog reports them as `not installed` and nothing else.
 
-Without it a hung Traefik stays hung. Measured on the step 8 lab host: with the
+Without it a hung Traefik stays hung. Measured on the lab host: with the
 process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
 did nothing further; every router was unanswered until the process resumed. A crash
 is different — the restart policy brought a killed process back within 8 s — and so

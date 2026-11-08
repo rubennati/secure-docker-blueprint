@@ -48,7 +48,7 @@ Ollama does not authenticate anyone. Two things follow:
 - **The route carries two gates, and neither is optional.** `APP_TRAEFIK_ACCESS`
   defaults to `access-trusted-vpn` (the declared ranges plus VPN), and a basicAuth
   middleware the stack defines from `APP_BASIC_AUTH_USERS` asks whoever the policy
-  admits for a password (DEC-077; `.env.example` has the command for the hash, API
+  admits for a password ([DEC-077](../../.ai/decisions.md#dec-077); `.env.example` has the command for the hash, API
   clients send it as `-u user:password`). Without the gate, whoever the policy
   admits can run inference on your hardware, pull arbitrary models from the
   internet onto your disk, and delete the ones you have.

@@ -142,7 +142,7 @@ business/     business applications
 monitoring/   monitoring and observability
 backup/       backup and recovery
 development/  reusable patterns for software you build yourself
-docs/         architecture and standards
+docs/         architecture, standards and records (index: docs/README.md)
 scripts/      CI checks, the overview script and the stack list tool
 site/         SecDockBlue source
 ```

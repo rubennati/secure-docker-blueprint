@@ -185,9 +185,9 @@ docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive   # internal check
 - [ ] SMTP configured and tested (send test email from admin panel)
 - [ ] 2FA enabled on all accounts
 - [ ] Push notifications configured (for mobile sync)
-- [ ] Backup strategy in place (see UPSTREAM.md)
+- [ ] Backup strategy in place (see [Backup](#backup))
 - [ ] `/admin` restricted to Tailscale only (separate Traefik router — future)
-- [ ] Docker Secrets migration (Phase 2 — future)
+- [ ] Docker Secrets migration (open — see UPSTREAM.md, "What we changed and why")
 - [ ] Backup cronjob for MariaDB + data directory
 
 ## Diagnostics

@@ -12,7 +12,7 @@
 - **Domain:** Documents and e-signature
 - **Role:** Document editing server for Nextcloud, Seafile and similar
 - **Based on version:** `10.0.0` (Document Server Community)
-- **Last verified:** 2026-11-02 (9.4.0) — step 8 lab host on its edge network: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud (`office.yml`) and Seafile CE and Pro (`onlyoffice-callback.yml`), and from a JWT-signed editor page; the command service and conversion refuse a missing or foreign token; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-06-14
+- **Last verified:** 2026-11-02 (9.4.0) — lab host on its edge network: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud (`office.yml`) and Seafile CE and Pro (`onlyoffice-callback.yml`), and from a JWT-signed editor page; the command service and conversion refuse a missing or foreign token; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-06-14
 
 ## What we use
 

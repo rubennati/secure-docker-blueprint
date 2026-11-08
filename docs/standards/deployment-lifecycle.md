@@ -73,7 +73,7 @@ not depend on ingress (the hoster's console, a second interface) exists for the 
 first is gone. No automatically filled rule reaches the management plane. What the
 internet reaches is measured from another machine with `scripts/exposure-test.sh`, and
 `validate.sh --strict` requires that measurement's marker for a public binding
-([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), DEC-078).
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), [DEC-078](../../.ai/decisions.md#dec-078)).
 
 **Not yet standardised here:** unattended upgrades, the account the stacks run under,
 and kernel or `sysctl` expectations. A deployment works without them being written
