@@ -11,7 +11,7 @@
 - **Origin:** Germany · Nextcloud GmbH · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share with calendars, contacts and collaborative editing
-- **Last verified:** 2026-11-02 (34.0.4-fpm-alpine) — lab host behind Traefik 3.7.17 on its edge network: unattended install, an app password from OCS, WebDAV PUT/GET/PROPFIND, a 100 MB upload and a 200 MB file through chunked upload v2 (checksum identical), CalDAV and CardDAV objects created and found, login flow v2 started, the brute-force counter on the client's address once the trusted proxy is the edge network (a host-local client; external IPv4 and IPv6 clients not measured) — all through curl, no official client run (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (35.0.2-fpm-alpine) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (MariaDB 12.3, Redis with cap_drop): the unattended install from the secret files, a 2 MB file through WebDAV up and down byte-identical before and after `down`/`up`, `NC_TRUSTED_PROXIES` from the edge network recording the client's own address in the brute-force table, the refused client answered `403`; the upgrade from 34 was not run (docs/labs/stack-refresh/2026-11-08-results.md)
 - **Supported until:** 2027-09-15
 
 Nextcloud publishes a major version every four months and maintains each for one

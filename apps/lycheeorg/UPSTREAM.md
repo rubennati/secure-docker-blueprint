@@ -11,7 +11,7 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (v7.12.1) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (MariaDB 12.3, Redis with cap_drop) after the correction of the v7 volume paths: the admin created through `/install/admin`, which then answered `403`, a photo uploaded through the API and downloaded byte-identical after `down`/`up`, the refused client answered `403`; the README's MariaDB entry restored into a throwaway server (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

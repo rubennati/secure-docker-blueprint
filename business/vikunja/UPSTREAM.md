@@ -1,7 +1,6 @@
 # Vikunja — Upstream
 
-**Last verified: 2026-05-06 (v2.3.0)**
-
+- **Last verified:** 2026-11-08 (2.8.0) — lab host (VM), IPv4 LAN, the PR #340 hardening (Postgres 18.6 with cap_drop): the shipped configuration built 2.3.0 although the pin named 2.6.0 (digest of 2.3.0), corrected; a project and a task created on that build survived the upgrade to 2.8.0 and a `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 ## Source
 
 - **Repository:** https://github.com/go-vikunja/vikunja

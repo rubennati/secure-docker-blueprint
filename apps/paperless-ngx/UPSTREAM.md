@@ -12,7 +12,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Documents and e-signature
 - **Role:** Document management with OCR, tagging and full-text search
-- **Last verified:** 2026-11-02 (3.1.3) — with postgres 16.14, redis 7.4-alpine, gotenberg 8.21 and tika 3.3.3.0; lab host on its edge network behind a loopback-only test router: the README's setup run again in a fresh instance, upload through the UI and the API, the consume folder and IMAP mail import; OCR of scans and images (`deu+ron` included), Tika and Gotenberg for DOCX and e-mail, full-text search, metadata, owner and object permissions, SMTP; dependency failures and the healthchecks; borgmatic backup with the README's entry and the PostgreSQL 16 client, restored into a throwaway instance (backup/borgmatic/RESTORE.md). Lab scripts and headless Chromium, no mobile app; `sso.yml` not run (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (v2.20.13)
+- **Last verified:** 2026-11-08 (3.4.2) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening at Postgres 18.6 (the server major moved from 16 since the last run) and Redis with cap_drop: a PDF uploaded through the API, consumed with OCR to PDF/A and found by full-text search, the original downloaded byte-identical after `down`/`up`, the refused client answered `403`; the upgrade of an existing Postgres 16 installation was not run (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
