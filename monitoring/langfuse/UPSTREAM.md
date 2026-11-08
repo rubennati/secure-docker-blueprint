@@ -20,9 +20,9 @@
 - `docker.langfuse.com/langfuse/langfuse:4.75.0` and `…/langfuse-worker:4.75.0`.
   Upstream's compose file uses the floating `:4`; not used here.
 - `postgres:18.6`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
-  `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — the same five components as
-  upstream's compose, pinned. Upstream's MinIO is `cgr.dev/chainguard/minio` with no
-  tag; the quay image is a versioned release of the same server.
+  `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` — the same five components as upstream's compose, pinned.
+  Upstream's object store is `cgr.dev/chainguard/minio` with no tag; Silo is a
+  maintained MinIO fork with release tags (see "Object store: Silo instead of MinIO").
 - This is upstream's smallest self-hosted shape (Docker Compose). Nothing is
   collapsed: the worker, ClickHouse, Redis and blob storage are all required by the
   v4 architecture.
@@ -109,25 +109,24 @@ Against the production `docker-compose.yml` (Docker Secrets, `entrypoint.sh`,
   from the configured environment of web, worker, ClickHouse and MinIO; the worker
   and ClickHouse have no route out
 
-## MinIO withdrew its public images (2026-09-24)
+## Object store: Silo instead of MinIO
 
-`quay.io/minio/minio` answers `401 Unauthorized`, the Docker Hub repository is
-gone, and [`minio/minio`](https://github.com/minio/minio) was archived on GitHub
-with its last push on 2026-04-24. Its final release, `RELEASE.2025-10-15`, is
-newer than the tag pinned here and is equally unavailable.
+MinIO withdrew its public container images on 2026-09-24: `quay.io/minio/minio`
+answers `401 Unauthorized`, the Docker Hub repository is gone, and
+[`minio/minio`](https://github.com/minio/minio) was archived on GitHub with its last
+push on 2026-04-24. The tag pinned here before, `RELEASE.2025-09-07T16-13-09Z`,
+could not be pulled from anywhere public, so the stack did not start.
 
-Checked on 2026-09-24: `quay.io`, Docker Hub, `ghcr.io`, and an older release
-tag — all refused. `quay.io` itself is fine; `quay.io/prometheus/prometheus`
-pulls from the same host.
+The store is now [`pgsty/silo`](https://github.com/pgsty/silo) (AGPL-3.0), a
+maintained MinIO fork with release tags on Docker Hub. Upstream's compose uses `cgr.dev/chainguard/minio`, which publishes `latest` only and cannot be pinned; `business/plane`'s upstream names Silo. It reads
+MinIO's variables (`MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD_FILE`) and serves the S3
+API on port 9000, so the service keeps the name `minio` and its clients are
+unchanged. The image has no `mc`; the healthcheck is Silo's own
+`silo healthcheck ready`. It runs as uid 1000 with `cap_drop: ALL` and no
+capability added.
 
-`cgr.dev/chainguard/minio` is public and is what upstream's own compose file
-uses. Its public repository carries `latest` and `latest-dev` and no version
-tags — the rest of its tag list is signatures and attestations — so a pin taken
-from it is a digest with no promise of staying pullable. It gets an installation
-running; it is not something this repository can pin.
-
-A versioned, S3-compatible replacement — SeaweedFS and Garage both publish one —
-is the real fix, and it changes the configuration rather than a tag.
+Not tested: a data directory written by the old MinIO image. Every run of this
+stack since the withdrawal started empty.
 
 ## Version notes
 
