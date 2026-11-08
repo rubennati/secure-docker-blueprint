@@ -81,7 +81,7 @@ docker-mailserver does not write a zone file. For `example.com` served by
 ```text
 example.com.                  MX   10 mail.example.com.
 example.com.                  TXT  "v=spf1 mx -all"
-mail._domainkey.example.com.  TXT  <the content of volumes/config/rspamd/dkim/rsa-2048-mail-example.com.public.dns.txt>
+mail._domainkey.example.com.  TXT  <the content of volumes/config/rspamd/dkim/example.com-mail.public.dns.txt>
 _dmarc.example.com.           TXT  "v=DMARC1; p=quarantine; rua=mailto:postmaster@example.com"
 ```
 
