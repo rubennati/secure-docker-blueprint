@@ -72,7 +72,7 @@ docker compose logs paperless-gpt-app --follow   # watch for: Server started on 
 ```
 
 On the first start it creates `paperless-gpt-failed` and
-`paperless-gpt-auto-complete` in Paperless-ngx (step 8 lab host); `paperless-gpt`
+`paperless-gpt-auto-complete` in Paperless-ngx (lab host); `paperless-gpt`
 and `paperless-gpt-auto` are created by whoever tags with them first. Tag
 a document with the first one and it appears in the interface for review; the
 second one processes without asking. The third marks what failed, so a document

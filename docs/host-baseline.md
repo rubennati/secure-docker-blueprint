@@ -7,7 +7,7 @@ This page is general host hardening: the Docker-specific prerequisites are in
 the ingress layers in [`docs/architecture.md`](architecture.md), "Ingress paths, profiles
 and trust boundaries".
 
-It is derived from one host — the step 8 lab host, a rented virtual machine with a public
+It is derived from one host — the lab host, a rented virtual machine with a public
 IPv4 and IPv6 address, Debian 13, Docker Engine 29, Tailscale on the host — and from what
 was measured there ([`docs/labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md),
 [`docs/host-verification-ingress.md`](host-verification-ingress.md)). A measurement on one
@@ -26,7 +26,7 @@ recorded), **not tested**, **open** (a known gap).
 | System | Debian 13, cloud kernel, updated to the current point release; one reboot for a kernel update | tested (two reboots, a third with the `nftables.service` drop-in: T8) |
 | Updates | `unattended-upgrades` for security updates, automatic reboot off — a kernel update waits for a planned reboot | configured |
 | Time, journal, swap | `systemd-timesyncd` synchronised; journald persistent, capped at 200 MB; swap with a low `swappiness` | configured |
-| Docker | Docker Engine 29 with Compose 5, `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`) | tested |
+| Docker | Docker Engine 29 with Compose 5 — the lab host's versions; the minimum is Engine 28.0 with Compose 2.33.1 ([`deployment-lifecycle.md`](standards/deployment-lifecycle.md) §1) — `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`) | tested |
 | Accounts | `<admin>`: key only, `sudo`; `<break-glass>`: password, no key, denied by sshd, for the provider console only; `root` locked | tested (console login, M1/M2) |
 | SSH | keys only (`AuthenticationMethods publickey`), root login off, `MaxAuthTries 3`, `LoginGraceTime 30`, no X11 or agent forwarding; TCP forwarding left on | tested |
 | Network | static public IPv4 and IPv6 from the provider, `accept_ra 0` on `<public-if>`; IPv4/IPv6 forwarding on (Docker); reverse-path filter loose on `<public-if>` | configured |

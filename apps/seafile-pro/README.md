@@ -71,13 +71,16 @@ docker compose ps                                          # All services up
 docker exec seafile-pro-app grep "SEASEARCH" /shared/seafile/conf/seafevents.conf  # Search configured
 docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf    # Antivirus configured
 curl -s https://your-domain/notification/ping              # {"ret": "pong"}
+docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py   # settings injected
+docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY     # key reaches the app
+docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"  # FOUND
 ```
 
 ## OnlyOffice
 
 OnlyOffice needs a server-to-server network path to Seafile's configured hostname (`APP_TRAEFIK_HOST`). This path can be public internet, Tailscale, or any direct route. If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice server, traffic routes via Tailscale automatically — no public internet exposure required.
 
-**The integrations call back past a closed policy, each by its own mechanism.** No closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — admits a request from a Docker container (DEC-076). SeaDoc calls Seafile over the internal network (`SEAHUB_SERVICE_URL` in `seadoc.yml`) and needs nothing. OnlyOffice fetches the document from `/seafhttp/files/<token>/…` and saves by calling `/onlyoffice/editor-callback/`, both at Seafile's public name, the only address Seafile hands it; the token is a fileserver access token valid for one hour, and the callback is acted on only for a document key Seafile issued — seahub verifies no JWT on it. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`; a Document Server on another host reaches a closed instance instead when its address is in `TRUSTED_RANGES` or on the VPN. Add the file to `COMPOSE_FILE` when you run OnlyOffice; the rest of the instance stays closed (`apps/seafile/README.md`, "Access policy", has the detail).
+**The integrations call back past a closed policy, each by its own mechanism.** No closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — admits a request from a Docker container ([DEC-076](../../.ai/decisions.md#dec-076)). SeaDoc calls Seafile over the internal network (`SEAHUB_SERVICE_URL` in `seadoc.yml`) and needs nothing. OnlyOffice fetches the document from `/seafhttp/files/<token>/…` and saves by calling `/onlyoffice/editor-callback/`, both at Seafile's public name, the only address Seafile hands it; the token is a fileserver access token valid for one hour, and the callback is acted on only for a document key Seafile issued — seahub verifies no JWT on it. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`; a Document Server on another host reaches a closed instance instead when its address is in `TRUSTED_RANGES` or on the VPN. Add the file to `COMPOSE_FILE` when you run OnlyOffice; the rest of the instance stays closed (`apps/seafile/README.md`, "Access policy", has the detail).
 
 **`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure setting.** `access-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls. `access-vpn` enforces a source-IP allowlist but may reject Tailscale-routed traffic if Docker bridge masquerades the source IP before Traefik sees it — see `UPSTREAM.md` and `TROUBLESHOOTING.md §4.4` for the known caveat and investigation steps.
 
@@ -94,6 +97,8 @@ Passwords are stored in `.env` (gitignored). Docker Secrets are not used because
 Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at Django startup on every restart, so changing those values in `.env` takes effect after `docker compose restart seafile-pro-app` — no re-injection needed.
 
 Adding a brand-new setting that was absent from `seahub_custom.py` at injection time requires either editing `seahub_settings.py` directly in the volume, or removing the marker line (`# --- Blueprint custom settings ---`) and everything after it, updating `config/seahub_custom.py`, then restarting.
+
+`seafevents.conf` (SeaSearch) and `seafile.conf` (ClamAV) are injected the same way, once, each behind its own marker.
 
 ## Backup
 

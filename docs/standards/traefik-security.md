@@ -29,7 +29,7 @@ service
 The numbers name the positions (D2, 2026-10-18) and stay; the **order on the router** puts
 the headers position first since 2026-11-04. A middleware sets its response headers only on
 what passes through it: behind the access position, a refusal (403), a rate-limit answer
-(429) and a gate's redirect left without HSTS (final audit of the step 8 host, FA-13). The
+(429) and a gate's redirect left without HSTS (final audit of the lab host, FA-13). The
 first middleware is the outermost; on a header two of them set, the outer one wins — so a
 block that must win over the profile still stands before it, and the profile cannot move to
 the entrypoint, where it would override `hsts-include-subdomains` (both measured
@@ -72,7 +72,7 @@ TAILSCALE_CIDR_V6=fd7a:115c:a1e0::/48
 TRUSTED_RANGES="192.168.10.0/24 2001:db8:10::/64"
 ```
 
-**No address class is trusted by default** (DEC-076). `access-trusted` admits exactly the networks `TRUSTED_RANGES` names, quoted and space-separated, IPv4 and IPv6; empty admits nobody. `validate.sh` refuses a value that is not a network in CIDR form, a range that overlaps the VPN range — the policy that admits both is `access-trusted-vpn` — and a range that overlaps a Docker network: `PUBLIC_NETWORK_SUBNET_*`, and every network of the daemon where Docker answers. A trusted range is a network of clients, never one of containers: no closed policy admits the Docker gateway or a container, so an instance cannot reach a closed route of its own or of another stack through the proxy — a route a container has to reach is `access-public`. Which VPN addresses are the host's is a property of its tunnel interface, which is why `access-vpn` needs no declaration.
+**No address class is trusted by default** ([DEC-076](../../.ai/decisions.md#dec-076)). `access-trusted` admits exactly the networks `TRUSTED_RANGES` names, quoted and space-separated, IPv4 and IPv6; empty admits nobody. `validate.sh` refuses a value that is not a network in CIDR form, a range that overlaps the VPN range — the policy that admits both is `access-trusted-vpn` — and a range that overlaps a Docker network: `PUBLIC_NETWORK_SUBNET_*`, and every network of the daemon where Docker answers. A trusted range is a network of clients, never one of containers: no closed policy admits the Docker gateway or a container, so an instance cannot reach a closed route of its own or of another stack through the proxy — a route a container has to reach is `access-public`. Which VPN addresses are the host's is a property of its tunnel interface, which is why `access-vpn` needs no declaration.
 
 **What this replaced, and how an installation moves.** Until v0.9.6 the LAN class was `access-lan` and `access-lan-vpn`: RFC 1918 and `fc00::/7`, which admitted every Docker subnet and, through `fc00::/7`, Tailscale's IPv6 range — a tailnet client over IPv6 passed a LAN-only policy, and a compromised container on any network Traefik joins passed it for another stack's host name (measured 2026-10-31, `docs/audits/ingress-architecture-2026-10-31.md`). Both names are retired: `render.sh` and `validate.sh` stop without `TRUSTED_RANGES`, `check-structure.py` and `check-prose.py` refuse the old names, and a router that still names one is disabled by Traefik. The migration is `scripts/migrate-traefik-env.sh --all`: it adds `TRUSTED_RANGES=""` to `core/traefik/.env` where the line is missing and renames the policy in every stack's `.env`; fill the ranges in, render, `docker compose up -d` per stack.
 
@@ -319,7 +319,7 @@ A gate on one path of a host — `apps/paperless-ngx`'s `/admin` — is a second
 router with `auth-authentik@file` in its auth position and `auth-none@file`
 on the main one ([`core/authentik/README.md`](../../core/authentik/README.md#integrating-other-apps-via-forward-auth)).
 
-### The posture beside the value (DEC-077)
+### The posture beside the value ([DEC-077](../../.ai/decisions.md#dec-077))
 
 `auth-none@file` means no additional authentication at the proxy, and that is
 two different things: an application with its own login, and an application

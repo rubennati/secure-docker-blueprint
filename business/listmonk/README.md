@@ -48,8 +48,7 @@ docker compose logs smtp-guard   # "smtp placeholder replaced by smtp.invalid" o
 # → the first visit creates the super admin account.
 ```
 
-**The stack ships closed** (`APP_TRAEFIK_ACCESS=access-vpn`), because of what the step 8
-lab host measured (v6.2.0; final audit FA-01, FA-02):
+**The stack ships closed** (`APP_TRAEFIK_ACCESS=access-vpn`), because of what the lab host measured (v6.2.0; final audit FA-01, FA-02):
 
 - **The first visit to `/admin` creates the super admin** — there is no setup secret. With a
   public route that is whoever arrives first. Create the account over the VPN.

@@ -12,7 +12,7 @@
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced
 - **Based on version:** v1.8.2
-- **Last verified:** 2026-11-01 (v1.7.8) — step 8 lab host: engine on `crowdsec-security` only, the Traefik access log acquired, the Traefik bouncer plugin v1.7.1 pulling, a `cscli` ban enforced and lifted per address family, the AppSec virtual-patching rule answering 403, fail-open with the engine stopped; no firewall bouncer (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-01 (v1.7.8) — lab host: engine on `crowdsec-security` only, the Traefik access log acquired, the Traefik bouncer plugin v1.7.1 pulling, a `cscli` ban enforced and lifted per address family, the AppSec virtual-patching rule answering 403, fail-open with the engine stopped; no firewall bouncer (docs/labs/ingress/2026-11-01-results.md)
 
 ## Architecture
 
@@ -45,7 +45,7 @@ the DROP rule rather than delegating it.
   `table` and `chain`. Set-only makes the bouncer maintain the blacklist sets and install
   no chain, which is what allows an interface-scoped rule to be owned elsewhere.
 - **`safe_range` is not a configuration key.** Neither is `deny_mode`; the real option is
-  `deny_action`. Both were previously documented here as working safeguards.
+  `deny_action`. Neither is a safeguard this stack can rely on.
 - **Unknown YAML keys pass `-t` validation**, which reports `config is valid`. A passing
   configuration test proves the file parses, not that an option in it has any effect.
 - **Hook and priority are not configurable** in this version, so scoping enforcement to an
@@ -147,8 +147,8 @@ docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "te
 # Remove a ban
 docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 
-# Generate bouncer API key (for either remediation component)
-docker exec crowdsec cscli bouncers add traefik-bouncer
+# Generate a bouncer API key: README.md, "Generate the bouncer key" (Traefik)
+# and docs/firewall-bouncer.md (host firewall)
 
 # Update hub (parsers, scenarios, collections)
 docker exec crowdsec cscli hub update

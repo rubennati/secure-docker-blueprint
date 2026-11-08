@@ -11,7 +11,7 @@
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
 - **Based on version:** `2.1.15`
-- **Last verified:** 2026-11-03 (2.1.15) — step 8 lab host behind Traefik 3.7.17: SMTP, SMTPS, IMAP, IMAPS, POP3 and POP3S from a container on `proxy-public`, the REST API through the route, no published port, not reachable from an edge network, a restart (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-22 (2.1.13)
+- **Last verified:** 2026-11-03 (2.1.15) — lab host behind Traefik 3.7.17: SMTP, SMTPS, IMAP, IMAPS, POP3 and POP3S from a container on `proxy-public`, the REST API through the route, no published port, not reachable from an edge network, a restart (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-22 (2.1.13)
 
 ## What we use
 
@@ -64,7 +64,7 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
 
 ## Verification performed (2026-11-03)
 
-Step 8 lab host, the production `docker-compose.yml` at 2.1.15 behind Traefik
+Lab host, the production `docker-compose.yml` at 2.1.15 behind Traefik
 3.7.17, its router admitting the lab's loopback probe only:
 
 - Healthy 8 s after the start; no published port; the container runs as
@@ -114,7 +114,7 @@ were not exercised.
 ## Version notes
 
 - Moved to `2.1.15` on 2026-10-31 (released 2026-10-25) and run at this tag on
-  2026-11-03 (step 8 lab host, below). 2.1.14 and 2.1.15 are dependency bumps — Bouncy Castle to
+  2026-11-03 (lab host, below). 2.1.14 and 2.1.15 are dependency bumps — Bouncy Castle to
   1.86.2, Jackson to 2.22.4, the Zulu JDK 21 image — with no breaking change,
   property change or advisory.
 

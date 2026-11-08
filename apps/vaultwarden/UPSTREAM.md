@@ -10,14 +10,14 @@
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
 - **Based on version:** `1.37.5`
-- **Last verified:** 2026-11-02 (1.37.4) — step 8 lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-02 (1.37.4) — lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we changed and why
 
 | Change | Reason |
 |--------|--------|
 | MariaDB instead of SQLite | More robust for concurrent access, better backup tooling |
-| Passwords in .env (not Secrets) | Phase 2 open. **Vaultwarden does support `_FILE`** — confirmed against the upstream configuration wiki on 2026-07-27; this entry previously claimed it does not, and whether that was wrong when written or went stale could not be established from the release notes. The genuine obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
+| Passwords in .env (not Secrets) | Open: moving them to Docker Secrets. **Vaultwarden does support `_FILE`** (upstream configuration wiki, checked 2026-07-27). The obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-strict` (TLS 1.3 only) | Password manager deserves strictest TLS — named by the router's `tls.options` label as a documented exception |
@@ -46,43 +46,10 @@ Owned by [`README.md`](README.md#backup) — engine, container, which volumes
 hold state, and the borgmatic block. Kept there because that is where the
 per-app backup pattern lives and what `lifecycle-report.py` reads.
 
-## First-time setup
+## Setup and verification
 
-```bash
-# 1. Copy and configure
-cp .env.example .env
-nano .env  # Set APP_TRAEFIK_HOST, SMTP settings
-
-# 2. Generate DB passwords
-# hex only — base64 chars +/= break DATABASE_URL
-sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
-sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
-
-# 3. Generate Argon2 admin token
-docker run --rm -it vaultwarden/server:1.37.5 /vaultwarden hash
-# Enter a strong password, copy the $argon2id$... output
-# In .env: replace every $ with $$ then paste as VW_ADMIN_TOKEN
-
-# 4. Start
-docker compose up -d
-
-# 5. Create your account (SIGNUPS_ALLOWED must be true for this)
-# Visit https://vault.example.com and register
-
-# 6. Disable signups
-# Set VW_SIGNUPS_ALLOWED=false in .env, then recreate — restart alone does not
-# pick up an .env change
-docker compose up -d --force-recreate vaultwarden-app
-```
-
-## Verify
-
-```bash
-docker compose ps                                    # All healthy
-curl -sI https://your-domain/alive                   # 200 OK
-curl -sI https://your-domain/admin                   # Admin panel loads
-docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive  # Internal check
-```
+Owned by [`README.md`](README.md#first-time-setup) — the setup steps, the admin
+token and the checks after startup.
 
 ## Push Notifications
 

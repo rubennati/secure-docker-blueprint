@@ -13,7 +13,7 @@
 - **Domain:** Photos
 - **Role:** Photo and video backup with mobile apps and machine-learning search
 - **Based on version:** `v3.3.6`
-- **Last verified:** 2026-11-03 (v3.2.0) — step 8 lab host behind Traefik 3.7.17 on its edge network, machine learning off: the admin, a second user kept from the admin's assets, uploads with byte-identical originals and thumbnails, and the README's restore pipeline with a plain `pg_dump`; the `postgresql_databases` entry did not restore (the host's PostgreSQL client) (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-04-17 (Last checked)
+- **Last verified:** 2026-11-03 (v3.2.0) — lab host behind Traefik 3.7.17 on its edge network, machine learning off: the admin, a second user kept from the admin's assets, uploads with byte-identical originals and thumbnails, and the README's restore pipeline with a plain `pg_dump`; the `postgresql_databases` entry did not restore (the host's PostgreSQL client) (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-04-17 (Last checked)
 
 ## What we use
 

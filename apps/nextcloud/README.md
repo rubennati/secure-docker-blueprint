@@ -292,7 +292,7 @@ calls itself through the proxy and the access policy denies it, which is the
 policy working.
 
 The shipped default `access-trusted-vpn` behaves the same way: no closed policy
-admits a Docker network (DEC-076), so these checks pass only once the route is
+admits a Docker network ([DEC-076](../../.ai/decisions.md#dec-076)), so these checks pass only once the route is
 `access-public`. Until then they are the policy working, not a defect — nothing
 of the instance's function depends on them; an office server reaches Nextcloud
 by its internal address (above, "Office servers behind a closed route", `office.yml`).
@@ -663,8 +663,8 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 
 > **Office servers behind a closed route.** OnlyOffice, Euro-Office and Collabora
 > call Nextcloud back; a closed access policy refuses a call from a container
-> (DEC-076). The call goes over a Docker network the two stacks share. On edge
-> networks (DEC-075) they share none, so `office.yml` joins Nextcloud's nginx —
+> ([DEC-076](../../.ai/decisions.md#dec-076)). The call goes over a Docker network the two stacks share. On edge
+> networks ([DEC-075](../../.ai/decisions.md#dec-075)) they share none, so `office.yml` joins Nextcloud's nginx —
 > and only nginx — to the office stack's edge network: the office server reaches
 > it by container name, and no other stack gains a path to Nextcloud. Nextcloud
 > calls the office server at its public name, as the browser does; the office
@@ -709,7 +709,7 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
 > with the consequence `core/traefik/docs/edge-networks.md` names. An office server
 > on another host reaches a closed instance only by its address in
-> `TRUSTED_RANGES`. **Measured on the step 8 lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> `TRUSTED_RANGES`. **Measured on the lab host** (`docs/labs/ingress/2026-11-01-results.md`,
 > "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
 > XLSX and PPTX opened, saved and reopened behind the closed route, without
 > `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora does not work behind the closed route:** the

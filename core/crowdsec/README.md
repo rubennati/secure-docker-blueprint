@@ -608,7 +608,7 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 The command prints the key once — save it immediately.
 
 When Traefik's container comes back with another address on `crowdsec-security` —
-after a restart of the Docker daemon, measured on the step 8 lab host — the local API
+after a restart of the Docker daemon, measured on the lab host — the local API
 lists the same key a second time as `traefik-bouncer@<address>`, and the first entry
 stops pulling. Both are the one bouncer; the stale line can be removed with
 `cscli bouncers delete`, and nothing has to change in `core/traefik`.
@@ -778,7 +778,7 @@ configuration, and neither is what you intended.
 Losing the decision list itself is survivable: bans rebuild from live traffic.
 Losing the credentials means re-enrolling every bouncer by hand.
 
-Rehearsed on the step 8 lab host (2026-11-03, v1.7.8): the container stopped, the stack
+Rehearsed on the lab host (2026-11-03, v1.7.8): the container stopped, the stack
 directory archived, the container started; restored into a throwaway instance on its own
 network with `DISABLE_ONLINE_API=true`, so the copy did not speak to the central API as the
 same machine. The decisions, all 100 alerts, the eight collections, the machine and the

@@ -88,7 +88,7 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
   `composer.json`, `README.md`, `CHANGELOG.md` and `LICENSE` answered `200` (final audit,
   FA-34). A second router, `<project>-files`, of priority 1000 matches `/vendor/` and those
   files and answers `404` through a deny list nobody is on; it keeps the four positions, so the
-  refusal carries the security headers. Measured on the step 8 lab host (1.6.1): those paths
+  refusal carries the security headers. Measured on the lab host (1.6.1): those paths
   `404` — also `/./vendor/…` and `/assets/../vendor/…`; case and encoding variants reach
   Apache's own `404` — while `/`, the booking page, the login page, `/assets/…` and the REST
   API (customer, appointment, availability) work unchanged. `config-sample.php` executes as
@@ -97,7 +97,7 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 ## Mail
 
 The stack passes no mail settings: notifications for bookings are not configured
-by this compose file, and none were sent on the step 8 lab host.
+by this compose file, and none were sent on the lab host.
 
 ## Backup
 
