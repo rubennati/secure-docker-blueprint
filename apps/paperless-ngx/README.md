@@ -62,6 +62,8 @@ openssl rand -base64 48 | tr -d '\n' > .secrets/secret_key.txt
 # 3. Prepare volume ownership (Paperless drops to USERMAP_UID/GID)
 mkdir -p volumes/{data,media,consume,export,postgres,redis}
 sudo chown -R 1000:1000 volumes/data volumes/media volumes/consume volumes/export
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 
 # 4. Start
 docker compose up -d

@@ -44,6 +44,8 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
 # 4. Create volume directories
 mkdir -p volumes/postgres volumes/redis volumes/model-cache volumes/library
+# Valkey runs as the image's own user and cannot fix ownership itself
+sudo chown 999:999 volumes/redis
 
 # 5. Start
 docker compose up -d

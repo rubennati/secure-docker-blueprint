@@ -45,6 +45,8 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 # 4. Volume ownership (Lychee entrypoint drops to PUID/PGID)
 mkdir -p volumes/{conf,uploads,sym,logs,tmp,mysql,redis}
 sudo chown -R 1000:1000 volumes/conf volumes/uploads volumes/sym volumes/logs volumes/tmp
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 
 # 5. Start
 docker compose up -d

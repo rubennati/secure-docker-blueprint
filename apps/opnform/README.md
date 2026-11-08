@@ -56,6 +56,8 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
 # 5. Create volumes directory (entrypoint initialises subdirectories on first start)
 mkdir -p volumes/storage volumes/postgres volumes/redis
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 
 # 6. Start
 docker compose up -d

@@ -50,6 +50,8 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 
 mkdir -p .secrets volumes/postgres volumes/redis volumes/elasticsearch volumes/zammad-storage
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 

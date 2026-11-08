@@ -65,6 +65,12 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The image's entrypoint drops to its own user only when it starts as root;
+    # started as that user it needs no capability. The data directory has to
+    # belong to it (README, setup).
+    user: "999:999"
     read_only: true
     tmpfs:
       - /tmp

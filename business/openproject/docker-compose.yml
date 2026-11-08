@@ -224,6 +224,17 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user.
+    # Set per image family: docs/standards/security-baseline.md.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     environment:
       # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
       # refuses to start when a volume sits on the old path without this. Same
