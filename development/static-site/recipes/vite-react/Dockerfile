@@ -5,7 +5,7 @@
 # by default, same as the Astro recipe.
 
 # --- Build ---
-FROM node:24-alpine AS builder
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS builder
 WORKDIR /src
 COPY package*.json ./
 RUN npm ci
@@ -15,7 +15,7 @@ RUN npm run build
 # --- Runtime ---
 # Identical across every recipe: a hardened, non-root nginx serving static
 # files.
-FROM nginxinc/nginx-unprivileged:1.31.7-alpine-slim
+FROM nginxinc/nginx-unprivileged:1.31.7-alpine-slim@sha256:a8cb0f33d51fa107c96fd2bd3a71aaf564ec131e9d2bdf8700944f0ed8b170d7
 COPY --from=builder /src/dist /usr/share/nginx/html
 USER 101
 EXPOSE 8080

@@ -5,7 +5,7 @@
 # no npm.
 
 # --- Build ---
-FROM node:24-alpine AS builder
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8 AS builder
 WORKDIR /src
 COPY package*.json tsconfig.json ./
 RUN npm ci
@@ -13,7 +13,7 @@ COPY src ./src
 RUN npm run build
 
 # --- Runtime ---
-FROM node:24-alpine
+FROM node:24-alpine@sha256:a34ab6d7f6f4813f4d0c5469d74685604b962fbdbf5793a7bc7b4998ecb867c8
 WORKDIR /app
 COPY --from=builder /src/dist ./dist
 # node:*-alpine ships a non-root `node` user (uid 1000) — no init system, so

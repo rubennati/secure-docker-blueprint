@@ -116,6 +116,7 @@ cache.
 - **Upstream `photoview-prepare` service dropped** — it ran `chown -R photoview:photoview` on the media-cache folder. Setup step 4 replicates this with `chown 999:999` — the `photoview` user inside the image has uid/gid 999, not 1000.
 - **SQLite and PostgreSQL drivers are not wired up here** — upstream compose supported three backends. Only MySQL/MariaDB is imported. To switch, see upstream `docker-compose.yml` for `PHOTOVIEW_SQLITE_PATH` / `PHOTOVIEW_POSTGRES_URL`.
 - **Watchtower dropped** — blueprint policy: explicit `APP_TAG` bumps.
+- **MariaDB seccomp/apparmor workaround** — upstream runs `seccomp:unconfined` and `apparmor:unconfined` for an [io_uring issue on older kernels](https://github.com/MariaDB/mariadb-docker/issues/434). Left at the defaults here; uncomment the block in `docker-compose.yml` only if MariaDB crashes during init.
 - **Hardware transcoding requires device passthrough** — uncomment the `devices:` block in `docker-compose.yml` if using `qsv`/`vaapi`/`nvenc`.
 
 ## Open findings
