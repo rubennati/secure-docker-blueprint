@@ -17,7 +17,7 @@
 
 ## What we use
 
-- `docker.langfuse.com/langfuse/langfuse:4.75.0` and `…/langfuse-worker:4.75.0`.
+- `docker.langfuse.com/langfuse/langfuse:4.76.0` and `…/langfuse-worker:4.76.0`.
   Upstream's compose file uses the floating `:4`; not used here.
 - `postgres:18.6`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
   `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` — the same five components as upstream's compose, pinned.
@@ -130,6 +130,10 @@ stack since the withdrawal started empty.
 
 ## Version notes
 
+- Moved to `4.76.0` on 2026-11-08 (released 2026-11-05), web and worker
+  together, run on the lab host. No breaking change, variable or migration is
+  labelled; the release is small fixes and refactoring, and web and worker move
+  to the current Langfuse SDK internally.
 - Moved to `4.75.0` on 2026-11-05 (released 2026-11-04), web and worker
   together, not run on a host at this tag. The releases from 4.51.0 to 4.75.0
   carry no breaking-change section; migrations still run at start. The web and
