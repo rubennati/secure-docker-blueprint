@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v0.29.7) — lab host (VM), IPv4 LAN, run in a parallel batch: a user created with the CLI and listed, `/health` passing through the route before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/juanfont/headscale/pkgs/container/headscale

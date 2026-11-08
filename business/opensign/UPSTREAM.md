@@ -11,7 +11,7 @@
 - **Origin:** India · OpenSign Inc · non-EU
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with qualified-certificate support
-- **Last checked:** 2026-05-11
+- **Last verified:** 2026-11-08 (main) — lab host (VM), IPv4 LAN, at the closed default, the `main` images built on 2026-11-02 (upstream publishes no version tags): the first admin created through the `addadmin` cloud function, `checkadminexist` then `exist`, a login with a session before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

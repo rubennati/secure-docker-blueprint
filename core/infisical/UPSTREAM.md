@@ -12,7 +12,7 @@
 - **Origin:** US · Infisical Inc · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Central secret manager, an alternative to per-stack Docker Secrets
-- **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
+- **Last verified:** 2026-11-08 (v0.167.6) — lab host (VM), IPv4 LAN, run in a parallel batch: `/api/status` OK through the route, all three services up before and after `down`/`up`, the refused client answered `403`; no project created (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

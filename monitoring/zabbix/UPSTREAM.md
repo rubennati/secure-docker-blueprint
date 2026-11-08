@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (alpine-8.0.0) — lab host (VM), IPv4 LAN, run in a parallel batch: moved to the 8.0 LTS line from 7.0: the API answered version 8.0.0, the default `Admin` logged in (the README says to change it), server, web and database up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/zabbix/zabbix-server-pgsql · https://hub.docker.com/r/zabbix/zabbix-web-nginx-pgsql

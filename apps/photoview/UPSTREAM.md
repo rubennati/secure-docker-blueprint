@@ -10,7 +10,7 @@
 - **Origin:** Denmark · community · EU
 - **Domain:** Photos
 - **Role:** Photo gallery that reads your existing folders, with RAW support and face recognition
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (2.4.0) — lab host (VM), IPv4 LAN, at the closed default: the initial setup wizard run through the GraphQL API, a second run refused (`not initial setup`), the administrator authorized before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

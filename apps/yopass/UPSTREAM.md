@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (16.1.0) — lab host (VM), IPv4 LAN, run in a parallel batch: an OpenPGP-encrypted secret stored through `/create/secret`, read once and `404` on the second read, before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/jhaals/yopass

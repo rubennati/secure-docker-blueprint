@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (0.77.3) — lab host (VM), IPv4 LAN, run in a parallel batch: after the README correction (directories owned by root): the server wrote its config, the GUI answered the admin (`401` for a wrong password) and the client frontend served its certificate, before and after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/Velocidex/velociraptor/pkgs/container/velociraptor-server

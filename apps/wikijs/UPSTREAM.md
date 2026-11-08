@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (3.2.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the site served and its job queue running before and after `down`/`up`, the refused client answered `403`; the administrator's login was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/requarks/wiki/pkgs/container/wiki

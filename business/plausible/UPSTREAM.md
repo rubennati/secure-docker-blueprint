@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v3.2.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the registration page served, all three services up before and after `down`/`up`, the refused client answered `403`; no site created (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/plausible/community-edition/pkgs/container/community-edition

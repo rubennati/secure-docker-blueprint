@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (0.30.2) — lab host (VM), IPv4 LAN, run in a parallel batch: `step ca health` answered `ok` inside the container before and after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/smallstep/step-ca

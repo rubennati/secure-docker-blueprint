@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (1.76.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the remote-control API answered `core/version` and `rc/noop` with the login from `ops/init.sh` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/rclone/rclone

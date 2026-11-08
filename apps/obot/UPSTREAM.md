@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v0.28.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the bootstrap token signed in (`302`), a wrong token refused (`401`), before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/obot-platform/obot/pkgs/container/obot

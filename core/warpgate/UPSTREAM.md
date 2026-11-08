@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (0.30.4) — lab host (VM), IPv4 LAN, run in a parallel batch: after the servers-transport correction: the admin from the secret file logged in through the API (`201`, `401` for a wrong password) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/warp-tech/warpgate

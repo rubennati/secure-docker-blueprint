@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (?) — lab host (VM), IPv4 LAN, run in a parallel batch: after the README correction (database password, key ownership): all five services healthy and the UI served before and after `down`/`up`, the refused client answered `403`; no agent enrolled (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/shellhub-io/shellhub

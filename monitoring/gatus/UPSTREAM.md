@@ -10,7 +10,7 @@
 - **Origin:** Canada · TwinProduction · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime and status page defined as YAML
-- **Last checked:** 2026-05-03
+- **Last verified:** 2026-11-08 (v5.38.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the status API answering for the configured endpoints before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
