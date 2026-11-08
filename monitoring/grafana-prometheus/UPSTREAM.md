@@ -13,7 +13,6 @@
 - **Origin:** US · Grafana Labs (Raintank, Inc.) · non-EU (Prometheus: CNCF, no single jurisdiction)
 - **Domain:** Monitoring
 - **Role:** Metrics collection and dashboards — a time series database, its scraper, and the interface that queries it
-- **Based on version:** `13.3.0` (Grafana), `v3.15.1` (Prometheus)
 
 ## Project maturity
 

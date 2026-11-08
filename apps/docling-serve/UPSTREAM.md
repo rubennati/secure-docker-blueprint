@@ -10,7 +10,6 @@
 - **Origin:** LF AI & Data Foundation (US non-profit) · originated at IBM Research Zurich, Switzerland · non-EU
 - **Domain:** AI and local AI
 - **Role:** Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines
-- **Based on version:** `v1.38.2`
 - **Last verified:** 2026-09-22 (v1.34.0) — behind Traefik with TLS: a PDF converted through the route with the key from the Docker Secret, a URL conversion, and a restart
 
 ## What we use
@@ -98,7 +97,7 @@ Against the local test stack, without Traefik:
 3. Bump `APP_TAG` in `.env.example` and `.env.local.example`
 4. `docker compose pull && docker compose up -d`
 5. Verify `/health` and a real conversion still work
-6. Update **Based on version** above — and **Last verified** only if the
+6. Update **Last verified** only if the
    upgrade was actually exercised on a real install
 
 ## Useful commands

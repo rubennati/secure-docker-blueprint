@@ -2,105 +2,91 @@
 """
 Lifecycle report generator for secure-docker-blueprint.
 
-Derives the per-stack lifecycle defined in docs/standards/status-model.md and
-writes it to LIFECYCLE.md. Every state is measured from an artefact. Nothing is
-typed into a table, and LIFECYCLE.md is never hand-edited.
+Writes the per-stack facts defined in docs/standards/status-model.md to
+LIFECYCLE.md and site/src/data/lifecycle.json, and the generated findings block
+in each stack README. A stack carries no state (DEC-080): every column is a
+fact read from one artefact, and nothing is typed into a table.
 
-The lifecycle records what the maintainer has done with each stack: a
-maintainer reads it to decide what to work on, anyone else as a hint of how
-far a stack has been taken. It carries no promise to an operator — that belongs on the site, as evidence and named gaps.
+One row per stack:
+  Pin          the primary image pin in <stack>/.env.example, and the date
+               upstream released it                      (upstream-status.json)
+  Newest       `= Pin`, or the newest release and its date; the date upstream
+               was checked; ⚠️ for an archived upstream or one without a release
+               for twelve months                         (upstream-status.json)
+  Findings     CRITICAL · HIGH across every image of the stack at the pin
+                                                         (upstream-status.json)
+  Last tested  the date in `Last verified: DATE (version)` of <stack>/UPSTREAM.md;
+               `with restore` when the stack is in the rehearsal log of
+               backup/borgmatic/RESTORE.md; the version that ran, where it
+               differs from the pin
 
-States, and what establishes each:
-  scaffolded        a compose file exists, or the stack is host-installed
-  verified          `Last verified: DATE (vX.Y.Z)` in <stack>/UPSTREAM.md,
-                    naming the version currently pinned — see pin-drifted below
-  baseline-aligned  verified, and both baseline checkers pass
-  ops-proven        baseline-aligned, and the stack appears in the rehearsal log
-                    of backup/borgmatic/RESTORE.md
+upstream-status.json is written by upstream-status.py. Where its pin is not
+the current pin, the row shows the pin and says it was not checked at it.
 
-A date without a version stays at `scaffolded`. Which version was checked is
-what makes the claim usable later; a bare date says only that someone looked.
-A version that no longer matches the current pin is the same problem in a
-different shape: the stamp still reads as evidence, but the release it names
-is not what would actually deploy. See pin-drifted.
-
-Baseline alignment is taken from the exit codes of check-baseline.py and
-check-structure.py, run once per invocation. A failure in either withholds
-`baseline-aligned` from every stack in that run rather than from the one that
-caused it — the two checkers truncate their own output, so a per-stack answer
-cannot be read back reliably. Both block CI, so a committed state never carries
-a partial answer.
-
-Other owners (see status-model.md):
-  pinned version  <stack>/.env.example  (APP_TAG, else APP_IMAGE, else first *_TAG/_IMAGE/_VERSION pin)
-  backup/restore  <stack>/README.md     (presence of the corresponding section)
-  open findings   .trivy-baseline.json  (CRITICAL findings recorded as an image
-                                         exception, counted per stack)
+The findings block sits under `## Open findings` in the stack README, between
+FINDINGS_START and FINDINGS_END: per image, the CRITICAL and HIGH findings in
+the base system, the libraries and the compiled programs. The text around it is
+written by hand — the reason a finding is left in place.
 
 Consistency rules (--check):
 
 FAIL:
-  stale-report         LIFECYCLE.md or lifecycle.json differs from the sources
-  unknown-stack        the rehearsal log or an image exception in
-                       .trivy-baseline.json names a stack that does not exist
+  stale-report         LIFECYCLE.md, lifecycle.json or a README findings block
+                       differs from the sources
+  unknown-stack        the rehearsal log, an image exception in
+                       .trivy-baseline.json or upstream-status.json names a
+                       stack that does not exist
   open-findings-unmarked
-                       a stack uses an image with a recorded exception, and its
-                       README has no `## Open findings` section saying so
-  open-findings-stale  a README carries `## Open findings`, and no exception in
-                       .trivy-baseline.json names the stack any more
+                       a stack has findings at its pin or a recorded exception,
+                       and its README has no `## Open findings` section
+  open-findings-stale  a README carries `## Open findings`, and the stack has
+                       neither findings at its pin nor a recorded exception
 
-WARN — evidence probably exists, the record is in the old shape:
-  legacy-stamp         the pre-v0.5.1 `Last checked: DATE` field instead of
-                       `Last verified: DATE (vX.Y.Z)`. Converting it asserts
-                       that evidence is real, so it is never automatic.
+WARN:
+  legacy-stamp         `Last checked: DATE`, or `Last verified` without the
+                       version in parentheses — a date that names no version.
+                       Converting it asserts that evidence is real, so it is
+                       never automatic.
+  no-test-date         neither a `Last verified` line nor a named gap
+                       (`Last verified: not yet — reason`)
+  not-checked          upstream-status.json has no row for the stack, or a row
+                       written for another pin — run upstream-status.py
   backup-docs-split    UPSTREAM.md documents the backup or restore procedure as
-                       well. Two owners for one fact — and because this report
-                       only reads the README, the stack shows up as "missing"
-                       and invites a third copy. A pointer there is fine.
-  pin-drifted          the currently pinned tag no longer matches the version
-                       named in `Last verified` (see pin_matches_verified()).
-                       A verification names a version, not a moving target —
-                       the stack drops back to `scaffolded` until it is
-                       re-verified at the current pin or the stamp is
-                       corrected. Never automatic, for the same reason a
-                       legacy stamp is never auto-converted.
+                       well. Two owners for one fact. A pointer there is fine.
 
 Usage:
   python3 scripts/ci/lifecycle-report.py            # report to stdout
-  python3 scripts/ci/lifecycle-report.py --write    # regenerate LIFECYCLE.md
+  python3 scripts/ci/lifecycle-report.py --write    # regenerate the files
   python3 scripts/ci/lifecycle-report.py --check [github-summary-path]
 
 --check exits 1 on FAIL only; the default and --write modes otherwise exit 0.
-Every mode exits 2 without writing when the baseline checkers cannot be run at
-all — see BaselineUndetermined for why that is not the same as them failing.
 """
 
-import importlib.util
+from __future__ import annotations
+
 import json
 import re
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 CATEGORIES = ["core", "apps", "business", "monitoring", "backup"]
 
-# The lifecycle, weakest first. A stack holds the highest state it establishes.
-STATES = ["scaffolded", "verified", "baseline-aligned", "ops-proven"]
-
 # Stacks that are structurally exempt, with the reason.
 EXCEPT = {"apps/_reference": "the canonical reference itself"}
 
-# Rules that report drift without blocking CI.
-WARN_RULES = {"legacy-stamp", "backup-docs-split", "pin-drifted"}
+# Rules that report without blocking CI.
+WARN_RULES = {"legacy-stamp", "no-test-date", "not-checked", "backup-docs-split"}
 
 # `Last verified: 2026-07-29 (34.0.2-fpm-alpine)` — the version in parentheses
-# is what separates this from the legacy field.
+# is what makes the date usable later.
 ANCHORED = re.compile(
     r"Last\s+verified:\s*(\d{4}-\d{2}-\d{2})\s*\(([^)]+)\)", re.I
 )
 VERIFIED = re.compile(r"Last\s+verified:\s*(\d{4}-\d{2}-\d{2})", re.I)
 CHECKED = re.compile(r"Last\s+checked:\s*(\d{4}-\d{2}-\d{2})", re.I)
+# A named gap: `Last verified: not yet — needs a GPU host`, or `— (reason)`.
+GAP = re.compile(r"Last\s+verified:\s*(?:not\s+yet|—)\s*[—:(-]?\s*([^)\n]+)", re.I)
 SECTION = re.compile(r"^#{2,4}\s+.*\b(backup|restore)\b", re.I)
 
 RESTORE_LOG = Path("backup/borgmatic/RESTORE.md")
@@ -110,7 +96,16 @@ REHEARSAL = re.compile(
     re.I,
 )
 
+UPSTREAM_STATUS = Path("upstream-status.json")
+
 MARKER = "<!-- generated by scripts/ci/lifecycle-report.py — do not edit by hand -->"
+FINDINGS_START = ("<!-- findings:start — generated by scripts/ci/lifecycle-report.py "
+                  "from upstream-status.json; edit the text around it -->")
+FINDINGS_END = "<!-- findings:end -->"
+FINDINGS_BLOCK = re.compile(
+    re.escape(FINDINGS_START.split(" — ")[0]) + r".*?" + re.escape(FINDINGS_END), re.S)
+AREA_LABELS = (("system", "Base system"), ("libraries", "Libraries"),
+               ("programs", "Programs"))
 
 
 def read(path: Path) -> str:
@@ -122,56 +117,6 @@ def read(path: Path) -> str:
 def plain(text: str) -> str:
     """Drop markdown emphasis so `**Last verified:**` matches like plain text."""
     return text.replace("*", "")
-
-
-class BaselineUndetermined(RuntimeError):
-    """A baseline checker could not run, which is not the same as failing.
-
-    Both outcomes leave this script without a passing checker, and treating them
-    alike is what makes the failure dangerous: an answer of "no stack is
-    baseline-aligned" is a legitimate finding, while "I could not ask" is an
-    absent one. Written out, the two produce a byte-identical report — every
-    stack demoted, `ops-proven` gone, and nothing on the page saying why.
-    """
-
-
-def baseline_ok() -> bool:
-    """True when both baseline checkers pass.
-
-    Run once per invocation. Their own output truncates its finding lists, so a
-    per-stack answer cannot be read back from it — the exit code is what is
-    reliable. A failure withholds `baseline-aligned` from every stack in the
-    run. Both checkers block CI, so no committed state depends on that.
-
-    Raises `BaselineUndetermined` where the exit code establishes nothing: a
-    missing dependency, a checker that could not be started, or one that died on
-    a traceback. A Python traceback also exits 1, so the exit code alone cannot
-    separate "found violations" from "crashed" — the stderr is what does.
-    """
-    if importlib.util.find_spec("yaml") is None:
-        raise BaselineUndetermined(
-            f"PyYAML is not importable by {Path(sys.executable).name} — the "
-            "checkers need it to read compose files. Install it with "
-            "`pip install --require-hashes -r scripts/ci/requirements.txt`"
-        )
-
-    here = Path(__file__).parent
-    for script in ("check-baseline.py", "check-structure.py"):
-        try:
-            done = subprocess.run(
-                [sys.executable, str(here / script)],
-                capture_output=True, text=True, timeout=180,
-            )
-        except (OSError, subprocess.SubprocessError) as exc:
-            raise BaselineUndetermined(f"{script} could not be run: {exc}") from exc
-        if done.returncode != 0 and "Traceback (most recent call last)" in done.stderr:
-            last = done.stderr.strip().splitlines()[-1]
-            raise BaselineUndetermined(
-                f"{script} exited on an exception rather than a finding: {last}"
-            )
-        if done.returncode != 0:
-            return False
-    return True
 
 
 TRIVY_BASELINE = Path(".trivy-baseline.json")
@@ -276,10 +221,10 @@ def normalize_version(value: str) -> str:
 
 # Image variants this repository documents as the same underlying release,
 # where the verification stamp names the version without the variant. Add an
-# entry here only when a stack's own UPSTREAM.md states the equivalence —
-# `-slim` is evidenced by apps/tymeslot/UPSTREAM.md: "Based on version:
-# `1.15.1` (`-slim` tag, digest-pinned)". This is not a place to guess at
-# Docker Hub conventions in general.
+# entry here only when a stack's own documentation states the equivalence —
+# `-slim` is apps/tymeslot's: it pins the `-slim` tag of the release it
+# records as tested. This is not a place to guess at Docker Hub conventions in
+# general.
 KNOWN_VARIANT_SUFFIXES = ("-slim",)
 
 
@@ -296,11 +241,9 @@ def pin_matches_verified(pin_value: str, verified_version: str) -> bool:
     image-name prefix, a digest suffix, and the one documented packaging
     variant in KNOWN_VARIANT_SUFFIXES. A pin that floats a version component
     on purpose — `traefik:v3.7`, verified against the exact `v3.7.13` that was
-    tested — is deliberately NOT tolerated: the pin can resolve to a newer
-    patch upstream with no change in this repository at all, which is exactly
-    the silent-drift risk this check exists to catch. A floating pin is
-    reported as `pin-drifted` the same as any other mismatch; there is no
-    separate exemption for it.
+    tested — is not a match: the pin can resolve to a newer patch upstream
+    with no change in this repository at all, so the row names the version
+    that ran beside the date.
     """
     pin_norm = normalize_version(pin_value)
     for suffix in KNOWN_VARIANT_SUFFIXES:
@@ -309,30 +252,6 @@ def pin_matches_verified(pin_value: str, verified_version: str) -> bool:
             break
     verified_norm = normalize_version(verified_version.split(",", 1)[0].strip())
     return pin_norm == verified_norm
-
-
-def last_verified(stack: Path) -> tuple[str, bool, str]:
-    """(date-or-dash, is_current_format, version-or-empty).
-
-    The version is what the date refers to. A pin that moved afterwards leaves
-    the two describing different things, so both are carried rather than the
-    date alone. Legacy `Last checked:` is not current format.
-    """
-    text = plain(read(stack / "UPSTREAM.md"))
-    if not text:
-        return "—", False, ""
-    m = ANCHORED.search(text)
-    if m:
-        return m.group(1), True, m.group(2).strip()
-    # A date without the version in parentheses names no anchor, so it does not
-    # establish `verified` — same treatment as the legacy field.
-    m = VERIFIED.search(text)
-    if m:
-        return f"{m.group(1)} ⚠️", False, ""
-    m = CHECKED.search(text)
-    if m:
-        return f"{m.group(1)} ⚠️", False, ""
-    return "—", False, ""
 
 
 # Stacks for which a `## Backup` section would be circular: the tool that performs
@@ -394,33 +313,145 @@ def doc_sections_raw(stack: Path) -> tuple[str, str]:
     )
 
 
-def collect() -> tuple[list[dict], list[dict]]:
-    """Return (rows, problems). Each row's state is measured, not read back."""
+def strip_stamp(text: str) -> str:
+    """The report without its generation date.
+
+    The date says when the file was written, not what it says. Comparing it
+    would make the freshness check fail for everyone whose clock is ahead of
+    the runner's — a commit made at 01:00 CEST carries tomorrow's date while
+    CI, in UTC, is still on today's. That is a two-hour window every night in
+    which a correct report is reported stale.
+    """
+    return "\n".join(
+        line for line in text.splitlines() if not line.startswith("Generated ")
+    )
+
+
+
+def upstream_status() -> dict:
+    """{stack key: row} from upstream-status.json; {} when the file is absent."""
+    if not UPSTREAM_STATUS.is_file():
+        return {}
+    return json.loads(UPSTREAM_STATUS.read_text(encoding="utf-8")).get("stacks") or {}
+
+
+def pin_tag(pinned: str) -> str | None:
+    """The tag of the primary pin, as upstream-status.py records it."""
+    value = bare_pin_value(pinned)
+    if value is None:
+        return None
+    value = value.split("@", 1)[0]
+    if ":" in value:
+        value = value.rsplit(":", 1)[1]
+    return value or None
+
+
+def last_verified(stack: Path) -> tuple[str, bool, str]:
+    """(date-or-dash, names a version, version-or-empty).
+
+    The version is what the date refers to. A pin that moved afterwards leaves
+    the two describing different things, so both are carried.
+    """
+    text = plain(read(stack / "UPSTREAM.md"))
+    if not text:
+        return "—", False, ""
+    m = ANCHORED.search(text)
+    if m:
+        return m.group(1), True, m.group(2).strip()
+    m = VERIFIED.search(text) or CHECKED.search(text)
+    if m:
+        return m.group(1), False, ""
+    return "—", False, ""
+
+
+def named_gap(stack: Path) -> str:
+    """The reason a stack has no test date, as its UPSTREAM.md states it."""
+    m = GAP.search(plain(read(stack / "UPSTREAM.md")))
+    return m.group(1).strip().rstrip(".") if m else ""
+
+
+def findings_block(key: str, up: dict | None, fresh: bool, tag: str | None) -> str:
+    """The generated part of a README's `## Open findings`."""
+    lines = [FINDINGS_START, ""]
+    f = (up or {}).get("findings") if fresh else None
+    if not fresh or f is None:
+        lines += [f"Not scanned at the pin `{tag}` yet.", "", FINDINGS_END]
+        return "\n".join(lines)
+    if up["status"] == "current":
+        where = "the newest upstream release"
+    elif up["status"] == "behind":
+        where = f"upstream has released `{up['newest']}` since"
+    else:
+        where = "whether upstream has released a newer version is not determinable"
+    lines += [
+        f"**Findings in the upstream images** at the pin `{tag}` — {where}. "
+        f"Scanned {up['checked']}; counted are findings with a published fix, "
+        "as CRITICAL · HIGH. They come with the images as upstream publishes "
+        "them.",
+        "",
+    ]
+    images = f.get("images") or {}
+    if not f["critical"] and not f["high"]:
+        lines += ["None at this pin."]
+    else:
+        lines += ["| Image | " + " | ".join(label for _, label in AREA_LABELS) + " |",
+                  "|---|" + "---|" * len(AREA_LABELS)]
+        for image in sorted(images):
+            cells = []
+            for name, _ in AREA_LABELS:
+                c, h = images[image].get(name, [0, 0])
+                cells.append(f"{c} · {h}" if c or h else "—")
+            lines.append(f"| `{shorten(image)}` | " + " | ".join(cells) + " |")
+    if f.get("unscanned"):
+        lines += ["", "Not scanned: " + ", ".join(f"`{shorten(i)}`" for i in f["unscanned"]) + "."]
+    lines += ["", FINDINGS_END]
+    return "\n".join(lines)
+
+
+def readme_with_block(text: str, block: str) -> str:
+    """The README with its findings block replaced, or a section added for it."""
+    if FINDINGS_BLOCK.search(text):
+        return FINDINGS_BLOCK.sub(lambda _: block, text, count=1)
+    m = OPEN_FINDINGS.search(text)
+    if m:
+        end = text.find("\n", m.start())
+        end = len(text) if end < 0 else end
+        rest = text[end:].lstrip("\n")
+        return text[:end] + "\n\n" + block + ("\n\n" + rest if rest else "\n")
+    section = "## Open findings\n\n" + block + "\n\n"
+    details = re.search(r"^## Details\s*$", text, re.M)
+    if details:
+        return text[:details.start()] + section + text[details.start():]
+    return text.rstrip("\n") + "\n\n" + section.rstrip("\n") + "\n"
+
+
+def collect() -> tuple[list[dict], list[dict], dict[Path, str]]:
+    """Return (rows, problems, {README path: its text with the block regenerated})."""
     rows: list[dict] = []
     problems: list[dict] = []
+    readmes: dict[Path, str] = {}
 
-    baseline = baseline_ok()
     restored, unknown = restored_stacks()
     for key in unknown:
         problems.append({
             "rule": "unknown-stack", "stack": key,
             "detail": f"named in {RESTORE_LOG} but no such directory exists",
         })
-    findings = open_findings()
-    for key in sorted(findings):
+    exceptions = open_findings()
+    for key in sorted(exceptions):
         if not Path(key).is_dir():
             problems.append({
                 "rule": "unknown-stack", "stack": key,
                 "detail": f"named in an exception in {TRIVY_BASELINE} but no such "
                           "directory exists",
             })
-
-    if not baseline:
-        problems.append({
-            "rule": "baseline-failing", "stack": "—",
-            "detail": "a baseline checker reported findings, so no stack is "
-                      "reported as baseline-aligned in this run",
-        })
+    status = upstream_status()
+    for key in sorted(status):
+        if not Path(key).is_dir():
+            problems.append({
+                "rule": "unknown-stack", "stack": key,
+                "detail": f"named in {UPSTREAM_STATUS} but no such directory exists",
+            })
 
     for category in CATEGORIES:
         cat_dir = Path(category)
@@ -446,138 +477,189 @@ def collect() -> tuple[list[dict], list[dict]]:
                               "this report reads. Leave a pointer there instead",
                 })
 
-            verified, current_format, verified_version = last_verified(stack)
             pinned = pinned_version(stack)
+            tag = pin_tag(pinned)
+            up = status.get(key)
+            fresh = bool(up and tag and up.get("pinned") == tag)
+            if tag and not fresh:
+                problems.append({
+                    "rule": "not-checked", "stack": key,
+                    "detail": (f"{UPSTREAM_STATUS} was written for `{up.get('pinned')}`"
+                               if up else f"no row in {UPSTREAM_STATUS}")
+                              + f", the pin is `{tag}` — run upstream-status.py",
+                })
 
-            state = "scaffolded"
-            if current_format:
-                pin_value = bare_pin_value(pinned)
-                drifted = pin_value is not None and not pin_matches_verified(
-                    pin_value, verified_version
-                )
-                if drifted:
-                    problems.append({
-                        "rule": "pin-drifted", "stack": key,
-                        "detail": f"pinned to {pinned}, but last verified against "
-                                  f"`{verified_version}` — stays at `scaffolded` "
-                                  f"until re-verified at the current pin",
-                    })
-                else:
-                    state = "verified"
-                    if baseline:
-                        state = "baseline-aligned"
-                        if key in restored:
-                            state = "ops-proven"
-
-            if verified != "—" and not current_format:
+            tested, anchored, tested_version = last_verified(stack)
+            gap = named_gap(stack) if tested == "—" else ""
+            if tested != "—" and not anchored:
                 problems.append({
                     "rule": "legacy-stamp", "stack": key,
-                    "detail": f"carries the pre-v0.5.1 `Last checked: "
-                              f"{verified.split()[0]}` — stays at `scaffolded` "
-                              f"until converted to `Last verified: DATE (vX.Y.Z)` "
-                              f"against confirmed evidence",
+                    "detail": f"`{tested}` names no version — convert it to "
+                              "`Last verified: DATE (version)` against confirmed "
+                              "evidence",
                 })
-
-            if key in restored and state != "ops-proven":
+            if tested == "—" and not gap:
                 problems.append({
-                    "rule": "legacy-stamp", "stack": key,
-                    "detail": f"a passing restore is logged in {RESTORE_LOG}, but "
-                              f"the stack is only `{state}` — it needs a version-"
-                              f"anchored verification date to reach ops-proven",
+                    "rule": "no-test-date", "stack": key,
+                    "detail": "UPSTREAM.md has no `Last verified` line and names no "
+                              "gap (`Last verified: not yet — reason`)",
                 })
+            differs = bool(anchored and tag and not pin_matches_verified(
+                bare_pin_value(pinned) or "", tested_version))
 
-            open_count = findings.get(key, 0)
-            marked = bool(OPEN_FINDINGS.search(read(stack / "README.md")))
-            if open_count and not marked:
-                problems.append({
-                    "rule": "open-findings-unmarked", "stack": key,
-                    "detail": f"ships {open_count} CRITICAL finding(s) under an image "
-                              f"exception in {TRIVY_BASELINE}, and its README has no "
-                              "`## Open findings` section saying so",
-                })
-            if marked and not open_count:
+            f = up.get("findings") if (fresh and up) else None
+            critical = f["critical"] if f else None
+            high = f["high"] if f else None
+            readme_path = stack / "README.md"
+            readme = read(readme_path)
+            marked = bool(OPEN_FINDINGS.search(readme))
+            has_findings = bool(critical or high)
+            if (has_findings or exceptions.get(key)) and readme:
+                block = findings_block(key, up, fresh, tag)
+                updated = readme_with_block(readme, block)
+                if updated != readme:
+                    readmes[readme_path] = updated
+                marked = True
+            elif marked and not exceptions.get(key) and f is not None:
                 problems.append({
                     "rule": "open-findings-stale", "stack": key,
-                    "detail": "README carries `## Open findings`, and no exception in "
-                              f"{TRIVY_BASELINE} names the stack — remove the section",
+                    "detail": "README carries `## Open findings`, and the stack has "
+                              "no findings at its pin and no exception in "
+                              f"{TRIVY_BASELINE} — remove the section",
                 })
+            elif marked and FINDINGS_BLOCK.search(readme):
+                block = findings_block(key, up, fresh, tag)
+                updated = readme_with_block(readme, block)
+                if updated != readme:
+                    readmes[readme_path] = updated
 
+            quiet = bool(fresh and up.get("quiet"))
             backup_docs, restore_docs = doc_sections(stack)
             rows.append({
-                "open_findings": open_count,
-                "stack": key, "category": category, "state": state,
-                "pinned": pinned, "verified": verified,
-                "verified_version": verified_version,
+                "stack": key, "category": category,
+                "pinned": pinned, "tag": tag,
+                "pinned_date": up.get("pinned_date") if fresh else None,
+                "upstream": (up.get("status") if fresh else "not checked"),
+                "newest": up.get("newest") if fresh else None,
+                "newest_date": up.get("newest_date") if fresh else None,
+                "checked": up.get("checked") if fresh else None,
+                "archived": bool(fresh and up.get("archived")),
+                "quiet": quiet,
+                "last_release": up.get("last_release") if fresh else None,
+                "critical": critical, "high": high, "marked": marked,
+                "tested": tested, "tested_anchored": anchored,
+                "tested_version": tested_version, "tested_differs": differs,
+                "restored": key in restored, "gap": gap,
                 "backup": backup_docs, "restore": restore_docs,
-                "local": "✅" if (stack / "docker-compose.local.yml").exists() else "—",
+                "local": (stack / "docker-compose.local.yml").exists(),
             })
 
-    return rows, problems
+    return rows, problems, readmes
 
 
 def render_json(rows: list[dict]) -> str:
-    """The same facts as LIFECYCLE.md, for anything that renders them.
-
-    The site does not show the lifecycle: a development state is a maintainer's
-    answer, and a visitor's question is what has been established about this
-    stack and what has not. The site reads the evidence fields — the verified
-    date and version, and the backup and restore documentation — and states the
-    gaps in its own words.
-    """
+    """The same facts as LIFECYCLE.md, for the site."""
     payload = {
         r["stack"]: {
-            "state": r["state"],
-            # LIFECYCLE.md renders this as markdown; data carries the value.
             "pinned": r["pinned"].strip("`*"),
-            # The ⚠️ marks a date with no version anchor; the site wants the
-            # date alone and the fact separately.
-            "verified": r["verified"].replace(" ⚠️", ""),
-            "verified_anchored": "⚠️" not in r["verified"] and r["verified"] != "—",
-            # What the date refers to. Where the pin has moved on since, the
-            # site must not present the current pin as the verified one.
-            "verified_version": r["verified_version"],
+            "pinned_date": r["pinned_date"],
+            # current · behind · undetermined · not checked
+            "upstream": r["upstream"],
+            "newest": r["newest"],
+            "newest_date": r["newest_date"],
+            "checked": r["checked"],
+            "archived": r["archived"],
+            "quiet": r["quiet"],
+            "last_release": r["last_release"],
+            # None: not scanned at the current pin; never read as zero.
+            "critical": r["critical"],
+            "high": r["high"],
+            "findings_section": r["marked"],
+            "tested": r["tested"] if r["tested"] != "—" else None,
+            "tested_anchored": r["tested_anchored"],
+            # The version that ran. Where it differs from the pin, the site
+            # names both rather than presenting the pin as the one that ran.
+            "tested_version": r["tested_version"],
+            "tested_differs": r["tested_differs"],
+            "restored": r["restored"],
+            "gap": r["gap"],
             "backup_docs": r["backup"],
             "restore_docs": r["restore"],
             "local_stack": r["local"],
-            # CRITICAL findings that ship with the pinned images, recorded as an
-            # exception with reason and risk; the README's section names them.
-            "open_findings": r["open_findings"],
         }
         for r in rows
     }
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 
-def strip_stamp(text: str) -> str:
-    """The report without its generation date.
-
-    The date says when the file was written, not what it says. Comparing it
-    would make the freshness check fail for everyone whose clock is ahead of
-    the runner's — a commit made at 01:00 CEST carries tomorrow's date while
-    CI, in UTC, is still on today's. That is a two-hour window every night in
-    which a correct report is reported stale.
-    """
-    return "\n".join(
-        line for line in text.splitlines() if not line.startswith("Generated ")
-    )
+def cell(value: str) -> str:
+    return value.replace("|", "&#124;")
 
 
-def marker(row: dict) -> str:
-    n = row["open_findings"]
-    if not n:
+def pin_cell(r: dict) -> str:
+    if r["tag"] is None:
+        return r["pinned"]
+    out = f"`{cell(shorten(r['tag']))}`"
+    return out + (f" · {r['pinned_date']}" if r["pinned_date"] else "")
+
+
+def newest_cell(r: dict, usual: str | None = None) -> str:
+    if r["tag"] is None:
         return "—"
-    return f"[⚠️ {n} CRITICAL]({row['stack']}/README.md#open-findings)"
+    if r["upstream"] == "not checked":
+        return "not checked at this pin"
+    if r["upstream"] == "current":
+        out = "= Pin"
+    elif r["upstream"] == "behind":
+        out = f"`{cell(r['newest'])}`" + (f" · {r['newest_date']}" if r["newest_date"] else "")
+    else:
+        out = "not determinable"
+    if r["archived"]:
+        out += " · ⚠️ archived"
+    elif r["quiet"]:
+        out += f" · ⚠️ no release since {r['last_release'] or 'over a year'}"
+    # The date of the check is stated once above the table; a row checked on
+    # another date (a single-stack run) says so itself.
+    if r["checked"] and r["checked"] != usual:
+        out += f" · checked {r['checked']}"
+    return out
+
+
+def findings_cell(r: dict) -> str:
+    if r["critical"] is None:
+        return "—"
+    text = f"{r['critical']} · {r['high']}"
+    if r["marked"] and (r["critical"] or r["high"]):
+        return f"[{text}]({r['stack']}/README.md#open-findings)"
+    return text
+
+
+def tested_cell(r: dict) -> str:
+    if r["tested"] == "—":
+        return f"— · [gap named]({r['stack']}/UPSTREAM.md)" if r["gap"] else "—"
+    out = f"[{r['tested']}]({r['stack']}/UPSTREAM.md)"
+    if not r["tested_anchored"]:
+        return out + " · no version recorded"
+    if r["restored"]:
+        out += " · with restore"
+    if r["tested_differs"]:
+        out += f" · ran `{cell(shorten(r['tested_version']))}`"
+    return out
 
 
 def render(rows: list[dict]) -> str:
     # UTC, so the file a contributor generates matches the one CI generates.
     today = datetime.now(timezone.utc).date().isoformat()
-    counts: dict[str, int] = {}
-    for r in rows:
-        counts[r["state"]] = counts.get(r["state"], 0) + 1
-    summary = " · ".join(
-        f"{counts.get(k, 0)} {k}" for k in reversed(STATES) if counts.get(k)
-    )
+    n = len(rows)
+    current = sum(1 for r in rows if r["upstream"] == "current")
+    behind = sum(1 for r in rows if r["upstream"] == "behind")
+    tested = sum(1 for r in rows if r["tested_anchored"])
+    restored = sum(1 for r in rows if r["tested_anchored"] and r["restored"])
+    warned = sum(1 for r in rows if r["archived"] or r["quiet"])
+    dates = [r["checked"] for r in rows if r["checked"]]
+    # The most frequent date, the latest among equals.
+    usual = max(sorted(set(dates)), key=dates.count) if dates else None
+    when = (usual + ("" if len(set(dates)) == 1 else "; rows checked on another date say so")) if usual else "—"
 
     out = [
         "# Lifecycle Overview",
@@ -588,51 +670,38 @@ def render(rows: list[dict]) -> str:
         + "[`docs/standards/status-model.md`](docs/standards/status-model.md). "
         + "**Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.",
         "",
-        f"{len(rows)} stacks: {summary}. "
-        + f"{sum(1 for r in rows if r['local'] == '✅')} carry a local test stack. "
-        + f"{sum(1 for r in rows if r['open_findings'])} ship with open CRITICAL "
-        + "findings.",
+        f"{n} stacks. {current} pin the newest upstream release, {behind} pin an "
+        + f"older one. {tested} have a test date on a host, {restored} of them with "
+        + f"a restore. {warned} have an upstream that is archived or has not "
+        + f"released for twelve months. Upstream checked {when}.",
         "",
-        "Each state says what the maintainer has done with a stack: "
-        + "`scaffolded` is built to the standards and not yet run at its current "
-        + "pin, `verified` ran at the pinned version, `baseline-aligned` also "
-        + "holds the security baseline, `ops-proven` also had its data restored. "
-        + "A lower state is not a defect, and no state says whether a stack suits "
-        + "a given deployment.",
-        "",
-        "Whether upstream has published a newer version, when each image was "
-        + "published, and what the pinned images carry today: the weekly "
+        "Every column is a fact, not a grade. Between two checks, the weekly "
         + "[stack status](https://github.com/rubennati/secure-docker-blueprint/"
-        + "issues?q=is%3Aissue+is%3Aopen+label%3Astack-status), written by "
-        + "`scripts/ci/upstream-status.py`.",
+        + "issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream "
+        + "has published since.",
         "",
         "## What the columns mean",
         "",
-        "- **State** — `scaffolded` · `verified` · `baseline-aligned` · "
-        + "`ops-proven`, each measured from an artefact. See "
-        + "[`status-model.md`](docs/standards/status-model.md).",
-        "- **Pinned** — the current image pin in `.env.example`; it may differ "
-        + "from the version last tested.",
-        "- **Verified version** — the version recorded in the stack's "
-        + "`UPSTREAM.md`, linked to its verification record. `—` means no version "
-        + "was recorded; the current pin is never substituted.",
-        "- **Last verified** — the date from that same record. A ⚠️ marks a date "
-        + "with no version in parentheses, which names no anchor and leaves the "
-        + "stack at `scaffolded`.",
-        "- **Local** — whether the stack carries "
-        + "`docker-compose.local.yml`, which runs it on one machine without a "
-        + "proxy, DNS or certificate. A `—` marks a stack that shows nothing run "
-        + "alone. See [`compose-structure.md`](docs/standards/compose-structure.md#local-test-stack).",
-        "- **Backup / Restore docs** — whether the stack README has such a "
-        + "section. Says nothing about whether either was performed; that is what "
-        + "`ops-proven` records. `n/a` marks a stack where the section would be "
-        + "circular — the backup tool cannot describe backing itself up with "
-        + "itself.",
-        "- **Open findings** — CRITICAL vulnerabilities with a published fix that "
-        + "the pinned images still carry, because no upstream release removes them "
-        + "yet. Each is recorded as an exception with its reason and risk in "
-        + "`.trivy-baseline.json`; the stack README's *Open findings* section "
-        + "says what that means for an installation. `—` means none.",
+        "- **Pin** — the primary image pin in `.env.example`, and the date upstream "
+        + "released that version. Where no upstream release matches, the date is "
+        + "the image's build date.",
+        "- **Newest** — `= Pin` when the pin is the newest release of the same kind "
+        + "of tag; otherwise the newest release and its date. ⚠️ marks an upstream "
+        + "repository that is archived or has published no stable release for "
+        + "twelve months. A row read from upstream on another date than the one above names it.",
+        "- **CRITICAL · HIGH** — findings with a published fix, across every image "
+        + "of the stack at the pin, each CVE counted once. The link leads to the "
+        + "stack README, which splits them per image into the base system, the "
+        + "libraries and the compiled programs. They come with the upstream images.",
+        "- **Last tested** — the date the stack last ran on a host, linked to the "
+        + "record of what that run established. *with restore*: a backup of its "
+        + "data was restored. *ran …*: the version that ran, where the pin has "
+        + "moved since. `—` with *gap named*: the stack's `UPSTREAM.md` says why "
+        + "it has no test date.",
+        "",
+        "The security baseline is not a column: the checkers enforce it for every "
+        + "stack. Backup and restore documentation and the local test stack are in "
+        + "each stack folder.",
         "",
     ]
 
@@ -643,32 +712,26 @@ def render(rows: list[dict]) -> str:
         out += [
             f"## `{category}/`",
             "",
-            "| Stack | State | Pinned | Verified version | Last verified | Local | Backup docs | Restore docs | Open findings |",
-            "|---|---|---|---|---|---|---|---|---|",
+            "| Stack | Pin | Newest | CRITICAL · HIGH | Last tested |",
+            "|---|---|---|---|---|",
         ]
         for r in group:
-            version = r["verified_version"]
-            verified_version = (
-                f"[`{shorten(version).replace('|', '&#124;')}`]"
-                f"({r['stack']}/UPSTREAM.md)" if version else "—"
-            )
             out.append(
-                f"| [`{r['stack']}`]({r['stack']}/) | `{r['state']}` "
-                f"| {r['pinned']} | {verified_version} | {r['verified']} | {r['local']} "
-                f"| {r['backup']} | {r['restore']} | {marker(r)} |"
+                f"| [`{r['stack']}`]({r['stack']}/) | {pin_cell(r)} | {newest_cell(r, usual)} "
+                f"| {findings_cell(r)} | {tested_cell(r)} |"
             )
         out.append("")
 
     out += [
         "## Source of truth",
         "",
-        "- Stack implementation: the stack's `docker-compose.yml` + `.env.example`.",
-        "- Lifecycle procedure: the stack's `README.md` and `UPSTREAM.md`.",
+        "- Pin: the stack's `.env.example`.",
+        "- Upstream releases and findings: [`upstream-status.json`](upstream-status.json), "
+        + "written by `scripts/ci/upstream-status.py`.",
+        "- Test date and what the run established: the stack's `UPSTREAM.md`.",
         "- Restore evidence: [`backup/borgmatic/RESTORE.md`]"
         + "(backup/borgmatic/RESTORE.md#rehearsal-log).",
-        "- Security baseline definition: [`docs/standards/security-baseline.md`]"
-        + "(docs/standards/security-baseline.md).",
-        "- State definitions and ownership: [`docs/standards/status-model.md`]"
+        "- The facts and their owners: [`docs/standards/status-model.md`]"
         + "(docs/standards/status-model.md).",
         "",
     ]
@@ -689,14 +752,7 @@ def main() -> int:
         print("error: run from the repository root", file=sys.stderr)
         return 2
 
-    try:
-        rows, problems = collect()
-    except BaselineUndetermined as exc:
-        print(f"  ❌ cannot establish any stack's state: {exc}", file=sys.stderr)
-        print("     Nothing written — a report produced without the baseline "
-              "checkers would demote every stack and look exactly like a clean "
-              "run that found nothing.", file=sys.stderr)
-        return 2
+    rows, problems, readmes = collect()
 
     generated = render(rows)
     target = Path("LIFECYCLE.md")
@@ -708,8 +764,11 @@ def main() -> int:
         target.write_text(generated, encoding="utf-8")
         json_target.parent.mkdir(parents=True, exist_ok=True)
         json_target.write_text(generated_json, encoding="utf-8")
+        for path, text in readmes.items():
+            path.write_text(text, encoding="utf-8")
         print(f"  ✅ LIFECYCLE.md written — {len(rows)} stacks")
         print(f"  ✅ {json_target} written")
+        print(f"  ✅ {len(readmes)} README findings block(s) written")
         if problems:
             print(f"  🟡 {len(problems)} consistency problem(s) — run --check for detail")
         return 0
@@ -719,25 +778,28 @@ def main() -> int:
     print("  Lifecycle report")
     print()
 
-    stale = strip_stamp(read(target)) != strip_stamp(generated)
-    if stale:
+    if strip_stamp(read(target)) != strip_stamp(generated):
         problems.append({
             "rule": "stale-report", "stack": "LIFECYCLE.md",
             "detail": "out of date with its sources — run --write",
         })
-
     if read(json_target) != generated_json:
         problems.append({
             "rule": "stale-report", "stack": str(json_target),
-            "detail": "the operator site would render a status the sources no "
+            "detail": "the operator site would render facts the sources no "
                       "longer support — run --write",
+        })
+    for path in sorted(readmes):
+        problems.append({
+            "rule": "stale-report", "stack": str(path),
+            "detail": "the findings block differs from upstream-status.json — run --write",
         })
 
     by_rule: dict[str, list[dict]] = {}
     for p in problems:
         by_rule.setdefault(p["rule"], []).append(p)
 
-    fails = sum(1 for p in problems if WARN_RULES.isdisjoint({p["rule"]}))
+    fails = sum(1 for p in problems if p["rule"] not in WARN_RULES)
     warns = len(problems) - fails
 
     for rule, items in sorted(by_rule.items(), key=lambda kv: -len(kv[1])):
@@ -749,12 +811,9 @@ def main() -> int:
             print(f"       … and {len(items) - 8} more")
         print()
 
-    counts: dict[str, int] = {}
-    for r in rows:
-        counts[r["state"]] = counts.get(r["state"], 0) + 1
-    tally = "  ·  ".join(
-        f"{counts[k]} {k}" for k in reversed(STATES) if counts.get(k)
-    )
+    tested = sum(1 for r in rows if r["tested_anchored"])
+    current = sum(1 for r in rows if r["upstream"] == "current")
+    tally = f"{tested} with a test date  ·  {current} at the newest release"
     status = "❌" if fails else "✅"
     print(f"  {status} {len(rows)} stacks  ·  {tally}  ·  "
           f"{fails} failure(s)  ·  {warns} warning(s)")

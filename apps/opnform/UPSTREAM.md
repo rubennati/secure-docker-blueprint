@@ -10,7 +10,6 @@
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions
-- **Based on version:** `2.8.4`
 - **Last checked:** 2026-04-17
 
 ## What we use

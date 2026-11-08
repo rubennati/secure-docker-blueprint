@@ -37,16 +37,16 @@ Paperless-ngx 23, OpenProject 22, Seafile 20.
 - [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
       if so bump the pin (normal upgrade), if not record the facts.
 
-### 2. Host verification of the scaffolded stacks (audit S1)
+### 2. A test date or a named gap for every stack (audit S1, DEC-080)
 
 [`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md) is the ordered
 run: Traefik with TLS, a refused client, restart, restore, and each stack's own open
-items. Needs a host; nothing in the 26 new stacks has one. Until then they stay
-`scaffolded`.
+items. Needs a host. A stack that cannot run on the lab host records why in its
+`UPSTREAM.md` (`Last verified: not yet — reason`); `lifecycle-report.py --check`
+lists the stacks with neither (`no-test-date`).
 
-- [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` were verified on a
-      host at the previous pin and moved on 2026-10-04 (`v1.101.4`, `v4.0.9`, `4.50.0`).
-      They are `scaffolded` until the run is repeated at the new pin.
+- [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` ran on a host at
+      an earlier pin; `LIFECYCLE.md` names the version that ran.
 
 ### 3. Personal data on the public site (audit W7 / D3)
 

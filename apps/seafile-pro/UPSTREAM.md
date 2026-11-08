@@ -12,7 +12,6 @@
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, professional edition
 - **Note:** Commercial license — self-hosting permitted under the paid plan. Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor itself is subject to Chinese law.
-- **Based on version:** Seafile Pro `13.0.29`
 - **Last verified:** 2026-11-02 (13.0.21) — lab host behind Traefik 3.7.17 on its edge network, the seven compose files of the example (SeaSearch 1.0.3, ClamAV `1.4` — 1.4.6 ran, the tag floats —, sdoc-server 2.0.9, notification-server 13.0.10, md-server and thumbnail-server 13.0.20), installed by the README: API login, libraries, a 10 MB and a 300 MB upload and download with identical checksums, the desktop client's sync protocol, the notification WebSocket delivering `repo-update`, SeaDoc's document fetch over the internal network, browser-session thumbnails, a share link, full-text search finding an indexed file, and the virus scan reporting the EICAR test file — through lab scripts, no official client run, OnlyOffice and SMTP not run; the restore rehearsal in backup/borgmatic/RESTORE.md (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-04-13
 
 ## What we use from upstream

@@ -10,7 +10,6 @@
 - **Origin:** France · Olivier Lambert · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages and availability read from a CalDAV calendar you already run
-- **Based on version:** `1.22.0`
 - **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the bootstrap, the login, a guest booking, a restart, and the README's restore
 
 ## Project maturity
@@ -112,5 +111,5 @@ login; the public booking page as a guest sees it; backup and restore.
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`; migrations run at start
 6. Log in, then open a booking page
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

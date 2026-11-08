@@ -12,7 +12,6 @@
 - **Origin:** United States · Smallstep Labs, Inc. · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Internal certificate authority for machines and services: X.509, ACME and optional SSH certificates
-- **Based on version:** `0.30.2`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted, init
   sequence, ACME directory and healthcheck exercised against a live
   container; the production compose's healthcheck against a real

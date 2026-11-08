@@ -10,7 +10,6 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Developer tools
 - **Role:** HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads
-- **Based on version:** `0.10.4`
 - **Last verified:** 2026-11-02 (0.10.4) — lab host behind Traefik 3.7.17: healthy; the root's Swagger index from `spec.json` (52 paths), `/get`, `/status/418` and `/redirect-to` through the route, a client's `X-Real-Ip` not passed on; moved from the shared network to its edge network and back (docs/labs/ingress/2026-11-01-results.md)
 
 The fork's README gives its reason: the original's maintainers could not be
@@ -79,5 +78,5 @@ without Traefik:
 2. Bump `APP_TAG` in `.env.example`
 3. `docker compose pull && docker compose up -d`
 4. `GET /get` answers 200
-5. Update **Based on version** above — and add **Last verified** only if the
+5. Add **Last verified** only if the
    upgrade was exercised on a real install

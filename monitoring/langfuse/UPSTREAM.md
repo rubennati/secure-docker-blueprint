@@ -13,7 +13,6 @@
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
-- **Based on version:** `4.75.0`
 - **Last verified:** 2026-09-22 (4.38.0) — behind Traefik with TLS: the UI, the Python SDK sending traces, scores and a prompt, a restart, and a restore
 
 ## What we use
@@ -224,7 +223,7 @@ is the real fix, and it changes the configuration rather than a tag.
 4. Bump `APP_TAG` in `.env.example` (web and worker move together)
 5. `docker compose pull && docker compose up -d`; migrations run at start
 6. Log in, then send a test trace
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install
 
 A move from v3 to v4 is a separate procedure: upstream's guide covers the

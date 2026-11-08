@@ -13,7 +13,6 @@
 - **Origin:** United States · HeyForm · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder and response collector, with conversational forms, logic, file uploads and submission export
-- **Based on version:** `v3.0.6`
 
 ## Project maturity
 

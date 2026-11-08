@@ -12,7 +12,6 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Invoicing, accounting and inventory for small businesses, extended through plugins
-- **Based on version:** `2026.7`
 - **Last verified:** 2026-09-22 (2026.5) — behind Traefik with TLS: the unattended install, the login and wizard, a customer, the in-app updater across a restart, and the README's restore
 
 The origin comes from the terms on facturascripts.com, which name the site's owner
@@ -140,5 +139,5 @@ Apache and the operating system.
    `docker compose pull && docker compose up -d`. This does not change the
    installed FacturaScripts version
 4. Log in and open the dashboard
-5. Update **Based on version** above — and add **Last verified** only if the
+5. Add **Last verified** only if the
    upgrade was exercised on a real install

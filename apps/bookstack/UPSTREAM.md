@@ -11,7 +11,6 @@
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Wiki with structure: shelves, books, chapters and pages
-- **Based on version:** `version-v26.09.2` (= BookStack 26.09.2), digest-pinned
 - **Last verified:** 2026-05-03 (v25.02)
 
 ## What we use

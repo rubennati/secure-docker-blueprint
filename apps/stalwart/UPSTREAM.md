@@ -13,7 +13,6 @@
 - **Origin:** United States and United Kingdom · Stalwart Labs LLC · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail and collaboration server — SMTP, IMAP, JMAP, calendars, contacts and files in one binary
-- **Based on version:** `v1.0.3`
 
 Part of the development was funded through NLnet's NGI0 funds.
 

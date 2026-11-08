@@ -11,7 +11,6 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Based on version:** `v7.12.1`
 - **Last checked:** 2026-04-17
 
 ## What we use

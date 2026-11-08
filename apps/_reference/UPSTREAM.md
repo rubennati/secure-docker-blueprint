@@ -14,7 +14,6 @@
 - **Origin:** `__REPLACE_ME__` (e.g. Germany · Nextcloud GmbH · EU — or: US · Acme Inc · non-EU)
 - **Domain:** `__REPLACE_ME__` (one of the groups in `scripts/ci/site-catalogue.py`, e.g. Files, wiki and collaboration)
 - **Role:** `__REPLACE_ME__` (one line, what it is for — shown on the site's catalogue)
-- **Based on version:** `__REPLACE_ME__`
 - **Last verified:** `__REPLACE_ME__` (v`__REPLACE_ME__`)
 
 > `Last verified: YYYY-MM-DD (vX.Y.Z)` is the current format and the one CI reads.
@@ -49,7 +48,7 @@ Internet → Traefik (TLS, port 443) → App :PORT
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`
 6. Verify core function works
-7. Update **Based on version** above — and **Last verified** only if the upgrade was
+7. Update **Last verified** only if the upgrade was
    actually exercised on a real install
 
 ## Useful commands

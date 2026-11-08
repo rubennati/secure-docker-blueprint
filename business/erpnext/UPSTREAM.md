@@ -13,7 +13,6 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
-- **Based on version:** `v16.53.0`
 - **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
@@ -204,5 +203,5 @@ documents, stock and reports; email; PDF printing; an image upgrade with
 5. Apply the new release's migrations, upstream's step (not exercised here):
    `docker compose exec erpnext-backend bench --site "$SITE_NAME" migrate`
 6. Log in and open the desk
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

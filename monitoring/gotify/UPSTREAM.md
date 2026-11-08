@@ -11,7 +11,6 @@
 - **Origin:** Germany · Gotify community project · EU
 - **Domain:** Monitoring
 - **Role:** Self-hosted push notifications — applications post with a token, clients hold a stream open
-- **Based on version:** `3.1.1`
 
 ## Origin, stated precisely
 

@@ -13,7 +13,6 @@
 - **Origin:** US · Plane Software, Inc. · non-EU
 - **Domain:** Business operations
 - **Role:** Project management — issues, cycles, modules and pages, with a collaborative editor and public project pages
-- **Based on version:** `v1.4.3`
 
 ## Project maturity
 

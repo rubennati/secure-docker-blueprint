@@ -10,7 +10,6 @@
 - **Origin:** Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU
 - **Domain:** Security operations
 - **Role:** Endpoint forensics and threat hunting across a fleet, driven by queries
-- **Based on version:** `0.77.3`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
   hardening and secret injection exercised against a live container; no
   endpoint agent has been enrolled

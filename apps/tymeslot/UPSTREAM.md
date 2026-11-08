@@ -10,7 +10,7 @@
 - **Origin:** Estonia · Diletta Luna OÜ (Tallinn) · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Meeting scheduling with booking pages, calendar sync and video links
-- **Based on version:** `1.39.0` (`-slim` tag, digest-pinned)
+- **Pinning:** the `-slim` tag, digest-pinned
 - **Last verified:** 2026-09-07 (v1.15.1)
 
 What that date covers: a clean install, migrations, the healthcheck, Traefik
@@ -117,7 +117,7 @@ deliberately, not on every tag.
    → `APP_TAG` in `.env.example` and `.env`
 5. `docker compose pull && docker compose up -d`
 6. `docker compose logs tymeslot-app | grep -E 'migrations completed|Running TymeslotWeb'`
-7. Update **Based on version** — and **Last verified** only after a real booking
+7. Update **Last verified** only after a real booking
    went through
 
 ## Diff against upstream

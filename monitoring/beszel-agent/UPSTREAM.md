@@ -10,7 +10,6 @@
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Agent that reports a remote host's metrics to Beszel
-- **Based on version:** `0.21.1`
 - **Last checked:** 2026-05-03
 
 ## What we use

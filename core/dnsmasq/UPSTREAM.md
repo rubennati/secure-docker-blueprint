@@ -10,7 +10,6 @@
 - **Origin:** UK · Simon Kelley · non-EU
 - **Domain:** Infrastructure
 - **Role:** DNS forwarder with wildcard zones for split-DNS setups
-- **Based on version:** `2.93` (image changed — see Version / tag notes)
 - **Last checked:** 2026-04-14
 
 ## What we changed and why

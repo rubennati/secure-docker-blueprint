@@ -10,7 +10,6 @@
 - **Origin:** Community · homarr-labs · EU contributors
 - **Domain:** Dashboards
 - **Role:** Dashboard with integrations into the services you run
-- **Based on version:** `v2.11.1`
 - **Last verified:** 2026-05-02 (v1.60.0)
 
 ## What we use

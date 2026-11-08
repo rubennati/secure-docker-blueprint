@@ -9,7 +9,6 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port
-- **Based on version:** `0.2.53`
 - **Last checked:** 2026-04-14
 
 ## What we changed and why

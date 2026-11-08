@@ -12,7 +12,6 @@
 - **Origin:** Germany · Philipp Heckel · EU
 - **Domain:** Monitoring
 - **Role:** Push notifications over HTTP, the receiving end for every other alert
-- **Based on version:** `v2.37.2` (released 2026-11-04)
 - **Upstream reviewed:** 2026-07-27 — image, tag, configuration surface, channel
   support and licence checked against upstream documentation
 - **Last verified:** 2026-09-08 (v2.28.0) — v0.8.0 host session: clean start,

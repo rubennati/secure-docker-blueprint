@@ -10,9 +10,11 @@ name: Trivy
 #      .trivy-baseline.json: a finding in an upstream image is reported, never
 #      blocking (DEC-079) — see docs/security-verification.md.
 #   3. Stack status — on the weekly, push and manual runs on main: per stack the
-#      pinned tag, the newest upstream tag in the same shape, both dates, and the
-#      findings of this scan (scripts/ci/upstream-status.py), written to the
-#      pinned issue labelled `stack-status`.
+#      pinned tag, the newest upstream tag in the same shape, both release dates,
+#      whether upstream is archived or quiet, and the findings of this scan
+#      (scripts/ci/upstream-status.py), written to the pinned issue labelled
+#      `stack-status`. The same data, as upstream-status.json, is the artifact
+#      the maintainer commits at a pin move and before a release (DEC-080).
 #
 # Triggers: PR to main, push to main, weekly Monday 04:00 UTC, manual
 # dispatch. The push, the weekly and the manual run scan in full. A pull
@@ -298,17 +300,20 @@ jobs:
   # ─────────────────────────────────────────────────────────────────────────
   # 3. STACK STATUS
   # ─────────────────────────────────────────────────────────────────────────
-  # Per stack: the pinned tag of the primary image and when it was published,
-  # the newest upstream tag in the same shape and when it was published, and
+  # Per stack: the pinned tag of the primary image and when upstream released
+  # it, the newest upstream tag in the same shape and its release date, whether
+  # the upstream repository is archived or has not released for a year, and
   # the CRITICAL and HIGH findings of this run's scan in every image of the
   # stack. Information, not a gate: scripts/ci/upstream-status.py exits 0
-  # whatever it finds (DEC-079).
+  # whatever it finds (DEC-079). The token reads the upstream repositories'
+  # releases, which the anonymous API limit would not cover.
   #
   # Not on pull requests — their scan may be partial or skipped. On main the
   # table overwrites the body of the one open issue labelled `stack-status`,
   # created and pinned on the first run; a manual run from another branch
-  # writes the table to its summary only. Nothing is committed: both branches
-  # reject a direct push, and a weekly pull request would wait for a merge.
+  # writes the table to its summary only. Nothing is committed by the job: both
+  # branches reject a direct push. The maintainer commits upstream-status.json
+  # from the artifact with the pull request that moves a pin or cuts a release.
   stack-status:
     name: Stack status
     needs: image-scan
@@ -332,10 +337,12 @@ jobs:
           path: /tmp/scan
 
       - name: Look up upstream versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           python3 scripts/ci/upstream-status.py \
             --results-dir /tmp/scan/trivy-results \
-            --json /tmp/stack-status.json \
+            --json /tmp/upstream-status.json \
             --markdown /tmp/stack-status.md
           cat /tmp/stack-status.md >> "$GITHUB_STEP_SUMMARY"
 
@@ -363,6 +370,6 @@ jobs:
         with:
           name: stack-status
           path: |
-            /tmp/stack-status.json
+            /tmp/upstream-status.json
             /tmp/stack-status.md
           if-no-files-found: warn

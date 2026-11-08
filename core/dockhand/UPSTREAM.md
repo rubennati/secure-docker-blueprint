@@ -13,7 +13,6 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git
-- **Based on version:** `v1.0.57`
 - **Last checked:** 2026-04-16
 
 ## What we use

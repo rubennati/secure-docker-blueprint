@@ -7,7 +7,21 @@
 # extends: every default rule applies.
 #
 # Single findings that are excluded by design are listed by fingerprint in
-# .gitleaksignore, never by commit or path here.
+# .gitleaksignore, never by commit or path here. The one pattern at the end is
+# not a single finding: it recurs in every generated file that names the image.
 
 [extend]
 useDefault = true
+
+# The Valkey image reference `valkey/valkey:<tag>` reads to generic-api-key as
+# `key: <value>`, because "key" ends the word "valkey". It appears in every
+# regenerated upstream-status.json and stack README that names the image, so a
+# fingerprint per line would need a new entry at every scan. Only this rule,
+# only a tag that starts with a digit. Extending the rule by its id keeps the
+# default rule and adds this allowlist to it.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "Valkey image reference, not a key"
+regexTarget = "match"
+regexes = ['''valkey:[0-9][0-9A-Za-z._-]*''']

@@ -11,7 +11,6 @@
 - **Origin:** United States · vLLM project (originated at the UC Berkeley Sky Computing Lab) · non-EU
 - **Domain:** AI and local AI
 - **Role:** High-throughput OpenAI-compatible model serving on an NVIDIA GPU
-- **Based on version:** `v0.33.0`
 
 No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
 below for exactly what has been exercised and what has not. The field
@@ -170,7 +169,7 @@ duration on other hardware.
    `volumes/cache/triton` if a start fails after an upgrade
 5. Verify `/v1/models` with the key, then one request
 6. Re-check which paths answer without the key; the list changes between releases
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was actually exercised on a real install
 
 ## Useful commands

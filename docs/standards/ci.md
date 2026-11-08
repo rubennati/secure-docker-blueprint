@@ -65,7 +65,9 @@ What a run covers depends on the event:
 | `workflow_dispatch` | the whole history of every fetched ref (`git log --all`, `fetch-depth: 0`) |
 
 A full-history scan therefore runs only on a manual dispatch. Single findings
-excluded by design are listed by fingerprint in `.gitleaksignore`.
+excluded by design are listed by fingerprint in `.gitleaksignore`. One pattern that
+recurs in generated files — the image reference `valkey/valkey:<tag>`, where
+"key" ends the word "valkey" — is allowed in `.gitleaks.toml` for that rule only.
 
 There is no scheduled full scan, on purpose. Every commit that lands passes the
 pull-request scan, the history does not change afterwards, and the rules change
@@ -298,9 +300,11 @@ host, which is v0.10.0; whether a policy is stated at all is settled.
 
 Five generated views, each checked against the files that own it.
 
-`scripts/ci/lifecycle-report.py --check` fails on a status claim that is not
-backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
-`LIFECYCLE.md` left stale against its sources.
+`scripts/ci/lifecycle-report.py --check` fails when `LIFECYCLE.md`,
+`lifecycle.json` or a stack README's findings block is stale against its sources
+— the stack folders, `upstream-status.json` and the rehearsal log — or when a
+stack with findings has no `## Open findings` section. A stack carries no state
+to claim (DEC-080).
 
 `scripts/ci/sovereignty-report.py --check` fails when a stack states no licence
 or origin, or when `sovereignty.json` is stale.

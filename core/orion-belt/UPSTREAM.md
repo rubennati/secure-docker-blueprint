@@ -13,7 +13,6 @@
 - **Origin:** Individual maintainer · Mohamed Zrouga · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access gateway for SSH sessions, from a young single-maintainer project
-- **Based on version:** `1.4.0`
 - **Verification snapshot:** 2026-09-19 — clean start and hardening only, see below
 
 ## EXPERIMENTAL — project maturity, verified directly

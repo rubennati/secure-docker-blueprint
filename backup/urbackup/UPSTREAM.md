@@ -10,7 +10,6 @@
 - **Origin:** Germany · Martin Raiber (uroni) · EU
 - **Domain:** Backup
 - **Role:** Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows
-- **Based on version:** `2.5.x` series, digest `sha256:e2fdc0d5…` (published 2026-04-23)
 - **Last verified:** `__REPLACE_ME__`
 
 > Not yet verified on a host. The date is set only once a client has been backed
@@ -65,7 +64,7 @@ and `no-new-privileges` still apply.
 4. Back up `./volumes/database` before upgrading — it holds the client index
 5. Bump `APP_TAG` in `.env`, then `docker compose pull && docker compose up -d`
 6. Confirm existing clients still appear and a browse of an old backup works
-7. Update **Based on version** here — and **Last verified** only if the upgrade
+7. Update **Last verified** only if the upgrade
    was actually exercised
 
 ## Useful commands

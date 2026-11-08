@@ -10,7 +10,6 @@
 - **Origin:** United States · OWASP Foundation (nonprofit) · non-EU
 - **Domain:** Security operations
 - **Role:** Threat modelling: data-flow diagrams, trust boundaries, threats and mitigations
-- **Based on version:** `v2.6.2`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   exercised with real Docker Secrets (see README.md's Preview → Ready gate);
   not yet run behind a real Traefik host

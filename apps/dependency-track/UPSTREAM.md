@@ -10,7 +10,6 @@
 - **Origin:** OWASP Foundation project · United States (OWASP Foundation) · non-EU
 - **Domain:** Security operations
 - **Role:** Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio
-- **Based on version:** `5.2.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted, all
   three services healthy, real Docker Secrets and migrations exercised
   against a live container; not yet run behind a real Traefik host

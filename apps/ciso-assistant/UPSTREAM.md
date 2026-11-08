@@ -13,7 +13,6 @@
 - **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
 - **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
 - **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
-- **Based on version:** `v4.2.1`
 - **Last verified:** 2026-09-22 (v4.0.5) — behind Traefik with TLS: the interface and the `/api` split, a framework imported into a compliance assessment, Huey's scheduled tasks, a restart, and the README's restore
 
 The origin comes from intuitem's legal notice (RCS Versailles, France).
@@ -128,5 +127,5 @@ into an assessment; backup and restore.
 4. Bump `APP_TAG` in `.env.example` — backend, Huey and frontend move together
 5. `docker compose pull && docker compose up -d`; the backend migrates at start
 6. Log in and open an assessment
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

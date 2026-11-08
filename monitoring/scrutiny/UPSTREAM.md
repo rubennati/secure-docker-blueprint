@@ -13,7 +13,6 @@
 - **Origin:** Community · Jason Kulatunga (AnalogJ) · no single jurisdiction
 - **Domain:** Monitoring
 - **Role:** S.M.A.R.T. disk health — collects the counters, keeps their history and warns before a drive fails
-- **Based on version:** `v0.10.0`
 
 ## Project maturity
 

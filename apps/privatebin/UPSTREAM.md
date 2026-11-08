@@ -14,7 +14,6 @@
 - **Origin:** Community project, no single company, maintained collectively on GitHub · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Zero-knowledge paste service for text and secrets
-- **Based on version:** `2.1.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   exercised (see README.md's Preview → Ready gate); not yet run behind a
   real Traefik host

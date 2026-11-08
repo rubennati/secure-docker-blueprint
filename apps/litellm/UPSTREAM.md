@@ -11,7 +11,6 @@
 - **Origin:** United States · BerriAI, Inc. · non-EU
 - **Domain:** AI and local AI
 - **Role:** OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log
-- **Based on version:** `v1.108.0`
 - **Last verified:** 2026-09-21 (v1.101.0) — behind Traefik with TLS: a provider credential stored encrypted through the admin API, a virtual key limited to it, the admin login, a restart, and a database restore
 
 ## What we use
@@ -140,7 +139,7 @@ throwaway Ollama container serving `smollm2:135m`:
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`; watch the migration in the log
 6. Verify `/health/readiness`, then make a real `/v1` request
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install
 
 Migrations run at start and are not reversible by downgrading the image; keep the

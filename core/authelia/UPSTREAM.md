@@ -12,7 +12,6 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Login portal with two-factor authentication that Traefik asks through forward-auth
-- **Based on version:** `4.39.28`
 
 ## What we use
 

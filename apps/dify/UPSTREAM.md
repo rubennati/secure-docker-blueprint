@@ -12,7 +12,6 @@
 - **Origin:** LangGenius · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers
-- **Based on version:** `1.19.0`
 - **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the setup through `/install`, a marketplace plugin with a model provider, a workflow with code, HTTP and LLM nodes, a restart, and a restore from its three dumps
 
 ## What we use
@@ -238,5 +237,5 @@ the model backend:
    against upstream's compose file for the same release
 5. `docker compose pull && docker compose up -d`; the api migrates at start
 6. Open the console, run a chat, then check that installed plugins load
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

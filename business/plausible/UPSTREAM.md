@@ -14,7 +14,6 @@
 - **Origin:** Estonia · Plausible Insights OÜ · EU
 - **Domain:** Business operations
 - **Role:** Cookie-free, GDPR-oriented web analytics — the measurement side of a company website, without a consent banner
-- **Based on version:** `v3.2.1`
 
 ## Project maturity
 

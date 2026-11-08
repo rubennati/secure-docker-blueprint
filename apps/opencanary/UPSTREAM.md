@@ -13,7 +13,6 @@
   the open-source counterpart to Thinkst's commercial Canary product —
   confirmed via upstream's own README; this stack uses only the
   open-source project
-- **Based on version:** `0.9.10`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   every enabled fake service exercised against a live container; the
   production compose's sub-1024 port publishing not confirmed on this test

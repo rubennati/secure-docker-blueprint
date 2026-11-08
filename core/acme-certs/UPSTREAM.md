@@ -13,7 +13,6 @@
 - **Origin:** Austria · maintained in this project · EU (the bundled acme.sh is independent, original author Neil Pang)
 - **Domain:** Infrastructure
 - **Role:** Certificates for devices that never pass through the reverse proxy: NAS, routers, mail servers
-- **Based on version:** `0.2.1` (cert-ops-tool)
 - **Last checked:** 2026-04-14
 
 ## What we changed and why

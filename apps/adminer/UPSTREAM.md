@@ -10,7 +10,6 @@
 - **Origin:** Czech Republic · Jakub Vrána · EU
 - **Domain:** Developer tools
 - **Role:** Web interface onto a database another stack already runs
-- **Based on version:** `6.3.0` (standalone variant)
 - **Last verified:** 2026-05-02 (v4.8.1-standalone)
 
 ## What we use

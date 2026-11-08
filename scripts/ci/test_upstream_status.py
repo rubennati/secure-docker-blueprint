@@ -122,7 +122,25 @@ class Findings(unittest.TestCase):
             _report(tmp, "b", "postgres:17", criticals=["CVE-1", "CVE-2"], highs=["CVE-H2"])
             scan = status.scan_findings(Path(tmp))
             f = status.stack_findings(["vendor/app:2", "postgres:17", "redis:8"], scan)
-            self.assertEqual(f, {"critical": 2, "high": 2, "unscanned": ["redis:8"]})
+            self.assertEqual(f["critical"], 2)
+            self.assertEqual(f["high"], 2)
+            self.assertEqual(f["unscanned"], ["redis:8"])
+            self.assertEqual(f["images"]["postgres:17"], {"libraries": [2, 1]})
+
+    def test_findings_are_split_by_where_they_sit(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            (Path(tmp) / "a.json").write_text(json.dumps({
+                "ArtifactName": "vendor/app:2", "Results": [
+                    {"Class": "os-pkgs", "Type": "debian",
+                     "Vulnerabilities": [{"Severity": "HIGH", "VulnerabilityID": "C1"}]},
+                    {"Class": "lang-pkgs", "Type": "gobinary",
+                     "Vulnerabilities": [{"Severity": "CRITICAL", "VulnerabilityID": "C2"}]},
+                    {"Class": "lang-pkgs", "Type": "node-pkg",
+                     "Vulnerabilities": [{"Severity": "HIGH", "VulnerabilityID": "C3"}]},
+                ]}))
+            f = status.stack_findings(["vendor/app:2"], status.scan_findings(Path(tmp)))
+            self.assertEqual(f["images"]["vendor/app:2"],
+                             {"system": [0, 1], "programs": [1, 0], "libraries": [0, 1]})
 
     def test_no_reports_means_no_counts_not_zero(self):
         self.assertIsNone(status.stack_findings(["vendor/app:2"], status.scan_findings(None)))
@@ -148,7 +166,17 @@ class Render(unittest.TestCase):
     def test_an_old_newest_image_is_named(self):
         old = self.NOW - timedelta(days=800)
         row = self._row(status="current", newest="1.0.0", pinned_date=old, newest_date=old)
-        self.assertIn("no newer image in over 12 months", status.render_markdown([row], self.NOW, True))
+        self.assertIn("no release in over 12 months", status.render_markdown([row], self.NOW, True))
+
+    def test_a_recent_github_release_is_not_quiet(self):
+        old = self.NOW - timedelta(days=800)
+        row = self._row(status="current", newest="1.0.0", pinned_date=old, newest_date=old,
+                        last_release=self.NOW - timedelta(days=10))
+        self.assertFalse(status.quiet(row, self.NOW))
+
+    def test_an_archived_upstream_is_named(self):
+        md = status.render_markdown([self._row(archived=True)], self.NOW, True)
+        self.assertIn("upstream repository archived", md)
 
     def test_undetermined_says_why(self):
         row = self._row(status="undetermined", newest=None, newest_date=None,
@@ -161,6 +189,29 @@ class Render(unittest.TestCase):
         data = json.loads(status.render_json([self._row()], self.NOW))
         self.assertEqual(data["stacks"]["apps/demo"]["newest"], "1.1.0")
         self.assertEqual(data["stacks"]["apps/demo"]["pinned_date"], "2026-10-09")
+
+
+class Releases(unittest.TestCase):
+    def test_version_numbers_ignore_prefix_and_suffix(self):
+        self.assertEqual(status.release_version("v2.4.29"), (2, 4, 29))
+        self.assertEqual(status.release_version("35.0.2-fpm-alpine"), (35, 0, 2))
+
+    def test_the_release_matching_the_image_tag(self):
+        when = datetime(2026, 11, 1, tzinfo=timezone.utc)
+        releases = [("v1.38.0", datetime(2026, 11, 7, tzinfo=timezone.utc), False),
+                    ("v1.37.5", when, False)]
+        self.assertEqual(status.release_date(releases, "1.37.5"), when)
+        self.assertIsNone(status.release_date(releases, "1.36.0"))
+
+    def test_the_first_github_repository_of_the_source_section(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            stack = Path(tmp)
+            (stack / "UPSTREAM.md").write_text(
+                "# U\n\n## Source\n\n- **Image:** https://hub.docker.com/_/traefik\n"
+                "- **GitHub:** https://github.com/traefik/traefik\n"
+                "- **Plugin:** https://github.com/other/plugin\n\n## Changes\n"
+                "https://github.com/not/this\n")
+            self.assertEqual(status.github_repo(stack), "traefik/traefik")
 
 
 if __name__ == "__main__":

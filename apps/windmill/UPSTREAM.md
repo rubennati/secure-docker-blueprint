@@ -11,7 +11,6 @@
 - **Origin:** Windmill Labs · no country stated in its published terms · no country
 - **Domain:** Automation and data
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
-- **Based on version:** `1.862.0`
 - **Last verified:** 2026-09-23 (1.814.0) — behind Traefik with TLS: the bootstrap behind `acc-deny`, jobs on both workers, the UI under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
 
 ## What we use
@@ -261,7 +260,7 @@ Traefik:
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`
 6. Verify `/api/version`, then submit a real job
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was actually exercised on a real install
 
 A move from an existing Postgres 16 install to 18 is a separate procedure:

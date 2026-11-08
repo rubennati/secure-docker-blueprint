@@ -112,8 +112,8 @@ than a plausible guess.
 ## What this blueprint accepts
 
 This blueprint is for self-hosted infrastructure. Every stack states its licence
-in `UPSTREAM.md`, and the baseline-aligned criteria require the field before a
-stack is recorded as ready.
+in `UPSTREAM.md`, and the [stack criteria](../maintenance.md#stack-criteria)
+require the field.
 
 **Accepted:**
 

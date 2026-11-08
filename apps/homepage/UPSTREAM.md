@@ -10,7 +10,6 @@
 - **Origin:** US · community (gethomepage) · non-EU
 - **Domain:** Dashboards
 - **Role:** Dashboard configured with YAML files
-- **Based on version:** `v2.7.0` (2.x — see Version / tag notes)
 - **Last verified:** 2026-05-03 (v0.10.9)
 
 ## What we use
