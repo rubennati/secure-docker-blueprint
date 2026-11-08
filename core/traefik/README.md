@@ -37,7 +37,7 @@ Complete these choices in `.env` **before validation or startup**:
 | Setting | What to configure |
 |---|---|
 | Dashboard | Set `ACME_EMAIL` and `TRAEFIK_DASHBOARD_HOST` to your email and dashboard FQDN. Arrange DNS so VPN clients resolve that name to an address they can reach on this host. |
-| Network | Choose [IPv4-only or dual-stack](#ipv4-only-vs-dual-stack-networking). For dual-stack, complete the [Docker daemon prerequisites](docs/ipv6-dual-stack.md#docker-daemon-prerequisites) and replace `PUBLIC_NETWORK_SUBNET_V6` with [your own ULA subnet](docs/ipv6-dual-stack.md#choosing-a-ula-prefix); the shipped documentation prefix is invalid for deployment. For IPv4-only, remove `network-dual-stack.yml` from `COMPOSE_FILE` and empty `TRAEFIK_BIND_V6`. Keep both rendered config files in `COMPOSE_FILE`. |
+| Network | Choose [IPv4-only or dual-stack](#ipv4-only-vs-dual-stack-networking). For dual-stack, complete the [Docker daemon prerequisites](docs/ipv6-dual-stack.md#docker-daemon-prerequisites) and replace `PUBLIC_NETWORK_SUBNET_V6` with [your own ULA subnet](docs/ipv6-dual-stack.md#choosing-a-ula-prefix); the shipped documentation prefix is invalid for deployment. For IPv4-only, remove `network-dual-stack.yml` from `COMPOSE_FILE` and empty `TRAEFIK_BIND_V6` and `PUBLIC_NETWORK_SUBNET_V6` — `validate.sh` judges a subnet that is set and refuses the shipped example prefix. Keep both rendered config files in `COMPOSE_FILE`. |
 | Certificate | Choose [one certificate strategy](#certificate-strategy--wildcard-vs-per-domain): a Cloudflare DNS-01 wildcard covering the dashboard (`ACME_WILDCARD_DOMAIN` and a real `CF_DNS_API_TOKEN`, dashboard resolver empty), or per-domain certificates with `TRAEFIK_DASHBOARD_CERT_RESOLVER` set. Per-domain DNS-01 also needs the token; HTTP-01 needs public port 80; TLS-ALPN-01 needs public TCP 443 without a TLS-terminating proxy in front. Neither strategy is selected in the example. |
 | Access | A VPN is the recommended way in; the shipped configuration uses Tailscale. With Tailscale, confirm `TAILSCALE_CIDR_V4` and `TAILSCALE_CIDR_V6`. `TRUSTED_RANGES` names the client networks that `access-trusted` admits — without a VPN, the networks you administer from; empty admits nobody. The dashboard uses `access-vpn`, so without a VPN it stays closed; no setup step needs it. |
 | Applications | Add each installed stack's `TRAEFIK_NETWORK` to `EDGE_NETWORKS` — [edge networks](docs/edge-networks.md). This can stay empty while installing Traefik alone. |
@@ -139,7 +139,8 @@ A new installation is **dual-stack**: the example `.env` applies `network-dual-s
 #   PUBLIC_NETWORK_SUBNET_V6=<your own ULA prefix>/64
 #   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
 #   TRAEFIK_BIND_V4=0.0.0.0 and TRAEFIK_BIND_V6=[::]   (IPv6 only: TRAEFIK_BIND_V4= empty)
-# IPv4 only: drop network-dual-stack.yml from COMPOSE_FILE, TRAEFIK_BIND_V6= empty
+# IPv4 only: drop network-dual-stack.yml from COMPOSE_FILE, TRAEFIK_BIND_V6= and
+#   PUBLIC_NETWORK_SUBNET_V6= empty
 # Docker daemon prerequisites first — see docs/ipv6-dual-stack.md
 
 bash ops/scripts/render.sh
