@@ -10,7 +10,7 @@
 - **Origin:** US · community (gethomepage) · non-EU
 - **Domain:** Dashboards
 - **Role:** Dashboard configured with YAML files
-- **Last verified:** 2026-05-03 (v0.10.9)
+- **Last verified:** 2026-11-08 (2.7.0) — lab host (VM), IPv4 LAN: the dashboard behind the basicAuth gate (`401` without, `200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

@@ -10,7 +10,7 @@
 - **Origin:** Hong Kong · Louis Lam · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime monitoring with a status page and many notification channels
-- **Last verified:** 2026-09-13 (2.5.4) — patch recreated on a live host, healthy, route unchanged. 2026-09-08 (2.5.3) — v0.8.0 host session: clean start on SQLite, owner account from the setup page, ntfy notification with an access token, a TCP monitor on a container on `proxy-public`; stopping that container produced the down alert on an iPhone within twenty seconds, starting it the up alert.
+- **Last verified:** 2026-11-08 (2.5.9) — lab host (VM), IPv4 LAN: the stack healthy and `/` redirecting a new instance to `/setup-database` before and after `down`/`up`, the refused client answered `403`; the setup and a monitor were not created (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

@@ -47,9 +47,9 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 
 | Stack | Pin | Newest | CRITICAL · HIGH | Last tested |
 |---|---|---|---|---|
-| [`apps/adminer`](apps/adminer/) | `6.3.0-standalone` · 2026-11-03 | = Pin | 0 · 0 | [2026-05-02](apps/adminer/UPSTREAM.md) · ran `v4.8.1-standalone` |
+| [`apps/adminer`](apps/adminer/) | `6.3.0-standalone` · 2026-11-03 | = Pin | 0 · 0 | [2026-11-08](apps/adminer/UPSTREAM.md) |
 | [`apps/agentgateway`](apps/agentgateway/) | `v1.7.0` · 2026-10-27 | = Pin | 0 · 0 | [2026-09-21](apps/agentgateway/UPSTREAM.md) · ran `v1.5.0` |
-| [`apps/bookstack`](apps/bookstack/) | `version-v26.09.2` · 2026-10-20 | not determinable | [1 · 31](apps/bookstack/README.md#open-findings) | [2026-05-03](apps/bookstack/UPSTREAM.md) · ran `v25.02` |
+| [`apps/bookstack`](apps/bookstack/) | `version-v26.09.2` · 2026-10-20 | not determinable | [1 · 31](apps/bookstack/README.md#open-findings) | [2026-11-08](apps/bookstack/UPSTREAM.md) |
 | [`apps/caldiy`](apps/caldiy/) | `v6.2.0-6` · 2026-03-01 | = Pin | [24 · 711](apps/caldiy/README.md#open-findings) | [2026-07-26](apps/caldiy/UPSTREAM.md) · ran `v6.2.0-3` |
 | [`apps/calnode`](apps/calnode/) | `0.14.0` | not checked at this pin | — | [2026-11-08](apps/calnode/UPSTREAM.md) |
 | [`apps/calrs`](apps/calrs/) | `1.23.0` | not checked at this pin | — | [2026-11-08](apps/calrs/UPSTREAM.md) |
@@ -66,11 +66,11 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/euro-office`](apps/euro-office/) | `v9.3.4-hotfix.1` · 2026-08-28 | not determinable | [0 · 3](apps/euro-office/README.md#open-findings) | [2026-11-02](apps/euro-office/UPSTREAM.md) |
 | [`apps/ghost`](apps/ghost/) | `6.75.0-alpine` · 2026-11-04 | = Pin | [2 · 45](apps/ghost/README.md#open-findings) | [2026-11-03](apps/ghost/UPSTREAM.md) · with restore · ran `6.63.0-alpine` |
 | [`apps/greenmail`](apps/greenmail/) | `2.1.15` · 2026-10-25 | = Pin | [1 · 3](apps/greenmail/README.md#open-findings) | [2026-11-03](apps/greenmail/UPSTREAM.md) |
-| [`apps/heimdall`](apps/heimdall/) | `2.8.4` · 2026-11-06 | not determinable | 0 · 0 | [2026-11-02](apps/heimdall/UPSTREAM.md) · with restore · ran `2.8.3` |
+| [`apps/heimdall`](apps/heimdall/) | `2.8.4` · 2026-11-06 | not determinable | 0 · 0 | [2026-11-08](apps/heimdall/UPSTREAM.md) · with restore |
 | [`apps/hemmelig`](apps/hemmelig/) | `v7.6.1` · 2026-09-25 | = Pin · ⚠️ archived | [7 · 30](apps/hemmelig/README.md#open-findings) | — · [upstream archived; plan a replacement](apps/hemmelig/UPSTREAM.md) |
 | [`apps/heyform`](apps/heyform/) | `v3.0.6` · 2026-11-01 | = Pin | [13 · 142](apps/heyform/README.md#open-findings) | — |
 | [`apps/homarr`](apps/homarr/) | `v2.12.0` | not checked at this pin | — | [2026-11-08](apps/homarr/UPSTREAM.md) |
-| [`apps/homepage`](apps/homepage/) | `v2.7.0` · 2026-10-23 | = Pin | [0 · 9](apps/homepage/README.md#open-findings) | [2026-05-03](apps/homepage/UPSTREAM.md) · ran `v0.10.9` |
+| [`apps/homepage`](apps/homepage/) | `v2.7.0` · 2026-10-23 | = Pin | [0 · 9](apps/homepage/README.md#open-findings) | [2026-11-08](apps/homepage/UPSTREAM.md) |
 | [`apps/httpbin`](apps/httpbin/) | `0.10.4` · 2026-06-16 | = Pin | [4 · 27](apps/httpbin/README.md#open-findings) | [2026-11-02](apps/httpbin/UPSTREAM.md) |
 | [`apps/immich`](apps/immich/) | `v3.3.6` · 2026-11-04 | = Pin | [16 · 102](apps/immich/README.md#open-findings) | [2026-11-08](apps/immich/UPSTREAM.md) |
 | [`apps/it-tools`](apps/it-tools/) | `2024.10.22-7ca5933` · 2024-10-22 | = Pin · ⚠️ no release since 2024-10-22 | [2 · 27](apps/it-tools/README.md#open-findings) | [2026-11-02](apps/it-tools/UPSTREAM.md) |
@@ -80,9 +80,9 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/mailpit`](apps/mailpit/) | `v1.33.1` | not checked at this pin | — | [2026-11-08](apps/mailpit/UPSTREAM.md) |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `8.1.0` · 2026-11-04 | `8.1.2` · 2026-11-07 | [2 · 41](apps/mailserver-jeboehm/README.md#open-findings) | — · [needs a host with port 25 open and public DNS](apps/mailserver-jeboehm/UPSTREAM.md) |
 | [`apps/monicahq`](apps/monicahq/) | `4.1.2-apache` · 2024-05-04 | = Pin · ⚠️ no release since 2024-05-04 | [4 · 50](apps/monicahq/README.md#open-findings) | [2026-11-03](apps/monicahq/UPSTREAM.md) · with restore |
-| [`apps/n8n`](apps/n8n/) | `2.46.6` · 2026-11-04 | `3.1.0` · 2026-11-03 | [1 · 23](apps/n8n/README.md#open-findings) | [2026-11-03](apps/n8n/UPSTREAM.md) · with restore · ran `2.41.7` |
+| [`apps/n8n`](apps/n8n/) | `2.46.6` · 2026-11-04 | `3.1.0` · 2026-11-03 | [1 · 23](apps/n8n/README.md#open-findings) | [2026-11-08](apps/n8n/UPSTREAM.md) · with restore |
 | [`apps/nextcloud`](apps/nextcloud/) | `35.0.2-fpm-alpine` · 2026-11-06 | = Pin | [1 · 28](apps/nextcloud/README.md#open-findings) | [2026-11-08](apps/nextcloud/UPSTREAM.md) · with restore |
-| [`apps/nocodb`](apps/nocodb/) | `2026.10.1` · 2026-10-29 | = Pin | 0 · 0 | [2026-05-02](apps/nocodb/UPSTREAM.md) · ran `v0.301.5` |
+| [`apps/nocodb`](apps/nocodb/) | `2026.10.1` · 2026-10-29 | = Pin | 0 · 0 | [2026-11-08](apps/nocodb/UPSTREAM.md) |
 | [`apps/obot`](apps/obot/) | `v0.27.0` · 2026-10-20 | `v0.28.0` · 2026-11-07 | [3 · 56](apps/obot/README.md#open-findings) | — |
 | [`apps/ollama`](apps/ollama/) | `0.40.15` | not checked at this pin | — | [2026-11-08](apps/ollama/UPSTREAM.md) |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `10.0.0` · 2026-10-12 | = Pin | [0 · 2](apps/onlyoffice/README.md#open-findings) | [2026-11-02](apps/onlyoffice/UPSTREAM.md) · ran `9.4.0` |
@@ -149,9 +149,9 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`monitoring/grafana-prometheus`](monitoring/grafana-prometheus/) | `13.3.0` · 2026-10-27 | = Pin | [0 · 7](monitoring/grafana-prometheus/README.md#open-findings) | — |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `v5.0.3` · 2026-10-27 | = Pin | [0 · 9](monitoring/healthchecks/README.md#open-findings) | [2026-09-08](monitoring/healthchecks/UPSTREAM.md) · ran `v4.4` |
 | [`monitoring/langfuse`](monitoring/langfuse/) | `4.75.0` · 2026-11-04 | `4.76.0` · 2026-11-05 | [1 · 29](monitoring/langfuse/README.md#open-findings) | [2026-09-22](monitoring/langfuse/UPSTREAM.md) · ran `4.38.0` |
-| [`monitoring/ntfy`](monitoring/ntfy/) | `v2.37.2` · 2026-11-04 | = Pin | [0 · 1](monitoring/ntfy/README.md#open-findings) | [2026-09-08](monitoring/ntfy/UPSTREAM.md) · ran `v2.28.0` |
+| [`monitoring/ntfy`](monitoring/ntfy/) | `v2.37.2` · 2026-11-04 | = Pin | [0 · 1](monitoring/ntfy/README.md#open-findings) | [2026-11-08](monitoring/ntfy/UPSTREAM.md) |
 | [`monitoring/scrutiny`](monitoring/scrutiny/) | `v0.10.0-web` · 2026-11-01 | = Pin | [0 · 51](monitoring/scrutiny/README.md#open-findings) | — |
-| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `2.5.9` · 2026-10-31 | = Pin | [7 · 455](monitoring/uptime-kuma/README.md#open-findings) | [2026-09-13](monitoring/uptime-kuma/UPSTREAM.md) · ran `2.5.4` |
+| [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `2.5.9` · 2026-10-31 | = Pin | [7 · 455](monitoring/uptime-kuma/README.md#open-findings) | [2026-11-08](monitoring/uptime-kuma/UPSTREAM.md) |
 | [`monitoring/zabbix`](monitoring/zabbix/) | `alpine-7.0.32` · 2026-10-22 | `alpine-8.0.0` · 2026-11-05 | [1 · 33](monitoring/zabbix/README.md#open-findings) | — |
 
 ## `backup/`

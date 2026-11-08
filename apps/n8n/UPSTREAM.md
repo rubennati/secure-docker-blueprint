@@ -13,7 +13,7 @@
 - **Origin:** Germany · n8n GmbH · EU
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation
-- **Last verified:** 2026-11-03 (2.41.7) — lab host behind Traefik 3.7.17 on its edge network: the owner, login, a webhook workflow with a Code node in the task runner, a stored credential, and the README's quiesced backup restored into a throwaway instance that decrypts it (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-02 (v2.19.2)
+- **Last verified:** 2026-11-08 (2.46.6) — lab host (VM), IPv4 LAN: the owner set up through the API, a webhook workflow created, activated and answering `{"sum":42}` through Traefik before and after `down`/`up`, the refused client answered `403`; 3.x not taken — 3.1.0 is still a GitHub pre-release (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
