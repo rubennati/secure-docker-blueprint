@@ -4,7 +4,7 @@
 
 Generated 2026-11-08 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 81 pin the newest upstream release, 6 pin an older one. 102 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 81 pin the newest upstream release, 6 pin an older one. 111 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -31,14 +31,14 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`core/headscale`](core/headscale/) | `v0.29.7` · 2026-10-30 | = Pin | [0 · 4](core/headscale/README.md#open-findings) | [2026-11-08](core/headscale/UPSTREAM.md) |
 | [`core/host-watchdog`](core/host-watchdog/) | *host-installed* | — | — | — · [host scripts without a container; they need a host of their own](core/host-watchdog/UPSTREAM.md) |
 | [`core/infisical`](core/infisical/) | `v0.167.6` · 2026-11-03 | = Pin | [1 · 33](core/infisical/README.md#open-findings) | [2026-11-08](core/infisical/UPSTREAM.md) |
-| [`core/jumpserver`](core/jumpserver/) | `v5.1.1` · 2026-10-20 | = Pin | [19 · 234](core/jumpserver/README.md#open-findings) | — |
+| [`core/jumpserver`](core/jumpserver/) | `v5.1.1` · 2026-10-20 | = Pin | [19 · 234](core/jumpserver/README.md#open-findings) | [2026-11-08](core/jumpserver/UPSTREAM.md) |
 | [`core/keycloak`](core/keycloak/) | `26.8.2` | not checked at this pin | — | [2026-11-08](core/keycloak/UPSTREAM.md) |
-| [`core/orion-belt`](core/orion-belt/) | `1.4.0` · 2026-10-24 | = Pin | [1 · 27](core/orion-belt/README.md#open-findings) | — |
+| [`core/orion-belt`](core/orion-belt/) | `1.4.0` · 2026-10-24 | = Pin | [1 · 27](core/orion-belt/README.md#open-findings) | [2026-11-08](core/orion-belt/UPSTREAM.md) |
 | [`core/portainer`](core/portainer/) | `2.45.3` · 2026-10-21 | = Pin | [0 · 6](core/portainer/README.md#open-findings) | [2026-11-08](core/portainer/UPSTREAM.md) |
 | [`core/portainer-agent`](core/portainer-agent/) | `2.45.3` · 2026-10-21 | `3.0.1` · 2026-11-03 | [0 · 6](core/portainer-agent/README.md#open-findings) | [2026-11-08](core/portainer-agent/UPSTREAM.md) |
 | [`core/shellhub`](core/shellhub/) | `v0.29.3` · 2026-11-05 | = Pin | [1 · 28](core/shellhub/README.md#open-findings) | [2026-11-08](core/shellhub/UPSTREAM.md) · ran `?` |
 | [`core/step-ca`](core/step-ca/) | `0.30.2` · 2026-03-23 | = Pin | [4 · 70](core/step-ca/README.md#open-findings) | [2026-11-08](core/step-ca/UPSTREAM.md) |
-| [`core/teleport`](core/teleport/) | `18.11.9` | not checked at this pin | — | — |
+| [`core/teleport`](core/teleport/) | `18.11.9` | not checked at this pin | — | [2026-11-08](core/teleport/UPSTREAM.md) |
 | [`core/traefik`](core/traefik/) | `v3.7.17` · 2026-10-30 | = Pin | [0 · 7](core/traefik/README.md#open-findings) | [2026-11-01](core/traefik/UPSTREAM.md) |
 | [`core/warpgate`](core/warpgate/) | `0.30.4` · 2026-11-03 | = Pin | [0 · 2](core/warpgate/README.md#open-findings) | [2026-11-08](core/warpgate/UPSTREAM.md) |
 | [`core/zot`](core/zot/) | `v2.1.23` · 2026-11-02 | = Pin | [0 · 1](core/zot/README.md#open-findings) | [2026-11-08](core/zot/UPSTREAM.md) |
@@ -68,7 +68,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/greenmail`](apps/greenmail/) | `2.1.15` · 2026-10-25 | = Pin | [1 · 3](apps/greenmail/README.md#open-findings) | [2026-11-03](apps/greenmail/UPSTREAM.md) |
 | [`apps/heimdall`](apps/heimdall/) | `2.8.4` · 2026-11-06 | not determinable | 0 · 0 | [2026-11-08](apps/heimdall/UPSTREAM.md) · with restore |
 | [`apps/hemmelig`](apps/hemmelig/) | `v7.6.1` · 2026-09-25 | = Pin · ⚠️ archived | [7 · 30](apps/hemmelig/README.md#open-findings) | [2026-11-08](apps/hemmelig/UPSTREAM.md) |
-| [`apps/heyform`](apps/heyform/) | `v3.0.6` · 2026-11-01 | = Pin | [13 · 142](apps/heyform/README.md#open-findings) | — |
+| [`apps/heyform`](apps/heyform/) | `v3.0.6` · 2026-11-01 | = Pin | [13 · 142](apps/heyform/README.md#open-findings) | [2026-11-08](apps/heyform/UPSTREAM.md) |
 | [`apps/homarr`](apps/homarr/) | `v2.12.0` | not checked at this pin | — | [2026-11-08](apps/homarr/UPSTREAM.md) |
 | [`apps/homepage`](apps/homepage/) | `v2.7.0` · 2026-10-23 | = Pin | [0 · 9](apps/homepage/README.md#open-findings) | [2026-11-08](apps/homepage/UPSTREAM.md) |
 | [`apps/httpbin`](apps/httpbin/) | `0.10.4` · 2026-06-16 | = Pin | [4 · 27](apps/httpbin/README.md#open-findings) | [2026-11-02](apps/httpbin/UPSTREAM.md) |
@@ -91,17 +91,17 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/opnform`](apps/opnform/) | `2.8.4` · 2026-11-05 | = Pin | [2 · 34](apps/opnform/README.md#open-findings) | [2026-11-08](apps/opnform/UPSTREAM.md) |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `v0.31.0` · 2026-10-14 | = Pin | [0 · 6](apps/paperless-gpt/README.md#open-findings) | [2026-11-08](apps/paperless-gpt/UPSTREAM.md) |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `3.4.2` · 2026-11-03 | = Pin | [2 · 39](apps/paperless-ngx/README.md#open-findings) | [2026-11-08](apps/paperless-ngx/UPSTREAM.md) · with restore |
-| [`apps/photoprism`](apps/photoprism/) | `261029` · 2026-10-29 | = Pin | [1 · 26](apps/photoprism/README.md#open-findings) | [2026-04-17](apps/photoprism/UPSTREAM.md) · no version recorded |
+| [`apps/photoprism`](apps/photoprism/) | `261029` · 2026-10-29 | = Pin | [1 · 26](apps/photoprism/README.md#open-findings) | [2026-11-08](apps/photoprism/UPSTREAM.md) |
 | [`apps/photoview`](apps/photoview/) | `2.4.0` · 2024-06-23 | = Pin · ⚠️ no release since 2024-06-23 | [5 · 55](apps/photoview/README.md#open-findings) | [2026-11-08](apps/photoview/UPSTREAM.md) |
 | [`apps/privatebin`](apps/privatebin/) | `2.1.1` · 2026-11-04 | = Pin | 0 · 0 | [2026-11-08](apps/privatebin/UPSTREAM.md) |
 | [`apps/qdrant`](apps/qdrant/) | `v1.20.0-unprivileged` · 2026-10-22 | = Pin | [0 · 9](apps/qdrant/README.md#open-findings) | [2026-11-08](apps/qdrant/UPSTREAM.md) |
 | [`apps/seafile`](apps/seafile/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [3 · 103](apps/seafile/README.md#open-findings) | [2026-11-08](apps/seafile/UPSTREAM.md) · with restore |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [23 · 783](apps/seafile-pro/README.md#open-findings) | [2026-11-08](apps/seafile-pro/UPSTREAM.md) · with restore |
 | [`apps/shlink`](apps/shlink/) | `5.1.8` · 2026-10-21 | = Pin | [2 · 33](apps/shlink/README.md#open-findings) | [2026-11-08](apps/shlink/UPSTREAM.md) |
-| [`apps/stalwart`](apps/stalwart/) | `v1.0.3` · 2026-11-04 | = Pin | [0 · 3](apps/stalwart/README.md#open-findings) | — · [needs a host with port 25 open and public DNS](apps/stalwart/UPSTREAM.md) |
+| [`apps/stalwart`](apps/stalwart/) | `v1.0.3` · 2026-11-04 | = Pin | [0 · 3](apps/stalwart/README.md#open-findings) | [2026-11-08](apps/stalwart/UPSTREAM.md) |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `v2.6.2` · 2026-05-10 | = Pin | [2 · 30](apps/threat-dragon/README.md#open-findings) | [2026-11-08](apps/threat-dragon/UPSTREAM.md) |
 | [`apps/tymeslot`](apps/tymeslot/) | `1.41.0-slim` | not checked at this pin | — | [2026-11-08](apps/tymeslot/UPSTREAM.md) · with restore |
-| [`apps/unifi`](apps/unifi/) | `10.6.109` · 2026-11-03 | not determinable | [12 · 57](apps/unifi/README.md#open-findings) | [2026-04-17](apps/unifi/UPSTREAM.md) · no version recorded |
+| [`apps/unifi`](apps/unifi/) | `10.6.109` · 2026-11-03 | not determinable | [12 · 57](apps/unifi/README.md#open-findings) | [2026-11-08](apps/unifi/UPSTREAM.md) |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `1.37.5` · 2026-11-01 | = Pin | [1 · 28](apps/vaultwarden/README.md#open-findings) | [2026-11-02](apps/vaultwarden/UPSTREAM.md) · with restore · ran `1.37.4` |
 | [`apps/velociraptor`](apps/velociraptor/) | `0.77.3` · 2026-10-05 | = Pin | [0 · 10](apps/velociraptor/README.md#open-findings) | [2026-11-08](apps/velociraptor/UPSTREAM.md) |
 | [`apps/vllm`](apps/vllm/) | `v0.33.0` · 2026-11-02 | = Pin | [0 · 9](apps/vllm/README.md#open-findings) | — · [needs a host with an NVIDIA GPU](apps/vllm/UPSTREAM.md) |
@@ -117,7 +117,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 |---|---|---|---|---|
 | [`business/akaunting`](business/akaunting/) | `3.3.0-v` · 2026-10-27 | = Pin | [2 · 85](business/akaunting/README.md#open-findings) | [2026-11-08](business/akaunting/UPSTREAM.md) |
 | [`business/chatwoot`](business/chatwoot/) | `v4.19.1` · 2026-10-24 | = Pin | [4 · 53](business/chatwoot/README.md#open-findings) | [2026-11-08](business/chatwoot/UPSTREAM.md) |
-| [`business/documenso`](business/documenso/) | `v2.21.1` · 2026-10-22 | = Pin | [1 · 45](business/documenso/README.md#open-findings) | — · [config authored 2026-07-26; not yet run on a live server](business/documenso/UPSTREAM.md) |
+| [`business/documenso`](business/documenso/) | `v2.21.1` · 2026-10-22 | = Pin | [1 · 45](business/documenso/README.md#open-findings) | [2026-11-08](business/documenso/UPSTREAM.md) |
 | [`business/dolibarr`](business/dolibarr/) | `24.0.2` · 2026-11-07 | = Pin | [1 · 33](business/dolibarr/README.md#open-findings) | [2026-11-08](business/dolibarr/UPSTREAM.md) |
 | [`business/erpnext`](business/erpnext/) | `v16.54.0` | not checked at this pin | — | [2026-11-08](business/erpnext/UPSTREAM.md) |
 | [`business/facturascripts`](business/facturascripts/) | `2026.72` | not checked at this pin | — | [2026-11-08](business/facturascripts/UPSTREAM.md) |
@@ -159,7 +159,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | Stack | Pin | Newest | CRITICAL · HIGH | Last tested |
 |---|---|---|---|---|
 | [`backup/borgmatic`](backup/borgmatic/) | *host-installed* | — | — | [2026-07-29](backup/borgmatic/UPSTREAM.md) |
-| [`backup/kopia`](backup/kopia/) | `0.23.1` · 2026-06-16 | = Pin | [2 · 58](backup/kopia/README.md#open-findings) | — |
+| [`backup/kopia`](backup/kopia/) | `0.23.1` · 2026-06-16 | = Pin | [2 · 58](backup/kopia/README.md#open-findings) | [2026-11-08](backup/kopia/UPSTREAM.md) |
 | [`backup/rclone-web`](backup/rclone-web/) | `1.76.0` | not checked at this pin | — | [2026-11-08](backup/rclone-web/UPSTREAM.md) |
 | [`backup/urbackup`](backup/urbackup/) | `2.5.x` · 2026-08-30 | = Pin | [4 · 19](backup/urbackup/README.md#open-findings) | — · [needs a client to back up and restore](backup/urbackup/UPSTREAM.md) |
 

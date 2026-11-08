@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v3.0.6) — lab host (VM), IPv4 LAN, run in a parallel batch: after the entry path was corrected for v3.0.6: the app, MongoDB and Valkey healthy, the site served before and after `down`/`up`, the refused client answered `403`; no form built (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/heyform/community-edition

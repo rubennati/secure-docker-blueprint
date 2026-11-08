@@ -11,7 +11,7 @@
 - **Domain:** Infrastructure
 - **Role:** Controller for Ubiquiti UniFi network devices
 - **Note:** Proprietary software — not open source. LSIO wrapper scripts are GPL-3. Ubiquiti is a US company; CLOUD Act applies to cloud-managed deployments. Self-hosted (local controller) has no cloud dependency.
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (10.6.109) — lab host (VM), IPv4 LAN, run in a parallel batch: after the audit-database grant and the servers-transport correction: the controller healthy and `/status` up (10.6.109) through the route before and after `down`/`up`, the refused client answered `403`; UNIFI_BIND was the VM's address because the default 0.0.0.0 collides with CrowdSec on 127.0.0.1:8080 (the report's decision) (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

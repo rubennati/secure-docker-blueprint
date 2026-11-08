@@ -499,10 +499,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "v3.0.6",
     "upstream": "current"
   },
   "apps/homarr": {
@@ -1028,10 +1028,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-04-17",
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "261029",
     "upstream": "current"
   },
   "apps/photoview": {
@@ -1178,7 +1178,7 @@
     "checked": "2026-11-08",
     "critical": 0,
     "findings_section": true,
-    "gap": "needs a host with port 25 open and public DNS",
+    "gap": "",
     "high": 3,
     "last_release": "2026-11-04",
     "local_stack": true,
@@ -1189,10 +1189,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "v1.0.3",
     "upstream": "current"
   },
   "apps/threat-dragon": {
@@ -1258,10 +1258,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-04-17",
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "10.6.109",
     "upstream": "undetermined"
   },
   "apps/vaultwarden": {
@@ -1488,10 +1488,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "0.23.1",
     "upstream": "current"
   },
   "backup/rclone-web": {
@@ -1592,7 +1592,7 @@
     "checked": "2026-11-08",
     "critical": 1,
     "findings_section": true,
-    "gap": "config authored 2026-07-26; not yet run on a live server",
+    "gap": "",
     "high": 45,
     "last_release": "2026-10-22",
     "local_stack": true,
@@ -1603,10 +1603,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "v2.21.1",
     "upstream": "current"
   },
   "business/dolibarr": {
@@ -2224,10 +2224,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "v5.1.1",
     "upstream": "current"
   },
   "core/keycloak": {
@@ -2270,10 +2270,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "1.4.0",
     "upstream": "current"
   },
   "core/portainer": {
@@ -2385,10 +2385,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": null,
-    "tested_anchored": false,
+    "tested": "2026-11-08",
+    "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "",
+    "tested_version": "18.11.9",
     "upstream": "not checked"
   },
   "core/traefik": {
