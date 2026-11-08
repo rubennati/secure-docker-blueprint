@@ -175,6 +175,7 @@ Upstream reference:
 docker compose ps                         # All healthy
 curl -sI https://your-domain/alive        # 200 OK
 curl -sI https://your-domain/admin        # Admin panel loads
+docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive   # internal check, without Traefik
 ```
 
 ## TODOs After Initial Setup

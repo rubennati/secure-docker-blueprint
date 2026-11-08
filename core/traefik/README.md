@@ -519,8 +519,8 @@ docker compose ps   # should show "healthy"
 # -----------------------------------------------
 # Step 2: Generate a bouncer API key
 # -----------------------------------------------
-docker exec crowdsec cscli bouncers add traefik-bouncer
-# Save the output key — it cannot be retrieved later!
+# core/crowdsec/README.md, "Generate the bouncer key" — the command, and what to
+# do when the key appears a second time after a Docker restart
 
 # -----------------------------------------------
 # Step 3: Set the switch in Traefik's .env

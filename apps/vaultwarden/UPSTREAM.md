@@ -46,43 +46,10 @@ Owned by [`README.md`](README.md#backup) — engine, container, which volumes
 hold state, and the borgmatic block. Kept there because that is where the
 per-app backup pattern lives and what `lifecycle-report.py` reads.
 
-## First-time setup
+## Setup and verification
 
-```bash
-# 1. Copy and configure
-cp .env.example .env
-nano .env  # Set APP_TRAEFIK_HOST, SMTP settings
-
-# 2. Generate DB passwords
-# hex only — base64 chars +/= break DATABASE_URL
-sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
-sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
-
-# 3. Generate Argon2 admin token
-docker run --rm -it vaultwarden/server:1.37.5 /vaultwarden hash
-# Enter a strong password, copy the $argon2id$... output
-# In .env: replace every $ with $$ then paste as VW_ADMIN_TOKEN
-
-# 4. Start
-docker compose up -d
-
-# 5. Create your account (SIGNUPS_ALLOWED must be true for this)
-# Visit https://vault.example.com and register
-
-# 6. Disable signups
-# Set VW_SIGNUPS_ALLOWED=false in .env, then recreate — restart alone does not
-# pick up an .env change
-docker compose up -d --force-recreate vaultwarden-app
-```
-
-## Verify
-
-```bash
-docker compose ps                                    # All healthy
-curl -sI https://your-domain/alive                   # 200 OK
-curl -sI https://your-domain/admin                   # Admin panel loads
-docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive  # Internal check
-```
+Owned by [`README.md`](README.md#first-time-setup) — the setup steps, the admin
+token and the checks after startup.
 
 ## Push Notifications
 

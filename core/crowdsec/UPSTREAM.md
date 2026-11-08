@@ -147,8 +147,8 @@ docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "te
 # Remove a ban
 docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 
-# Generate bouncer API key (for either remediation component)
-docker exec crowdsec cscli bouncers add traefik-bouncer
+# Generate a bouncer API key: README.md, "Generate the bouncer key" (Traefik)
+# and docs/firewall-bouncer.md (host firewall)
 
 # Update hub (parsers, scenarios, collections)
 docker exec crowdsec cscli hub update
