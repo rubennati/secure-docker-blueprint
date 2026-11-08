@@ -42,10 +42,15 @@ cp .env.example .env
 mkdir -p .secrets volumes/postgres volumes/recordings volumes/hostkey
 openssl rand -hex 32 > .secrets/db_pwd.txt
 openssl rand -hex 32 > .secrets/jwt_secret.txt
+# The app runs as root without capabilities (no DAC_OVERRIDE): hand it the
+# directories it writes, or it cannot save its SSH host key
+sudo chown 0:0 volumes/recordings volumes/hostkey
+sed -i "s|^ORION_JWT_SECRET=.*|ORION_JWT_SECRET=$(cat .secrets/jwt_secret.txt)|" .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(cat .secrets/db_pwd.txt)|" .env
 ```
 
-Copy `.secrets/jwt_secret.txt`'s contents into `.env` as `ORION_JWT_SECRET`,
-and `.secrets/db_pwd.txt`'s contents into `.env` as `POSTGRES_PASSWORD` —
+The two `sed` lines copy `.secrets/jwt_secret.txt` into `.env` as `ORION_JWT_SECRET`
+and `.secrets/db_pwd.txt` as `POSTGRES_PASSWORD` —
 see `.env.example`'s Secrets section for why this one value has to match a
 Docker Secret's contents by hand rather than reference it directly.
 
