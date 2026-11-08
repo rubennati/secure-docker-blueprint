@@ -4,7 +4,7 @@
 
 Generated 2026-11-08 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 81 pin the newest upstream release, 6 pin an older one. 117 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 81 pin the newest upstream release, 5 pin an older one. 118 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -128,7 +128,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`business/matomo`](business/matomo/) | `5.14.2-apache` · 2026-10-22 | = Pin | [1 · 28](business/matomo/README.md#open-findings) | [2026-11-08](business/matomo/UPSTREAM.md) |
 | [`business/openproject`](business/openproject/) | `17.9.6-slim` · 2026-10-30 | = Pin | [3 · 53](business/openproject/README.md#open-findings) | [2026-11-08](business/openproject/UPSTREAM.md) |
 | [`business/opensign`](business/opensign/) | `main` · 2026-11-02 | not determinable | [30 · 996](business/opensign/README.md#open-findings) | [2026-11-08](business/opensign/UPSTREAM.md) |
-| [`business/plane`](business/plane/) | `v1.4.3` · 2026-10-28 | = Pin | [8 · 112](business/plane/README.md#open-findings) | — |
+| [`business/plane`](business/plane/) | `v1.4.3` · 2026-10-28 | = Pin | [8 · 112](business/plane/README.md#open-findings) | [2026-11-08](business/plane/UPSTREAM.md) |
 | [`business/plausible`](business/plausible/) | `v3.2.1` · 2026-05-15 | = Pin | [1 · 50](business/plausible/README.md#open-findings) | [2026-11-08](business/plausible/UPSTREAM.md) |
 | [`business/solidinvoice`](business/solidinvoice/) | `3.1.2` · 2026-10-21 | = Pin | [0 · 2](business/solidinvoice/README.md#open-findings) | [2026-11-08](business/solidinvoice/UPSTREAM.md) |
 | [`business/twenty`](business/twenty/) | `v2.56.1` | not checked at this pin | — | [2026-11-08](business/twenty/UPSTREAM.md) |
@@ -148,7 +148,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`monitoring/gotify`](monitoring/gotify/) | `3.1.1` · 2026-09-15 | = Pin | [2 · 31](monitoring/gotify/README.md#open-findings) | [2026-11-08](monitoring/gotify/UPSTREAM.md) |
 | [`monitoring/grafana-prometheus`](monitoring/grafana-prometheus/) | `13.3.0` · 2026-10-27 | = Pin | [0 · 7](monitoring/grafana-prometheus/README.md#open-findings) | [2026-11-08](monitoring/grafana-prometheus/UPSTREAM.md) |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `v5.0.3` · 2026-10-27 | = Pin | [0 · 9](monitoring/healthchecks/README.md#open-findings) | [2026-11-08](monitoring/healthchecks/UPSTREAM.md) |
-| [`monitoring/langfuse`](monitoring/langfuse/) | `4.75.0` · 2026-11-04 | `4.76.0` · 2026-11-05 | [1 · 29](monitoring/langfuse/README.md#open-findings) | [2026-09-22](monitoring/langfuse/UPSTREAM.md) · ran `4.38.0` |
+| [`monitoring/langfuse`](monitoring/langfuse/) | `4.76.0` | not checked at this pin | — | [2026-11-08](monitoring/langfuse/UPSTREAM.md) |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `v2.37.2` · 2026-11-04 | = Pin | [0 · 1](monitoring/ntfy/README.md#open-findings) | [2026-11-08](monitoring/ntfy/UPSTREAM.md) |
 | [`monitoring/scrutiny`](monitoring/scrutiny/) | `v0.10.0-web` · 2026-11-01 | = Pin | [0 · 51](monitoring/scrutiny/README.md#open-findings) | [2026-11-08](monitoring/scrutiny/UPSTREAM.md) |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `2.5.9` · 2026-10-31 | = Pin | [7 · 455](monitoring/uptime-kuma/README.md#open-findings) | [2026-11-08](monitoring/uptime-kuma/UPSTREAM.md) |

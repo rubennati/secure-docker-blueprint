@@ -13,7 +13,7 @@
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
-- **Last verified:** 2026-09-22 (4.38.0) — behind Traefik with TLS: the UI, the Python SDK sending traces, scores and a prompt, a restart, and a restore
+- **Last verified:** 2026-11-08 (4.76.0) — lab host (VM), IPv4 LAN, with Silo as the object store: the provisioned key pair answered 200 and no key 401, an OpenTelemetry trace was stored as an event file in Silo, processed by the worker and read back from ClickHouse, still readable after down/up
 
 ## What we use
 

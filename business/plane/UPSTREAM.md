@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v1.4.3) — lab host (VM), IPv4 LAN, with Silo as the object store: /god-mode claimed, a workspace, project and work item created, an image attachment uploaded through the pre-signed URL into Silo and read back byte-identical, all still there after down/up
+
 ## Source
 
 - **Image:** https://hub.docker.com/u/makeplane

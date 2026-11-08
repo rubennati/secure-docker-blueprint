@@ -2970,7 +2970,7 @@
     "quiet": false,
     "restored": false,
     "role": "Project management — issues, cycles, modules and pages, with a collaborative editor and public project pages",
-    "tested": null,
+    "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/u/makeplane",
     "upstream_status": "current",
@@ -4288,8 +4288,8 @@
   },
   "monitoring/langfuse": {
     "archived": false,
-    "checked": "2026-11-08",
-    "critical": 1,
+    "checked": null,
+    "critical": null,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -4323,21 +4323,21 @@
       "summary": "6 services · ClickHouse + PostgreSQL + Redis + object storage"
     },
     "gap": null,
-    "high": 29,
-    "last_release": "2026-11-05",
+    "high": null,
+    "last_release": null,
     "name": "Langfuse",
-    "newest": "4.76.0",
-    "newest_date": "2026-11-05",
+    "newest": null,
+    "newest_date": null,
     "path": "monitoring/langfuse",
-    "pinned_date": "2026-11-04",
+    "pinned_date": null,
     "quiet": false,
     "restored": false,
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
-    "tested": "2026-09-22",
-    "tested_version": "4.38.0",
+    "tested": "2026-11-08",
+    "tested_version": null,
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
-    "upstream_status": "behind",
-    "version": "4.75.0"
+    "upstream_status": "not checked",
+    "version": "4.76.0"
   },
   "monitoring/ntfy": {
     "archived": false,
