@@ -1,6 +1,7 @@
 # OpenProject — Upstream
 
 - **Last verified:** 2026-11-08 (17.9.6) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 18.6, memcached with cap_drop), after the seeder and worker limits were raised to 1G: the seeder ran the migrations and the demo data, the health checks passed, a work package created through the API v3 found again after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Repository:** https://github.com/opf/openproject
