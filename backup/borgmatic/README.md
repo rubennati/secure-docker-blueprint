@@ -288,7 +288,7 @@ postgresql_databases:
 ```
 
 **What was measured.** On Debian 13, whose `postgresql-client` is version 17,
-`apps/paperless-ngx` with `postgres:16.14` (step 8 lab host, 2026-11-02, the
+`apps/paperless-ngx` with `postgres:16.14` (lab host, 2026-11-02, the
 [rehearsal log](RESTORE.md#rehearsal-log)):
 
 | Client | Backup | Restore into `postgres:16.14` |
@@ -296,8 +296,7 @@ postgresql_databases:
 | 17, Debian's, on the `PATH` | ran without error | stopped on `SET transaction_timeout = 0`, a setting server 16 does not know |
 | 16.15, named in the entry | ran without error | `pg_restore --exit-on-error` exited 0; all 74 tables with the live row counts |
 
-**Measured later, with the stack READMEs' entries** (client 17 on the `PATH`, step 8
-lab host): listmonk (server 16) and Immich (server 14) failed the same way, and
+**Measured later, with the stack READMEs' entries** (client 17 on the `PATH`, lab host): listmonk (server 16) and Immich (server 14) failed the same way, and
 Tymeslot (server 17) passed; with client 16 named in its entry, listmonk's backup
 restored completely ([`docs/labs/ingress/2026-11-01-results.md`](../../docs/labs/ingress/2026-11-01-results.md),
 the decision paper above). **Not measured:** server 15, and client 17 against a
@@ -326,7 +325,7 @@ sudo apt install postgresql-client-16
 /usr/lib/postgresql/16/bin/pg_dump --version
 ```
 
-The blueprint installs nothing on the host (DEC-058); the operator does, once per
+The blueprint installs nothing on the host ([DEC-058](../../.ai/decisions.md#dec-058)); the operator does, once per
 major. On another distribution the package names and paths differ and have not
 been verified here.
 

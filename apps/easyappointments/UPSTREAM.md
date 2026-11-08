@@ -11,7 +11,7 @@
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Appointment booking in PHP, established since 2013
 - **Based on version:** `1.6.1`
-- **Last verified:** 2026-11-03 (1.6.1) — step 8 lab host behind Traefik 3.7.17 on its edge network: the installation wizard, the backend login, the REST API with a customer and an appointment, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (1.5.x)
+- **Last verified:** 2026-11-03 (1.6.1) — lab host behind Traefik 3.7.17 on its edge network: the installation wizard, the backend login, the REST API with a customer and an appointment, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (1.5.x)
 
 ## What we use
 

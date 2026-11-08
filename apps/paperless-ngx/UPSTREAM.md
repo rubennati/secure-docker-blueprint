@@ -13,7 +13,7 @@
 - **Domain:** Documents and e-signature
 - **Role:** Document management with OCR, tagging and full-text search
 - **Based on version:** `3.4.2`
-- **Last verified:** 2026-11-02 (3.1.3) — with postgres 16.14, redis 7.4-alpine, gotenberg 8.21 and tika 3.3.3.0; step 8 lab host on its edge network behind a loopback-only test router: the README's setup run again in a fresh instance, upload through the UI and the API, the consume folder and IMAP mail import; OCR of scans and images (`deu+ron` included), Tika and Gotenberg for DOCX and e-mail, full-text search, metadata, owner and object permissions, SMTP; dependency failures and the healthchecks; borgmatic backup with the README's entry and the PostgreSQL 16 client, restored into a throwaway instance (backup/borgmatic/RESTORE.md). Lab scripts and headless Chromium, no mobile app; `sso.yml` not run (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (v2.20.13)
+- **Last verified:** 2026-11-02 (3.1.3) — with postgres 16.14, redis 7.4-alpine, gotenberg 8.21 and tika 3.3.3.0; lab host on its edge network behind a loopback-only test router: the README's setup run again in a fresh instance, upload through the UI and the API, the consume folder and IMAP mail import; OCR of scans and images (`deu+ron` included), Tika and Gotenberg for DOCX and e-mail, full-text search, metadata, owner and object permissions, SMTP; dependency failures and the healthchecks; borgmatic backup with the README's entry and the PostgreSQL 16 client, restored into a throwaway instance (backup/borgmatic/RESTORE.md). Lab scripts and headless Chromium, no mobile app; `sso.yml` not run (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (v2.20.13)
 
 ## What we use
 
@@ -47,7 +47,7 @@
   reachable — so breaking changes and advisories in the range are not checked;
   read https://tika.apache.org/ before a host run. The Java requirement of the
   3.x line is unchanged.
-- Run at these tags on the step 8 lab host on 2026-11-02; that run does not
+- Run at these tags on the lab host on 2026-11-02; that run does not
   replace the change-note check above.
 - Moved to `3.4.2` on 2026-11-05, not run on a host at this tag. No breaking
   change, renamed `PAPERLESS_*` variable or manual step is listed from 3.2.0 to
@@ -164,7 +164,7 @@ Paperless's Django migrations are forward-only. Rollback = restore the SQL dump 
 The service is `paperless-app`. `python manage.py` under `exec` does not see the
 secrets the container read at start and stops on `PAPERLESS_SECRET_KEY`; the
 image's wrappers (`createsuperuser`, `document_*`) and `/command/with-contenv`
-carry them (step 8 lab host).
+carry them (lab host).
 
 ```bash
 # Shell

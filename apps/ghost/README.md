@@ -77,7 +77,7 @@ reaches it first becomes the owner. The stack therefore ships with `access-vpn`
 (final audit FA-01): the setup happens over the VPN, and the blog becomes public by
 the operator's decision in step 5.
 With mail configured, a staff login from a new browser waits for a six-digit code
-Ghost mails to the staff address (step 8 lab host, 6.63.0).
+Ghost mails to the staff address (lab host, 6.63.0).
 
 Shipped access is `access-vpn` until setup; a public blog then runs `access-public`, with `limit-standard` and `headers-standard` — the standard headers and rate limit.
 
@@ -131,7 +131,7 @@ mysql_databases:
       username: ghost_user
       password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
       # MySQL's self-signed certificate: the host's client refuses it and the
-      # dump fails (step 8 lab host). The connection stays on the host.
+      # dump fails (lab host). The connection stays on the host.
       tls: false
 ```
 

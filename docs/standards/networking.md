@@ -53,11 +53,11 @@ networks:
 
 **IP family — dual-stack as shipped, IPv4-only and IPv6-only as settings** (IPv6-only is not verified on a host).
 The example `core/traefik/.env` applies the `network-dual-stack.yml` overlay, which
-creates `proxy-public` with an IPv6 subnet (DEC-063, refined by DEC-075); without
+creates `proxy-public` with an IPv6 subnet ([DEC-063](../../.ai/decisions.md#dec-063), refined by [DEC-075](../../.ai/decisions.md#dec-075)); without
 it the network is IPv4-only. Traefik's published ports are one bind variable per family
 (`TRAEFIK_BIND_V4`, `TRAEFIK_BIND_V6`), rendered into `config/published-ports.yml`;
 an empty variable publishes nothing for its family, neither has a default, and an
-IPv6 binding needs the overlay (DEC-075.3). Every other published port in the catalogue names its host
+IPv6 binding needs the overlay ([DEC-075.3](../../.ai/decisions.md#dec-075)). Every other published port in the catalogue names its host
 address through a required `*_BIND` variable, IPv4 as shipped — a port without an
 address also listens on `[::]`, where Docker relays IPv6 from the bridge gateway. Dual-stack matters specifically for Tailscale ingress:
 Tailscale always hands a client an IPv6 address, and that address only

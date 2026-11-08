@@ -388,7 +388,7 @@ the per-deployment `.env`, which is already gitignored and host-specific).
 
 ## Quick setup — new deployment (dual-stack from day one)
 
-The default for new installs (DEC-063, refined by DEC-075), and what
+The default for new installs ([DEC-063](../../../.ai/decisions.md#dec-063), refined by [DEC-075](../../../.ai/decisions.md#dec-075)), and what
 `.env.example` ships: modern servers increasingly have IPv6, and Tailscale
 always hands out an IPv6 address regardless. Starting dual-stack avoids a
 later migration. Complete [Traefik setup](../README.md#setup), including the

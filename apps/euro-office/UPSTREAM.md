@@ -12,7 +12,7 @@
 - **Domain:** Documents and e-signature
 - **Role:** EU-governed fork of OnlyOffice, a drop-in document editing server
 - **Based on version:** `v9.3.4-hotfix.1`
-- **Last verified:** 2026-11-02 (v9.3.4-hotfix.1) — step 8 lab host on its edge network, after correcting the entrypoint and paths: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud's OnlyOffice connector (`office.yml`) and Seafile CE and Pro, switched from OnlyOffice by settings alone; the command service and conversion refuse a missing or foreign token; the admin panel stays off; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-02 (v9.3.4-hotfix.1) — lab host on its edge network, after correcting the entrypoint and paths: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud's OnlyOffice connector (`office.yml`) and Seafile CE and Pro, switched from OnlyOffice by settings alone; the command service and conversion refuse a missing or foreign token; the admin panel stays off; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use
 
@@ -41,5 +41,5 @@
 
 ## Known limitations
 
-- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; the stack copied OnlyOffice's and the container exited 127 in a restart loop until corrected (step 8 lab host, 2026-11-02)
+- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; with OnlyOffice's paths the container exits 127 in a restart loop (lab host, 2026-11-02)
 - **Young project** — smaller release history than OnlyOffice; watch releases closely
