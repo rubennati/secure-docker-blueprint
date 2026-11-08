@@ -60,48 +60,11 @@
 - **SEAHUB_DB_NAME is permanent**: Database names are chosen on first init. Changing `SEAHUB_DB_NAME` in `.env` after first start does not rename the database — it causes a mismatch. Migration requires manual database work.
 - **`DB_USER` may not control the actual MariaDB username**: On Seafile Pro 13.0, the database user created during first init was `seafile` regardless of the `DB_USER` value in `.env`. Operators setting a custom `DB_USER` (e.g. `seafileu`) should verify the actual MariaDB username after first boot — the configured value may be silently ignored. The `.env.example` defaults to `DB_USER=seafile`, which matches observed behaviour.
 
-## First-time setup
+## Setup and verification
 
-After the very first `docker compose up -d`:
-
-```bash
-# 1. Wait until app is healthy
-docker compose ps
-
-# 2. Restart app to inject ALL configs automatically:
-#    - seahub_settings.py (OnlyOffice + Metadata + Thumbnail)
-#    - seafevents.conf (SeaSearch — replaces Elasticsearch)
-#    - seafile.conf (ClamAV virus scanning)
-docker compose restart seafile-pro-app
-
-# 3. Verify all configs were injected
-docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py
-docker exec seafile-pro-app grep "SEASEARCH" /shared/seafile/conf/seafevents.conf
-docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf
-
-# 4. Trigger initial search index
-docker exec seafile-pro-app /opt/seafile/seafile-server-latest/pro/pro.py search --update
-
-# 5. Verify everything works
-curl -s https://your-domain/notification/ping  # should return {"ret": "pong"}
-docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY  # should show the key
-docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"  # should show FOUND
-```
-
-**Why restart?** On first boot, Seafile creates its config files. Our entrypoint wrapper
-detects these files on the second start and injects the Blueprint configs.
-
-**Injection behaviour (important):** `seahub_settings.py` injection is one-time — the
-marker `# --- Blueprint custom settings ---` prevents it from running again. This is
-different from Seafile CE, which re-injects on every container start.
-
-- Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at
-  Django startup. Changing those values in `.env` and running `docker compose restart seafile-pro-app`
-  takes effect immediately — no re-injection needed.
-- Adding a brand-new setting that was absent from `config/seahub_custom.py` at injection
-  time requires removing the marker line and everything after it from `seahub_settings.py`,
-  updating `config/seahub_custom.py` on the host, then restarting.
-- `seafevents.conf` and `seafile.conf` injections are also one-time (separate markers).
+Owned by [`README.md`](README.md#quick-start) — the first start, the config
+injection with its one-time markers, and the checks after startup. Deeper
+diagnostics are under [Troubleshooting & Verification](#troubleshooting--verification) below.
 
 ## OnlyOffice integration
 

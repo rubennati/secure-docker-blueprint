@@ -71,6 +71,9 @@ docker compose ps                                          # All services up
 docker exec seafile-pro-app grep "SEASEARCH" /shared/seafile/conf/seafevents.conf  # Search configured
 docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf    # Antivirus configured
 curl -s https://your-domain/notification/ping              # {"ret": "pong"}
+docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py   # settings injected
+docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY     # key reaches the app
+docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"  # FOUND
 ```
 
 ## OnlyOffice
@@ -94,6 +97,8 @@ Passwords are stored in `.env` (gitignored). Docker Secrets are not used because
 Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at Django startup on every restart, so changing those values in `.env` takes effect after `docker compose restart seafile-pro-app` — no re-injection needed.
 
 Adding a brand-new setting that was absent from `seahub_custom.py` at injection time requires either editing `seahub_settings.py` directly in the volume, or removing the marker line (`# --- Blueprint custom settings ---`) and everything after it, updating `config/seahub_custom.py`, then restarting.
+
+`seafevents.conf` (SeaSearch) and `seafile.conf` (ClamAV) are injected the same way, once, each behind its own marker.
 
 ## Backup
 
