@@ -20,6 +20,15 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   stack has been taken; `scaffolded` is a stack built to the standards and not yet
   run at its current pin, not a defect. The states and how they are measured are
   unchanged.
+- **Database and cache containers drop capabilities by image family.**
+  `security-baseline.md` records, per image family, which capabilities a container
+  needs when it starts as root and drops to its own user, and that it needs none
+  when it starts as that user. Eight PostgreSQL services now drop all capabilities
+  and add back the five their entrypoint needs; six Redis and Valkey services run
+  as the image's own user with no capability, and two that read a secret as root
+  keep the five and become read-only. Those six need their data directory owned by
+  that user before the first start: the READMEs carry the `chown`, and
+  `core/authentik`'s init container does it itself. Not yet run on a host.
 
 ### Added
 

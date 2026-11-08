@@ -264,6 +264,20 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Starts as root: sh reads the password secret, then the entrypoint fixes
+    # ownership of /data and drops to its redis user. That sequence needs the
+    # set below (docs/standards/security-baseline.md, per image family).
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
 
     # --- Configuration ---
     # The password is read from the secret at startup, so it never appears in

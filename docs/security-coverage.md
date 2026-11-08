@@ -46,8 +46,8 @@ image property, established by running it rather than by counting.
 
 | Control | Coverage |
 |---|---|
-| `read_only: true` | 119 / 301 services |
-| `cap_drop: ALL` | 186 / 301 services |
-| Non-root `user:` | 51 / 301 services |
+| `read_only: true` | 121 / 301 services |
+| `cap_drop: ALL` | 202 / 301 services |
+| Non-root `user:` | 57 / 301 services |
 | Resource limits — `memory` and `pids` | 301 / 301 services |
 | Docker Secrets — a `secrets:` block | 179 / 301 services |

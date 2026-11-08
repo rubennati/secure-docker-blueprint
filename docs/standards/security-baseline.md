@@ -63,6 +63,33 @@ docker run --rm --cap-drop ALL <image>     # read the first denial in the log
 Add back what the log names, one capability at a time, and record the result beside
 the `cap_add` block. A set copied from another stack is a guess.
 
+#### Per image family
+
+One question decides the set: **does the container start as root and drop to its
+own user, or start as that user?** Started as root, the entrypoint needs the
+capabilities to fix ownership and switch user. Started as its own user (`user:`),
+it needs none, but the data directory has to belong to that user before the first
+start, because nothing inside the container can change it any more.
+
+| Family | Started as root: `cap_add` | Started as its own user | `read_only` | Established |
+|---|---|---|---|---|
+| `postgres` (official, Alpine and Debian) | `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`, `SETUID` | not used here | works with tmpfs on `/tmp`, `/run`, `/var/run`; not applied yet | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| `redis`, `valkey` (official) | the same five | `user: "999:1000"` on Alpine, `"999:999"` on Debian; no capability | yes, tmpfs on `/tmp` | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40); IDs from the upstream Dockerfiles |
+| `nginx` (official) | `CHOWN`, `SETGID`, `SETUID` | — | with tmpfs on the cache, run and tmp paths | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| `nginxinc/nginx-unprivileged` | — | already; no capability | yes | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| `mariadb` | `CHOWN`, `DAC_OVERRIDE`, `SETGID`, `SETUID` | — | not established | in use in eleven stacks; not measured |
+| `mysql`, `mongo`, `memcached` | sets in use differ | — | not established | needs a host test |
+| linuxserver.io and other s6-overlay images | not established | never `user:`, see below | — | — |
+
+A Redis that reads its password from a secret through `sh` before handing over to
+the entrypoint starts as root, so it takes the root column: the secret file belongs
+to the host user, and only root with `DAC_OVERRIDE` reads it. `apps/nextcloud` and
+`business/invoiceninja` are built that way.
+
+An image outside this table is not covered by it, even when it is built on one of
+these: `ghcr.io/immich-app/postgres` is a PostgreSQL image with its own build and
+needs its own measurement.
+
 **Six capabilities need no exception.** `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`
 and `SETUID` are the set above — an entrypoint taking ownership of its data
 directory and then dropping to its own user. They reach no further than the
