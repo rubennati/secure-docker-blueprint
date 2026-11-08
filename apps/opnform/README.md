@@ -77,7 +77,7 @@ docker compose logs -f
 ```bash
 docker compose ps                                    # all seven services up
 curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI via opnform-nginx)
-curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via opnform-nginx → php-fpm)
+curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform-nginx → php-fpm)
 ```
 
 ## Security Model
