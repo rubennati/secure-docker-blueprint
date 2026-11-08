@@ -8,6 +8,29 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Security
+
+- **Every stack ships closed.** Fifteen stacks shipped `access-public` although
+  their first visitor became the admin or a default login was active: Photoview,
+  WordPress, Documenso, Matomo and OpenSign (setup wizard or first sign-up),
+  OpnForm, Immich, Lychee, Zammad and authentik (found on the lab host), BookStack
+  (`admin@admin.com` / `password`), and LibrePhotos, PhotoPrism, authelia and the
+  reference stack by the same rule. They ship `access-vpn` now; each README says
+  to finish the setup over the VPN and then open the route. `check-structure.py`
+  fails `access-public` unless the auth posture is `public` or a
+  `# public by design: <reason>` line stands above it (`public-default`).
+  **Migration:** an existing `.env` keeps its value; check the routes you opened.
+
+### Fixed
+
+- **Upstream data no longer offers a pre-release or another release line as the
+  newest version.** `scripts/ci/upstream-status.py` reported n8n 3.1.0, a GitHub
+  pre-release, and the Portainer agent's 3.0.1 image tag, which has no release, as
+  newer than their stable and LTS pins. A version upstream published only as a
+  pre-release is skipped, and a pin upstream names LTS is compared with LTS
+  releases only. Release tags with a digit in the project name (`n8n@2.46.6`) are
+  now read by their version, which also corrects n8n's release dates.
+
 ### Changed
 
 - **Stack READMEs open with the application.** Each README starts with what the

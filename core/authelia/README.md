@@ -153,8 +153,8 @@ access_control:
   Chrome) — under the burst of 200 of the former `sec-3` chain, and well under
   the burst of 500 of `limit-standard`, which `.env.example` ships.
 - **The portal's access policy follows the apps it protects.** It ships
-  `access-public`, because a public app needs a public login page. When every
-  protected app is VPN-only, set `access-vpn` here as well.
+  `access-vpn`, like the apps behind it. Once one protected app is public, set
+  `access-public` here as well: a public app needs a public login page.
 
 ## Choosing between Authelia, Authentik and Keycloak
 

@@ -409,9 +409,15 @@ def github_repo(stack: Path) -> str | None:
 
 
 def release_version(tag: str) -> tuple[int, ...]:
-    """The version numbers in a release tag or an image tag, suffix ignored."""
-    m = re.search(r"\d+(?:\.\d+)*", tag)
-    return tuple(int(p) for p in m.group(0).split(".")) if m else ()
+    """The version numbers in a release tag or an image tag, suffix ignored.
+
+    The run with the most parts wins, so a digit inside a name (`n8n@2.46.6`)
+    is not read as the version."""
+    runs = re.findall(r"\d+(?:\.\d+)*", tag)
+    if not runs:
+        return ()
+    best = max(runs, key=lambda r: r.count("."))
+    return tuple(int(p) for p in best.split("."))
 
 
 class GitHub:
@@ -423,7 +429,7 @@ class GitHub:
             self.headers["Authorization"] = f"Bearer {token}"
 
     def repo(self, name: str) -> dict:
-        """{archived, releases: [(tag, date, prerelease)]} newest first."""
+        """{archived, releases: [(tag, date, prerelease, name)]} newest first."""
         body, _ = http_get(f"{self.API}/{name}", self.headers)
         info = json.loads(body)
         releases = []
@@ -436,7 +442,8 @@ class GitHub:
                     continue
                 releases.append((r.get("tag_name") or "",
                                  parse_date(r.get("published_at")),
-                                 bool(r.get("prerelease"))))
+                                 bool(r.get("prerelease")),
+                                 r.get("name") or ""))
             if len(batch) < 100:
                 break
         return {"archived": bool(info.get("archived")), "releases": releases}
@@ -447,10 +454,50 @@ def release_date(releases: list, tag: str | None) -> datetime | None:
     want = release_version(tag or "")
     if not want:
         return None
-    for name, when, _ in releases:
+    for name, when, *_ in releases:
         if release_version(name) == want and when:
             return when
     return None
+
+
+CHANNEL = re.compile(r"\b(LTS|STS)\b")
+
+
+def release_filter(releases: list, pinned: str):
+    """Which registry versions may be offered as newer: a test on a version tuple.
+
+    A GitHub pre-release (n8n's next line) is not offered unless upstream also
+    published that version as a stable release. Next to a pin upstream names
+    LTS (Portainer), only versions upstream released as LTS are offered."""
+    stable, pre, lts, pinned_lts = set(), set(), set(), False
+    want = release_version(pinned)
+    for name, _, prerelease, *rest in releases:
+        v = release_version(name)
+        if not v:
+            continue
+        (pre if prerelease else stable).add(v)
+        m = CHANNEL.search(rest[0] if rest else "")
+        if m and m.group(1) == "LTS":
+            lts.add(v)
+            pinned_lts = pinned_lts or v == want
+    skip = pre - stable
+    if pinned_lts:
+        return lambda v: v in lts and v not in skip
+    return lambda v: v not in skip
+
+
+def step_down(row: dict, allowed) -> None:
+    """Re-pick the newest registry tag among the versions `allowed` admits."""
+    tags = row.get("_tags")
+    pin = row["pinned"]
+    if not tags or not row["newest"] or allowed(release_version(row["newest"])):
+        return
+    want = shape(pin)
+    same = [t for t in tags if shape(t) == want and allowed(release_version(t))]
+    best = max(same + [pin], key=version)
+    row["newest"] = best
+    row["status"] = "current" if version(best) == version(pin) else "behind"
+    row["newest_date"] = row["pinned_date"] if best == pin else tags.get(best)
 
 
 def upstream(stack: Path, row: dict, gh: GitHub | None) -> None:
@@ -465,11 +512,12 @@ def upstream(stack: Path, row: dict, gh: GitHub | None) -> None:
     except (urllib.error.URLError, OSError, ValueError, KeyError, RegistryError):
         return
     row["archived"] = data["archived"]
-    stable = [when for _, when, pre in data["releases"] if not pre and when]
+    step_down(row, release_filter(data["releases"], row["pinned"]))
+    stable = [when for _, when, pre, *_ in data["releases"] if not pre and when]
     row["last_release"] = max(stable) if stable else None
     if row["reason"] == "built locally":
         want = release_version(row["pinned"])
-        same = [(release_version(n), n, w) for n, w, pre in data["releases"]
+        same = [(release_version(n), n, w) for n, w, pre, *_ in data["releases"]
                 if not pre and w and len(release_version(n)) == len(want)]
         if want and same:
             best = max(same)
@@ -505,6 +553,7 @@ def lookup(image: str) -> dict:
     reg = client(registry)
     try:
         tags = reg.tags(repo)
+        row["_tags"] = tags
         if shape(tag) is not None:
             best = newest(tag, list(tags))
             row["newest"] = best
@@ -629,6 +678,7 @@ def collect(selected: list[str], results_dir: Path | None) -> list[dict]:
         else:
             row = lookup(primary)
         upstream(stack, row, gh)
+        row.pop("_tags", None)
         row["stack"] = key
         row["images"] = [image for _, image in images]
         row["findings"] = stack_findings(row["images"], scan)

@@ -37,7 +37,9 @@ rm /tmp/k.pem /tmp/c.pem
 
 docker compose up -d
 docker compose logs documenso-app --follow   # watch migrations + server start
-# https://<APP_TRAEFIK_HOST> — first user becomes the admin
+# https://<APP_TRAEFIK_HOST> over the VPN — the first user becomes the admin.
+# The route ships closed (APP_TRAEFIK_ACCESS=access-vpn); open it (access-public)
+# afterwards for signers outside the VPN
 ```
 
 ## Security Model

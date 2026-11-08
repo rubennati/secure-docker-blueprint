@@ -65,14 +65,14 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Security Model
 
-- **Setup wizard is the first-run gate** — run it yourself immediately after `docker compose up`. An attacker that opens the URL before you can claim the super-user account.
+- **Setup wizard is the first-run gate** — whoever completes it owns the super-user account, which is why the route ships at `access-vpn`: run it over the VPN, then open it.
 - **`MATOMO_DATABASE_PASSWORD_FILE` is supported natively** — Matomo reads the password from `/run/secrets/DB_PWD` directly. No inline duplication needed.
 - **`MYSQL_PASSWORD_FILE` + `MYSQL_ROOT_PASSWORD_FILE`** — MariaDB also reads secrets from files.
 - **`cap_drop: ALL`** on MariaDB with minimal `cap_add`.
 - **`no-new-privileges:true`** on both services.
 - **MariaDB on `app-internal` (`internal: true`)** — not reachable from outside.
 - **`X-Forwarded-Proto=https`** header injected by Traefik middleware so Matomo generates `https://` tracking URLs (avoids Mixed Content on tracked pages).
-- **Default access `access-public`, with `limit-standard` and `headers-application-owned`** — the tracking endpoint must be reachable from every page you track.
+- **Shipped access `access-vpn`, `access-public` once the wizard has run, with `limit-standard` and `headers-application-owned`** — the tracking endpoint must be reachable from every page you track.
 - **The proxy sends no `X-Frame-Options`; Matomo sets it itself.** `headers-application-owned` sets the HSTS base only, and the compose file places `header-nosniff@file` and `header-permissions@file` before it for the two headers Matomo lacks. Matomo varies the frame header per endpoint — `deny` on the reporting UI, absent on the [Widgetize](https://matomo.org/guide/reporting-tools/embedding-matomo/) endpoints, which exist to be embedded in another page. A header from the proxy would reach the widget responses as a second, conflicting value, and the embedded reports would stop loading.
 
 ## Backup
