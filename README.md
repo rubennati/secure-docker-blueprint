@@ -54,6 +54,14 @@ run as a host tool. Each category below links to its full list.
 
 Where several tools solve the same problem, more than one is included.
 
+**What a host needs.** Only Traefik is required: every stack that publishes a domain
+routes through it. CrowdSec is recommended — it detects attacks in the logs and blocks
+only once you enable a remediation; its AppSec component (Coraza, with the optional
+OWASP Core Rule Set) is opt-in. Everything else in `core/` — identity, secrets, DNS and
+certificates, Docker management, bastions — is optional shared infrastructure, often
+several alternatives for one job: install it when you need it. `stacks.example` starts
+with Traefik, CrowdSec and the `whoami` test target.
+
 ## How the pieces fit
 
 A typical HTTPS application follows this path. Traefik applies the stack's access
@@ -68,6 +76,11 @@ flowchart LR
 
 [Architecture](docs/architecture.md) covers optional integrations, host controls
 and the boundaries between them.
+
+**A blueprint, not a fixed product.** Each stack ships secure defaults — closed access,
+secrets in files, pinned images, resource limits — and every one can be changed in
+`.env` or an overlay. What a stack may assume from the platform and what it must provide
+itself is [the application contract](docs/architecture.md#the-application-contract).
 
 ## Getting started
 
@@ -183,6 +196,7 @@ shows what upstream has published since.
 | Every stack, by category | [core/](core/) · [apps/](apps/) · [business/](business/) · [monitoring/](monitoring/) · [backup/](backup/) |
 | Verification status per stack | [LIFECYCLE.md](LIFECYCLE.md) |
 | Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
+| What a stack may assume and must provide | [application contract](docs/architecture.md#the-application-contract) |
 | Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |
 | Applications you build yourself | [development/](development/) (patterns) · [docs/standards/custom-application.md](docs/standards/custom-application.md) (rules) |
 | Symptom-to-cause troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
