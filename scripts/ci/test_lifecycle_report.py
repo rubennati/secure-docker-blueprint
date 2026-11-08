@@ -307,6 +307,12 @@ class Cells(unittest.TestCase):
         cell = lr.newest_cell(self.row(quiet=True, last_release="2024-10-22"))
         self.assertIn("⚠️ no release since 2024-10-22", cell)
 
+    def test_check_date_only_where_it_differs(self):
+        self.assertEqual(lr.newest_cell(self.row(), "2026-11-08"), "= Pin")
+        self.assertEqual(lr.newest_cell(self.row(), "2026-11-15"),
+                         "= Pin · checked 2026-11-08")
+        self.assertNotIn("<", lr.newest_cell(self.row()))
+
     def test_not_scanned_is_not_zero(self):
         self.assertEqual(lr.findings_cell(self.row(critical=None, high=None)), "—")
         self.assertEqual(lr.findings_cell(self.row()),

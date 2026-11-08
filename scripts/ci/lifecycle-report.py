@@ -603,7 +603,7 @@ def pin_cell(r: dict) -> str:
     return out + (f" · {r['pinned_date']}" if r["pinned_date"] else "")
 
 
-def newest_cell(r: dict) -> str:
+def newest_cell(r: dict, usual: str | None = None) -> str:
     if r["tag"] is None:
         return "—"
     if r["upstream"] == "not checked":
@@ -618,7 +618,11 @@ def newest_cell(r: dict) -> str:
         out += " · ⚠️ archived"
     elif r["quiet"]:
         out += f" · ⚠️ no release since {r['last_release'] or 'over a year'}"
-    return out + f"<br><sub>checked {r['checked']}</sub>"
+    # The date of the check is stated once above the table; a row checked on
+    # another date (a single-stack run) says so itself.
+    if r["checked"] and r["checked"] != usual:
+        out += f" · checked {r['checked']}"
+    return out
 
 
 def findings_cell(r: dict) -> str:
@@ -652,8 +656,10 @@ def render(rows: list[dict]) -> str:
     tested = sum(1 for r in rows if r["tested_anchored"])
     restored = sum(1 for r in rows if r["tested_anchored"] and r["restored"])
     warned = sum(1 for r in rows if r["archived"] or r["quiet"])
-    checked = sorted({r["checked"] for r in rows if r["checked"]})
-    when = (checked[0] if len(checked) == 1 else f"{checked[0]} to {checked[-1]}") if checked else "—"
+    dates = [r["checked"] for r in rows if r["checked"]]
+    # The most frequent date, the latest among equals.
+    usual = max(sorted(set(dates)), key=dates.count) if dates else None
+    when = (usual + ("" if len(set(dates)) == 1 else "; rows checked on another date say so")) if usual else "—"
 
     out = [
         "# Lifecycle Overview",
@@ -682,7 +688,7 @@ def render(rows: list[dict]) -> str:
         "- **Newest** — `= Pin` when the pin is the newest release of the same kind "
         + "of tag; otherwise the newest release and its date. ⚠️ marks an upstream "
         + "repository that is archived or has published no stable release for "
-        + "twelve months. *checked* is the date upstream was read.",
+        + "twelve months. A row read from upstream on another date than the one above names it.",
         "- **CRITICAL · HIGH** — findings with a published fix, across every image "
         + "of the stack at the pin, each CVE counted once. The link leads to the "
         + "stack README, which splits them per image into the base system, the "
@@ -711,7 +717,7 @@ def render(rows: list[dict]) -> str:
         ]
         for r in group:
             out.append(
-                f"| [`{r['stack']}`]({r['stack']}/) | {pin_cell(r)} | {newest_cell(r)} "
+                f"| [`{r['stack']}`]({r['stack']}/) | {pin_cell(r)} | {newest_cell(r, usual)} "
                 f"| {findings_cell(r)} | {tested_cell(r)} |"
             )
         out.append("")

@@ -65,7 +65,9 @@ What a run covers depends on the event:
 | `workflow_dispatch` | the whole history of every fetched ref (`git log --all`, `fetch-depth: 0`) |
 
 A full-history scan therefore runs only on a manual dispatch. Single findings
-excluded by design are listed by fingerprint in `.gitleaksignore`.
+excluded by design are listed by fingerprint in `.gitleaksignore`. One pattern that
+recurs in generated files — the image reference `valkey/valkey:<tag>`, where
+"key" ends the word "valkey" — is allowed in `.gitleaks.toml` for that rule only.
 
 There is no scheduled full scan, on purpose. Every commit that lands passes the
 pull-request scan, the history does not change afterwards, and the rules change
