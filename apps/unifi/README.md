@@ -66,7 +66,7 @@ curl -fsSIk https://<APP_TRAEFIK_HOST>/manage/account/login    # 200 OK
 ## Security Model
 
 - **`MONGO_INITDB_ROOT_PASSWORD_FILE`** — Mongo root password is a Docker Secret; never lands in `.env`.
-- **Separate application user** — the controller uses its own MongoDB user (`unifi-app`) with `dbOwner` only on the `unifi` and `unifi_stat` databases. The Mongo root account is used only for one-time init.
+- **Separate application user** — the controller uses its own MongoDB user (`unifi-app`) with `dbOwner` only on the `unifi`, `unifi_stat` and `unifi_audit` databases. The Mongo root account is used only for one-time init.
 - **`DB_APP_PWD_INLINE` duplicates the app-user password** — see Known Issues.
 - **`no-new-privileges:true`** on both services.
 - **MongoDB on `app-internal` (`internal: true`)** — not reachable from outside.
