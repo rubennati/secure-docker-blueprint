@@ -55,7 +55,8 @@ docker compose up -d
 docker compose logs lychee-app --follow
 # Watch for: "Started Apache"
 
-# 7. Open UI and create the admin account on first visit
+# 7. Over the VPN, open the UI and create the admin account on first visit. The
+#    route ships closed (APP_TRAEFIK_ACCESS=access-vpn); open it afterwards
 # https://<APP_TRAEFIK_HOST>
 # The first-visit wizard creates the admin user.
 ```
@@ -69,7 +70,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Security Model
 
-- **First-visit admin creation** — the first time the web UI is opened, Lychee prompts for admin credentials. Open it yourself immediately after `docker compose up -d` so an attacker cannot claim the account.
+- **First-visit admin creation** — until an admin exists, `/` redirects to `/install/admin`, whose form creates the admin for whoever submits it — no setup secret, no CSRF token; afterwards it answers `403` (measured on the lab host at v7.12.1). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`APP_KEY`** encrypts Laravel sessions and signed URLs. Rotating invalidates all sessions (acceptable).
 - **`DB_PASSWORD_FILE` is supported natively** — Lychee reads the password from `/run/secrets/DB_PWD`. No inline duplication needed.
 - **`MYSQL_PASSWORD_FILE` + `MYSQL_ROOT_PASSWORD_FILE`** — MariaDB also reads secrets from files.
