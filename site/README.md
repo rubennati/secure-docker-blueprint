@@ -135,7 +135,7 @@ owns those.
 - **"Available now" / "Planned later" / "Coming soon"** or any other status-of-the-site commentary. A guide either exists — link to it — or it doesn't — don't mention it.
 - **Unconfirmed or speculative claims.** A statement about what's planned must trace to an actual source (`ROADMAP.md`, or explicit maintainer confirmation). If it can't be traced, omit it rather than guess.
 - **Repository-internal framing** (directory structure rationale, "core vs. apps" taxonomy, etc.) — that belongs in the repository's own docs, not in a guide aimed at someone installing a service.
-- **The repository's lifecycle vocabulary** — `scaffolded`, `baseline-aligned`, `ops-proven` and the like answer a maintainer's question about what to work on next. A visitor is asking something else. See "Evidence, not status" below.
+- **Grades or tiers for a stack.** The repository shows facts — dates, versions, findings, named gaps — and no state (DEC-080). See "Evidence, not status" below.
 
 ### Navigation
 
@@ -164,13 +164,14 @@ the editorial state of the website, which no visitor came for.
 ### Evidence, not status
 
 Guide pages carry `<StackEvidence>`, which reads generated facts from
-`src/data/lifecycle.json` and renders only what a visitor can weigh: the version
-the guide is written against, the verification date where one exists, and whether
-data has been restored from a backup on a live host.
+`src/data/lifecycle.json` and renders only what a visitor can weigh: when the
+stack last ran on a host and with which version, whether data has been restored
+from a backup, the pin and what upstream has released since, and the findings the
+upstream images carry.
 
-- **No repository tier names are rendered**, and no overall grade is implied.
-- **`gap="…"` is mandatory where there is no anchored verification date** — the
+- **No grade is rendered or implied.** A stack carries no state (DEC-080).
+- **`gap="…"` is mandatory where there is no test date** — the
   build fails without one. A stack that has not been checked needs a sentence
   naming what specifically was not exercised; a generic hedge ("may well work",
   "nothing has been established") warns without telling anyone what to do.
-- **A named gap is useful on verified stacks too.** Prefer one.
+- **A named gap is useful on tested stacks too.** Prefer one.

@@ -10,7 +10,6 @@
 - **Origin:** Calnode · no country stated in its published terms · no country
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite
-- **Based on version:** `0.13.0`
 - **Last verified:** 2026-09-22 (0.9.0) — behind Traefik with TLS: the setup, the API, the admin interface after `reset-admin`, a guest booking, a restart, and the README's restore
 
 ## Project maturity
@@ -112,7 +111,7 @@ server; the MCP server; Litestream replication and restore; backup and restore.
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`; migrations run at start
 6. Check `/healthz`, then make an authenticated API call
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install
 
 Pre-1.0: read the release notes for breaking changes before every bump.

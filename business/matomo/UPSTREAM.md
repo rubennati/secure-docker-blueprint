@@ -12,7 +12,6 @@
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
 - **Domain:** Business operations
 - **Role:** Web analytics under your control
-- **Based on version:** `5.14.2-apache`
 - **Last checked:** 2026-04-17
 
 ## What we use

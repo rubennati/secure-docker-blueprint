@@ -10,7 +10,6 @@
 - **Decision facts checked:** not yet
 - **Domain:** Security operations
 - **Role:** Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure
-- **Based on version:** `3.5.0`
 - **Last verified:** 2026-09-22 (3.3.100) — behind Traefik with TLS: the first start, the API with a token, scan imports, the interface, a restart, and the README's restore
 
 The licence names DefectDojo, Inc.; no jurisdiction was found in the pages checked.
@@ -137,5 +136,5 @@ firing; backup and restore; an upgrade across versions.
 4. Bump `APP_TAG` in `.env.example` — the django and nginx images move together
 5. `docker compose pull && docker compose up -d`; the initializer migrates first
 6. Log in and open a product's findings
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

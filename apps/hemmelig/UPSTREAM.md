@@ -14,7 +14,6 @@
 - **Origin:** Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)
 - **Domain:** Identity, access and secrets
 - **Role:** Ephemeral secret sharing with a built-in request flow
-- **Based on version:** `v7.6.1`
 - **Verification snapshot:** 2026-09-19 — clean start and one full migration
   cycle, not a full operational verification (see below)
 

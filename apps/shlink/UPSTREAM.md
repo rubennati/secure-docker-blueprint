@@ -11,7 +11,6 @@
 - **Origin:** Spain · Alejandro Celaya · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** URL shortener on your own domain with visit statistics and a REST API; no user accounts, API keys instead
-- **Based on version:** `5.1.8`
 
 ## What we use
 

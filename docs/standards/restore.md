@@ -231,12 +231,10 @@ Three distinct claims, easy to conflate:
 |---|---|---|
 | **Documented** | A restore procedure exists for this stack — this standard, plus whatever the stack's own README adds | The stack's README, pointing here |
 | **Restore-tested** | Someone has walked the procedure by hand and it worked, informally | Wherever the operator notes it — not a status this repository tracks |
-| **`ops-proven`** | The restore is logged with real evidence — archive, scope, result, numbers — in the rehearsal log | [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log), which is what `scripts/ci/lifecycle-report.py` reads to award the status, per [Status Model](status-model.md) |
+| **Restored, on record** | The restore is logged with real evidence — archive, scope, result, numbers — in the rehearsal log | [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log), which `scripts/ci/lifecycle-report.py` reads to show *with restore* beside the stack's last test date, per [Status Model](status-model.md) |
 
-`ops-proven`'s definition is unchanged by this document — it already meant
-exactly this. What changes is that a stack now has somewhere to point
-*before* it reaches that bar: "documented" is a real, useful intermediate
-state this repository did not previously give a name to.
+A stack has somewhere to point *before* a restore is on record: "documented" is
+a real, useful step of its own.
 
 ---
 

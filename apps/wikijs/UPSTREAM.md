@@ -11,7 +11,6 @@
 - **Origin:** Canada · Requarks · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Wiki with Markdown and visual editors, per-page permissions and about twenty authentication modules
-- **Based on version:** `3.1.0`
 
 ## Which version line, and why it matters
 

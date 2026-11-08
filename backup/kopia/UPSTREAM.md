@@ -11,7 +11,6 @@
 - **Origin:** No country stated · Kopia community project · no country
 - **Domain:** Backup
 - **Role:** Repository server for Kopia clients — deduplicated, encrypted snapshots from other machines, without handing them the repository password
-- **Based on version:** `0.23.1`
 
 ## Origin, stated precisely
 

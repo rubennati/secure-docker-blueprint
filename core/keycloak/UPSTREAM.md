@@ -11,7 +11,6 @@
 - **Origin:** US · Red Hat, Inc. (CNCF incubating project) · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation
-- **Based on version:** `26.8.1`
 - **Last verified:** 2026-09-07 (v26.7.3)
 
 What that date covers: boot under `cap_drop: ALL` as uid 1000, the healthcheck

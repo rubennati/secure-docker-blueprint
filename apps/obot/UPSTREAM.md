@@ -13,7 +13,6 @@
 - **Origin:** US · Obot AI, Inc · non-EU
 - **Domain:** AI and local AI
 - **Role:** MCP gateway and agent platform — catalogues MCP servers, runs the hosted ones as containers, with an LLM gateway in front
-- **Based on version:** `v0.27.0`
 
 ## Project maturity
 

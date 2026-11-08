@@ -160,9 +160,9 @@ Two further boundaries:
 nothing more; [`env-structure.md`](env-structure.md) has no digest convention, and
 `APP_DIGEST` exists in exactly one `.env.example`.
 
-**The baseline-aligned criteria were not extended.**
-[`../maintenance.md`](../maintenance.md) requires an `UPSTREAM.md` naming an
-upstream licence and a verified version. Both real cases satisfy that because both
+**The stack criteria were not extended.**
+[`../maintenance.md`](../maintenance.md#stack-criteria) requires an `UPSTREAM.md`
+naming an upstream licence and the version a host run tested. Both real cases satisfy that because both
 have an upstream. A genuinely first-party application would have neither, and the
 criteria still require both — this repository has no such stack to widen them for.
 

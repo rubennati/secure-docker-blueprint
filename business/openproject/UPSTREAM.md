@@ -15,7 +15,6 @@
 - **Origin:** Germany · OpenProject GmbH · EU
 - **Domain:** Business operations
 - **Role:** Project management with work packages, boards and Gantt planning
-- **Based on version:** `17.9.6-slim`
 
 ## License
 

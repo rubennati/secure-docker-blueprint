@@ -12,7 +12,6 @@
 - **Origin:** Open WebUI · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload
-- **Based on version:** `v0.13.0`
 - **Last verified:** 2026-09-21 (v0.11.3) — behind Traefik with TLS: sign-in and an answer from an attached document in a browser, LiteLLM as a second backend, offline mode, a restart, and a restore
 
 ## What we use
@@ -123,5 +122,5 @@ container (`smollm2:135m`) as the OpenAI-compatible backend at `/v1`:
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`; database migrations run at start
 6. Log in and send a message
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

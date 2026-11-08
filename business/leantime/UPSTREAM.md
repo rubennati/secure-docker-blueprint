@@ -14,7 +14,6 @@
 - **Domain:** Business operations
 - **Role:** Project management for teams that do not have a project manager —
   projects, milestones, tasks, time tracking, retrospectives and goals
-- **Based on version:** `3.13.2`
 
 ## Project maturity
 

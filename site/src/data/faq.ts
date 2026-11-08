@@ -76,12 +76,12 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'How do I know whether a guide has actually been tested?',
         answer:
-          'Each guide says so in one line under its title. Either it names a date and the exact version it was verified against, or it says no verification is recorded for the version it is written against. Underneath, a second line names what was not exercised — a restore, client sync, a specific integration. There is no overall grade to interpret: the date, the version and the named gap are the whole of it.',
+          'Each guide says so under its title. Either it names the date the stack last ran on a host — with the version that ran, where the pin has moved since — or it says it has not run on a host yet. A second line shows the pin, when upstream released it and whether upstream has released a newer version; another names what was not exercised — a restore, client sync, a specific integration. There is no overall grade to interpret: the dates, the versions and the named gap are the whole of it.',
       },
       {
         question: 'Is this safe to run in production today?',
         answer:
-          'Read the two evidence lines on the guide for the service you want, and decide against your own tolerance. Two things apply everywhere regardless: only the applications marked ops-proven in the catalogue have had a restore performed from a backup, so for the rest recovery is yours to establish before you rely on it, and file paths and variable names can still change before the 1.0 milestone.',
+          'Read the two evidence lines on the guide for the service you want, and decide against your own tolerance. Two things apply everywhere regardless: only the applications marked with a restore in the catalogue have had their data restored from a backup, so for the rest recovery is yours to establish before you rely on it, and file paths and variable names can still change before the 1.0 milestone.',
       },
       {
         question: 'What can I actually deploy right now?',

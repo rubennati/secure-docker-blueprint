@@ -10,7 +10,6 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Portainer
-- **Based on version:** `2.45.3`
 - **Last verified:** 2026-05-05 (v2.39.1)
 
 ## What we changed and why

@@ -11,7 +11,6 @@
 - **Origin:** EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU
 - **Domain:** Documents and e-signature
 - **Role:** EU-governed fork of OnlyOffice, a drop-in document editing server
-- **Based on version:** `v9.3.4-hotfix.1`
 - **Last verified:** 2026-11-02 (v9.3.4-hotfix.1) — lab host on its edge network, after correcting the entrypoint and paths: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud's OnlyOffice connector (`office.yml`) and Seafile CE and Pro, switched from OnlyOffice by settings alone; the command service and conversion refuse a missing or foreign token; the admin panel stays off; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md)
 
 ## What we use

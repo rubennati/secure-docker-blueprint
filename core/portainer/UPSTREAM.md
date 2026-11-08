@@ -12,7 +12,6 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
 - **Domain:** Infrastructure
 - **Role:** Docker management web interface, reaching Docker through a filtered socket proxy
-- **Based on version:** `2.45.3` (Community Edition)
 - **Last checked:** 2026-04-16
 
 Note: this setup uses Portainer **CE** (Community Edition). Portainer Business Edition (`portainer/portainer-ee`) is a different paid product with additional features and a different license — not used here.

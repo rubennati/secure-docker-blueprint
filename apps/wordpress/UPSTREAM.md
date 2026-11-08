@@ -9,7 +9,6 @@
 - **Origin:** US · Automattic / WordPress Foundation · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Content management system for sites and blogs
-- **Based on version:** `7.1.4-php8.3-apache`
 - **Last checked:** 2026-04-15
 
 ## What we use

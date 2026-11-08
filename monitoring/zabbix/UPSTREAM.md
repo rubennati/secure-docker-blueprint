@@ -13,7 +13,6 @@
 - **Origin:** Latvia · Zabbix, Riga — the project's own record adds Tokyo and New York; the site's copyright line reads "Zabbix LLC" · EU
 - **Domain:** Monitoring
 - **Role:** Enterprise monitoring — agents, SNMP, IPMI and HTTP checks with triggers, escalation and history
-- **Based on version:** `alpine-7.0.32`
 
 ## Project maturity
 

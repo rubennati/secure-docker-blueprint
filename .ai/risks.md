@@ -6,7 +6,7 @@ measured host behavior is in the relevant host and lab records.
 
 | Risk | Impact | Current mitigation | What would close it |
 |---|---|---|---|
-| **Restore evidence covers one stack** | A backup that has never been restored may not be one. One stack has been restored from; the others have a procedure, not a record — `LIFECYCLE.md` counts `ops-proven`. | Rehearsal logged in `backup/borgmatic/RESTORE.md`; `LIFECYCLE.md` awards `ops-proven` only where one exists | One rehearsal per stack whose loss would matter — the mechanism is proven, the per-stack quirks are not |
+| **Restore evidence covers one stack** | A backup that has never been restored may not be one. Some stacks have been restored from; the others have a procedure, not a record — `LIFECYCLE.md` counts the stacks *with restore*. | Rehearsal logged in `backup/borgmatic/RESTORE.md`; `LIFECYCLE.md` shows *with restore* only where one exists | One rehearsal per stack whose loss would matter — the mechanism is proven, the per-stack quirks are not |
 | **Nine major versions pinned but never started** | Paperless 3.x, WordPress 7.x, Immich 3.x and others are advertised at a version nobody has run. Paperless needs a search-index migration. | Flagged in `docs/maintenance.md`; status honest | Host session, Block 4 |
 | **Legacy verification stamps** | `Last checked:` predates the current format; the evidence behind ✅ is older than the claim | Marked ⚠️ per stack in `LIFECYCLE.md`; `legacy-stamp` reports the ✅ ones, non-blocking | Per-app judgement during the host session |
 | **Single maintainer** | No second reviewer; a mistaken decision has no second pair of eyes | CI gates catch mechanical errors; branch protection on `main` | Structural — accepted |

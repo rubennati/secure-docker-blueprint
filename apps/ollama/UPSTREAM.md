@@ -10,7 +10,6 @@
 - **Origin:** United States · Ollama Inc. (California) · non-EU
 - **Domain:** AI and local AI
 - **Role:** Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU
-- **Based on version:** `0.40.14`
 - **Last verified:** 2026-09-21 (0.34.2) — behind Traefik with TLS: models to 3.2B parameters pulled and served through the route on CPU, concurrent requests, a restart, and a restore of `volumes/data`
 
 ## What we use
@@ -131,7 +130,7 @@ Docker VM with six CPUs and 12 GB of memory and no GPU:
 3. Bump `APP_TAG` in `.env.example` and `.env.local.example`
 4. `docker compose pull && docker compose up -d`
 5. Verify `ollama list` still shows the models, then run one request
-6. Update **Based on version** above — and add **Last verified** only if the
+6. Add **Last verified** only if the
    upgrade was actually exercised on a real install
 
 ## Useful commands

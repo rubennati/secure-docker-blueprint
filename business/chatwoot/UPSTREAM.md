@@ -12,7 +12,6 @@
 - **Domain:** Business operations
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox
 - **Edition gating:** everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
-- **Based on version:** `v4.19.1`
 - **Last verified:** 2026-09-22 (v4.18.0) — behind Traefik with TLS: the onboarding, the dashboard and its websocket, the API, a website widget, a restart, and the README's restore
 
 The origin comes from the governing-law clause of Chatwoot's terms of service
@@ -140,5 +139,5 @@ enterprise features; backup and restore; an upgrade across versions.
 4. Bump `APP_TAG` in `.env.example` — web and worker move together
 5. `docker compose pull && docker compose up -d`; the web service migrates at start
 6. Log in and open a conversation
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

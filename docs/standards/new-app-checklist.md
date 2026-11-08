@@ -25,8 +25,9 @@ a host can establish.
 | | Ships an opt-in overlay → it must merge and stay inside the baseline | `check-overlays.py` |
 | | Reachable over the network → Traefik labels, an access policy and a security chain | `traefik-security.md` |
 | | Holds persistent state → the backup section names every volume and database a restore needs | review |
-| **Generated — never edited** | `LIFECYCLE.md`, `site/src/data/lifecycle.json`, `sovereignty.json`, `catalogue.json` | the three `--check` runs fail when stale |
-| **Runtime evidence only** | `Last verified: DATE (vX.Y.Z)`, and any lifecycle state above `scaffolded` | a host, not a checker |
+| **Generated — never edited** | `LIFECYCLE.md`, `site/src/data/lifecycle.json`, `sovereignty.json`, `catalogue.json`, the findings block under `## Open findings` | the three `--check` runs fail when stale |
+| **Upstream data** | the stack's row in `upstream-status.json`, written by `upstream-status.py` from the image scan | `lifecycle-report.py --check` warns `not-checked` until it exists |
+| **Runtime evidence only** | `Last verified: DATE (vX.Y.Z)`, or `Last verified: not yet — reason` until a host run | a host, not a checker |
 
 A stack reaches the operator site by existing: the catalogue is generated from
 `UPSTREAM.md`, so `Domain` and `Role` are what put it there. Nothing else has to be

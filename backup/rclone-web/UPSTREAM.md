@@ -10,7 +10,6 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Backup
 - **Role:** Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics
-- **Based on version:** `1.75.2`
 
 No `Last verified` line: behind Traefik, the interface can be signed into only with
 the password inside its URL — see
@@ -121,5 +120,5 @@ remote at a real storage provider; transfers of size; serves; backup and restore
 3. Bump `APP_TAG` in `.env.example`
 4. `docker compose pull && docker compose up -d`
 5. Log in and list the remotes
-6. Update **Based on version** above — and add **Last verified** only if the
+6. Add **Last verified** only if the
    upgrade was exercised on a real install

@@ -10,7 +10,6 @@
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Self-destructing links for handing someone a credential once
-- **Based on version:** `16.0.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and exercised (see README.md's Preview → Ready gate); not yet run behind a real Traefik host
 
 ## What we use

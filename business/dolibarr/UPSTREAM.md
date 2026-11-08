@@ -10,7 +10,6 @@
 - **Origin:** France · Dolibarr Association · EU
 - **Domain:** Business operations
 - **Role:** ERP and CRM: contacts, quotes, invoices, stock and accounting
-- **Based on version:** `24.0.2`
 - **Last checked:** 2026-04-17
 
 ## What we use

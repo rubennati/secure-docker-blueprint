@@ -13,7 +13,6 @@
 - **Origin:** Community · juanfont, Kristoffer Dalby and contributors · no single jurisdiction
 - **Domain:** Infrastructure
 - **Role:** Self-hosted control server for Tailscale clients — node registry, keys and access policy for a tailnet you run
-- **Based on version:** `v0.29.7`
 
 Upstream states plainly that the project is **not associated with Tailscale
 Inc.** The clients are Tailscale's; the control server is not.

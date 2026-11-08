@@ -67,7 +67,7 @@ disagree, the owner wins, and the derived file was generated from stale input.
 
 | Fact | Owner |
 |---|---|
-| Pinned image version | `<stack>/.env.example` |
+| Pinned image version | `<stack>/.env.example`; for a host-installed component, which has none, `Based on version` in its `UPSTREAM.md` |
 | Upstream release dates, newest release, archived or quiet upstream, findings at the pin | `upstream-status.json`, written by `scripts/ci/upstream-status.py` |
 | Last test date and version, and what the run established | `<stack>/UPSTREAM.md`, `Last verified` |
 | A named gap where no test date exists | `<stack>/UPSTREAM.md` |
@@ -82,9 +82,11 @@ the log records the archive, the scope, the result and the numbers. The log's
 
 ## LIFECYCLE.md is generated
 
-`scripts/ci/lifecycle-report.py` produces [`LIFECYCLE.md`](../../LIFECYCLE.md)
-and `site/src/data/lifecycle.json`; `scripts/ci/site-catalogue.py` reads the same
-facts for the catalogue. **None of them is edited by hand.**
+`scripts/ci/lifecycle-report.py` produces [`LIFECYCLE.md`](../../LIFECYCLE.md),
+`site/src/data/lifecycle.json` and the findings block under `## Open findings` in
+each stack README; `scripts/ci/site-catalogue.py` reads the same facts for the
+catalogue. **None of them is edited by hand** — the text around the findings
+block is.
 
 ```bash
 python3 scripts/ci/lifecycle-report.py --write
@@ -101,9 +103,14 @@ not.
 - a stack directory carries no `UPSTREAM.md`
 - the rehearsal log names a stack that does not exist
 
+It also fails when a findings block in a stack README differs from
+`upstream-status.json`, and when a stack has findings at its pin or a recorded
+exception and its README has no `## Open findings` section.
+
 It reports without failing when a stack carries neither a `Last verified` line
-nor a named gap, and when a stack still carries the pre-v0.5.1 `Last checked:
-DATE` field, which names no version.
+nor a named gap (`no-test-date`), when a stack still carries the pre-v0.5.1
+`Last checked: DATE` field, which names no version (`legacy-stamp`), and when
+`upstream-status.json` was written for another pin (`not-checked`).
 
 ## Why there are no states
 

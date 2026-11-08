@@ -12,7 +12,7 @@ context. Otherwise go directly to the relevant sources below.
 | **Traefik, routing, middleware, TLS** | `docs/standards/traefik-security.md` · `traefik-labels.md` · `networking.md` |
 | **Security hardening** | `docs/standards/security-baseline.md` · `docs/standards/ci.md` for enforcement · `docs/security-coverage.md` for the current figures (generated — never hand-edited) · `SECURITY.md` |
 | **Documentation change** | `domains/documentation.md` · `docs/standards/documentation-workflow.md` · `docs/standards/writing-style.md` · `docs/maintenance.md` File Map — roles below |
-| **Status or lifecycle** | `docs/standards/status-model.md` · `docs/maintenance.md` baseline-aligned criteria · `LIFECYCLE.md` for the current per-stack figures (generated — never hand-edited) |
+| **Status or lifecycle** | `docs/standards/status-model.md` · `docs/maintenance.md` stack criteria · `LIFECYCLE.md` for the current per-stack facts (generated from `upstream-status.json` and the stack folders — never hand-edited) |
 | **Architecture question** | `domains/architecture.md` · `docs/architecture.md` · `decisions.md` |
 | **Is something already decided?** | `decisions.md` — the register at its top first, then the entry it links, then the owner the entry's Implementation line names |
 | **Release** | `domains/release.md` · `docs/maintenance.md` Release Chain · `ROADMAP.md` |

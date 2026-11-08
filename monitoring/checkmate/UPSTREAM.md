@@ -13,7 +13,6 @@
 - **Origin:** Canada · BlueWave Labs · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime, certificate, hardware and container monitoring with incidents, maintenance windows and status pages
-- **Based on version:** `v3.13.1`
 
 ## Project maturity
 

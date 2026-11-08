@@ -5,13 +5,18 @@ published since, and what the pinned images carry.
 
 One row per stack, for someone deciding whether to use it or update it:
 
-  Pinned       the tag of the stack's primary image and when that image was
-               published
+  Pinned       the tag of the stack's primary image and when upstream released
+               that version
   Newest       the newest tag upstream publishes in the same shape as the pin,
-               and when it was published
+               and when it was released
+  Upstream     whether the upstream repository is archived, and when it last
+               published a stable release
   CRITICAL ·   fixable findings in the stack's images, read from the Trivy
   HIGH         reports of the same workflow run; every image of the stack
-               counts, a database or a cache as much as the application
+               counts, a database or a cache as much as the application. Per
+               image they are split by where they sit: the base system's
+               packages, the application's libraries, or a compiled program
+               shipped in the image
 
 This reports and never judges. It exits 0 whatever it finds; it exits non-zero
 only when it cannot run at all. A lookup that fails is shown in the row as not
@@ -32,11 +37,24 @@ Where a tag's version is read from:
   `14-vectorchord1.1.1`) and a tag without a version (`latest`) cannot be
   compared, and the row says so rather than guessing.
 
-  Dates come from the registry. Docker Hub records when a tag was last pushed;
-  other registries are read through the OCI distribution API, from the image
-  config's `created`. An official image that is rebuilt for a base-image update
-  is pushed again under the same tag, so its date is the date of the build, not
-  of the upstream release.
+  Dates come from the upstream release where one matches. The upstream
+  repository is the first GitHub repository in the `## Source` section of the
+  stack's UPSTREAM.md; a release matches when its tag carries the same version
+  numbers as the image tag (`v2.4.29` for `2.4.29-alpine`). An image tag is
+  rebuilt and pushed again for a base-image update, so a registry date says
+  when the image was built, not when the version was released. Only where no
+  release matches is the registry date used, and the data says so
+  (`pinned_date_source: image`). GitHub is read with GITHUB_TOKEN when it is
+  set; without it the anonymous limit of 60 requests an hour covers a few
+  stacks only, and the rest show the registry date.
+
+  Docker Hub records when a tag was last pushed; other registries are read
+  through the OCI distribution API, from the image config's `created`.
+
+The data file (--json) is what the repository commits as upstream-status.json:
+the maintainer writes it at a pin move and before a release, and
+lifecycle-report.py renders it. With --stack, an existing file is updated for
+the named stacks only.
 
 Usage:
   upstream-status.py [--results-dir DIR] [--json FILE] [--markdown FILE]
@@ -48,6 +66,7 @@ from __future__ import annotations
 import argparse
 import importlib.util
 import json
+import os
 import re
 import sys
 import time
@@ -140,7 +159,18 @@ def primary_image(stack: Path, images: list[tuple[str, str]]) -> str | None:
         for raw, image in images:
             if re.search(r"\$\{?" + re.escape(var) + r"\b", raw):
                 return image
+        if local_build(stack, var):
+            return None
     return images[0][1]
+
+
+def local_build(stack: Path, var: str) -> bool:
+    """True when the pin variable names an image the stack builds itself."""
+    compose = stack / "docker-compose.yml"
+    if not compose.is_file():
+        return False
+    pattern = re.compile(r"^\s+image:\s*\S*-local:\$\{?" + re.escape(var) + r"\b", re.M)
+    return bool(pattern.search(compose.read_text(encoding="utf-8", errors="replace")))
 
 
 def split_ref(image: str) -> tuple[str, str, str]:
@@ -350,6 +380,102 @@ class Oci:
         return parse_date(json.loads(body).get("created"))
 
 
+GITHUB_REPO = re.compile(r"https://github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+)")
+RELEASE_PAGES = 3
+
+
+def github_repo(stack: Path) -> str | None:
+    """`owner/repo` — the first GitHub repository in UPSTREAM.md's `## Source`."""
+    path = stack / "UPSTREAM.md"
+    if not path.is_file():
+        return None
+    text = path.read_text(encoding="utf-8", errors="replace")
+    source = text.split("## Source", 1)
+    if len(source) < 2:
+        return None
+    section = source[1].split("\n## ", 1)[0]
+    m = GITHUB_REPO.search(section)
+    if not m:
+        return None
+    name = m.group(2)
+    return f"{m.group(1)}/{name[:-4] if name.endswith('.git') else name}"
+
+
+def release_version(tag: str) -> tuple[int, ...]:
+    """The version numbers in a release tag or an image tag, suffix ignored."""
+    m = re.search(r"\d+(?:\.\d+)*", tag)
+    return tuple(int(p) for p in m.group(0).split(".")) if m else ()
+
+
+class GitHub:
+    API = "https://api.github.com/repos"
+
+    def __init__(self, token: str | None):
+        self.headers = {"Accept": "application/vnd.github+json"}
+        if token:
+            self.headers["Authorization"] = f"Bearer {token}"
+
+    def repo(self, name: str) -> dict:
+        """{archived, releases: [(tag, date, prerelease)]} newest first."""
+        body, _ = http_get(f"{self.API}/{name}", self.headers)
+        info = json.loads(body)
+        releases = []
+        for page in range(1, RELEASE_PAGES + 1):
+            body, _ = http_get(f"{self.API}/{name}/releases?per_page=100&page={page}",
+                               self.headers)
+            batch = json.loads(body)
+            for r in batch:
+                if r.get("draft"):
+                    continue
+                releases.append((r.get("tag_name") or "",
+                                 parse_date(r.get("published_at")),
+                                 bool(r.get("prerelease"))))
+            if len(batch) < 100:
+                break
+        return {"archived": bool(info.get("archived")), "releases": releases}
+
+
+def release_date(releases: list, tag: str | None) -> datetime | None:
+    """The date of the release whose version numbers match the image tag."""
+    want = release_version(tag or "")
+    if not want:
+        return None
+    for name, when, _ in releases:
+        if release_version(name) == want and when:
+            return when
+    return None
+
+
+def upstream(stack: Path, row: dict, gh: GitHub | None) -> None:
+    """Add the release dates, the archive flag and the last stable release."""
+    row.update({"repo": github_repo(stack), "archived": None, "last_release": None,
+                "pinned_date_source": "image" if row["pinned_date"] else None,
+                "newest_date_source": "image" if row["newest_date"] else None})
+    if not row["repo"] or gh is None:
+        return
+    try:
+        data = gh.repo(row["repo"])
+    except (urllib.error.URLError, OSError, ValueError, KeyError, RegistryError):
+        return
+    row["archived"] = data["archived"]
+    stable = [when for _, when, pre in data["releases"] if not pre and when]
+    row["last_release"] = max(stable) if stable else None
+    if row["reason"] == "built locally":
+        want = release_version(row["pinned"])
+        same = [(release_version(n), n, w) for n, w, pre in data["releases"]
+                if not pre and w and len(release_version(n)) == len(want)]
+        if want and same:
+            best = max(same)
+            row["newest"] = best[1].lstrip("v") if not row["pinned"].startswith("v") else best[1]
+            row["status"] = "current" if best[0] <= want else "behind"
+            row["reason"] = ""
+    for key in ("pinned", "newest"):
+        when = release_date(data["releases"], row[key] if row[key] != "—" else None)
+        if when:
+            row[f"{key}_date"] = when
+            row[f"{key}_date_source"] = "release"
+
+
 _clients: dict[str, object] = {}
 
 
@@ -392,8 +518,22 @@ def lookup(image: str) -> dict:
 # Findings
 # ---------------------------------------------------------------------------
 
-def scan_findings(results_dir: Path | None) -> dict[str, dict[str, set[str]]] | None:
-    """{image: {"CRITICAL": {CVE}, "HIGH": {CVE}}} from Trivy's JSON reports."""
+# Where a finding sits, from Trivy's result class and type: the base system's
+# packages, the application's libraries, or a compiled program in the image.
+AREAS = ("system", "libraries", "programs")
+PROGRAM_TYPES = {"gobinary", "rustbinary"}
+
+
+def area(result: dict) -> str:
+    if result.get("Class") == "os-pkgs":
+        return "system"
+    if result.get("Type") in PROGRAM_TYPES:
+        return "programs"
+    return "libraries"
+
+
+def scan_findings(results_dir: Path | None) -> dict[str, dict] | None:
+    """{image: {"CRITICAL": {CVE}, "HIGH": {CVE}, "areas": {area: {sev: {CVE}}}}}."""
     if results_dir is None or not results_dir.is_dir():
         return None
     found: dict[str, dict[str, set[str]]] = {}
@@ -405,12 +545,16 @@ def scan_findings(results_dir: Path | None) -> dict[str, dict[str, set[str]]] | 
         image = data.get("ArtifactName")
         if not image:
             continue
-        sev = found.setdefault(image, {"CRITICAL": set(), "HIGH": set()})
+        sev = found.setdefault(image, {
+            "CRITICAL": set(), "HIGH": set(),
+            "areas": {a: {"CRITICAL": set(), "HIGH": set()} for a in AREAS}})
         for result in data.get("Results") or []:
+            where = sev["areas"][area(result)]
             for vuln in result.get("Vulnerabilities") or []:
                 level = vuln.get("Severity")
-                if level in sev and vuln.get("VulnerabilityID"):
+                if level in ("CRITICAL", "HIGH") and vuln.get("VulnerabilityID"):
                     sev[level].add(vuln["VulnerabilityID"])
+                    where[level].add(vuln["VulnerabilityID"])
     return found
 
 
@@ -420,13 +564,19 @@ def stack_findings(images: list[str], scan: dict | None) -> dict | None:
     critical: set[str] = set()
     high: set[str] = set()
     unscanned = []
+    per_image = {}
     for image in images:
         if image not in scan:
             unscanned.append(image)
             continue
         critical |= scan[image]["CRITICAL"]
         high |= scan[image]["HIGH"]
-    return {"critical": len(critical), "high": len(high), "unscanned": unscanned}
+        counts = {a: [len(scan[image]["areas"][a]["CRITICAL"]),
+                      len(scan[image]["areas"][a]["HIGH"])] for a in AREAS}
+        # An area without findings is left out; an image without any keeps {}.
+        per_image[image] = {a: c for a, c in counts.items() if any(c)}
+    return {"critical": len(critical), "high": len(high), "unscanned": unscanned,
+            "images": per_image}
 
 
 # ---------------------------------------------------------------------------
@@ -449,18 +599,29 @@ def stacks(selected: list[str]) -> list[Path]:
 
 def collect(selected: list[str], results_dir: Path | None) -> list[dict]:
     scan = scan_findings(results_dir)
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
+    gh = GitHub(token)
     rows = []
     for stack in stacks(selected):
         key = stack.as_posix()
         images = stack_images(stack)
         primary = primary_image(stack, images)
-        if primary is None:
+        pin = lifecycle.pinned_version(stack).strip("`")
+        var, _, value = pin.partition("=")
+        if primary is None and value and local_build(stack, var):
+            # Built from upstream source here: no registry tag to compare, so
+            # the version is read against the upstream releases alone.
+            row = {"image": None, "pinned": value, "pinned_date": None, "newest": None,
+                   "newest_date": None, "status": "undetermined",
+                   "reason": "built locally"}
+        elif primary is None:
             row = {"image": None, "pinned": "—", "pinned_date": None, "newest": None,
                    "newest_date": None, "status": "undetermined",
                    "reason": "host-installed" if not lifecycle.has_compose(stack)
                    else "no resolvable image"}
         else:
             row = lookup(primary)
+        upstream(stack, row, gh)
         row["stack"] = key
         row["images"] = [image for _, image in images]
         row["findings"] = stack_findings(row["images"], scan)
@@ -475,15 +636,26 @@ def day(when: datetime | None) -> str:
     return when.strftime("%Y-%m-%d") if when else "—"
 
 
+def quiet(row: dict, now: datetime) -> bool:
+    """Nothing new for twelve months: no stable release on GitHub and no newer
+    image. Both count, because some projects publish images without GitHub
+    releases and some keep releasing on GitHub after the image moved."""
+    dates = [row.get("last_release"), row["newest_date"],
+             row["pinned_date"] if row["status"] == "current" else None]
+    dates = [d for d in dates if d]
+    return bool(dates and now - max(dates) > STALE_AFTER)
+
+
 def notes(row: dict, now: datetime) -> list[str]:
     out = []
     if row["status"] == "behind":
         out.append("newer version upstream")
     if row["reason"]:
         out.append(f"not determinable: {row['reason']}")
-    latest = row["newest_date"] or (row["pinned_date"] if row["status"] == "current" else None)
-    if latest and now - latest > STALE_AFTER:
-        out.append("no newer image in over 12 months")
+    if row.get("archived"):
+        out.append("upstream repository archived")
+    if quiet(row, now):
+        out.append("no release in over 12 months")
     f = row["findings"]
     if f and f["unscanned"]:
         out.append(f"{len(f['unscanned'])} image(s) not scanned")
@@ -508,10 +680,10 @@ def render_markdown(rows: list[dict], now: datetime, scanned: bool) -> str:
             else "findings not available in this run")),
         "",
         ("- **Pinned** — the tag of the stack's primary image in `main`, and when that "
-         "image was published."),
+         "version was released upstream."),
         ("- **Newest** — the newest upstream tag in the same shape as the pin "
-         "(same prefix, number of parts and suffix), and when it was published. "
-         "Official images rebuilt for a base update carry the build date."),
+         "(same prefix, number of parts and suffix), and when it was released. "
+         "Where no upstream release matches, the date is the image's build date."),
         ("- **CRITICAL · HIGH** — findings with a published fix, in every image of the "
          "stack. A linked count means the stack README assesses the CRITICAL ones "
          "under *Open findings*."),
@@ -542,25 +714,35 @@ def render_markdown(rows: list[dict], now: datetime, scanned: bool) -> str:
     return "\n".join(lines)
 
 
-def render_json(rows: list[dict], now: datetime) -> str:
-    payload = {
-        "generated": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "stacks": {
-            r["stack"]: {
-                "image": r["image"],
-                "pinned": r["pinned"],
-                "pinned_date": day(r["pinned_date"]) if r["pinned_date"] else None,
-                "newest": r["newest"],
-                "newest_date": day(r["newest_date"]) if r["newest_date"] else None,
-                "status": r["status"],
-                "reason": r["reason"] or None,
-                "images": r["images"],
-                "findings": r["findings"],
-                "assessed": r["assessed"],
-            }
-            for r in rows
-        },
+def json_row(r: dict, now: datetime) -> dict:
+    def d(when):
+        return day(when) if when else None
+    return {
+        "checked": day(now),
+        "image": r["image"],
+        "pinned": r["pinned"],
+        "pinned_date": d(r["pinned_date"]),
+        "pinned_date_source": r.get("pinned_date_source"),
+        "newest": r["newest"],
+        "newest_date": d(r["newest_date"]),
+        "newest_date_source": r.get("newest_date_source"),
+        "status": r["status"],
+        "reason": r["reason"] or None,
+        "repo": r.get("repo"),
+        "archived": r.get("archived"),
+        "last_release": d(r.get("last_release")),
+        "quiet": quiet(r, now),
+        "images": r["images"],
+        "findings": r["findings"],
     }
+
+
+def render_json(rows: list[dict], now: datetime, previous: dict | None = None) -> str:
+    """The data file; with `previous`, the stacks not in `rows` are kept as they were."""
+    stacks_out = dict((previous or {}).get("stacks") or {})
+    for r in rows:
+        stacks_out[r["stack"]] = json_row(r, now)
+    payload = {"stacks": dict(sorted(stacks_out.items()))}
     return json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
 
 
@@ -579,7 +761,10 @@ def main() -> int:
     scanned = scan_findings(args.results_dir) is not None
     markdown = render_markdown(rows, now, scanned)
     if args.json:
-        args.json.write_text(render_json(rows, now), encoding="utf-8")
+        previous = None
+        if args.stack and args.json.is_file():
+            previous = json.loads(args.json.read_text(encoding="utf-8"))
+        args.json.write_text(render_json(rows, now, previous), encoding="utf-8")
     if args.markdown:
         args.markdown.write_text(markdown + "\n", encoding="utf-8")
     if not args.json and not args.markdown:

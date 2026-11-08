@@ -22,7 +22,7 @@ deployment patterns: a **static site** and a **web API**, following the same
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Version](https://img.shields.io/badge/version-v0.9.8-blue)](CHANGELOG.md)
 
-**[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
+**[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Stacks at a glance](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
 </div>
 
@@ -173,7 +173,7 @@ Four phases, and the repository covers all of them:
 
 - **Deploy** — a shared structure for Compose stacks, with configurable values documented in `.env.example`; host-installed tools have their own setup guides
 - **Secure** — `no-new-privileges`, Docker socket proxies, file-based secrets with documented exceptions, datastores unreachable from the host network, memory, PID and swap limits — checked on every pull request; capabilities dropped and a read-only root filesystem wherever the image allows it
-- **Operate** — healthchecks, resource and swap limits, monitoring stacks, and a recorded version each stack was last verified against
+- **Operate** — healthchecks, resource and swap limits, monitoring stacks, and the date and version each stack last ran on a host
 - **Recover** — Borgmatic with database-aware dumps, and restore playbooks per persistence pattern
 
 [`docs/architecture.md`](docs/architecture.md) covers the networking model and how the
@@ -184,9 +184,10 @@ stack is checked against.
 
 **Pre-1.0** — paths, variable names and defaults can still change.
 
-Verification depth varies by stack. [`LIFECYCLE.md`](LIFECYCLE.md) records what the
-maintainer has done with each stack — run it, against which version, restored its
-data — and the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status)
+[`LIFECYCLE.md`](LIFECYCLE.md) shows one row per stack: the pin and when upstream
+released it, the newest upstream release, the CRITICAL and HIGH findings in the
+upstream images, and when the stack last ran on a host. Between two updates of
+that file, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status)
 shows what upstream has published since.
 
 ## Documentation
@@ -194,7 +195,7 @@ shows what upstream has published since.
 | | |
 |---|---|
 | Every stack, by category | [core/](core/) · [apps/](apps/) · [business/](business/) · [monitoring/](monitoring/) · [backup/](backup/) |
-| Verification status per stack | [LIFECYCLE.md](LIFECYCLE.md) |
+| Pin, upstream, findings and last test per stack | [LIFECYCLE.md](LIFECYCLE.md) |
 | Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
 | What a stack may assume and must provide | [application contract](docs/architecture.md#the-application-contract) |
 | Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |

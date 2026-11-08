@@ -11,7 +11,6 @@
 - **Origin:** Brot & Games · no country stated · no country
 - **Domain:** Monitoring
 - **Role:** HTTP checks on a cron schedule with a dashboard, webhook notifications and TLS expiry warnings
-- **Based on version:** `1.12.0`
 
 ## Origin, stated precisely
 

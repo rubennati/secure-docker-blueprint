@@ -11,7 +11,6 @@
 - **Origin:** Germany · Eugen Pankov Softwareentwicklung · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Lightweight access proxy for SSH, HTTPS, databases, Kubernetes, RDP and VNC
-- **Based on version:** `0.30.4`
 - **Verification snapshot:** 2026-09-19 — hardening only (see below), not a full clean-install run
 
 ## What we use

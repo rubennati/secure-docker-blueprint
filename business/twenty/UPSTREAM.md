@@ -12,7 +12,6 @@
 - **Domain:** Business operations
 - **Role:** CRM: companies, people, opportunities and tasks, with an extensible data model and an API
 - **Edition gating:** files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0 — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
-- **Based on version:** `v2.55.0`
 - **Last verified:** 2026-09-23 (v2.41.0) — behind Traefik with TLS: the first sign-up and workspace, a company over the interface and over REST, the interface under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
 
 The origin comes from Twenty's terms of service, which name Twenty.com PBC as a
@@ -190,5 +189,5 @@ backup and restore; an upgrade across versions.
 6. `docker compose exec twenty-server yarn command:prod upgrade:status --failed-only`
    lists workspaces whose upgrade failed; a server restart retries it
 7. Log in and open a record
-8. Update **Based on version** above — and add **Last verified** only if the
+8. Add **Last verified** only if the
    upgrade was exercised on a real install

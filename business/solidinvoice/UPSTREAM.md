@@ -10,7 +10,6 @@
 - **Origin:** SolidInvoice · no country stated in its published terms · no country
 - **Domain:** Business operations
 - **Role:** Invoicing: clients, quotes, invoices, recurring invoices and payments
-- **Based on version:** `3.1.2`
 - **Last verified:** 2026-09-22 (3.0.1) — behind Traefik with TLS: the web installer to the end, the onboarding with a client and an invoice, a restart, and the README's restore
 
 ## What we use
@@ -139,5 +138,5 @@ TLS; email; backup and restore. This is the least-verified stack in its batch.
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`
 6. Log in and open an invoice
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

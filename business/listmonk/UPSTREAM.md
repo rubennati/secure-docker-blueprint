@@ -10,7 +10,6 @@
 - **Origin:** India · Zerodha (Kailash Nadh) · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Newsletter and mailing-list manager
-- **Based on version:** `v6.2.0`
 - **Last verified:** 2026-11-03 (v6.2.0) — lab host behind Traefik 3.7.17 on its edge network: the super admin on the first visit, login, a double opt-in list, the public subscription form, the opt-in and a campaign mail; the README's borgmatic entry did not restore (the host's PostgreSQL client), the PostgreSQL 16 client did (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (Last checked)
 
 ## What we use

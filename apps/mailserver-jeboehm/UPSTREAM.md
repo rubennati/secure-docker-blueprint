@@ -13,7 +13,6 @@
 - **Origin:** Germany · Jeffrey Boehm (individual maintainer) · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail
-- **Based on version:** `8.1.0`
 
 ## Project maturity
 

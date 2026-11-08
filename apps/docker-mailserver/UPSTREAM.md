@@ -13,7 +13,6 @@
 - **Origin:** Community · docker-mailserver organisation · no single jurisdiction
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface
-- **Based on version:** `16.0.1`
 
 `tvial/docker-mailserver` on Docker Hub is this project's former image name; its
 newest tag is from 2021-01-16.

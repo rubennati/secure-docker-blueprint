@@ -10,7 +10,6 @@
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
-- **Based on version:** `v1.7.0`
 - **Last verified:** 2026-09-21 (v1.5.0) — behind Traefik with TLS: both routes, a provider credential from a Docker Secret, an MCP target under `/mcp`, a restart, and a restore
 
 ## What we use
@@ -118,5 +117,5 @@ serving `smollm2:135m` as the backend:
 4. Bump `APP_TAG` in `.env.example`
 5. Validate the config with `--validate-only` against the new image
 6. `docker compose pull && docker compose up -d`; make a real `/v1` request
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

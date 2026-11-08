@@ -298,9 +298,11 @@ host, which is v0.10.0; whether a policy is stated at all is settled.
 
 Five generated views, each checked against the files that own it.
 
-`scripts/ci/lifecycle-report.py --check` fails on a status claim that is not
-backed: an owner and its mirror disagreeing, a ✅ without `Last verified`, or a
-`LIFECYCLE.md` left stale against its sources.
+`scripts/ci/lifecycle-report.py --check` fails when `LIFECYCLE.md`,
+`lifecycle.json` or a stack README's findings block is stale against its sources
+— the stack folders, `upstream-status.json` and the rehearsal log — or when a
+stack with findings has no `## Open findings` section. A stack carries no state
+to claim (DEC-080).
 
 `scripts/ci/sovereignty-report.py --check` fails when a stack states no licence
 or origin, or when `sovereignty.json` is stale.

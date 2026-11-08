@@ -10,7 +10,6 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Photos
 - **Role:** Photo library with face recognition and search
-- **Based on version:** `1.5.1` (upstream moved from weekly builds to semver)
 - **Last checked:** 2026-04-17
 
 ## What we use

@@ -11,7 +11,6 @@
 - **Domain:** Infrastructure
 - **Role:** Controller for Ubiquiti UniFi network devices
 - **Note:** Proprietary software — not open source. LSIO wrapper scripts are GPL-3. Ubiquiti is a US company; CLOUD Act applies to cloud-managed deployments. Self-hosted (local controller) has no cloud dependency.
-- **Based on version:** `10.6.109` (LSIO build of UniFi Network Application)
 - **Last checked:** 2026-04-17
 
 ## What we use

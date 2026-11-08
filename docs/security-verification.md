@@ -385,9 +385,11 @@ document restates their coverage, severity or exit behavior — it points here.
   with the stacks that use it, why the pin cannot move and the risk. An
   exception missing any of these fails the job — the baseline is the
   repository's own writing — and there is no way to
-  record a scan's findings in bulk. Each stack named in an exception carries an
-  `## Open findings` section in its README and an *Open findings* mark in
-  `LIFECYCLE.md` and on the site, which `lifecycle-report.py --check` enforces.
+  record a scan's findings in bulk. Each stack named in an exception, and each
+  stack with findings at its pin, carries an `## Open findings` section in its
+  README, with the generated counts per image and the reason by hand;
+  `LIFECYCLE.md` and the site show the counts. `lifecycle-report.py --check`
+  enforces both.
   Making the scan itself blocking was
   rejected in `.ai/decisions.md` (2026-09-20): the blueprint does not build
   these images, the findings that exist sit in layers upstream ships, and a gate

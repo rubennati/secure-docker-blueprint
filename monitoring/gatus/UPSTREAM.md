@@ -10,7 +10,6 @@
 - **Origin:** Canada · TwinProduction · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime and status page defined as YAML
-- **Based on version:** `v5.38.0`
 - **Last checked:** 2026-05-03
 
 ## What we use

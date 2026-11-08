@@ -245,7 +245,8 @@ If `borg compact` has already run since the deletion, the data is gone. That is 
 ## Rehearsal log
 
 The `Stack` column carries the repository key, which is what
-`scripts/ci/lifecycle-report.py` reads to award `ops-proven`.
+`scripts/ci/lifecycle-report.py` reads to show *with restore* beside the stack's
+last test date.
 
 | Date | Stack | Archive | Scope | Result | Notes |
 |---|---|---|---|---|---|

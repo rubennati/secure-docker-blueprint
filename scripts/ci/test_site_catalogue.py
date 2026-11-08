@@ -37,7 +37,7 @@ class Version(unittest.TestCase):
     def test_drops_image_name(self):
         self.assertEqual(sc.version({"pinned": "IMG=traefik:v3.7"}, ""), "3.7")
 
-    def test_falls_back_to_upstream_field(self):
+    def test_a_host_installed_component_reads_upstream_md(self):
         self.assertEqual(sc.version({}, "- **Based on version:** `2.0.1`\n"), "2.0.1")
 
 

@@ -10,7 +10,6 @@
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
-- **Based on version:** `v1.20.0`
 - **Last verified:** 2026-09-21 (v1.19.1-unprivileged) — behind Traefik with TLS: the REST API through the route, gRPC with 100,000 points, snapshot recovery, a restart, and the README's restore
 
 ## What we use
@@ -132,7 +131,7 @@ on a throwaway `proxy-public` network without Traefik:
 4. Bump `APP_TAG` in `.env.example` and `.env.local.example`
 5. `docker compose pull && docker compose up -d`
 6. Verify `/readyz`, then run a search against an existing collection
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was actually exercised on a real install
 
 The release notes name any version-specific upgrade requirement; read them for

@@ -16,7 +16,6 @@
 - **Origin:** China · FIT2CLOUD · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access management: stored target credentials, session recording, approval workflows
-- **Based on version:** `v5.1.1`
 - **Verification snapshot:** 2026-09-19 — clean start only (see below), not a full
   operational verification
 
