@@ -10,7 +10,7 @@
 - **Origin:** Australia · dgtlmoon · non-EU
 - **Domain:** Monitoring
 - **Role:** Watches web pages for changes: restocks, prices, terms
-- **Last verified:** 2026-09-13 (0.60.4) — patch recreated on a live host, route unchanged. 2026-09-08 (0.60.3) — v0.8.0 host session: clean start, password set in the UI, a watch on a page on the Docker network (after lifting the private-address guard), the ntfy notification through Apprise; a deliberate change on that page produced the notification on an iPhone within half a minute.
+- **Last verified:** 2026-11-08 (0.70.2) — lab host (VM), IPv4 LAN: moved from 0.70.1, a watch added through the API with the key from the datastore and checked, the two example watches the README names present, all three kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

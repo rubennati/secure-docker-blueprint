@@ -11,7 +11,7 @@
 - **Origin:** US · Red Hat, Inc. (CNCF incubating project) · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation
-- **Last verified:** 2026-09-07 (v26.7.3)
+- **Last verified:** 2026-11-08 (26.8.2) — lab host (VM), IPv4 LAN: moved from 26.8.1, a token for the bootstrap admin from the master realm, a realm created through the admin API and its discovery document served before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 What that date covers: boot under `cap_drop: ALL` as uid 1000, the healthcheck
 on the management port, Traefik routing under `acc-tailscale`, and the OIDC

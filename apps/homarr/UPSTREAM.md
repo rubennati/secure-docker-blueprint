@@ -10,7 +10,7 @@
 - **Origin:** Community · homarr-labs · EU contributors
 - **Domain:** Dashboards
 - **Role:** Dashboard with integrations into the services you run
-- **Last verified:** 2026-05-02 (v1.60.0)
+- **Last verified:** 2026-11-08 (2.12.0) — lab host (VM), IPv4 LAN: moved from v2.11.1, the setup wizard at `/init` served (a new instance redirects there) before and after `down`/`up`, the refused client answered `403`; the wizard was not completed (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

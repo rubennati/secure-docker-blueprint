@@ -11,7 +11,7 @@
 - **Origin:** UK · Collabora Productivity Ltd · non-EU
 - **Domain:** Documents and e-signature
 - **Role:** Office document editing server based on LibreOffice
-- **Last verified:** 2026-11-02 (26.04.5.2.1) — lab host on its edge network, after correcting the healthcheck: DOCX, XLSX and PPTX opened, edited, saved and reopened over WOPI from a lab host and through Nextcloud's `richdocuments` — there only with Nextcloud's public name reachable from the container; behind Nextcloud's closed route the document does not open (the report) — and Seafile CE with settings the blueprint does not ship; a WOPI host outside the alias groups is refused; the admin console answers 401; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (26.04.6.1.1) — lab host (VM), IPv4 LAN: moved from 26.04.5.2.1, discovery and capabilities served, the admin console asking for credentials, the same after `down`/`up`; the route is public by design, so check 3's refusal does not apply; `/cool/convert-to` answered a client outside every list (the report's suggestion); the editor with Nextcloud was not opened (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
-- **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (16.54.0) — lab host (VM), IPv4 LAN: moved from v16.53.0, `ops/create-site.sh` created the site with ERPNext, Administrator logged in through the API, a ToDo created and read back after `down`/`up`, socket.io answering polling and the websocket upgrade (`101`) through Traefik, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the

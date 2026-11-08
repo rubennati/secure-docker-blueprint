@@ -12,7 +12,7 @@
 - **Domain:** Business operations
 - **Role:** CRM: companies, people, opportunities and tasks, with an extensible data model and an API
 - **Edition gating:** files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0 — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
-- **Last verified:** 2026-09-23 (v2.41.0) — behind Traefik with TLS: the first sign-up and workspace, a company over the interface and over REST, the interface under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (2.56.1) — lab host (VM), IPv4 LAN: started at v2.55.0, an account signed up through the metadata API, then moved to v2.56.1 — the server's metadata upgrade ran on start and the account was present afterwards; server and worker healthy before and after `down`/`up`, the refused client answered `403`; no workspace was created (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from Twenty's terms of service, which name Twenty.com PBC as a
 public benefit corporation incorporated in Delaware.
