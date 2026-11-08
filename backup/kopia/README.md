@@ -30,6 +30,8 @@ configuration.
 
 ```bash
 cp .env.example .env            # host name, the two account names
+# ops/init.sh runs the image through docker compose, which needs kopia-edge:
+# list it in core/traefik/.env EDGE_NETWORKS, render and recreate Traefik first
 ops/init.sh                     # passwords, the server certificate, the repository
 docker compose up -d
 docker compose logs kopia-server --follow    # watch for: SERVER ADDRESS: https://[::]:51515
