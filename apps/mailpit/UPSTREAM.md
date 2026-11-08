@@ -10,7 +10,7 @@
 - **Origin:** New Zealand · Ralph Slooten (axllent) · non-EU
 - **Domain:** Developer tools
 - **Role:** SMTP sink that catches every outgoing message and shows it, delivering nothing
-- **Last verified:** 2026-11-02 (v1.31.1) — lab host: the SMTP sink for `apps/vaultwarden` on `proxy-public` (its verification mail delivered and read back), the API refused without credentials and answering with them only under the host name in `MP_ALLOWED_HOSTS` (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (1.33.1) — lab host (VM), IPv4 LAN: moved from v1.33.0, a message sent with `mailpit sendmail` read through the API behind the UI password, kept after `down`/`up`, the refused client answered `403`; the README's password step corrected (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

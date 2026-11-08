@@ -11,7 +11,7 @@
 - **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
 - **Domain:** Dashboards
 - **Role:** One page linking everything you run, configured in a single YAML file
-- **Last verified:** 2026-05-02 (v4.0.4)
+- **Last verified:** 2026-11-08 (4.9.17) — lab host (VM), IPv4 LAN: moved from 4.9.15, the dashboard served behind the basicAuth gate (`401` without, `200` with the credentials), the refused client answered `403`, the same after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

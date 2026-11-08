@@ -4,7 +4,7 @@
 
 Generated 2026-11-08 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 81 pin the newest upstream release, 30 pin an older one. 68 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 81 pin the newest upstream release, 22 pin an older one. 68 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -51,11 +51,11 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/agentgateway`](apps/agentgateway/) | `v1.7.0` · 2026-10-27 | = Pin | 0 · 0 | [2026-09-21](apps/agentgateway/UPSTREAM.md) · ran `v1.5.0` |
 | [`apps/bookstack`](apps/bookstack/) | `version-v26.09.2` · 2026-10-20 | not determinable | [1 · 31](apps/bookstack/README.md#open-findings) | [2026-05-03](apps/bookstack/UPSTREAM.md) · ran `v25.02` |
 | [`apps/caldiy`](apps/caldiy/) | `v6.2.0-6` · 2026-03-01 | = Pin | [24 · 711](apps/caldiy/README.md#open-findings) | [2026-07-26](apps/caldiy/UPSTREAM.md) · ran `v6.2.0-3` |
-| [`apps/calnode`](apps/calnode/) | `0.13.0` · 2026-11-03 | `0.14.0` · 2026-11-07 | [3 · 54](apps/calnode/README.md#open-findings) | [2026-09-22](apps/calnode/UPSTREAM.md) · ran `0.9.0` |
-| [`apps/calrs`](apps/calrs/) | `1.22.0` · 2026-10-31 | `1.23.0` · 2026-11-07 | [0 · 3](apps/calrs/README.md#open-findings) | [2026-09-22](apps/calrs/UPSTREAM.md) · ran `1.17.1` |
-| [`apps/ciso-assistant`](apps/ciso-assistant/) | `v4.2.1` · 2026-11-01 | `v4.2.2` · 2026-11-08 | [2 · 79](apps/ciso-assistant/README.md#open-findings) | [2026-09-22](apps/ciso-assistant/UPSTREAM.md) · ran `v4.0.5` |
+| [`apps/calnode`](apps/calnode/) | `0.14.0` | not checked at this pin | — | [2026-11-08](apps/calnode/UPSTREAM.md) |
+| [`apps/calrs`](apps/calrs/) | `1.23.0` | not checked at this pin | — | [2026-11-08](apps/calrs/UPSTREAM.md) |
+| [`apps/ciso-assistant`](apps/ciso-assistant/) | `v4.2.2` | not checked at this pin | — | [2026-11-08](apps/ciso-assistant/UPSTREAM.md) |
 | [`apps/collabora`](apps/collabora/) | `26.04.5.2.1` · 2026-10-23 | `26.04.6.1.1` · 2026-11-07 | [1 · 1](apps/collabora/README.md#open-findings) | [2026-11-02](apps/collabora/UPSTREAM.md) |
-| [`apps/dashy`](apps/dashy/) | `4.9.15` · 2026-11-02 | `4.9.17` · 2026-11-07 | 0 · 0 | [2026-05-02](apps/dashy/UPSTREAM.md) · ran `v4.0.4` |
+| [`apps/dashy`](apps/dashy/) | `4.9.17` | not checked at this pin | — | [2026-11-08](apps/dashy/UPSTREAM.md) |
 | [`apps/defectdojo`](apps/defectdojo/) | `3.5.0` · 2026-11-02 | = Pin | [3 · 95](apps/defectdojo/README.md#open-findings) | [2026-09-22](apps/defectdojo/UPSTREAM.md) · ran `3.3.100` |
 | [`apps/dependency-track`](apps/dependency-track/) | `5.2.1` · 2026-10-25 | = Pin | [3 · 36](apps/dependency-track/README.md#open-findings) | — |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `v2.4.29` · 2026-08-10 | = Pin | [28 · 920](apps/dfir-iris/README.md#open-findings) | — |
@@ -75,16 +75,16 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/immich`](apps/immich/) | `v3.3.6` · 2026-11-04 | = Pin | [16 · 102](apps/immich/README.md#open-findings) | [2026-11-08](apps/immich/UPSTREAM.md) |
 | [`apps/it-tools`](apps/it-tools/) | `2024.10.22-7ca5933` · 2024-10-22 | = Pin · ⚠️ no release since 2024-10-22 | [2 · 27](apps/it-tools/README.md#open-findings) | [2026-11-02](apps/it-tools/UPSTREAM.md) |
 | [`apps/librephotos`](apps/librephotos/) | `1.5.1` · 2026-10-31 | = Pin | [1 · 33](apps/librephotos/README.md#open-findings) | [2026-04-17](apps/librephotos/UPSTREAM.md) · no version recorded |
-| [`apps/litellm`](apps/litellm/) | `v1.108.0` · 2026-11-04 | `v1.108.3` · 2026-11-07 | [1 · 29](apps/litellm/README.md#open-findings) | [2026-09-21](apps/litellm/UPSTREAM.md) · ran `v1.101.0` |
+| [`apps/litellm`](apps/litellm/) | `v1.108.3` | not checked at this pin | — | [2026-11-08](apps/litellm/UPSTREAM.md) |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `v7.12.1` · 2026-11-03 | `v7.12.2` · 2026-11-07 | [1 · 29](apps/lycheeorg/README.md#open-findings) | [2026-11-08](apps/lycheeorg/UPSTREAM.md) · with restore |
-| [`apps/mailpit`](apps/mailpit/) | `v1.33.0` · 2026-10-31 | `v1.33.1` · 2026-11-07 | 0 · 0 | [2026-11-02](apps/mailpit/UPSTREAM.md) · ran `v1.31.1` |
+| [`apps/mailpit`](apps/mailpit/) | `v1.33.1` | not checked at this pin | — | [2026-11-08](apps/mailpit/UPSTREAM.md) |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `8.1.0` · 2026-11-04 | `8.1.2` · 2026-11-07 | [2 · 41](apps/mailserver-jeboehm/README.md#open-findings) | — · [needs a host with port 25 open and public DNS](apps/mailserver-jeboehm/UPSTREAM.md) |
 | [`apps/monicahq`](apps/monicahq/) | `4.1.2-apache` · 2024-05-04 | = Pin · ⚠️ no release since 2024-05-04 | [4 · 50](apps/monicahq/README.md#open-findings) | [2026-11-03](apps/monicahq/UPSTREAM.md) · with restore |
 | [`apps/n8n`](apps/n8n/) | `2.46.6` · 2026-11-04 | `3.1.0` · 2026-11-03 | [1 · 23](apps/n8n/README.md#open-findings) | [2026-11-03](apps/n8n/UPSTREAM.md) · with restore · ran `2.41.7` |
 | [`apps/nextcloud`](apps/nextcloud/) | `35.0.2-fpm-alpine` · 2026-11-06 | = Pin | [1 · 28](apps/nextcloud/README.md#open-findings) | [2026-11-08](apps/nextcloud/UPSTREAM.md) · with restore |
 | [`apps/nocodb`](apps/nocodb/) | `2026.10.1` · 2026-10-29 | = Pin | 0 · 0 | [2026-05-02](apps/nocodb/UPSTREAM.md) · ran `v0.301.5` |
 | [`apps/obot`](apps/obot/) | `v0.27.0` · 2026-10-20 | `v0.28.0` · 2026-11-07 | [3 · 56](apps/obot/README.md#open-findings) | — |
-| [`apps/ollama`](apps/ollama/) | `0.40.14` · 2026-11-03 | `0.40.15` · 2026-11-03 | [0 · 2](apps/ollama/README.md#open-findings) | [2026-09-21](apps/ollama/UPSTREAM.md) · ran `0.34.2` |
+| [`apps/ollama`](apps/ollama/) | `0.40.15` | not checked at this pin | — | [2026-11-08](apps/ollama/UPSTREAM.md) |
 | [`apps/onlyoffice`](apps/onlyoffice/) | `10.0.0` · 2026-10-12 | = Pin | [0 · 2](apps/onlyoffice/README.md#open-findings) | [2026-11-02](apps/onlyoffice/UPSTREAM.md) · ran `9.4.0` |
 | [`apps/open-webui`](apps/open-webui/) | `v0.13.0` · 2026-11-03 | = Pin | [4 · 31](apps/open-webui/README.md#open-findings) | [2026-09-21](apps/open-webui/UPSTREAM.md) · ran `v0.11.3` |
 | [`apps/opencanary`](apps/opencanary/) | `0.9.10` · 2026-09-21 | = Pin | [8 · 111](apps/opencanary/README.md#open-findings) | — · [needs a real host for the ports below 1024, which Docker Desktop cannot show](apps/opencanary/UPSTREAM.md) |
@@ -100,7 +100,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/shlink`](apps/shlink/) | `5.1.8` · 2026-10-21 | = Pin | [2 · 33](apps/shlink/README.md#open-findings) | — |
 | [`apps/stalwart`](apps/stalwart/) | `v1.0.3` · 2026-11-04 | = Pin | [0 · 3](apps/stalwart/README.md#open-findings) | — · [needs a host with port 25 open and public DNS](apps/stalwart/UPSTREAM.md) |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `v2.6.2` · 2026-05-10 | = Pin | [2 · 30](apps/threat-dragon/README.md#open-findings) | — |
-| [`apps/tymeslot`](apps/tymeslot/) | `1.39.0-slim` · 2026-11-04 | `1.41.0-slim` · 2026-11-05 | [1 · 28](apps/tymeslot/README.md#open-findings) | [2026-09-07](apps/tymeslot/UPSTREAM.md) · with restore · ran `v1.15.1` |
+| [`apps/tymeslot`](apps/tymeslot/) | `1.41.0-slim` | not checked at this pin | — | [2026-11-08](apps/tymeslot/UPSTREAM.md) · with restore |
 | [`apps/unifi`](apps/unifi/) | `10.6.109` · 2026-11-03 | not determinable | [12 · 57](apps/unifi/README.md#open-findings) | [2026-04-17](apps/unifi/UPSTREAM.md) · no version recorded |
 | [`apps/vaultwarden`](apps/vaultwarden/) | `1.37.5` · 2026-11-01 | = Pin | [1 · 28](apps/vaultwarden/README.md#open-findings) | [2026-11-02](apps/vaultwarden/UPSTREAM.md) · with restore · ran `1.37.4` |
 | [`apps/velociraptor`](apps/velociraptor/) | `0.77.3` · 2026-10-05 | = Pin | [0 · 10](apps/velociraptor/README.md#open-findings) | — |

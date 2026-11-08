@@ -10,7 +10,7 @@
 - **Origin:** France · Olivier Lambert · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages and availability read from a CalDAV calendar you already run
-- **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the bootstrap, the login, a guest booking, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (1.23.0) — lab host (VM), IPv4 LAN: moved from 1.22.0, the administrator created with `ops/bootstrap-admin.sh` (in a pseudo-terminal) and registration closed, a login with the double-submit CSRF token reaching the dashboard before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 

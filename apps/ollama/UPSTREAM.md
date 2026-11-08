@@ -10,7 +10,7 @@
 - **Origin:** United States · Ollama Inc. (California) · non-EU
 - **Domain:** AI and local AI
 - **Role:** Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU
-- **Last verified:** 2026-09-21 (0.34.2) — behind Traefik with TLS: models to 3.2B parameters pulled and served through the route on CPU, concurrent requests, a restart, and a restore of `volumes/data`
+- **Last verified:** 2026-11-08 (0.40.15) — lab host (VM), IPv4 LAN, CPU only: moved from 0.40.14, a 0.5B model pulled and answering through the route behind the basicAuth gate, two concurrent requests, the model kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

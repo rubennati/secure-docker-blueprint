@@ -11,7 +11,7 @@
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Meeting scheduling with booking pages, calendar sync and video links
 - **Pinning:** the `-slim` tag, digest-pinned
-- **Last verified:** 2026-09-07 (v1.15.1)
+- **Last verified:** 2026-11-08 (1.41.0) — lab host (VM), IPv4 LAN: moved from 1.39.0, the migrations on the first start, `/` redirecting to the login page as the README's check expects, the same after `down`/`up`, the refused client answered `403`; no account registered — the registration form is a LiveView page this run did not drive (docs/labs/stack-refresh/2026-11-08-results.md)
 
 What that date covers: a clean install, migrations, the healthcheck, Traefik
 routing under `acc-tailscale` and `sec-3`, registration and the LiveView
