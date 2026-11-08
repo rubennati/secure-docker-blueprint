@@ -21,6 +21,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   `# public by design: <reason>` line stands above it (`public-default`).
   **Migration:** an existing `.env` keeps its value; check the routes you opened.
 
+### Fixed
+
+- **Upstream data no longer offers a pre-release or another release line as the
+  newest version.** `scripts/ci/upstream-status.py` reported n8n 3.1.0, a GitHub
+  pre-release, and the Portainer agent's 3.0.1 image tag, which has no release, as
+  newer than their stable and LTS pins. A version upstream published only as a
+  pre-release is skipped, and a pin upstream names LTS is compared with LTS
+  releases only. Release tags with a digit in the project name (`n8n@2.46.6`) are
+  now read by their version, which also corrects n8n's release dates.
+
 ### Changed
 
 - **Stack READMEs open with the application.** Each README starts with what the
