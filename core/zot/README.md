@@ -56,9 +56,9 @@ mkdir -p .secrets volumes/registry/.tmp   # .tmp: the CVE scanner's temp files (
 sudo chown -R 1000:1000 volumes/registry
 
 # Bcrypt htpasswd entry — this host has no htpasswd binary by default
-docker run --rm httpd:2.4-alpine htpasswd -Bbn admin "$(openssl rand -base64 24)" \
-  > .secrets/htpasswd
-# Note the generated password before it scrolls out of your shell history
+ZOT_PW="$(openssl rand -base64 24)"; echo "$ZOT_PW"   # the password for user admin — store it now, it is not shown again
+docker run --rm httpd:2.4-alpine htpasswd -Bbn admin "$ZOT_PW" > .secrets/htpasswd
+unset ZOT_PW
 
 docker compose up -d
 docker compose logs -f    # watch for "finished setting up ui routes"
