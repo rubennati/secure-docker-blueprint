@@ -13,7 +13,7 @@
 - **Origin:** Germany · Jeffrey Boehm (individual maintainer) · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail
-- **Last verified:** not yet — needs a host with port 25 open and public DNS
+- **Last verified:** 2026-11-08 (8.1.2) — lab host (VM), IPv4 LAN, a new installation: a certificate from core/acme-certs, `ops/setup.sh` created the domain, the administrator and the DKIM key, a message delivered locally through the MTA and found with `doveadm search`, IMAP authentication, the administration interface behind the route, all before and after `down`/`up`, the refused client answered `403`; outbound port 25 is open on this host but there is no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 

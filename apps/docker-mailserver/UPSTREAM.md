@@ -13,7 +13,7 @@
 - **Origin:** Community · docker-mailserver organisation · no single jurisdiction
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface
-- **Last verified:** not yet — needs a host with port 25 open and public DNS
+- **Last verified:** 2026-11-08 (17.0.0) — lab host (VM), IPv4 LAN, a new installation at the new major: a certificate from core/acme-certs, `ops/setup.sh` created the postmaster mailbox and the DKIM key (its printed path corrected for 17.0), an account added, a message delivered locally and found with `doveadm search`, IMAP authentication, all before and after `down`/`up`; no mail ports published, no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
 
 `tvial/docker-mailserver` on Docker Hub is this project's former image name; its
 newest tag is from 2021-01-16.

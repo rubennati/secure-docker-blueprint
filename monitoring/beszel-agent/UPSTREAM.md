@@ -10,7 +10,7 @@
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Agent that reports a remote host's metrics to Beszel
-- **Last checked:** 2026-05-03
+- **Last verified:** 2026-11-08 (0.21.1) — lab container (LXC) as the remote host, hub from monitoring/beszel on the lab host (VM): the agent connected out over WSS with the hub key and a universal token, registered under its system name, and was back after down/up
 
 ## What we use
 
