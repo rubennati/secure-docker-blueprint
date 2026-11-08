@@ -85,10 +85,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-07-26",
+    "tested": "2026-11-08",
     "tested_anchored": true,
-    "tested_differs": true,
-    "tested_version": "v6.2.0-3",
+    "tested_differs": false,
+    "tested_version": "v6.2.0-6",
     "upstream": "current"
   },
   "apps/calnode": {
@@ -223,10 +223,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": false,
-    "tested": "2026-09-22",
+    "tested": "2026-11-08",
     "tested_anchored": true,
-    "tested_differs": true,
-    "tested_version": "3.3.100",
+    "tested_differs": false,
+    "tested_version": "3.5.0",
     "upstream": "current"
   },
   "apps/dependency-track": {
@@ -1120,10 +1120,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": true,
-    "tested": "2026-11-02",
+    "tested": "2026-11-08",
     "tested_anchored": true,
-    "tested_differs": true,
-    "tested_version": "13.0.20",
+    "tested_differs": false,
+    "tested_version": "13.0.29",
     "upstream": "behind"
   },
   "apps/seafile-pro": {
@@ -1143,10 +1143,10 @@
     "quiet": false,
     "restore_docs": "missing",
     "restored": true,
-    "tested": "2026-11-02",
+    "tested": "2026-11-08",
     "tested_anchored": true,
-    "tested_differs": true,
-    "tested_version": "13.0.21",
+    "tested_differs": false,
+    "tested_version": "13.0.29",
     "upstream": "behind"
   },
   "apps/shlink": {

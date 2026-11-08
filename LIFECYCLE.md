@@ -50,13 +50,13 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/adminer`](apps/adminer/) | `6.3.0-standalone` · 2026-11-03 | = Pin | 0 · 0 | [2026-11-08](apps/adminer/UPSTREAM.md) |
 | [`apps/agentgateway`](apps/agentgateway/) | `v1.7.0` · 2026-10-27 | = Pin | 0 · 0 | [2026-11-08](apps/agentgateway/UPSTREAM.md) |
 | [`apps/bookstack`](apps/bookstack/) | `version-v26.09.2` · 2026-10-20 | not determinable | [1 · 31](apps/bookstack/README.md#open-findings) | [2026-11-08](apps/bookstack/UPSTREAM.md) |
-| [`apps/caldiy`](apps/caldiy/) | `v6.2.0-6` · 2026-03-01 | = Pin | [24 · 711](apps/caldiy/README.md#open-findings) | [2026-07-26](apps/caldiy/UPSTREAM.md) · ran `v6.2.0-3` |
+| [`apps/caldiy`](apps/caldiy/) | `v6.2.0-6` · 2026-03-01 | = Pin | [24 · 711](apps/caldiy/README.md#open-findings) | [2026-11-08](apps/caldiy/UPSTREAM.md) |
 | [`apps/calnode`](apps/calnode/) | `0.14.0` | not checked at this pin | — | [2026-11-08](apps/calnode/UPSTREAM.md) |
 | [`apps/calrs`](apps/calrs/) | `1.23.0` | not checked at this pin | — | [2026-11-08](apps/calrs/UPSTREAM.md) |
 | [`apps/ciso-assistant`](apps/ciso-assistant/) | `v4.2.2` | not checked at this pin | — | [2026-11-08](apps/ciso-assistant/UPSTREAM.md) |
 | [`apps/collabora`](apps/collabora/) | `26.04.6.1.1` | not checked at this pin | — | [2026-11-08](apps/collabora/UPSTREAM.md) |
 | [`apps/dashy`](apps/dashy/) | `4.9.17` | not checked at this pin | — | [2026-11-08](apps/dashy/UPSTREAM.md) |
-| [`apps/defectdojo`](apps/defectdojo/) | `3.5.0` · 2026-11-02 | = Pin | [3 · 95](apps/defectdojo/README.md#open-findings) | [2026-09-22](apps/defectdojo/UPSTREAM.md) · ran `3.3.100` |
+| [`apps/defectdojo`](apps/defectdojo/) | `3.5.0` · 2026-11-02 | = Pin | [3 · 95](apps/defectdojo/README.md#open-findings) | [2026-11-08](apps/defectdojo/UPSTREAM.md) |
 | [`apps/dependency-track`](apps/dependency-track/) | `5.2.1` · 2026-10-25 | = Pin | [3 · 36](apps/dependency-track/README.md#open-findings) | — |
 | [`apps/dfir-iris`](apps/dfir-iris/) | `v2.4.29` · 2026-08-10 | = Pin | [28 · 920](apps/dfir-iris/README.md#open-findings) | — |
 | [`apps/dify`](apps/dify/) | `1.19.0` · 2026-11-04 | = Pin | [6 · 84](apps/dify/README.md#open-findings) | [2026-11-08](apps/dify/UPSTREAM.md) |
@@ -95,8 +95,8 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/photoview`](apps/photoview/) | `2.4.0` · 2024-06-23 | = Pin · ⚠️ no release since 2024-06-23 | [5 · 55](apps/photoview/README.md#open-findings) | [2026-04-17](apps/photoview/UPSTREAM.md) · no version recorded |
 | [`apps/privatebin`](apps/privatebin/) | `2.1.1` · 2026-11-04 | = Pin | 0 · 0 | — |
 | [`apps/qdrant`](apps/qdrant/) | `v1.20.0-unprivileged` · 2026-10-22 | = Pin | [0 · 9](apps/qdrant/README.md#open-findings) | [2026-11-08](apps/qdrant/UPSTREAM.md) |
-| [`apps/seafile`](apps/seafile/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [3 · 103](apps/seafile/README.md#open-findings) | [2026-11-02](apps/seafile/UPSTREAM.md) · with restore · ran `13.0.20` |
-| [`apps/seafile-pro`](apps/seafile-pro/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [23 · 783](apps/seafile-pro/README.md#open-findings) | [2026-11-02](apps/seafile-pro/UPSTREAM.md) · with restore · ran `13.0.21` |
+| [`apps/seafile`](apps/seafile/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [3 · 103](apps/seafile/README.md#open-findings) | [2026-11-08](apps/seafile/UPSTREAM.md) · with restore |
+| [`apps/seafile-pro`](apps/seafile-pro/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [23 · 783](apps/seafile-pro/README.md#open-findings) | [2026-11-08](apps/seafile-pro/UPSTREAM.md) · with restore |
 | [`apps/shlink`](apps/shlink/) | `5.1.8` · 2026-10-21 | = Pin | [2 · 33](apps/shlink/README.md#open-findings) | — |
 | [`apps/stalwart`](apps/stalwart/) | `v1.0.3` · 2026-11-04 | = Pin | [0 · 3](apps/stalwart/README.md#open-findings) | — · [needs a host with port 25 open and public DNS](apps/stalwart/UPSTREAM.md) |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `v2.6.2` · 2026-05-10 | = Pin | [2 · 30](apps/threat-dragon/README.md#open-findings) | — |

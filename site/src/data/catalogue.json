@@ -122,8 +122,8 @@
     "quiet": false,
     "restored": false,
     "role": "Appointment booking pages, the community edition of Cal.com",
-    "tested": "2026-07-26",
-    "tested_version": "v6.2.0-3",
+    "tested": "2026-11-08",
+    "tested_version": null,
     "upstream": "https://cal.diy/",
     "upstream_status": "current",
     "version": "6.2.0-6"
@@ -330,8 +330,8 @@
     "quiet": false,
     "restored": false,
     "role": "Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure",
-    "tested": "2026-09-22",
-    "tested_version": "3.3.100",
+    "tested": "2026-11-08",
+    "tested_version": null,
     "upstream": "https://hub.docker.com/r/defectdojo/defectdojo-django",
     "upstream_status": "current",
     "version": "3.5.0"
@@ -1740,8 +1740,8 @@
     "quiet": false,
     "restored": true,
     "role": "File sync and share, community edition",
-    "tested": "2026-11-02",
-    "tested_version": "13.0.20",
+    "tested": "2026-11-08",
+    "tested_version": null,
     "upstream": "https://manual.seafile.com/13.0/docker/",
     "upstream_status": "behind",
     "version": "13.0.29"
@@ -1787,8 +1787,8 @@
     "quiet": false,
     "restored": true,
     "role": "File sync and share, professional edition",
-    "tested": "2026-11-02",
-    "tested_version": "13.0.21",
+    "tested": "2026-11-08",
+    "tested_version": null,
     "upstream": "https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/",
     "upstream_status": "behind",
     "version": "13.0.29"
