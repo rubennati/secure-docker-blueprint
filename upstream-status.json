@@ -4369,16 +4369,16 @@
       "images": [
         "portainer/agent:2.45.3"
       ],
-      "last_release": "2020-07-23",
+      "last_release": "2026-10-21",
       "newest": "3.0.1",
       "newest_date": "2026-11-03",
       "newest_date_source": "image",
       "pinned": "2.45.3",
       "pinned_date": "2026-10-21",
-      "pinned_date_source": "image",
+      "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
-      "repo": "portainer/agent",
+      "repo": "portainer/portainer",
       "status": "behind"
     },
     "core/shellhub": {

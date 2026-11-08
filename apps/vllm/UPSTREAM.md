@@ -12,10 +12,10 @@
 - **Domain:** AI and local AI
 - **Role:** High-throughput OpenAI-compatible model serving on an NVIDIA GPU
 
-No `Last verified` line yet — see [Verification performed](#verification-performed-2026-09-18)
-below for exactly what has been exercised and what has not. The field
-asserts the production file ran on a real host; it has not run on a GPU or
-behind Traefik. This stack stays `scaffolded` until that happens.
+- **Last verified:** not yet — needs a host with an NVIDIA GPU
+
+It has not run on a GPU or behind Traefik. What was exercised without one, and
+what was not: [Verification performed](#verification-performed-2026-09-18).
 
 ## What we use
 

@@ -4,6 +4,11 @@ Client-side encrypted secret sharing with a built-in secret-request
 workflow: someone can generate a link that asks a third party for a
 credential, without that person needing an account.
 
+> **Upstream archived.** The source repository is archived on GitHub (checked
+> 2026-11-08): no further releases and no fixes for the findings below. The stack
+> stays documented as it ran; plan a replacement. The other secret-sharing stacks
+> are [`apps/privatebin`](../privatebin/) and [`apps/yopass`](../yopass/).
+
 Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## License — read this first

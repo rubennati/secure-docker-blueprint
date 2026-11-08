@@ -31,11 +31,12 @@ products with separate structures, and v1.0 is the one checkpoint they share.
 
 Open in this repository:
 
-- **A test date or a named gap, for every stack.** Each stack has run at least once
-  on a clean install, with the date in its `UPSTREAM.md`, or its `UPSTREAM.md` says
-  why not. [`LIFECYCLE.md`](LIFECYCLE.md) shows which stacks have a date. A date
-  comes only from a host session, so this is measured there, not in editing
-  ([DEC-080](.ai/decisions.md#dec-080)).
+- **A host run for every stack that can have one.** Each stack has run at least
+  once on a clean install, with the date in its `UPSTREAM.md`. Where something
+  particular stands in the way — a GPU, port 25 and public DNS, an archived
+  upstream — its `UPSTREAM.md` names it instead. [`LIFECYCLE.md`](LIFECYCLE.md)
+  shows which stacks have a date. A date comes only from a host session, so this
+  is measured there, not in editing ([DEC-080](.ai/decisions.md#dec-080)).
 - **Traefik middlewares, checked against the applications on a host.** The
   names and the structure are settled by the middleware model of v0.9.5: four
   positions on every router, defined once. What is not established is how the

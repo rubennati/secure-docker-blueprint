@@ -155,8 +155,8 @@ docker compose up -d
 ## Version notes
 
 - Moved to `5.13.52` on 2026-10-31 (released 2026-10-30), not run at this tag;
-  `Last verified` stays at `5.13.40`, so the stack is `scaffolded`
-  (`pin-drifted`) until a host run. `5.13.45` replaces `OIDC_WELL_KNOWN` with
+  `Last verified` stays at `5.13.40`, and `LIFECYCLE.md` shows that version
+  beside the pin until a host run. `5.13.45` replaces `OIDC_WELL_KNOWN` with
   `OIDC_ISSUER`; this stack sets neither, an installation that configured OIDC
   renames it. No breaking change, no migration beyond `php artisan migrate`, no
   advisory in the range.

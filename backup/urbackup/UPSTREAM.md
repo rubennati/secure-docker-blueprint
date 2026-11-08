@@ -10,7 +10,7 @@
 - **Origin:** Germany · Martin Raiber (uroni) · EU
 - **Domain:** Backup
 - **Role:** Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows
-- **Last verified:** `__REPLACE_ME__`
+- **Last verified:** not yet — needs a client to back up and restore
 
 > Not yet verified on a host. The date is set only once a client has been backed
 > up and a restore confirmed — see `README.md` "Verify on first deploy".

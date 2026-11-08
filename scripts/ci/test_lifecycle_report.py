@@ -321,7 +321,9 @@ class Cells(unittest.TestCase):
     def test_a_named_gap(self):
         self.assertEqual(
             lr.tested_cell(self.row(tested="—", tested_anchored=False, gap="needs a GPU")),
-            "— · [gap named](apps/widget/UPSTREAM.md)")
+            "— · [needs a GPU](apps/widget/UPSTREAM.md)")
+        self.assertEqual(
+            lr.tested_cell(self.row(tested="—", tested_anchored=False, gap="")), "—")
 
     def test_render_has_no_state(self):
         report = lr.render([self.row()])

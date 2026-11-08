@@ -479,7 +479,7 @@
       "services": 1,
       "summary": "1 service"
     },
-    "gap": null,
+    "gap": "needs a host with port 25 open and public DNS",
     "high": 24,
     "last_release": "2026-11-05",
     "name": "docker-mailserver",
@@ -700,7 +700,7 @@
       "services": 1,
       "summary": "1 service"
     },
-    "gap": null,
+    "gap": "upstream archived; plan a replacement",
     "high": 30,
     "last_release": "2026-09-25",
     "name": "Hemmelig",
@@ -1110,7 +1110,7 @@
       "services": 7,
       "summary": "7 services · MySQL + Redis"
     },
-    "gap": null,
+    "gap": "needs a host with port 25 open and public DNS",
     "high": 41,
     "last_release": "2026-11-07",
     "name": "mailserver",
@@ -1448,7 +1448,7 @@
       "services": 1,
       "summary": "1 service"
     },
-    "gap": null,
+    "gap": "needs a real host for the ports below 1024, which Docker Desktop cannot show",
     "high": 111,
     "last_release": "2026-09-21",
     "name": "OpenCanary",
@@ -1863,7 +1863,7 @@
       "services": 1,
       "summary": "1 service"
     },
-    "gap": null,
+    "gap": "needs a host with port 25 open and public DNS",
     "high": 3,
     "last_release": "2026-11-04",
     "name": "Stalwart",
@@ -2055,7 +2055,7 @@
       "services": 1,
       "summary": "1 service · GPU required"
     },
-    "gap": null,
+    "gap": "needs a host with an NVIDIA GPU",
     "high": 9,
     "last_release": "2026-11-02",
     "name": "vLLM",
@@ -2354,7 +2354,7 @@
       "services": 1,
       "summary": "1 service"
     },
-    "gap": null,
+    "gap": "needs a client to back up and restore",
     "high": 19,
     "last_release": "2026-08-30",
     "name": "UrBackup Server",
@@ -3494,7 +3494,7 @@
     "decision_facts_checked": "2026-09-21",
     "domain": "Infrastructure",
     "footprint": null,
-    "gap": null,
+    "gap": "host scripts without a container; they need a host of their own",
     "high": null,
     "last_release": null,
     "name": "Host Watchdog",
@@ -3725,7 +3725,7 @@
     },
     "gap": null,
     "high": 6,
-    "last_release": "2020-07-23",
+    "last_release": "2026-10-21",
     "name": "Portainer Agent",
     "newest": "3.0.1",
     "newest_date": "2026-11-03",

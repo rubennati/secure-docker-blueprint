@@ -37,13 +37,13 @@ Paperless-ngx 23, OpenProject 22, Seafile 20.
 - [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
       if so bump the pin (normal upgrade), if not record the facts.
 
-### 2. A test date or a named gap for every stack (audit S1, DEC-080)
+### 2. A host run for every stack (audit S1, DEC-080)
 
 [`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md) is the ordered
 run: Traefik with TLS, a refused client, restart, restore, and each stack's own open
-items. Needs a host. A stack that cannot run on the lab host records why in its
-`UPSTREAM.md` (`Last verified: not yet — reason`); `lifecycle-report.py --check`
-lists the stacks with neither (`no-test-date`).
+items. Needs a host. A stack without a test date has not run on a host; where
+something particular stands in the way — a GPU, port 25, an archived upstream — its
+`UPSTREAM.md` says so (`Last verified: not yet — reason`).
 
 - [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` ran on a host at
       an earlier pin; `LIFECYCLE.md` names the version that ran.
@@ -168,8 +168,8 @@ products and are added as a second deliberate exception (`decisions.md`,
       questions need a host that can be flooded without consequence, so it
       waits. Both in `decisions.md`, 2026-09-24.
       Which of them landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
-      Each stack ships `scaffolded` — verified on its image, not yet behind
-      Traefik. Moving them to `baseline-aligned` is S1, above.
+      Each stack was verified on its image, not yet behind Traefik; a host run
+      is §2, above.
 - [ ] Replace MinIO in `business/plane` and `monitoring/langfuse`. Both stacks
       stop at it: MinIO withdrew every public image on 2026-09-24 and archived
       its source repository, so the pinned tag cannot be pulled and the services
@@ -237,8 +237,7 @@ milestone.
   Done: `VIKUNJA_MAILER_HOST` is empty, and the Brevo host stands only in a comment
   as an example.
 - The five AI stacks and Dify/Langfuse have no restore procedure performed; the READMEs
-  document one. The Restore docs column in `LIFECYCLE.md` records what each README
-  has; `ops-proven` records a rehearsal.
+  document one. A rehearsal shows as `with restore` in `LIFECYCLE.md`.
 - The Trivy scan does not cover images built locally (Cal.diY, the vikunja layer);
   recorded in `decisions.md`, 2026-09-18, the custom-application path.
 - `core/traefik/ops/scripts/validate.sh` searched the whole of `config/` for
@@ -345,7 +344,7 @@ session left open is in
 
 - Verify the Priority 1 stacks behind Traefik with TLS and restore each —
       [`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md).
-      Until then they stay `scaffolded`. Not done; the same item is §2 above, which
+      Not done; the same item is §2 above, which
       carries it, so it has no box here.
 
 - [x] Borgmatic: install, initialise repository, first backup, export the key off-host

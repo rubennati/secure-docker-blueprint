@@ -13,6 +13,7 @@
 - **Origin:** Germany · Jeffrey Boehm (individual maintainer) · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail
+- **Last verified:** not yet — needs a host with port 25 open and public DNS
 
 ## Project maturity
 

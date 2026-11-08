@@ -47,8 +47,6 @@ WARN:
                        version in parentheses — a date that names no version.
                        Converting it asserts that evidence is real, so it is
                        never automatic.
-  no-test-date         neither a `Last verified` line nor a named gap
-                       (`Last verified: not yet — reason`)
   not-checked          upstream-status.json has no row for the stack, or a row
                        written for another pin — run upstream-status.py
   backup-docs-split    UPSTREAM.md documents the backup or restore procedure as
@@ -76,7 +74,7 @@ CATEGORIES = ["core", "apps", "business", "monitoring", "backup"]
 EXCEPT = {"apps/_reference": "the canonical reference itself"}
 
 # Rules that report without blocking CI.
-WARN_RULES = {"legacy-stamp", "no-test-date", "not-checked", "backup-docs-split"}
+WARN_RULES = {"legacy-stamp", "not-checked", "backup-docs-split"}
 
 # `Last verified: 2026-07-29 (34.0.2-fpm-alpine)` — the version in parentheses
 # is what makes the date usable later.
@@ -498,12 +496,6 @@ def collect() -> tuple[list[dict], list[dict], dict[Path, str]]:
                               "`Last verified: DATE (version)` against confirmed "
                               "evidence",
                 })
-            if tested == "—" and not gap:
-                problems.append({
-                    "rule": "no-test-date", "stack": key,
-                    "detail": "UPSTREAM.md has no `Last verified` line and names no "
-                              "gap (`Last verified: not yet — reason`)",
-                })
             differs = bool(anchored and tag and not pin_matches_verified(
                 bare_pin_value(pinned) or "", tested_version))
 
@@ -636,7 +628,7 @@ def findings_cell(r: dict) -> str:
 
 def tested_cell(r: dict) -> str:
     if r["tested"] == "—":
-        return f"— · [gap named]({r['stack']}/UPSTREAM.md)" if r["gap"] else "—"
+        return f"— · [{cell(r['gap'])}]({r['stack']}/UPSTREAM.md)" if r["gap"] else "—"
     out = f"[{r['tested']}]({r['stack']}/UPSTREAM.md)"
     if not r["tested_anchored"]:
         return out + " · no version recorded"
@@ -696,8 +688,8 @@ def render(rows: list[dict]) -> str:
         "- **Last tested** — the date the stack last ran on a host, linked to the "
         + "record of what that run established. *with restore*: a backup of its "
         + "data was restored. *ran …*: the version that ran, where the pin has "
-        + "moved since. `—` with *gap named*: the stack's `UPSTREAM.md` says why "
-        + "it has no test date.",
+        + "moved since. `—`: not run on a host yet; where something particular "
+        + "stands in the way, the reason follows.",
         "",
         "The security baseline is not a column: the checkers enforce it for every "
         + "stack. Backup and restore documentation and the local test stack are in "

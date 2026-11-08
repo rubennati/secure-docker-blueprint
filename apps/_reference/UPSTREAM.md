@@ -1,9 +1,10 @@
 # Upstream Reference
 
 > **This is the template.** Copy it with the rest of `apps/_reference/` and replace
-> every `__REPLACE_ME__`. Every app in the blueprint carries one of these — it is
-> two of the baseline-aligned criteria, and `scripts/ci/lifecycle-report.py` reads the
-> `Last verified` line out of it.
+> every `__REPLACE_ME__`. Every app in the blueprint carries one of these, and
+> `scripts/ci/lifecycle-report.py` reads the `Last verified` line out of it: a date
+> and the version that ran, or `not yet — reason` where something particular stands
+> in the way of a host run.
 
 ## Source
 
