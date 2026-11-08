@@ -52,7 +52,7 @@ docker compose up -d
 
 ```bash
 docker compose ps                              # healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
+curl -fsSI https://<APP_TRAEFIK_HOST>/         # 307 to /init until the setup wizard is done, then 200
 ```
 
 ## Security Model
