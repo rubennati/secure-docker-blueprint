@@ -1,0 +1,183 @@
+---
+title: Uptime Kuma
+description: Uptime monitoring configured in the browser — HTTP, TCP, DNS and more, with status pages and alerts to almost any channel, VPN-only by default.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Uptime Kuma checks whether your services answer — HTTP, TCP, DNS, keywords in a
+page, certificate expiry — and alerts you when one stops. Monitors, notification
+channels and status pages are all configured in its web interface. One
+container, with a SQLite database in its data directory.
+
+<StackEvidence stack="monitoring/uptime-kuma" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `monitoring/uptime-kuma/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:3001`, choose SQLite on the database page and create
+the owner account. Stop it again with the same command and `down`.
+
+## Installation
+
+From `monitoring/uptime-kuma/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. List `uptime-kuma-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then
+   render and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Create the data directory and start the stack:
+
+   ```bash
+   mkdir -p volumes/data
+   docker compose up -d
+   docker compose logs uptime-kuma-app --follow
+   ```
+
+   Wait for `Listening on 3001`.
+
+4. Open `https://<APP_TRAEFIK_HOST>` straight away, choose SQLite and create the
+   owner account. Whoever opens the page first becomes the owner, so do this
+   before anyone else can reach it.
+
+5. Under **Settings → About**, switch off **Show update if available**. Uptime
+   Kuma otherwise asks `uptime.kuma.pet` for the newest version every 48 hours.
+   The setting lives in the database, so it is a step after the first login.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                              # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/         # 302 to /setup-database before setup, 200 after
+```
+
+Then add a monitor against a service you run and a notification channel, and
+use the channel's **Test** button. Stop the monitored container: the monitor
+turns red and the alert arrives where you pointed it. Start the container again
+for the recovery alert.
+
+## Going further
+
+### Who can reach it
+
+The stack ships `access-vpn`, with `limit-standard` and `headers-standard`. The
+interface shows every probe URL, the response bodies and the notification
+webhook URLs, so it answers on your VPN and nowhere else.
+
+### A public status page
+
+Status pages live at `/status/<slug>` and inherit the same access policy. To
+publish one while the admin interface stays on the VPN, add a second router on
+its own hostname with `access-public` in the first middleware position:
+
+```yaml
+- "traefik.http.routers.kuma-public.rule=Host(`status.example.com`)"
+- "traefik.http.routers.kuma-public.service=uptime-kuma"
+# + the four middleware positions, access-public@file in the first
+```
+
+### Alerts that reach you
+
+Uptime Kuma sends to ntfy, Gotify, Matrix, webhooks, email and many more. A
+receiver on the same host stops when the host does, so the outage that most
+needs an alert would produce none — [ntfy](/monitoring/ntfy/) on a second host
+closes that gap. Uptime Kuma also only alerts while it runs itself; a
+[dead-man's switch](/monitoring/healthchecks/) covers that.
+
+### Browser and gRPC monitors
+
+**Real Browser** monitors run the Chromium inside the image, and gRPC monitors
+use protobufjs. The findings in the evidence line above sit largely in those
+two components. Point those monitor types only at targets you control. The
+upstream `-slim` image ships without Chromium if you need no browser monitors.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `volumes/data` — SQLite at `/app/data/kuma.db`: every monitor, notification channel and credential |
+| **Critical** | All of it. The configuration lives in the database, not in files |
+| **Quiescing** | Dump rather than copy — the database is written continuously |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+sqlite_databases:
+    - name: uptime-kuma
+      path: /srv/docker/monitoring/uptime-kuma/volumes/data/kuma.db
+```
+
+Restore order: stop the container, restore, start. Then send a test message
+through every notification channel — a restore is complete once alerts arrive
+again.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/louislam/uptime-kuma/releases).
+
+2. Back up the data directory:
+
+   ```bash
+   cp -r volumes/data/ uptime-kuma-backup-$(date +%Y%m%d)/
+   ```
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Check that the monitors are active and a notification channel still sends.
+
+</Steps>
+
+## Troubleshooting
+
+**Someone else is the owner.** The first visitor to a new instance creates the
+owner account. On a new instance with nothing to keep, stop the stack, remove
+`volumes/data`, start it again and open the page yourself first.
+
+**The page answers 403.** The request did not come over the VPN. That is the
+`access-vpn` policy working; connect to the VPN or add a public status page as
+above.
+
+**SQLite contention with many monitors.** Above about 500 monitors the SQLite
+database becomes the bottleneck. Uptime Kuma can use MariaDB instead
+(`UPTIME_KUMA_DB_TYPE=mariadb`).
+
+**Files in `volumes/data` belong to root.** The image runs as root and the stack
+sets no `user:`, so files it creates there are root-owned. Read them with `sudo`.
+
+## Repository files
+
+- [`monitoring/uptime-kuma/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/uptime-kuma/README.md) — setup, security model, what it sends outward
+- [`monitoring/uptime-kuma/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/uptime-kuma/.env.example)
+- [`monitoring/uptime-kuma/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/uptime-kuma/UPSTREAM.md) — source and upgrade checklist
+
+## Official sources
+
+- [Uptime Kuma](https://uptime.kuma.pet/)
+- [Uptime Kuma on GitHub](https://github.com/louislam/uptime-kuma)
