@@ -12,7 +12,7 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
 - **Domain:** Infrastructure
 - **Role:** Docker management web interface, reaching Docker through a filtered socket proxy
-- **Last verified:** 2026-11-08 (2.45.3) — lab host (VM), IPv4 LAN: the administrator created with the setup token from the log (refused without it), the local Docker host through the socket proxy, the Edge environment of the lab container connected through port 8000 bound to one address (the lab's stand-in for the VPN address) and managed — containers listed, one created, started, its log read, stopped and removed — before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2.45.3) — over IPv4: the administrator created with the setup token from the log (refused without it), the local Docker host through the socket proxy, an Edge environment on a remote host connected through port 8000 bound to one address (the lab's stand-in for the VPN address) and managed — containers listed, one created, started, its log read, stopped and removed — before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 Note: this setup uses Portainer **CE** (Community Edition). Portainer Business Edition (`portainer/portainer-ee`) is a different paid product with additional features and a different license — not used here.
 
@@ -49,8 +49,8 @@ If you prefer `tecnativa/docker-socket-proxy`, replace the image and consult its
   `linuxserver/socket-proxy` had two minor lines of drift and this stack's whole point is
   the filter in front of the Docker API.
 - Moved `portainer/portainer-ce` to `2.45.3` on 2026-11-05 (released 2026-10-21, the
-  current LTS line), from the 2.39 LTS line across the STS releases 2.40 to 2.44, not
-  run on a host at this tag. Breaking changes: 2.41 replaced the CSRF protection —
+  current LTS line), from the 2.39 LTS line across the STS releases 2.40 to 2.44
+  . Breaking changes: 2.41 replaced the CSRF protection —
   entries in the trusted-origins list must be full URLs with scheme, and a browser
   request whose origin does not match gets `403 Forbidden` with `CSRF check failed` in
   the log; 2.42 removed the `legacy-csrf` fallback flag. This stack sets no trusted
@@ -75,7 +75,7 @@ If you prefer `tecnativa/docker-socket-proxy`, replace the image and consult its
   https://github.com/portainer/portainer/releases/tag/2.41.0
 - Moved `lscr.io/linuxserver/socket-proxy` to `3.4.7` on 2026-11-05 (LinuxServer build
   `3.4.7-r0-ls104` of 2026-10-27), patch releases of the HAProxy 3.4 package it is
-  built on, not run on a host at this tag. The LinuxServer builds 3.4.5 to 3.4.7 list
+  built on. The LinuxServer builds 3.4.5 to 3.4.7 list
   no changes of their own, only the package update, so the permission variables are
   unchanged. Source: https://github.com/linuxserver/docker-socket-proxy/releases
 

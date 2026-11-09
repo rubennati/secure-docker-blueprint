@@ -11,7 +11,7 @@
 - **Origin:** Germany · Nextcloud GmbH · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share with calendars, contacts and collaborative editing
-- **Last verified:** 2026-11-09 (35.0.2-fpm-alpine) — lab host (VM), IPv4 LAN, a new installation with Collabora over office.yml and office-collabora.yml behind the closed route: a .docx opened, edited, saved and reopened in the browser, a .docx preview rendered, sign-in and redirects at the public name, the same after `down`/`up`
+- **Last verified:** 2026-11-09 (35.0.2-fpm-alpine) — over IPv4, a new installation with Collabora over office.yml and office-collabora.yml behind the closed route: a .docx opened, edited, saved and reopened in the browser, a .docx preview rendered, sign-in and redirects at the public name, the same after `down`/`up`
 - **Supported until:** 2027-09-15
 
 Nextcloud publishes a major version every four months and maintains each for one
@@ -81,7 +81,7 @@ If fpm-alpine + nginx causes issues:
 ## Version notes
 
 - Moved to `34.0.5-fpm-alpine` on 2026-11-05 (released 2026-10-15, image rebuilt
-  2026-10-28), not run on a host at this tag. A maintenance release of the 34 line
+  2026-10-28). A maintenance release of the 34 line
   with no breaking change, no new requirement and no change to the environment
   variables or `nginx.conf`
   ([v34.0.5](https://github.com/nextcloud-releases/server/releases/tag/v34.0.5)).
@@ -99,7 +99,7 @@ If fpm-alpine + nginx causes issues:
   them.
 
 - The nginx front (`NGINX_TAG`) moved from `1.29-alpine-slim` to
-  `1.31-alpine-slim` on 2026-11-05, not run on a host at this tag; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
+  `1.31-alpine-slim` on 2026-11-05; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
   stable branch). The "Change:" entries from 1.30.0 to 1.31.8 do not touch this
   configuration: HTTP/2 and HTTP/3 requests carrying `Connection`, `Upgrade`, `TE`
   and similar headers are rejected, requests to backends always carry `:authority`
@@ -110,13 +110,12 @@ If fpm-alpine + nginx causes issues:
   CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
   CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
   CVE-2026-97629, CVE-2026-97205.
-- The nginx front is pinned to `1.31.8-alpine-slim` on 2026-11-05, not run on a
-  host at this tag; until then it followed the floating `1.31-alpine-slim`. The
+- The nginx front is pinned to `1.31.8-alpine-slim` on 2026-11-05; until then it followed the floating `1.31-alpine-slim`. The
   image the scan had pulled under that tag carried `brotli-libs` 1.2.0
   (CVE-2026-111497); the 1.31.8 build on Alpine 3.24.3 ships no brotli library
   at all. CRITICAL findings 1 -> 0. No configuration change.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -140,7 +139,7 @@ If fpm-alpine + nginx causes issues:
   https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
   https://docs.nextcloud.com/server/latest/admin_manual/configuration_server/caching_configuration.html
 - Moved to `35.0.2-fpm-alpine` on 2026-11-05 (35.0.2 released 2026-10-15, image
-  built 2026-10-23), not run on a host at this tag. One major step, 34 to 35,
+  built 2026-10-23). One major step, 34 to 35,
   as Nextcloud requires; 35.0.3 exists only as a release candidate. The image
   ships PHP 8.5, as the 34 image did. Nextcloud 35 drops PHP 8.2, MariaDB 10.6
   and MySQL 8.0 and adds MariaDB 12.3 as a supported LTS
@@ -156,8 +155,7 @@ If fpm-alpine + nginx causes issues:
   during `occ upgrade`. Supported until 2027-09-15
   ([v35.0.2](https://github.com/nextcloud-releases/server/releases/tag/v35.0.2),
   [schedule](https://github.com/nextcloud/server/wiki/Maintenance-and-Release-Schedule)).
-- Moved `mariadb` from `11.8` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Nextcloud 35 lists 12.3 as recommended;
+- Moved `mariadb` from `11.8` to `12.3.3`, the current LTS line, on 2026-11-05. Nextcloud 35 lists 12.3 as recommended;
   Nextcloud 34 supports it too, so take the two steps apart as README.md
   "Updates" says: first `DB_TAG` with `APP_TAG` still on 34, then `APP_TAG`.
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs

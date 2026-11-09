@@ -10,7 +10,7 @@
 - **Origin:** LF AI & Data Foundation (US non-profit) · originated at IBM Research Zurich, Switzerland · non-EU
 - **Domain:** AI and local AI
 - **Role:** Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines
-- **Last verified:** 2026-11-08 (1.38.2) — lab host (VM), IPv4 LAN: a PDF converted to Markdown through the route with the API key before and after `down`/`up`, `401` without the key, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.38.2) — over IPv4: a PDF converted to Markdown through the route with the API key before and after `down`/`up`, `401` without the key, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -80,8 +80,7 @@ Against the local test stack, without Traefik:
 
 ## Version notes
 
-- Moved to `v1.38.2` on 2026-11-05, not run on a host at this tag; `Last verified`
-  stays at `v1.34.0`. `v1.35.0` removes the deprecated openapi-3 endpoint, serves
+- Moved to `v1.38.2` on 2026-11-05. `v1.35.0` removes the deprecated openapi-3 endpoint, serves
   `/metrics` only with the Prometheus exporter on, and adds
   `DOCLING_SERVE_ENABLE_API_DOCS`, default true, whose pages (`/openapi.json`,
   `/docs`, `/swagger`, `/scalar`) need no API key; this stack sets it to `false`.

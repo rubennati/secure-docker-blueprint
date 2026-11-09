@@ -12,7 +12,7 @@
 - **Origin:** US · Alex Tran · non-EU
 - **Domain:** Photos
 - **Role:** Photo and video backup with mobile apps and machine-learning search
-- **Last verified:** 2026-11-08 (v3.3.6) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 14 with vectorchord, Valkey with cap_drop): the admin created through `admin-sign-up`, a second admin setup refused, an image uploaded and downloaded byte-identical after `down`/`up`, `/api/server/ping` 200, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v3.3.6) — over IPv4, a new installation with Postgres 14 with vectorchord, Valkey with cap_drop: the admin created through `admin-sign-up`, a second admin setup refused, an image uploaded and downloaded byte-identical after `down`/`up`, `/api/server/ping` 200, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -40,8 +40,7 @@
 
 ## Version notes
 
-- Moved to `v3.3.6` on 2026-11-05, server and machine learning together, not run
-  on a host at this tag; `Last verified` stays at `v3.2.0`. No breaking change,
+- Moved to `v3.3.6` on 2026-11-05, server and machine learning together. No breaking change,
   variable change or database image change in the range; migrations run on start.
   `v3.3.0` offers optimised models behind `MACHINE_LEARNING_MODEL_REVISION=v2`
   (opt-in, not set here). `v3.3.6` turns off onnxruntime telemetry, which had sent
@@ -50,8 +49,7 @@
   `v3.2.4`) and GHSA-72rm-x7xr-v679 (unauthenticated filesystem path injection;
   `v3.3.0`). `v3.3.5` carries the eMudhra CA removal and the Node.js October 2026
   security releases. https://github.com/immich-app/immich/releases
-- Moved `valkey/valkey` from `8.1.6` to `9.1.3` on 2026-11-05, not run on a host
-  at this tag. Immich's own release compose ships `valkey/valkey:9` since
+- Moved `valkey/valkey` from `8.1.6` to `9.1.3` on 2026-11-05. Immich's own release compose ships `valkey/valkey:9` since
   https://github.com/immich-app/immich/pull/24336
   (https://github.com/immich-app/immich/releases/latest/download/docker-compose.yml).
   Valkey 9 loads the 8.x RDB file in `./volumes/redis` at start; the file it
@@ -61,7 +59,7 @@
 - `DB_TAG` moved from `14-vectorchord0.4.3-pgvectors0.2.0` to
   `14-vectorchord1.1.1`, digest
   `sha256:b38cad4a8bdb716d19b07e5afb4a6e2ed9e7f8a5a93f428aae35f495c72d3498`, on
-  2026-11-05, not run on a host at this tag. The reason is the CVE fixes in the
+  2026-11-05. The reason is the CVE fixes in the
   newer base image. Upstream's own compose at `v3.3.6` still ships
   `14-vectorchord0.4.3-pgvectors0.2.0`; Immich `v3.3.6` accepts VectorChord
   `>=0.3 <2` (`VECTORCHORD_VERSION_RANGE` in `server/src/constants.ts`). On

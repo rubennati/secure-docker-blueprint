@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v1.4.3) — lab host (VM), IPv4 LAN, with Silo as the object store: /god-mode claimed, a workspace, project and work item created, an image attachment uploaded through the pre-signed URL into Silo and read back byte-identical, all still there after down/up
+- **Last verified:** 2026-11-08 (v1.4.3) — over IPv4, with Silo as the object store: /god-mode claimed, a workspace, project and work item created, an image attachment uploaded through the pre-signed URL into Silo and read back byte-identical, all still there after down/up
 
 ## Source
 
@@ -124,8 +124,7 @@ stack since the withdrawal started empty.
 
 ## Version notes
 
-- Moved to `v1.4.3` on 2026-10-31 (released 2026-10-28), all six images together,
-  not run at this tag. No breaking change, variable, migration or image order is
+- Moved to `v1.4.3` on 2026-10-31 (released 2026-10-28), all six images together. No breaking change, variable, migration or image order is
   labelled; the REST API now answers a validation error for assignees or labels
   outside the project instead of dropping them. The release fixes access-control
   issues (project publish, published boards, sub-work-items, invitations, sign-in

@@ -1,6 +1,6 @@
 # Vikunja — Upstream
 
-- **Last verified:** 2026-11-08 (2.8.0) — lab host (VM), IPv4 LAN, the PR #340 hardening (Postgres 18.6 with cap_drop): the shipped configuration built 2.3.0 although the pin named 2.6.0 (digest of 2.3.0), corrected; a project and a task created on that build survived the upgrade to 2.8.0 and a `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2.8.0) — over IPv4, with Postgres 18.6 under cap_drop: a project and a task created on 2.3.0 survived the upgrade to 2.8.0 and a `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -44,7 +44,7 @@ https://github.com/go-vikunja/vikunja/releases
 
 ## Version notes
 
-- Moved to `2.8.0` on 2026-11-08 and run on a host. The pin named
+- Moved to `2.8.0` on 2026-11-08. The pin named
   `2.6.0` but `APP_DIGEST` held the digest of `2.3.0`; the build pulls by digest,
   so every install since that bump ran 2.3.0 (`/api/v1/info` answered `v2.3.0`).
   `APP_DIGEST` and the `Dockerfile` defaults now name the digest of `2.8.0`
@@ -54,8 +54,7 @@ https://github.com/go-vikunja/vikunja/releases
   breaking change or configuration change. Tested as an upgrade: a project and a
   task created on the 2.3.0 build were present after the rebuild on 2.8.0, which
   migrated the schema on start.
-- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05, not run on a
-  host at this tag. PostgreSQL 18 support: upstream's CI tests PostgreSQL 18 and
+- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: upstream's CI tests PostgreSQL 18 and
   its full Docker example uses `postgres:18`
   (https://vikunja.io/docs/installing/). The 18 image keeps its cluster under
   `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both

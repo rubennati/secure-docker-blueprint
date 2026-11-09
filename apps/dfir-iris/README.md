@@ -52,9 +52,9 @@ people) once in use.** Treat it accordingly:
   do.
 - **No `read_only`** on `app`/`worker` (documented, not silently dropped)
   — the app writes case attachments, generated reports and templates
-  under its own install tree beyond the three named volumes, and this has
-  not been narrowly verified enough to isolate without risking a silent
-  write failure on an untested code path. See UPSTREAM.md.
+  under its own install tree beyond the three named volumes, and those
+  paths are not mapped narrowly enough to isolate without risking a silent
+  write failure. See UPSTREAM.md.
 - **Backups contain everything sensitive this stack holds** — see Backup.
   Encrypt the backup archive itself; this stack does not do that for you.
 - **MFA**: available per-user in IRIS's own settings (TOTP), not enforced

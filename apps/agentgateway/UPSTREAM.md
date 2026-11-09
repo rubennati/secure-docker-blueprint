@@ -10,7 +10,7 @@
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
-- **Last verified:** 2026-11-08 (1.7.0) — lab host (VM), IPv4 LAN: `ops/init.sh` rendered the config, which validated once the README's command mounted the UI htpasswd (corrected), `/v1/models` answered with the client key and `401` without it before and after `down`/`up`, the UI behind its basicAuth gate, the refused client answered `403`; no completion through a backend (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.7.0) — over IPv4: `ops/init.sh` rendered the config with the UI htpasswd mounted as the README shows, `/v1/models` answered with the client key and `401` without it before and after `down`/`up`, the UI behind its basicAuth gate, the refused client answered `403`; no completion through a backend (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -84,8 +84,7 @@ serving `smollm2:135m` as the backend:
 
 ## Version notes
 
-- Moved to `v1.7.0` on 2026-11-05 (released 2026-10-27), across v1.6.0, not run
-  on a host at this tag. Breaking in v1.6.0: Anthropic Messages requests now
+- Moved to `v1.7.0` on 2026-11-05 (released 2026-10-27), across v1.6.0. Breaking in v1.6.0: Anthropic Messages requests now
   prefer the OpenAI Responses format over Chat Completions; a provider base URL
   without a path now means `/` (the template's `http://ollama:11434/v1` already
   carries its path); the standalone `llm` mode matches standard LLM paths only

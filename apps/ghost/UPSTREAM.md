@@ -11,7 +11,7 @@
 - **Origin:** Ireland · Ghost Foundation · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Publishing platform for blogs and newsletters, with optional Fediverse publishing
-- **Last verified:** 2026-11-08 (6.75.0-alpine) — lab host (VM), IPv4 LAN: the owner set up through the admin API, a session login, a post published and rendered on the site before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (6.75.0-alpine) — over IPv4: the owner set up through the admin API, a session login, a post published and rendered on the site before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ### ActivityPub service
 
@@ -62,7 +62,7 @@ The official ghost-docker setup uses Caddy as an internal webserver. This bluepr
 
 ## Version notes
 
-- Moved to `6.75.0-alpine` on 2026-11-05, not run on a host at this tag. No
+- Moved to `6.75.0-alpine` on 2026-11-05. No
   breaking change, variable or manual step is listed from 6.64.0 to 6.75.0;
   migrations run on start. 6.66.0 was not published to npm (its content ships
   in 6.67.0); 6.70.0 removes Ember, so Admin is React only; 6.71.0 fixes

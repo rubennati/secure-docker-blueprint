@@ -14,7 +14,7 @@
 - **Origin:** Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)
 - **Domain:** Identity, access and secrets
 - **Role:** Ephemeral secret sharing with a built-in request flow
-- **Last verified:** 2026-11-08 (v7.6.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the first account signed up through the API before and after `down`/`up`; the route is public by design; upstream archived (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v7.6.1) — over IPv4: the first account signed up through the API before and after `down`/`up`; the route is public by design; upstream archived (docs/labs/stack-refresh/2026-11-08-results.md)
 - **Verification snapshot:** 2026-09-19 — clean start and one full migration
   cycle, not a full operational verification (see below)
 
@@ -68,8 +68,7 @@ bump — the two have drifted apart before.
 
 ## Version notes
 
-- Moved to `v7.6.1` on 2026-11-05, not run on a host at this tag; the
-  verification above was against `v7.4.8`. v7.5.0 brings the v2 interface and
+- Moved to `v7.6.1` on 2026-11-05. v7.5.0 brings the v2 interface and
   requires `HEMMELIG_TRUSTED_PROXIES` behind a reverse proxy — this stack now
   sets it, see `.env.example`. It also makes `BETTER_AUTH_SECRET` mandatory
   (already injected here), removes the default analytics HMAC secret (already

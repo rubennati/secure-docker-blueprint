@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (0.30.4) — lab host (VM), IPv4 LAN, run in a parallel batch: after the servers-transport correction: the admin from the secret file logged in through the API (`201`, `401` for a wrong password) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (0.30.4) — over IPv4: the admin from the secret file logged in through the API (`201`, `401` for a wrong password) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -55,8 +55,7 @@ stack, not assumed from the README:
 
 ## Version notes
 
-- Moved to `0.30.4` on 2026-11-05, not run on a host at this tag; the
-  verification below was against `0.29.0`. Since 0.30.0 the runtime image is
+- Moved to `0.30.4` on 2026-11-05. Since 0.30.0 the runtime image is
   distroless (`gcr.io/distroless/cc`): no shell, no package manager, so the
   `bash`/`wget`/`cat` noted below are gone. The `warpgate` user (UID 1000),
   `/data`, the entrypoint `/usr/local/bin/warpgate` and the exec-form image

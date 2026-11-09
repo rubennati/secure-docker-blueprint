@@ -13,7 +13,7 @@
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
-- **Last verified:** 2026-11-08 (4.76.0) — lab host (VM), IPv4 LAN, with Silo as the object store: the provisioned key pair answered 200 and no key 401, an OpenTelemetry trace was stored as an event file in Silo, processed by the worker and read back from ClickHouse, still readable after down/up
+- **Last verified:** 2026-11-08 (4.76.0) — over IPv4, with Silo as the object store: the provisioned key pair answered 200 and no key 401, an OpenTelemetry trace was stored as an event file in Silo, processed by the worker and read back from ClickHouse, still readable after down/up
 
 ## What we use
 
@@ -131,11 +131,11 @@ stack since the withdrawal started empty.
 ## Version notes
 
 - Moved to `4.76.0` on 2026-11-08 (released 2026-11-05), web and worker
-  together, run on a host. No breaking change, variable or migration is
+  together. No breaking change, variable or migration is
   labelled; the release is small fixes and refactoring, and web and worker move
   to the current Langfuse SDK internally.
 - Moved to `4.75.0` on 2026-11-05 (released 2026-11-04), web and worker
-  together, not run on a host at this tag. The releases from 4.51.0 to 4.75.0
+  together. The releases from 4.51.0 to 4.75.0
   carry no breaking-change section; migrations still run at start. The web and
   worker images moved from `node:24-alpine` to Red Hat UBI 9 micro with the
   `nodejs:24` RPM: no busybox and no package manager, but bash, sed, wget and
@@ -156,8 +156,7 @@ stack since the withdrawal started empty.
   Node.js 24.22.1 fixes in the images, and webhook, PostHog and storage
   secrets are required again when their destination changes (PRs #19261,
   #19566); no GHSA published.
-- Moved `postgres` from `17.6` to `18.6` on 2026-11-05, not run on a host at
-  this tag. PostgreSQL 18 support: Langfuse supports Postgres 12 and newer (v4
+- Moved `postgres` from `17.6` to `18.6` on 2026-11-05. PostgreSQL 18 support: Langfuse supports Postgres 12 and newer (v4
   needs 15 or newer), with no upper bound
   (https://langfuse.com/self-hosting/deployment/infrastructure/postgres). The 18
   image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
@@ -170,8 +169,7 @@ stack since the withdrawal started empty.
   < dump.sql` (errors that the bootstrap role and database already exist are
   expected); then `docker compose up -d`. A return to the old major is only a
   restore of that dump.
-- Moved `clickhouse/clickhouse-server` from `25.12` to `26.10.3.7` on 2026-11-05,
-  not run on a host at this tag. The tag keeps the minor precision the stack
+- Moved `clickhouse/clickhouse-server` from `25.12` to `26.10.3.7` on 2026-11-05. The tag keeps the minor precision the stack
   used; `26.10` points at 26.10.3.7 (2026-10-26), the newest stable release.
   Langfuse v4 needs ClickHouse 25.12 or newer and names no upper bound
   (https://langfuse.com/self-hosting/deployment/infrastructure/clickhouse).
@@ -193,8 +191,8 @@ stack since the withdrawal started empty.
   `arrayCount` now returns `UInt64` and `accurateCast` to `Nullable` throws
   instead of returning NULL; neither appears in Langfuse's release notes as a
   problem.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

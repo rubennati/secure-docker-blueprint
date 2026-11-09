@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v0.31.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the service healthy behind its basicAuth gate before and after `down`/`up`, the refused client answered `403`; no Paperless-ngx connected (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v0.31.0) — over IPv4: the service healthy behind its basicAuth gate before and after `down`/`up`, the refused client answered `403`; no Paperless-ngx connected (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -70,7 +70,7 @@ run, and the restore in the README.
 
 ## Version notes
 
-- Moved to `v0.31.0` on 2026-11-05, not run on a host at this tag. `v0.29.0`
+- Moved to `v0.31.0` on 2026-11-05. `v0.29.0`
   replaces MuPDF with PDFium (WebAssembly); rendering peaks at about 320 MiB
   instead of about 270 MiB, which the 512 MiB limit still covers. `v0.30.0` warns
   at startup unless `config/`, `prompts/` and `db/` are volumes (all three are

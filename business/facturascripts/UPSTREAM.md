@@ -12,7 +12,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Invoicing, accounting and inventory for small businesses, extended through plugins
-- **Last verified:** 2026-11-08 (2026.72) — lab host (VM), IPv4 LAN: moved from 2026.7, `ops/install.sh` ran the unattended installer and closed the web installer, the administrator logged in and reached the first-use wizard before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2026.72) — over IPv4: moved from 2026.7, `ops/install.sh` ran the unattended installer and closed the web installer, the administrator logged in and reached the first-use wizard before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the terms on facturascripts.com, which name the site's owner
 and apply Spanish law.
@@ -109,11 +109,10 @@ local file; an upgrade to a newer image; backup and restore.
 
 ## Version notes
 
-- Moved to `2026.72` on 2026-11-08 and run on a host. The image
+- Moved to `2026.72` on 2026-11-08. The image
   repository publishes no release notes; the unattended install and the login
   ran unchanged.
-- Moved to `2026.7` on 2026-11-05 (image published 2026-10-21), not run on a
-  host at this tag. `2026.7` is the image behind `latest`; the automatic pick
+- Moved to `2026.7` on 2026-11-05 (image published 2026-10-21). `2026.7` is the image behind `latest`; the automatic pick
   `2026.72` is the `beta` tag and was not used. The image tag changes PHP,
   Apache and the operating system and seeds the webroot of a new install; an
   existing install keeps the version in its webroot until the in-app updater

@@ -10,7 +10,7 @@
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Agent that reports a remote host's metrics to Beszel
-- **Last verified:** 2026-11-08 (0.21.1) — lab container (LXC) as the remote host, hub from monitoring/beszel on the lab host (VM): the agent connected out over WSS with the hub key and a universal token, registered under its system name, and was back after down/up
+- **Last verified:** 2026-11-08 (0.21.1) — on a remote host, with the hub from monitoring/beszel: the agent connected out over WSS with the hub key and a universal token, registered under its system name, and was back after down/up
 
 ## What we use
 
@@ -36,7 +36,7 @@ See `monitoring/beszel/UPSTREAM.md` for the full architecture overview.
 ## Version notes
 
 - Moved to `0.21.1` on 2026-11-05 (released 2026-10-22), with the hub in
-  `monitoring/beszel`, not run on a host at this tag. No breaking
+  `monitoring/beszel`. No breaking
   change for a Docker deployment between 0.19.0 and 0.21.1 (0.21.1's
   `Agent.Start` signature change concerns only Go code that embeds the agent).
   New, from the release notes (https://github.com/henrygd/beszel/releases):

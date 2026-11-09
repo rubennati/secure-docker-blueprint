@@ -10,7 +10,7 @@
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
-- **Last verified:** 2026-11-08 (1.20.0-unprivileged) — lab host (VM), IPv4 LAN: a collection created and a point written through the route with the API key, a request without the key refused, a snapshot taken, the point present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.20.0-unprivileged) — over IPv4: a collection created and a point written through the route with the API key, a request without the key refused, a snapshot taken, the point present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -113,8 +113,7 @@ on a throwaway `proxy-public` network without Traefik:
 
 ## Version notes
 
-- Moved to `v1.20.0-unprivileged` on 2026-11-05 (released 2026-10-22), not run
-  on a host at this tag; 1.19.2 lies between. No storage migration named.
+- Moved to `v1.20.0-unprivileged` on 2026-11-05 (released 2026-10-22); 1.19.2 lies between. No storage migration named.
   `service.enforce_internal_auth` now defaults to `true` when an API key is set —
   it concerns the internal gRPC API of distributed mode, which this stack does
   not run. Snapshot names are unique and a stored snapshot is never

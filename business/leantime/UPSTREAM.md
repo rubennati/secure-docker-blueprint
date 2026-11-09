@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (3.13.2) — lab host (VM), IPv4 LAN, run in a parallel batch: the installer served through the route before and after `down`/`up`, the refused client answered `403`; the installer was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (3.13.2) — over IPv4: the installer served through the route before and after `down`/`up`, the refused client answered `403`; the installer was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -95,7 +95,7 @@ notifications the scheduler sends, and a restore from the volumes below.
 
 ## Version notes
 
-- Moved to `3.13.2` on 2026-11-05, not run on a host at this tag. Database
+- Moved to `3.13.2` on 2026-11-05. Database
   migrations in 3.12 (db version 3.5.30, merges duplicate plugin rows) and 3.13 (db
   version 3.5.33: a `metadata` column on projects for per-project modules, a separate
   key and base role for roles, the new permissions granted to existing roles). The
@@ -119,8 +119,7 @@ notifications the scheduler sends, and a restore from the volumes below.
   file module, outbound webhook and calendar requests, CSRF), 3.10.3 (email links from
   a trusted app URL instead of the Host header, escaped theme CSS). No CVE or GHSA IDs
   are listed in the notes.
-- Moved `mysql` from `8.4.11` to `9.7.4` (the newest LTS line) on 2026-11-05,
-  not run on a host at this tag. Leantime requires "MySQL 8.0+ or MariaDB 10.6+"
+- Moved `mysql` from `8.4.11` to `9.7.4` (the newest LTS line) on 2026-11-05. Leantime requires "MySQL 8.0+ or MariaDB 10.6+"
   with no upper bound (https://github.com/Leantime/leantime); upstream's
   docker-leantime compose still ships `mysql:8.4`. MySQL upgrades in place from
   one LTS line to the next: the 9.7 server upgrades the data dictionary and

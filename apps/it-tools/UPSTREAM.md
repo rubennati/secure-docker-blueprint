@@ -10,7 +10,7 @@
 - **Origin:** France · CorentinTh · EU
 - **Domain:** Developer tools
 - **Role:** Collection of small utilities: converters, generators and formatters
-- **Last verified:** 2026-11-09 (2024.10.22-7ca5933) — lab host (VM), IPv4 LAN: the tool list served through Traefik, the same after `down`/`up`
+- **Last verified:** 2026-11-09 (2024.10.22-7ca5933) — over IPv4: the tool list served through Traefik, the same after `down`/`up`
 
 ## What we use
 

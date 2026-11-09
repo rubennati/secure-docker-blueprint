@@ -108,7 +108,7 @@ exactly what was and was not verified.
 |---|---|---|---|---|---|
 | Approach | Session proxy | Stored-credential vault | Reverse-connection agent | Short-lived certificates | Reverse-agent, JIT |
 | Protocols | SSH, HTTPS, MySQL, PostgreSQL, Kubernetes, RDP, VNC | SSH, RDP, Kubernetes, databases, web apps | SSH, SCP/SFTP | SSH, Kubernetes, databases, internal web apps | SSH, SCP |
-| Session recording | Yes | Yes (terminal + video) | Server-side, scope not exercised here | Not enabled in this config | Yes (encryption optional) |
+| Session recording | Yes | Yes (terminal + video) | Server-side | Not enabled in this config | Yes (encryption optional) |
 | MFA | TOTP | TOTP / Passkey / WebAuthn | Not confirmed | TOTP / WebAuthn, required for local users | WebAuthn, optional |
 | OIDC / SSO | Yes (native) | Yes — OIDC, SAML 2.0, CAS, LDAP (Community Edition) | SAML confirmed Enterprise-only; OIDC unconfirmed | **Enterprise-only** — no SSO in Community Edition | Not found in documented config |
 | JIT / approval | No | Ticket-based workflows | No | No (certificate TTL only) | Yes — the stack's core model |

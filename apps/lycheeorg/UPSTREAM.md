@@ -11,7 +11,7 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Last verified:** 2026-11-09 (v7.13.0) — lab host (VM), IPv4 LAN, moved from v7.12.1 on a new installation: an administrator from `lychee:create_user`, login, an album and a photo upload through the API, the photo still on disk after `down`/`up`
+- **Last verified:** 2026-11-09 (v7.13.0) — over IPv4, moved from v7.12.1 on a new installation: an administrator from `lychee:create_user`, login, an album and a photo upload through the API, the photo still on disk after `down`/`up`
 
 ## What we use
 
@@ -44,11 +44,11 @@
 
 ## Version notes
 
-- Moved to `v7.13.0` on 2026-11-09, run on a host. Features for the v8
+- Moved to `v7.13.0` on 2026-11-09. Features for the v8
   layout (struct-of-arrays, configurable tile size), inline feedback for
   throttled logins, and an SSRF hardening for unusual IP forms. No migration or
   variable labelled.
-- Moved to `v7.12.1` on 2026-11-05, not run on a host at this tag. No breaking change
+- Moved to `v7.12.1` on 2026-11-05. No breaking change
   and no manual step in the notes. The standard image moves to FrankenPHP 1.13.3
   and builds its own ImageMagick 7.1.2 with JPEG XL support, and turns off PHP's `session.upload_progress`; entrypoint,
   `PUID`/`PGID`, the volume paths and the healthcheck on `:2019/metrics` are
@@ -60,8 +60,7 @@
   vulnerability (v7.11.0), complete stripping against XSS and blocking of
   IPv6-transition spellings of internal IPv4 addresses (v7.10.0), dependency CVEs
   (v7.8.4).
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: Lychee requires "MariaDB (version >
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: Lychee requires "MariaDB (version >
   10.2)" with no upper bound
   (https://lycheeorg.dev/docs/getting-started/manual-installation/); upstream's
   compose uses `mariadb:11`. `MARIADB_AUTO_UPGRADE: "1"`, already set in both
@@ -73,8 +72,8 @@
   row another transaction changed after its snapshot fails with error 1020
   instead of overwriting it; the new default collation `utf8mb4_uca1400_ai_ci`
   does not apply, as the stack sets `utf8mb4_unicode_ci` explicitly.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

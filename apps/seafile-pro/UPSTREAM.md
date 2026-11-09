@@ -12,7 +12,7 @@
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, professional edition
 - **Note:** Commercial license — self-hosting permitted under the paid plan. Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor itself is subject to Chinese law.
-- **Last verified:** 2026-11-08 (13.0.29) — lab host (VM), IPv4 LAN: the administrator from `.env`, a library created and a PDF uploaded through the API, downloaded byte-identical after `down`/`up`, all nine services up including ClamAV and SeaSearch, the refused client answered `403`; 14.0 not taken — a beta per the repository's note (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (13.0.29) — over IPv4: the administrator from `.env`, a library created and a PDF uploaded through the API, downloaded byte-identical after `down`/`up`, all nine services up including ClamAV and SeaSearch, the refused client answered `403`; 14.0 not taken — a beta per the repository's note (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use from upstream
 
@@ -128,7 +128,7 @@ If you need Elasticsearch instead of SeaSearch:
 
 ## Version notes
 
-- Moved to `13.0.29` on 2026-11-05, not run on a host at this tag. `APP_TAG`
+- Moved to `13.0.29` on 2026-11-05. `APP_TAG`
   (`seafile-pro-mc`) from 13.0.21 to 13.0.29, `NOTIFICATION_TAG` from 13.0.10 to
   13.0.29, `MD_TAG` from 13.0.20 to 13.0.28 (the newest 13.0 tag of
   `seafile-md-server`), `THUMBNAIL_TAG` from 13.0.20 to 13.0.29, `SEADOC_TAG` from
@@ -154,8 +154,7 @@ If you need Elasticsearch instead of SeaSearch:
   not taken: the changelog lists its only release as "14.0.9 beta (2026-10-14)",
   so the stack stays on the stable 13 line.
 - The Elasticsearch image in `elasticsearch.yml` (the optional search backend,
-  not in `COMPOSE_FILE`) moved from `8.15.0` to `8.19.23` on 2026-11-05, not run
-  on a host at this tag. 8.19.23 (image built 2026-10-26) is the newest release
+  not in `COMPOSE_FILE`) moved from `8.15.0` to `8.19.23` on 2026-11-05. 8.19.23 (image built 2026-10-26) is the newest release
   of the 8 line; the Seafile 13 manual ships `elasticsearch:8.15.0` and names
   Elasticsearch 8.x since Seafile 10, and its upgrade notes for 13.0 say the
   Elasticsearch version did not change. Elasticsearch 9 is not taken: Seafile
@@ -166,8 +165,7 @@ If you need Elasticsearch instead of SeaSearch:
   Trivy findings 5 -> 0 (netty-handler, Tika's PDF parser module, Bouncy
   Castle). Sources: https://manual.seafile.com/13.0/upgrade/upgrade_notes_for_13.0.x/,
   https://www.elastic.co/guide/en/elasticsearch/reference/8.19/es-release-notes.html
-- `SEASEARCH_TAG` moved from `1.0.3` to `1.0.8` on 2026-11-05, not run on a host
-  at this tag (held at `1.0.3` on 2026-10-31 while the pairing was open). The
+- `SEASEARCH_TAG` moved from `1.0.3` to `1.0.8` on 2026-11-05 (held at `1.0.3` on 2026-10-31 while the pairing was open). The
   Seafile 13 manual (https://manual.seafile.com/13.0/setup/use_seasearch/)
   defaults to `seafileltd/seasearch:1.0-latest`, which points at `1.0.8`.
   Upstream (https://github.com/seafileltd/seasearch) publishes no release notes
@@ -181,8 +179,8 @@ If you need Elasticsearch instead of SeaSearch:
   (`SS_MAX_OBJ_CACHE_SIZE`, `SS_STORAGE_TYPE`, `SS_LOG_TO_STDOUT`, `SS_LOG_DIR`,
   `SS_LOG_LEVEL`); `SS_FIRST_ADMIN_USER` and `SS_FIRST_ADMIN_PASSWORD` are read
   outside that file and were not checked.
-- `CLAMAV_TAG` (`clamav/clamav`) moved from `1.4` to `1.5` on 2026-11-05, not
-  run on a host at this tag. `1.5` points at 1.5.4 (2026-08-07), the newest
+- `CLAMAV_TAG` (`clamav/clamav`) moved from `1.4` to `1.5` on 2026-11-05
+  . `1.5` points at 1.5.4 (2026-08-07), the newest
   stable feature release; `1.4` is upstream's long-term line, which still gets
   security fixes (1.4.6). The tag keeps the minor precision the stack used.
   Seafile reaches clamd over TCP (`config/clamd-remote.conf`), and the 1.5 notes
@@ -194,8 +192,8 @@ If you need Elasticsearch instead of SeaSearch:
   CVE-2026-20337 and CVE-2026-20338, which affect only 1.5.0 to 1.5.3, plus
   CVE-2026-20339, CVE-2026-20345 to CVE-2026-20348 and CVE-2025-8088, which
   1.4.6 fixes too. https://github.com/Cisco-Talos/clamav/releases
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

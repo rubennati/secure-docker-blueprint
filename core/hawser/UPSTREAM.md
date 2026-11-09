@@ -9,7 +9,7 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port
-- **Last verified:** 2026-11-08 (0.2.53) — Hawser in edge mode in the lab container (LXC, unprivileged), managed from Dockhand v1.0.57 on the lab host (VM): `connected: true` over `wss://` through Traefik, containers listed, a log read, one stopped and started, reconnected by itself after Dockhand's `down`/`up`; no port published on the agent host (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (0.2.53) — Hawser in edge mode on a remote Docker host, managed from Dockhand v1.0.57: `connected: true` over `wss://` through Traefik, containers listed, a log read, one stopped and started, reconnected by itself after Dockhand's `down`/`up`; no port published on the agent host (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we changed and why
 
@@ -66,7 +66,7 @@ docker exec hawser-app wget -qO- http://127.0.0.1:2376/_hawser/health
 ## Version notes
 
 - Moved to `0.2.53` on 2026-10-31 (released 2026-10-30), together with Dockhand
-  v1.0.56, not run at this tag. 0.2.53 takes its settings from environment
+  v1.0.56. 0.2.53 takes its settings from environment
   variables only, without `--port`, `--server` or `--token` flags — this stack
   configures the container through the environment already, so nothing changes;
   0.2.50 sets the `REQUEST_TIMEOUT` default to 30 s; 0.2.48 adds `TOKEN_FILE`, a

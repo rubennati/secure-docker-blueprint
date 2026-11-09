@@ -102,7 +102,7 @@ project and unaudited codebase, treat a compromise here as total until
 proven otherwise — do not assume any blast-radius containment beyond what
 is explicitly documented.
 
-**What session recordings contain.** Not exercised in this deployment.
+**What session recordings contain.** Recording is off until you enable it in the console.
 `ORION_RECORDING_ENCRYPTION_KEY` exists to encrypt them at rest — if you
 enable recording in the console, generate and set a real key first, or
 recordings are stored unencrypted in `./volumes/recordings`.

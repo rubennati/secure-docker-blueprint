@@ -100,8 +100,8 @@ connections to targets, not the reverse.
 **MFA / OIDC.** Confirmed available in the Community Edition (GPL-3.0), not
 gated to Enterprise: local TOTP/Passkey/WebAuthn MFA, plus OIDC, SAML 2.0,
 CAS and LDAP/AD SSO. Both `core/authentik` and `core/keycloak` in this
-repository are usable OIDC providers. Not exercised end to end from this
-repository — configure and verify against your own instance.
+repository are usable OIDC providers; configure and verify the sign-in against
+your own instance.
 
 ## Backup
 

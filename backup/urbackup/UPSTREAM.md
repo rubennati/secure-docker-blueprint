@@ -10,7 +10,7 @@
 - **Origin:** Germany · Martin Raiber (uroni) · EU
 - **Domain:** Backup
 - **Role:** Client backup for Windows, macOS and Linux, with whole-disk image restore on Windows
-- **Last verified:** 2026-11-09 (2.5.x) — lab host (VM), IPv4 LAN, with the lab container (LXC) as a Linux client 2.5.31 added by address: a full file backup, the four files downloaded from the server matching their checksums, an anonymous login refused, the same after `down`/`up`; the restore to the LXC client itself stopped at the client's permission check
+- **Last verified:** 2026-11-09 (2.5.x) — over IPv4, a Linux client 2.5.31 added by address: a full file backup, the four files downloaded from the server matching their checksums, an anonymous login refused, the same after `down`/`up`; the restore to the LXC client itself stopped at the client's permission check
 
 ## What we use
 

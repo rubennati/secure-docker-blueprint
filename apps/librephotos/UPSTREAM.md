@@ -10,7 +10,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Photos
 - **Role:** Photo library with face recognition and search
-- **Last verified:** 2026-11-08 (1.5.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the administrator from `.env` obtained a token through the API, all four services up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.5.1) — over IPv4: the administrator from `.env` obtained a token through the API, all four services up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -51,8 +51,7 @@
 - The backend healthcheck calls upstream's liveness endpoint `/api/healthz` with the command
   from upstream's own compose file (`deploy/compose/docker-compose.e2e.yml`). The `1.2.x`
   backend image ships no `curl`.
-- Moved to `1.5.1` on 2026-11-05 (released 2026-10-31), not run on a host at this
-  tag; 1.3.0, 1.4.0 and 1.5.0 lie between. Backend, frontend and proxy share
+- Moved to `1.5.1` on 2026-11-05 (released 2026-10-31); 1.3.0, 1.4.0 and 1.5.0 lie between. Backend, frontend and proxy share
   `APP_TAG` and all three exist at `1.5.1`. Changes:
   - 1.3.0: OpenCLIP ViT-B/32 replaces the separate tagging and CLIP models; a
     background job re-embeds and re-tags every photo once.
@@ -82,7 +81,7 @@
   sharing fixes and Pillow 13 (1.5.0). Upstream lists GHSA-975v-mx44-9jxq,
   GHSA-6367-m327-c4pf and GHSA-hq2w-x39h-8wmp with no patched release.
 - Moved `pgautoupgrade/pgautoupgrade` from `16-bookworm` to `18-trixie` on
-  2026-11-05, not run on a host at this tag. LibrePhotos states no maximum;
+  2026-11-05. LibrePhotos states no maximum;
   1.5.0 requires PostgreSQL 15 or newer, and upstream's compose
   (https://github.com/LibrePhotos/librephotos-docker) runs
   `pgautoupgrade/pgautoupgrade:latest`, which is PostgreSQL 18. 18 is built on

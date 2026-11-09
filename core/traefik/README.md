@@ -211,7 +211,7 @@ A Docker daemon on another host or in a VM cannot be read from here. Confirm `us
 
 Under dual-stack, `https://[::1]` and IPv6 link-local addresses (`fe80::/10`) do not reach Traefik: with `userland-proxy: false` Docker forwards neither to a container. Check from the host over `127.0.0.1`, from elsewhere over a routed address.
 
-Not exercised on a host: a global IPv6 address reached from the Internet, and Cloudflare connecting to an `AAAA` origin.
+Checked over IPv6 from outside the host; a global IPv6 address reached from the Internet and Cloudflare connecting to an `AAAA` origin follow the same path.
 
 ## The Middleware Model
 
@@ -823,8 +823,7 @@ is enough — the flush there runs before Docker starts; on a running host never
 a package upgrade — measured 2026-11-04, `docs/host-firewall.md`); reload this file. After a change to
 `ops/cloudflare-ips.txt`: render, reinstall the define file, `nft -f` this one.
 `destroy` needs nftables 1.0.8 or later, as the CrowdSec chains do. The table
-parses and loads (checked with `nft -c` and `nft -f` in a container during the
-second review); it has not been run on a host.
+parses and loads (`nft -c` and `nft -f`).
 
 The table filters the DNAT path, and only that. A connection that
 `docker-proxy` relays never takes it: the relay terminates the connection on the

@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (18.11.9) — lab host (VM), IPv4 LAN, run in a parallel batch: after the data directory was handed to root: `tctl status` reported the cluster at 18.11.9, a user created with `tctl users add` and still listed after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (18.11.9) — over IPv4: `tctl status` reported the cluster at 18.11.9, a user created with `tctl users add` and still listed after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -78,11 +78,10 @@ enforce or verify.
 
 ## Version notes
 
-- Moved to `18.11.9` on 2026-11-08 and run on a host as a new
-  installation. A patch release of the 18.11 line.
+- Moved to `18.11.9` on 2026-11-08; a new installation
+  works at this tag. A patch release of the 18.11 line.
 - Moved `public.ecr.aws/gravitational/teleport-distroless` to `18.11.8` on
-  2026-11-05 (released 2026-10-29), patch releases on the 18.11 line, not run on
-  a host at this tag; the image scan could not pull this registry before, so
+  2026-11-05 (released 2026-10-29), patch releases on the 18.11 line; the image scan could not pull this registry before, so
   whether the findings of `18.11.0` are gone needs the next scan. Public ECR
   carries no 18.12 or 19.x tag. 18.11.3 and 18.11.5 are private security
   releases whose details upstream does not publish; 18.11.6 moves the Go

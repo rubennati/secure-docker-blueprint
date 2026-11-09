@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v3.13.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the first account registered as superadmin, a second superadmin refused (`Invite not found`), the state kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v3.13.1) — over IPv4: the first account registered as superadmin, a second superadmin refused (`Invite not found`), the state kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -108,7 +108,7 @@ the rest — also reach their vendors, which is what a notification channel is.
 
 ## Version notes
 
-- Moved to `v3.13.1` on 2026-11-05, not run on a host at this tag. Upstream's
+- Moved to `v3.13.1` on 2026-11-05. Upstream's
   notes for `v3.13.0` and `v3.13.1` say no new required variables and no
   migrations. The image moves to Node 24 and the server to Express 5, and
   `v3.13.0` turns on an anonymous daily telemetry heartbeat by default, which

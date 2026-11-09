@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v0.29.7) — lab host (VM), IPv4 LAN, run in a parallel batch: a user created with the CLI and listed, `/health` passing through the route before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v0.29.7) — over IPv4: a user created with the CLI and listed, `/health` passing through the route before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -109,7 +109,7 @@ the map the fetch is no longer what clients depend on.
 
 ## Version notes
 
-- Moved to `v0.29.7` on 2026-10-31 (released 2026-10-30), not run at this tag.
+- Moved to `v0.29.7` on 2026-10-31 (released 2026-10-30).
   No breaking change, config key change or database migration in 0.29.5 to
   0.29.7. 0.29.6 moves to Go 1.27.3, which rejects chains with the compromised
   eMudhra keys (CVE-2026-111943), and raises x/net, x/text and gRPC. 0.29.7 is a

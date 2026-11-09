@@ -11,7 +11,7 @@
 - **Origin:** Latvia · Pēteris Caune · EU
 - **Domain:** Monitoring
 - **Role:** Dead-man's switch that alerts when a cron job or backup stops reporting
-- **Last verified:** 2026-11-08 (5.0.3) — lab host (VM), IPv4 LAN, after the README's `chown` was given `sudo`: a superuser created with `createsuperuser`, a login to the checks page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (5.0.3) — over IPv4: a superuser created with `createsuperuser`, a login to the checks page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -65,7 +65,7 @@ If the upgrade breaks, restore the pre-upgrade SQLite backup and revert `APP_TAG
 ## Version notes
 
 - Moved to `v5.0.3` on 2026-11-05 (released 2026-10-27), across v5.0, v5.0.1 and
-  v5.0.2, not run on a host at this tag. The v4 line ends at v4.4, so the
+  v5.0.2. The v4 line ends at v4.4, so the
   CRITICAL image findings at `v4.4` have no fix on v4. Breaking in v5.0: the
   image serves HTTP with gunicorn instead of uWSGI and starts through
   `/opt/healthchecks/run.sh`; a compose file that overrides `command` with

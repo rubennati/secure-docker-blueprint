@@ -114,7 +114,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
   digest, and without `LEAN_EMAIL_*` they go nowhere. The image reads
   `LEAN_EMAIL_SMTP_PASSWORD_FILE`, so an SMTP password can be a Docker Secret
   like the others — see `config/sample.env` in the image for the full set.
-- **OIDC and LDAP are untested here**, though both are in the core.
+- **OIDC and LDAP are in the core** and need their own configuration; this stack ships neither.
 - **Plugins are a paid marketplace.** The platform is free and AGPL; the
   advanced functionality is not. `volumes/plugins` exists so that what you buy
   survives a recreate.

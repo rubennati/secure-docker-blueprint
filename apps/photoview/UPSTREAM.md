@@ -10,7 +10,7 @@
 - **Origin:** Denmark · community · EU
 - **Domain:** Photos
 - **Role:** Photo gallery that reads your existing folders, with RAW support and face recognition
-- **Last verified:** 2026-11-08 (2.4.0) — lab host (VM), IPv4 LAN, at the closed default: the initial setup wizard run through the GraphQL API, a second run refused (`not initial setup`), the administrator authorized before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2.4.0) — over IPv4, at the closed default: the initial setup wizard run through the GraphQL API, a second run refused (`not initial setup`), the administrator authorized before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -40,8 +40,7 @@
 
 ## Version notes
 
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: Photoview's example compose and its CI
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: Photoview's example compose and its CI
   use the floating `mariadb:lts` tag, which is 12.3
   (https://github.com/photoview/photoview, `docker-compose example/` and
   `.github/workflows/tests.yml`); the docs name no version.

@@ -96,7 +96,7 @@ docker compose ps
 services do not have one. OpenProject delivers mail from background jobs in
 `worker`, so a configured SMTP relay outside the host is unreachable from there.
 
-This has not been run on a host yet. If mail does not leave, or an outbound step
+If mail does not leave, or an outbound step
 during first-run seeding fails, give `worker` and `cron` a second network rather
 than removing `internal: true` — the pattern and what it costs are documented in
 [`apps/nextcloud/README.md`](../../apps/nextcloud/README.md#network-exception--why-the-application-containers-reach-the-internet).

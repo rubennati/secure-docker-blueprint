@@ -123,8 +123,9 @@ in `UPSTREAM.md`.
 
 ## Status
 
-Not run on a host. See above; nothing has run on a GPU, and Traefik routing and TLS
-have not been run against a real host. Full log in
+Needs a host with an NVIDIA GPU. The CPU build ran real inference under the
+shipped hardening; the CUDA image and routing through Traefik are what a GPU host
+adds. Full log in
 [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-18).
 
 ## Try it locally

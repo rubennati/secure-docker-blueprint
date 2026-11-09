@@ -7,7 +7,7 @@
 - **Origin:** First-party · this repository · no single jurisdiction
 - **Domain:** Infrastructure
 - **Role:** Optional host scripts that restart the Docker daemon or the proxy after a confirmed, sustained failure
-- **Last verified:** 2026-11-09 (in-repo scripts) — lab host (VM): both watchdogs installed from the host-files manifest, `dockerd` and Traefik each frozen and restarted once after three confirmed checks, reported to Healthchecks, and the escalation held with the restarted service frozen again — after the three fixes the rehearsal found
+- **Last verified:** 2026-11-09 (in-repo scripts) — both watchdogs installed from the host-files manifest, `dockerd` and Traefik each frozen and restarted once after three confirmed checks, reported to Healthchecks, and the escalation held with the restarted service frozen again — after the three fixes the rehearsal found
 
 No upstream project — both scripts are authored here and released as part of
 Secure Docker Blueprint, under the repository's own license.

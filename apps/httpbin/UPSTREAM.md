@@ -10,7 +10,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Developer tools
 - **Role:** HTTP request and response service for testing clients: echoes requests, returns chosen status codes, redirects, delays and payloads
-- **Last verified:** 2026-11-09 (0.10.4) — lab host (VM), IPv4 LAN: `/get` echoed the request through Traefik, the same after `down`/`up`
+- **Last verified:** 2026-11-09 (0.10.4) — over IPv4: `/get` echoed the request through Traefik, the same after `down`/`up`
 
 The fork's README gives its reason: the original's maintainers could not be
 reached, and the `httpbin` package on PyPI is released from the fork. It also

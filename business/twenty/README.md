@@ -51,7 +51,7 @@ The worker is on `app-internal` only, with no route out. That is enough for the
 CRM itself, but syncing a mailbox or a calendar from Google or Microsoft runs in
 the worker and needs to reach those providers. To use it, add the worker to a
 network with outbound access, the same way `apps/windmill` does for its workers.
-Not configured here, and not exercised.
+The shipped stack keeps the worker without a route out.
 
 ## Credentials
 

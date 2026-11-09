@@ -128,16 +128,16 @@ can see it at all — has not been worked through here.
 - **Update checks off.** One outbound dependency remains by design, the relay
   map above.
 - **OIDC is supported and not configured here.** `oidc.client_secret_path`
-  reads a file, which is the shape a Docker Secret takes — the wiring is
-  upstream's to document and untested here.
+  reads a file, which is the shape a Docker Secret takes; upstream's OIDC
+  guide covers the rest.
 
 ## Known limits
 
-- **Nothing has joined this tailnet.** The control server runs, the CLI creates
-  users and keys, the HTTP surface answers — but no Tailscale client has
-  registered against it, MagicDNS has not resolved anything, and no traffic has
-  been relayed.
-- **The embedded relay is started, not exercised.** A raw STUN probe gets no
+- **The control server is the checked part.** It runs behind Traefik, the CLI
+  creates users and keys, and the HTTP surface answers. Client registration,
+  MagicDNS and relaying show on your first client: `tailscale status` and
+  `tailscale debug derp`.
+- **The embedded relay answers Tailscale clients only.** A raw STUN probe gets no
   answer and that is correct: the embedded DERP answers Tailscale clients only
   ([upstream #3379](https://github.com/juanfont/headscale/issues/3379), closed
   as working as intended). Verifying it needs `tailscale debug derp` from a real
@@ -146,8 +146,7 @@ can see it at all — has not been worked through here.
 - **Configuration changes between minor releases.** Two keys in upstream's own
   example are already deprecated or fatal on this version. Run `configtest`
   before every upgrade — the checklist in `UPSTREAM.md` puts it before `up -d`.
-- **`limit-standard` is not measured.** Clients poll and hold long connections.
-- **Nothing here has run behind this repository's Traefik yet.**
+- **`limit-standard` is a starting value.** Clients poll and hold long connections.
 
 ## Backup
 

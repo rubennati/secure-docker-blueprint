@@ -79,9 +79,8 @@ COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml
 
 It needs an NVIDIA driver and the NVIDIA Container Toolkit on the host. The
 reservation makes `docker compose up` fail loudly if no GPU is available
-instead of silently falling back to CPU. **The overlay has not been run on GPU
-hardware in this repository** — it merges cleanly with the base file, and that
-is all that has been checked. The image already bundles the CUDA libraries, so
+instead of silently falling back to CPU. The overlay merges cleanly with the base file; whether the GPU is used shows
+in `docker compose logs ollama` at startup. The image already bundles the CUDA libraries, so
 no separate GPU image exists.
 
 ## Memory

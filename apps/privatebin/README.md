@@ -94,7 +94,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 - [x] `docker compose config` clean; `docker compose up -d` — healthy — **verified locally, 2026-09-19**
 - [x] `GET /` returns 200 and serves the PrivateBin UI — **verified locally, 2026-09-19**
 - [ ] A paste created and decrypted once through the actual web UI, including burn-after-read, behind Traefik on a real host
-- [ ] The data-directory ownership requirement confirmed on the real host's filesystem (not tested here beyond a local Docker Desktop volume)
+- [ ] The data-directory ownership requirement confirmed on the real host's filesystem
 - [ ] TLS and the router's four middleware positions confirmed against the real domain
 
 ## Details

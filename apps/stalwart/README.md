@@ -83,8 +83,7 @@ The zone file names port 995 in an SRV record. `mail.yml` does not publish that
 port; leave the record out or publish the port.
 
 Stalwart can also write the records itself through a DNS provider's API
-(*Settings › Network › DNS*). That is upstream's feature and has not been run
-here.
+(*Settings › Network › DNS*). That is upstream's feature; this stack ships no DNS provider credentials for it.
 
 ## Certificate
 

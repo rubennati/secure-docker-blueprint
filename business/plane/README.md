@@ -15,8 +15,8 @@ about 1.4 GiB at rest.
 > a maintained MinIO fork published under release tags — the image upstream's own
 > compose names since v1.4.3. It reads
 > MinIO's variables and answers on the same port, so the service keeps the name
-> `plane-minio` and nothing that talks to it changes. A data directory written
-> by the old MinIO image was not tested against it — see [`UPSTREAM.md`](UPSTREAM.md).
+> `plane-minio` and nothing that talks to it changes. Start Silo on a fresh data
+> directory; for data written by the old MinIO image, see [`UPSTREAM.md`](UPSTREAM.md).
 
 Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 

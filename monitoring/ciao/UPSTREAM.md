@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (1.12.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the dashboard behind its basicAuth gate (`200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.12.0) — over IPv4: the dashboard behind its basicAuth gate (`200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -71,8 +71,7 @@ and a webhook arriving, and the restore in the README.
 
 ## Version notes
 
-- Moved to `1.12.0` on 2026-11-05 (released 2026-10-25), not run on a host at
-  this tag. 1.11.0 removed `GET /checks/jobs/recreate` (jobs are recreated at
+- Moved to `1.12.0` on 2026-11-05 (released 2026-10-25). 1.11.0 removed `GET /checks/jobs/recreate` (jobs are recreated at
   boot) and replaced the admin page's "Recreate jobs" with "Check now"; 1.11.1
   made `/checks/check`, `/checks/tls/check` and `/checks/notifications/test`
   POST-only. 1.12.0 adds a response-time column through `db:migrate`, which the

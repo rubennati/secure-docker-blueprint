@@ -10,7 +10,7 @@
 - **Origin:** Community · Marcel May · Germany · EU
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
-- **Last verified:** 2026-11-09 (2.1.15) — lab host (VM), IPv4 LAN: a message sent over SMTP from a container on `proxy-public` was read back over IMAP, the recipient listed by the REST API through Traefik; mailboxes are in memory and empty again after `down`/`up`, as designed
+- **Last verified:** 2026-11-09 (2.1.15) — over IPv4: a message sent over SMTP from a container on `proxy-public` was read back over IMAP, the recipient listed by the REST API through Traefik; mailboxes are in memory and empty again after `down`/`up`, as designed
 
 ## What we use
 

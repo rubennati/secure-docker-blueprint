@@ -27,7 +27,7 @@ lists and the reports work without it.
 
 Enter the key from an akaunting.com account where the banner "You have not
 entered your API Key!" links to. From then on the server sends it with every
-check. A working key was not exercised here.
+check.
 
 ## Architecture
 
@@ -113,8 +113,9 @@ Run behind Traefik with TLS on 2026-09-22 (3.1.21): the install, the login and
 company wizard, a customer, the reports, a restart, and the restore below. The
 pages that create records stayed closed without an akaunting.com API key — see
 above. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
-The current pin, 3.3.0, has not been run on a host; see
-[`UPSTREAM.md`](UPSTREAM.md#version-notes).
+At 3.3.0 (2026-11-08) `ops/install.sh` ran upstream's installer and closed the web
+installer, and the administrator signed in before and after `down`/`up`; see
+[`UPSTREAM.md`](UPSTREAM.md).
 
 ## Try it locally
 

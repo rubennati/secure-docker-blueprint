@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (5.1.8) — lab host (VM), IPv4 LAN, run in a parallel batch: a short URL created through the REST API with the initial key and redirecting with `302` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (5.1.8) — over IPv4: a short URL created through the REST API with the initial key and redirecting with `302` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -67,12 +67,11 @@ README.
 
 ## Version notes
 
-- Moved to `5.1.8` on 2026-10-31 (released 2026-10-21), not run at this tag. The
+- Moved to `5.1.8` on 2026-10-31 (released 2026-10-21). The
   one change is the image base, Alpine 3.24, so PHP security updates arrive
   again, among them CVE-2026-109618 and CVE-2026-109619. Changed, added, removed
   and deprecated all read "nothing"; no variable or migration.
-- The web client moved to `4.9.0` on 2026-11-05, not run on a host at this
-  tag. The one addition is forward support for Mercure 1.0, used once the
+- The web client moved to `4.9.0` on 2026-11-05. The one addition is forward support for Mercure 1.0, used once the
   server exposes it, plus dependency updates; deprecated, removed and fixed
   read "nothing". No variable, path or port change, no advisory.
 

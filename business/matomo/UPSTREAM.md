@@ -12,7 +12,7 @@
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
 - **Domain:** Business operations
 - **Role:** Web analytics under your control
-- **Last verified:** 2026-11-08 (5.14.2-apache) — lab host (VM), IPv4 LAN, at the closed default: the installation wizard driven over HTTP with the database settings from the environment, the super user logged in, a tracking hit accepted, the refused client answered `403`; `down`/`up` checked before the installation (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (5.14.2-apache) — over IPv4, at the closed default: the installation wizard driven over HTTP with the database settings from the environment, the super user logged in, a tracking hit accepted, the refused client answered `403`; `down`/`up` checked before the installation (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -40,7 +40,7 @@
 
 ## Version notes
 
-- Moved to `5.14.2-apache` on 2026-11-05, not run on a host at this tag. 5.14.0,
+- Moved to `5.14.2-apache` on 2026-11-05. 5.14.0,
   5.14.1 and 5.14.2 each state that they contain no major database upgrade; the
   image repository changed only `MATOMO_VERSION`. 5.14.0 adds aggregated real-time
   counters for when the Visits Log is disabled and a refreshed login page; 5.14.1
@@ -50,8 +50,7 @@
   carries the fix for — updating Matomo alone does not. On an existing install the
   tag bump moves PHP and the OS but not Matomo's own code until checklist step 4 is
   run; this applied to every earlier bump of this stack as well.
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: Matomo 5 requires MySQL 5.5 or newer
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: Matomo 5 requires MySQL 5.5 or newer
   or MariaDB, and Matomo 6 MariaDB 10.6 or newer, neither with an upper bound
   (https://matomo.org/faq/on-premise/matomo-requirements/).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs

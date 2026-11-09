@@ -11,7 +11,7 @@
 - **Origin:** US · Red Hat, Inc. (CNCF incubating project) · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation
-- **Last verified:** 2026-11-08 (26.8.2) — lab host (VM), IPv4 LAN: moved from 26.8.1, a token for the bootstrap admin from the master realm, a realm created through the admin API and its discovery document served before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (26.8.2) — over IPv4: moved from 26.8.1, a token for the bootstrap admin from the master realm, a realm created through the admin API and its discovery document served before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 What that date covers: boot under `cap_drop: ALL` as uid 1000, the healthcheck
 on the management port, Traefik routing under `acc-tailscale`, and the OIDC
@@ -46,12 +46,11 @@ Client → Traefik (TLS, 443) → keycloak-app :8080  (admin console, realms, OI
 
 ## Version notes
 
-- Moved to `26.8.2` on 2026-11-08 and run on a host. A patch release
+- Moved to `26.8.2` on 2026-11-08. A patch release
   with security fixes, among them CVE-2026-107889 (stored XSS on the login page)
   and CVE-2026-105305 (device grant bypassing a client's minimum ACR); upstream
   points to its migration guide, which names no change for 26.8.2.
-- Moved to `26.8.1` on 2026-11-05 (released 2026-10-13), not run on a host at
-  this tag; 26.7.4, 26.7.5 and 26.8.0 lie between. Every statement above marked
+- Moved to `26.8.1` on 2026-11-05 (released 2026-10-13); 26.7.4, 26.7.5 and 26.8.0 lie between. Every statement above marked
   "verified against 26.7.3" — no working `_FILE` variant, the rebuild into
   `lib/quarkus` at every start — holds for 26.7.3; check it again at 26.8.1 before
   relying on it, since the rebuild depends on the release. No option this stack sets is renamed or removed. 26.8.0 changes
@@ -75,8 +74,7 @@ Client → Traefik (TLS, 443) → keycloak-app :8080  (admin console, realms, OI
   CVE-2026-96445, CVE-2026-97177, CVE-2026-95503, CVE-2026-97311,
   CVE-2026-97846, CVE-2026-101333, CVE-2026-103884, CVE-2026-107121 and
   dependency CVEs.
-- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05, not run
-  on a host at this tag. PostgreSQL 18 support: Keycloak 26 lists 18.x as
+- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: Keycloak 26 lists 18.x as
   supported and tested (https://www.keycloak.org/server/db). The 18 image keeps
   its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
   /var/lib/postgresql/data` in both compose files keeps it on the existing

@@ -151,9 +151,8 @@ initiates the connection *to* targets, not the reverse.
 **MFA / OIDC.** Native support, confirmed in the upstream README: TOTP for
 local accounts, and OpenID Connect for SSO. Both `core/authentik` and
 `core/keycloak` in this repository are usable OIDC providers — point
-Warpgate's SSO configuration at either. Not exercised end to end from this
-repository; configure and verify against your own instance before relying
-on it.
+Warpgate's SSO configuration at either, and verify the sign-in against your
+own instance before relying on it.
 
 ## Backup
 

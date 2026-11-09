@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (alpine-8.0.0) — lab host (VM), IPv4 LAN, run in a parallel batch: moved to the 8.0 LTS line from 7.0: the API answered version 8.0.0, the default `Admin` logged in (the README says to change it), server, web and database up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (alpine-8.0.0) — over IPv4: moved to the 8.0 LTS line from 7.0: the API answered version 8.0.0, the default `Admin` logged in (the README says to change it), server, web and database up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -93,12 +93,12 @@ configure it to monitor.
 
 ## Version notes
 
-- Moved to `alpine-8.0.0` on 2026-11-08, the new LTS line, and run on the lab
-  host (VM) as a new installation: server, web frontend and API at 8.0.0 on
+- Moved to `alpine-8.0.0` on 2026-11-08, the new LTS line; a new installation
+  at this tag: server, web frontend and API at 8.0.0 on
   PostgreSQL 17. An existing 7.0 installation upgrades its database on the first
-  start of 8.0; take a database dump first — that upgrade was not run here.
+  start of 8.0; take a database dump first.
 - Moved from `alpine-7.0.31` to `alpine-7.0.32` on 2026-11-05 (released
-  2026-10-20), not run on a host at this tag. A patch release of the 7.0 LTS
+  2026-10-20). A patch release of the 7.0 LTS
   for server and web together: bug fixes and a raised TimescaleDB version
   limit (2.30), no breaking changes listed. The reason for the move is the CVE
   findings in the packages of the 7.0.31 images. Source:

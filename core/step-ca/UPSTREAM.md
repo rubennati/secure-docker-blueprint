@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (0.30.2) — lab host (VM), IPv4 LAN, run in a parallel batch: `step ca health` answered `ok` inside the container before and after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (0.30.2) — over IPv4: `step ca health` answered `ok` inside the container before and after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 

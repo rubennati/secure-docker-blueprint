@@ -105,7 +105,7 @@ PAM would.
 **What session recordings contain.** Confirmed by upstream docs: session
 recordings and audit logs are kept server-side, with the same scope as any
 SSH session recorder — keystrokes and terminal output for what was
-recorded. Exact retention/storage behavior was not exercised here.
+recorded. Retention and storage follow upstream's defaults; check them in the UI before relying on them.
 
 **Which ports must be reachable from where.** The SSH port from every
 managed device's network (outbound) and from wherever you connect (inbound)

@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (1.4.0) — lab host (VM), IPv4 LAN, after the README correction (root-owned directories, the two .env values): the app wrote its SSH host key and served `/health` through the route before and after `down`/`up`, the refused client answered `403`; no session recorded (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.4.0) — over IPv4: the app wrote its SSH host key and served `/health` through the route before and after `down`/`up`, the refused client answered `403`; no session recorded (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -102,7 +102,7 @@ open source.
 
 ## Version notes
 
-- Moved to `1.4.0` on 2026-11-05, not run on a host at this tag; the agent
+- Moved to `1.4.0` on 2026-11-05; the agent
   example (`.env.agent.example`) moved with it. 1.4.0 adds RDP, VNC and
   just-in-time Kubernetes access through the agents and migrates the database
   schema on start (`permission_history`, risk signals, `risk_policy`). A

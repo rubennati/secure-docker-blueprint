@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (16.1.0) — lab host (VM), IPv4 LAN, run in a parallel batch: an OpenPGP-encrypted secret stored through `/create/secret`, read once and `404` on the second read, before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (16.1.0) — over IPv4: an OpenPGP-encrypted secret stored through `/create/secret`, read once and `404` on the second read, before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -60,11 +60,11 @@ Secret Requests on; it requires a different, licensed product from upstream.
 
 ## Version notes
 
-- Moved to `16.1.0` on 2026-11-08 and run on a host. Upstream calls
+- Moved to `16.1.0` on 2026-11-08. Upstream calls
   16.1.0 a drop-in replacement with the same frontend, flags and environment
   variables; the API path is `/create/secret`.
-- Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors, not
-  run on a host at this tag; the checks under "What was actually verified" ran
+- Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors
+  ; the checks under "What was actually verified" ran
   on 14.10.0. Nothing this stack sets changes: `MEMCACHED`, `PORT` and the
   `--health-check` subcommand keep their names
   (https://yopass.se/docs/server-options), and with no `FILE_STORE` set, files

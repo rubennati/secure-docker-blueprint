@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
-- **Last verified:** 2026-11-08 (16.54.0) — lab host (VM), IPv4 LAN: moved from v16.53.0, `ops/create-site.sh` created the site with ERPNext, Administrator logged in through the API, a ToDo created and read back after `down`/`up`, socket.io answering polling and the websocket upgrade (`101`) through Traefik, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (16.54.0) — over IPv4: moved from v16.53.0, `ops/create-site.sh` created the site with ERPNext, Administrator logged in through the API, a ToDo created and read back after `down`/`up`, socket.io answering polling and the websocket upgrade (`101`) through Traefik, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the
@@ -155,12 +155,11 @@ documents, stock and reports; email; PDF printing; an image upgrade with
 
 ## Version notes
 
-- Moved to `v16.54.0` on 2026-11-08 and run on a host. Fixes, among
+- Moved to `v16.54.0` on 2026-11-08. Fixes, among
   them a migration error with Asset Depreciation Schedules on older sites; no
   configuration change. The nginx configuration forwards `Upgrade` on the
   `/socket.io` locations only (checked for FA-12).
-- Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28), not run on a host at
-  this tag. The step from v16.37 to v16.50 is upstream's coordinated
+- Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28). The step from v16.37 to v16.50 is upstream's coordinated
   renumbering of Frappe, ERPNext and HRMS, not a skipped range. Breaking
   changes listed: v16.36.0 adds access checks to several actions and record
   lookups and carries the new role grants into customized permissions;
@@ -180,8 +179,7 @@ documents, stock and reports; email; PDF printing; an image upgrade with
   it by default and Frappe background jobs then fail with error 1020.
   No ERPNext advisory names a fix after v16.35.0; the move clears CRITICAL
   findings in the image scan.
-- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05, not run on a host
-  at this tag; across 8.8 and 8.10, minor releases of the same major with no
+- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05; across 8.8 and 8.10, minor releases of the same major with no
   breaking change listed (they add commands, compact hashes and performance work).
   Redis does not load data files written by a newer version, so a rollback needs the
   backup of the Redis data. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1,

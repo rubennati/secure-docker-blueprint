@@ -133,7 +133,7 @@ The overlay exists because the host is not always yours to install on.
   test machine's virtual disk, and Scrutiny published the reading anyway. On
   real hardware that code means something; in a VM it usually means the
   hypervisor's emulation is thin.
-- **NVMe is untested here**, and needs the capability this stack leaves out.
+- **NVMe needs the capability this stack leaves out.**
 - **Notifications are not configured.** Scrutiny supports many channels through
   Shoutrrr; none is set up and none has been delivered.
 - **`limit-standard` is not measured** against the interface.

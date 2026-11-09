@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (3.2.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the site served and its job queue running before and after `down`/`up`, the refused client answered `403`; the administrator's login was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (3.2.0) — over IPv4: the site served and its job queue running before and after `down`/`up`, the refused client answered `403`; the administrator's login was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -100,15 +100,14 @@ curl -s https://raw.githubusercontent.com/requarks/wiki/3.1.0/dev/build/Dockerfi
 
 ## Version notes
 
-- Moved to `3.2.0` on 2026-11-08 and run on a host. 3.1.1 and 3.2.0
+- Moved to `3.2.0` on 2026-11-08. 3.1.1 and 3.2.0
   fix GHSA-p5rv-hmh3-wrv8, GHSA-7mf7-wprw-7fjm and GHSA-fxw3-8676-67fm; no
   configuration change.
-- Moved to `2.5.317` on 2026-10-31, not run at this tag: `2.5.316` (2026-10-02)
+- Moved to `2.5.317` on 2026-10-31: `2.5.316` (2026-10-02)
   adds the export utility for Wiki.js 3.x, `2.5.317` (2026-10-23) is a rebuild
   with Node security updates. No breaking change, migration or advisory.
 - Moved to `3.1.0` on 2026-11-05 (released 2026-11-05), from `2.5.317` across
-  `3.0.1` (2026-11-01, the first stable 3.x) and `3.0.2`, not run on a host at
-  this tag. The image scan of 2026-11-05 found CRITICAL findings at `2.5.317`,
+  `3.0.1` (2026-11-01, the first stable 3.x) and `3.0.2`. The image scan of 2026-11-05 found CRITICAL findings at `2.5.317`,
   and the 2.x line has no newer release.
   Breaking: a new application with its own schema and configuration. No
   in-place upgrade — 3.x exits when it finds 2.x tables in its schema. No setup

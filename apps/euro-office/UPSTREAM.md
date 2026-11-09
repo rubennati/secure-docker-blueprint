@@ -11,7 +11,7 @@
 - **Origin:** EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU
 - **Domain:** Documents and e-signature
 - **Role:** EU-governed fork of OnlyOffice, a drop-in document editing server
-- **Last verified:** 2026-11-09 (v9.3.7-1) — lab host (VM), IPv4 LAN, moved from v9.3.4-hotfix.1 on a new installation: the healthcheck answered `true` through the public route, the same after `down`/`up`; not edited with Nextcloud at this tag
+- **Last verified:** 2026-11-09 (v9.3.7-1) — over IPv4, moved from v9.3.4-hotfix.1 on a new installation: the healthcheck answered `true` through the public route, the same after `down`/`up`; not edited with Nextcloud at this tag
 
 ## What we use
 
@@ -45,6 +45,6 @@
 
 ## Version notes
 
-- Moved to `v9.3.7-1` on 2026-11-09, run on a host. Upstream now builds
+- Moved to `v9.3.7-1` on 2026-11-09. Upstream now builds
   `vX.Y.Z-N` tags as stable patch builds that refresh the OS packages daily;
   brotli 1.2.1. No configuration change.

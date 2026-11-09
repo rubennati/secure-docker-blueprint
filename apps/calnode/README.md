@@ -93,7 +93,7 @@ The API key is accepted as `Authorization: Bearer …` and as `X-API-Key: …`.
   and an SMTP relay from there.
 - **Litestream** is built into the image's entrypoint and streams the database to
   an object store when `LITESTREAM_REPLICA_URL` is set; if the volume comes up
-  empty it restores from the replica first. Not configured here, and not exercised.
+  empty it restores from the replica first. Off by default; set the variable to use it.
 
 ## Status
 
@@ -134,7 +134,7 @@ docker compose start calnode-app
 Restore by unpacking both back into place, restoring the `1000:1000` ownership on
 `volumes/data`, and running `docker compose up -d`. Without the original
 encryption key the stored calendar credentials cannot be decrypted. Litestream is
-upstream's own continuous alternative to this and is not exercised here.
+upstream's own continuous alternative to this; it stays off unless you configure it.
 
 ## Open findings
 

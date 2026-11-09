@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (0.77.3) — lab host (VM), IPv4 LAN, run in a parallel batch: after the README correction (directories owned by root): the server wrote its config, the GUI answered the admin (`401` for a wrong password) and the client frontend served its certificate, before and after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (0.77.3) — over IPv4: the server wrote its config, the GUI answered the admin (`401` for a wrong password) and the client frontend served its certificate, before and after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -75,7 +75,7 @@ corrected in this stack (a specific version tag, and a generated secret).
 
 ## Version notes
 
-- Moved to `0.77.3` on 2026-10-31 (released 2026-10-05), not run at this tag.
+- Moved to `0.77.3` on 2026-10-31 (released 2026-10-05).
   Upstream says the release addresses the CVEs of the 0.77.3 cycle without naming
   them on the release page; the advisory is
   https://docs.velociraptor.app/announcements/advisories/v0-77-3/, not reachable

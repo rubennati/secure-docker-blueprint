@@ -13,7 +13,7 @@
 - **Origin:** Community · docker-mailserver organisation · no single jurisdiction
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface
-- **Last verified:** 2026-11-08 (17.0.0) — lab host (VM), IPv4 LAN, a new installation at the new major: a certificate from core/acme-certs, `ops/setup.sh` created the postmaster mailbox and the DKIM key (its printed path corrected for 17.0), an account added, a message delivered locally and found with `doveadm search`, IMAP authentication, all before and after `down`/`up`; no mail ports published, no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (17.0.0) — over IPv4, a new installation at the new major: a certificate from core/acme-certs, `ops/setup.sh` created the postmaster mailbox and the DKIM key, an account added, a message delivered locally and found with `doveadm search`, IMAP authentication, all before and after `down`/`up`; no mail ports published, no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
 
 `tvial/docker-mailserver` on Docker Hub is this project's former image name; its
 newest tag is from 2021-01-16.
@@ -98,8 +98,8 @@ The update check is off.
 
 ## Version notes
 
-- Moved to `17.0.0` on 2026-11-08, a major release, and run on a host
-  as a new installation. Breaking per upstream: the Xapian FTS plugin is removed
+- Moved to `17.0.0` on 2026-11-08, a major release; a new
+  installation works at this tag. Breaking per upstream: the Xapian FTS plugin is removed
   (migrate to Flatcurve), the Postfix LDAP configuration is generated from
   layered sources with renamed `POSTFIX_*_QUERY_FILTER` variables and no default
   filters, Rspamd uses Valkey instead of Redis, `SA_SPAM_SUBJECT` is gone

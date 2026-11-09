@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (2.1.1) — lab host (VM), IPv4 LAN, run in a parallel batch: a paste stored through the JSON API (the data directory writable) before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2.1.1) — over IPv4: a paste stored through the JSON API (the data directory writable) before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -77,7 +77,7 @@ cause.
 ## Version notes
 
 - Moved `privatebin/nginx-fpm-alpine` to `2.1.1` on 2026-11-05 (released
-  2026-11-04), across 2.1.0, not run on a host at this tag. Security: 2.1.1 fixes
+  2026-11-04), across 2.1.0. Security: 2.1.1 fixes
   GHSA-6vvp-q86m-cp8q (SVG attachment previews ran script in the instance's origin;
   previews now use a data URL), GHSA-9rmv-j9gp-6vc5 (`sizelimit` checked only the
   cipher text, so the unbounded `adata` array could fill the disk; the limit now

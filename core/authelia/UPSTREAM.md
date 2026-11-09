@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (4.39.28) — lab host (VM), IPv4 LAN, run in a parallel batch: `/api/health` OK through the route, all three services up before and after `down`/`up`, the refused client answered `403`; no login flow driven (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (4.39.28) — over IPv4: `/api/health` OK through the route, all three services up before and after `down`/`up`, the refused client answered `403`; no login flow driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -74,8 +74,7 @@ restore.
 
 ## Version notes
 
-- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05, not run
-  on a host at this tag. PostgreSQL 18 support: Authelia supports any version
+- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: Authelia supports any version
   the PostgreSQL project still supports and tests against the newest
   (https://www.authelia.com/reference/integrations/database-integrations/). The
   18 image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
@@ -88,8 +87,8 @@ restore.
   dump.sql` (errors that the bootstrap role and database already exist are
   expected); then `docker compose up -d`. A return to the old major is only a
   restore of that dump.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

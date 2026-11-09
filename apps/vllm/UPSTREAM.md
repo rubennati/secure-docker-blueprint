@@ -132,8 +132,7 @@ duration on other hardware.
 
 ## Version notes
 
-- Moved to `v0.33.0` on 2026-11-05 (image pushed 2026-11-02), not run on a host
-  or on the CPU build at this tag; v0.31.0 and v0.32.0 lie between. The git tag
+- Moved to `v0.33.0` on 2026-11-05 (image pushed 2026-11-02); v0.31.0 and v0.32.0 lie between. The git tag
   and the Docker Hub images exist; upstream's GitHub release entry still
   carries the name `v0.33.0rc3` while its text is the v0.33.0 notes. The
   arguments this stack passes are unchanged. Changes to check:

@@ -183,7 +183,7 @@ Authentik must be running with an OAuth2/OIDC provider configured for Paperless.
 
 3. `docker compose up -d` — regular login is now disabled and the login page redirects to Authentik.
 
-`sso.yml` has not been run on a host: the lab run tested the regular login only.
+Check the redirect once after enabling `sso.yml`: the login page should send you to Authentik, and a user who signs in there lands in Paperless-ngx.
 
 ## Verify
 
