@@ -1,0 +1,216 @@
+---
+title: Wiki.js
+description: A wiki organised by path, with Markdown and visual editors, per-page permissions and its own sign-in modules — administrator created from secrets, PostgreSQL behind it.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Wiki.js is a wiki with Markdown, AsciiDoc and visual editors, per-page
+permissions, live collaboration and an optional Git mirror of the content. Pages
+are organised by path rather than in books and chapters — that is the difference
+to [BookStack](/applications/bookstack/). Its sign-in modules, OpenID Connect,
+SAML and LDAP among them, are all in the free code. Two containers: the
+application and PostgreSQL, which holds the pages and uploaded files.
+
+<StackEvidence stack="apps/wikijs" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain. SMTP
+for mail is set in the administration area.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/wikijs/`:
+
+```bash
+cp .env.local.example .env.local
+mkdir -p .secrets volumes/data volumes/postgres
+openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080` and sign in as `admin@example.com`
+(`ADMIN_EMAIL`) with the password in `.secrets/admin_pwd.txt`. Stop it again with
+the same command and `down`.
+
+## Installation
+
+There is no setup wizard. The first start creates the root administrator from
+`ADMIN_EMAIL` and a secret file.
+
+From `apps/wikijs/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `ADMIN_EMAIL` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the secrets and the volumes. The database password ends up in a
+   connection string, so it is hex — base64 produces characters that break URL
+   parsing:
+
+   ```bash
+   mkdir -p .secrets volumes/data volumes/postgres
+   openssl rand -hex 32 | tr -d '\n' > .secrets/db_pwd.txt
+   openssl rand -base64 24 | tr -d '\n' > .secrets/admin_pwd.txt
+   sudo chown -R 1000:1000 volumes/data
+   ```
+
+   `volumes/data` belongs to uid 1000, the user the image runs as.
+
+3. List `wikijs-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render and
+   restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+4. Start and watch the migrations:
+
+   ```bash
+   docker compose up -d
+   docker compose logs wikijs-app --follow
+   ```
+
+   Wait for `HTTP Server: [ RUNNING ]`.
+
+5. Sign in at `https://<APP_TRAEFIK_HOST>` as `ADMIN_EMAIL` with the password in
+   `.secrets/admin_pwd.txt`, then:
+
+   - **Administration → Security:** turn on **Trust X-Forwarded-\* Proxy
+     Headers**, so audit entries and rate limits see the client rather than
+     Traefik.
+   - In the site settings, set the hostname to `APP_TRAEFIK_HOST`. Mail is not
+     sent without a fixed hostname.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps    # two services, healthy
+```
+
+Create a page, edit it, and open **Administration → System Info**.
+
+## Going further
+
+### Who can reach it
+
+The stack ships `access-vpn`, with `limit-standard` and `headers-standard`. A
+wiki with public pages is a normal thing to want: once the administrator and the
+site settings are in place, `APP_TRAEFIK_ACCESS` decides what the router
+answers, and **Administration → Groups** decides what a guest may read.
+
+### Single sign-on
+
+Local accounts work out of the box, with two-factor authentication. OpenID
+Connect, SAML, LDAP and about fifteen other modules are configured under
+**Administration → Auth**; [Authentik](/infrastructure/authentik/) or
+[Keycloak](/infrastructure/keycloak/) can be the provider.
+
+### What leaves the host
+
+The version check calls `api.github.com`, and icons are fetched from
+`api.iconify.design` on first use. Upstream lists both as required outbound
+endpoints.
+
+### Extensions
+
+Extensions cannot be installed from the administration area: that writes under
+`/wiki/backend`, and the container's root filesystem is read-only. The Puppeteer
+extension for server-side rendering is part of the image.
+
+### Coming from Wiki.js 2.x
+
+There is no in-place upgrade: 3.x refuses to start on a database that holds 2.x
+tables. Export from 2.x (**Administration → Utilities → Export for Wiki.js
+3.x**), start 3.x on an empty database and import the package. The full steps,
+with the rollback, are in `UPSTREAM.md` under "Version notes".
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `wikijs-db`, database `wikijs` (schema `wiki`), user `wikijs` — pages, history, uploads, users, settings |
+| **Password** | `.secrets/db_pwd.txt` — `.secrets/admin_pwd.txt` is only read at the first start |
+| **State** | `volumes/data` — the content mirror, if the Git storage module is on |
+| **Rebuildable** | `volumes/data/cache` |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+source_directories:
+    - /srv/docker/apps/wikijs/volumes/data
+
+postgresql_databases:
+    - name: wikijs
+      username: wikijs
+      pg_dump_command: docker exec wikijs-db pg_dump
+      pg_restore_command: docker exec -i wikijs-db pg_restore
+      psql_command: docker exec -i wikijs-db psql
+```
+
+No quiescing — dump the database rather than copying its files. Restore order:
+database, then the data directory, then the application, which reads its
+configuration from the database at boot. Keep `volumes/data` owned by uid 1000.
+
+## Updates
+
+A schema upgraded by a newer version cannot be run by an older one, so the
+database backup comes first.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/requarks/wiki/releases).
+
+2. Dump the database:
+
+   ```bash
+   docker compose exec wikijs-db sh -c 'pg_dump -U "$POSTGRES_USER" "$POSTGRES_DB"' \
+     > wikijs-db-$(date +%Y%m%d).sql
+   ```
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs wikijs-app --follow
+   ```
+
+   Migrations run first, then `HTTP Server: [ RUNNING ]`.
+
+4. Sign in, open and edit a page, and check **Administration → System Info**.
+
+</Steps>
+
+## Troubleshooting
+
+**Permission errors on `/wiki/data` in the log.**
+`volumes/data` is not owned by uid 1000. `sudo chown -R 1000:1000 volumes/data`.
+
+**Audit entries and rate limits show Traefik's address for everyone.** **Trust
+X-Forwarded-\* Proxy Headers** is off.
+
+**No mail is sent.** The site hostname is not set in the administration area.
+
+**3.x exits at start on an existing database.** The database holds 2.x tables —
+see [Coming from Wiki.js 2.x](#coming-from-wikijs-2x).
+
+**A changed administrator password in `.secrets/admin_pwd.txt` has no effect.**
+It is read only when the account is created. Change the password in the
+interface.
+
+## Repository files
+
+- [`apps/wikijs/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wikijs/README.md) — setup, authentication, backup
+- [`apps/wikijs/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wikijs/.env.example)
+- [`apps/wikijs/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wikijs/UPSTREAM.md) — the 2.x to 3.x migration and upgrade checklist
+
+## Official sources
+
+- [Wiki.js documentation](https://docs.requarks.io/)
+- [Wiki.js on GitHub](https://github.com/requarks/wiki)
