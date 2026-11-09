@@ -33,6 +33,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Changed
 
+- **The README shows four ways in.** Getting started separates trying a stack on
+  your machine — the local variant most stacks ship, which the README did not
+  mention — from setting up a new host, adding a stack to a host and updating a
+  host. The documentation table splits into using and developing the blueprint.
 - **Stack READMEs open with the application.** Each README starts with what the
   application is and a pointer to `UPSTREAM.md` for the project, source, licence
   and origin. `## Open findings` moved from the top to after the operating
