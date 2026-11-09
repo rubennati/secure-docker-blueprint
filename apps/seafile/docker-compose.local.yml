@@ -2,6 +2,7 @@
 #
 #   cp .env.local.example .env.local
 #   mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+#   sudo chown 999:999 volumes/local/mysql   # the mariadb image's mysql user — the db service has no CHOWN
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   http://127.0.0.1:8000
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -17,8 +18,11 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Measured on the stack-refresh lab host: the entrypoint switches to the mysql user.
+    # The entrypoint switches to the mysql user (SETUID, SETGID); healthcheck.sh runs
+    # as root and reads /var/lib/mysql/.my-healthcheck.cnf, mode 600 and owned by
+    # mysql (DAC_OVERRIDE) — without it the service never turns healthy.
     cap_add:
+      - DAC_OVERRIDE
       - SETUID
       - SETGID
 

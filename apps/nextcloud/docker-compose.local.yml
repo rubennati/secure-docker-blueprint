@@ -2,6 +2,7 @@
 #
 #   cp .env.local.example .env.local
 #   mkdir -p volumes/local/mysql volumes/local/redis volumes/local/html
+#   sudo chown 999:999 volumes/local/mysql   # the mariadb image's mysql user — the db service has no CHOWN
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   docker compose -f docker-compose.local.yml --env-file .env.local logs -f app
 #   http://localhost:8080 — log in as ADMIN_USER / ADMIN_PASSWORD
