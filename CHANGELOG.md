@@ -35,13 +35,25 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Changed
 
-- **CrowdSec's LAPI moves to `127.0.0.1:8081` on the host.** `apps/unifi` publishes
-  8080 for its devices' inform requests and `core/crowdsec` published `127.0.0.1:8080`
-  for the host firewall bouncer, so the two could not start on one host. The port is
-  loopback-only and exists for that bouncer alone; Traefik keeps `crowdsec:8080` on the
-  Docker network. **Migration:** an existing `.env` keeps its value — to move, set
-  `CROWDSEC_LAPI_PORT=8081` and change the bouncer's `api_url` (core/crowdsec README,
-  "LAPI port on the host").
+- **`DAC_READ_SEARCH` needs no exception any more** (`scripts/ci/check-baseline.py`,
+  DEC-047 addendum). The official mongo entrypoint searches its own mode-700 data
+  directory with it on every start after the first; it reads and lists and writes
+  nothing, so it is narrower than `DAC_OVERRIDE`, which was already in the baseline.
+  `CAP_BASELINE` holds seven capabilities, and the exception entries of `apps/unifi` and
+  `business/opensign` are gone.
+- **`check-structure.py` fails a port published from internal networks only**
+  (`internal-port`). Docker binds nothing for such a service, so the port never
+  answers; it had hidden ShellHub's SSH port and the ports of five local files.
+
+- **CrowdSec publishes no host port unless the host-firewall bouncer needs one.**
+  `core/crowdsec` published `127.0.0.1:8080` on every host, for the optional firewall
+  bouncer alone, and `apps/unifi` needs 8080 for its devices' inform requests, so the two
+  could not start on one host. Traefik reaches the engine at `crowdsec:8080` on the
+  Docker network and never used the port. It now comes from the `firewall-bouncer.yml`
+  overlay, on `127.0.0.1:8081` by default (`CROWDSEC_LAPI_PORT`). **Migration:** with
+  the firewall bouncer, set `COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in
+  `.env` and point the bouncer's `api_url` at the port (core/crowdsec README, "LAPI port
+  on the host"); without it, `docker compose up -d` drops the old port.
 - **Healthchecks also listens on `127.0.0.1:8001`** (`HC_LOCAL_PORT`), for jobs on the
   same host: the watchdogs and borgmatic ping there instead of through Traefik, where a
   closed access policy refused them. No public `/ping/` route is needed.
