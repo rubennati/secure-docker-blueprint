@@ -50,7 +50,7 @@ therefore without the password gate. It needs a reachable Paperless-ngx and a
 model server to do any work.
 
 ```bash
-cp .env.local.example .env.local          # point it at your Paperless-ngx and model
+cp .env.local.example .env.local
 mkdir -p .secrets volumes/db volumes/config volumes/prompts
 printf '%s' 'your-paperless-api-token' > .secrets/paperless_api_token.txt
 touch .secrets/llm_api_key.txt

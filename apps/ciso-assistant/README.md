@@ -83,6 +83,8 @@ tasks, a restart, and the restore below. Full log in
 ```bash
 cp .env.local.example .env.local
 ops/init.sh
+mkdir -p volumes/data
+sudo chown -R 1001:1001 volumes/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000 — about ten minutes on the first start
 docker compose -f docker-compose.local.yml --env-file .env.local down

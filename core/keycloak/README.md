@@ -23,10 +23,15 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
-docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:8080
-docker compose -f docker-compose.local.yml --env-file .env.local down
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'BOOTSTRAP_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/postgres volumes/local/data && sudo chown 1000:0 volumes/local/data
+docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080/admin — sign in as the bootstrap administrator
+docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local down
 ```
 
 `.env.local` holds plain values, not Docker Secrets — local only.

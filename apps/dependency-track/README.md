@@ -126,7 +126,11 @@ values only, discovered the next time an integration tries to use one.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill DB_PASSWORD, DT_KEK
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DT_KEK=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 mkdir -p volumes/local/postgres volumes/local/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080 — frontend; API at http://localhost:8081

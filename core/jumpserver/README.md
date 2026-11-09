@@ -24,6 +24,7 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/data volumes/local/download
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down

@@ -22,6 +22,7 @@ Runs on `http://localhost:3000` without Traefik, DNS or a certificate.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/config
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
 docker compose -f docker-compose.local.yml --env-file .env.local down

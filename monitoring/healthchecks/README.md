@@ -19,8 +19,15 @@ Data stored in SQLite (`./volumes/data/hc.sqlite`). Suitable for personal use an
 Runs on `http://localhost:8000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'HC_SECRET_KEY=%s\n' "$(openssl rand -base64 60 | tr -d '\n=')" >> .env.local
+
+mkdir -p volumes/local/data
+sudo chown -R 999:999 volumes/local/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local \
+  exec app python /opt/healthchecks/manage.py createsuperuser
 # http://localhost:8000
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```

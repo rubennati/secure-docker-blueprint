@@ -64,7 +64,11 @@ Then, in this order:
 ```bash
 cp .env.local.example .env.local
 ops/init.sh --local             # fills .env.local, creates a self-signed certificate
-# the chown lines init.sh prints
+sudo chown -R 1000:1000 volumes/local/mail
+sudo chown -R root:1000 volumes/local/certs && sudo chmod 640 volumes/local/certs/tls.key
+sudo chown root:root volumes/local/spool && sudo chmod 755 volumes/local/spool
+sudo chown -R 11333:11333 volumes/local/filter
+sudo chown -R 999:999 volumes/local/redis
 ops/setup.sh --local
 ```
 

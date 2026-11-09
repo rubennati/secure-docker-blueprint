@@ -30,6 +30,8 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/postgres volumes/local/recordings volumes/local/hostkey
+sudo chown 0:0 volumes/local/recordings volumes/local/hostkey
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down

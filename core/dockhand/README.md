@@ -23,7 +23,11 @@ Dockhand reaches the Docker daemon via `DOCKER_HOST=tcp://socket-proxy:2375`. Th
 Runs on `http://localhost:3000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
 docker compose -f docker-compose.local.yml --env-file .env.local down

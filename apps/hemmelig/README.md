@@ -110,7 +110,10 @@ database may reference uploaded file paths), start the container.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill BETTER_AUTH_SECRET
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'BETTER_AUTH_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 mkdir -p volumes/local/database volumes/local/uploads
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080

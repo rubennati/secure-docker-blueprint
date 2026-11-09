@@ -78,7 +78,11 @@ restore below. Full log in
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local       # set QDRANT_API_KEY: openssl rand -hex 24
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+QDRANT_API_KEY=$(openssl rand -hex 24)
+printf 'QDRANT_API_KEY=%s\n' "$QDRANT_API_KEY" >> .env.local
+
 mkdir -p volumes/local/storage volumes/local/snapshots
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 curl -H "api-key: $QDRANT_API_KEY" http://localhost:6333/collections

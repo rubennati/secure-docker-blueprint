@@ -43,6 +43,7 @@ docker compose up -d
 cp .env.local.example .env.local
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080/healthcheck → "true"   (JWT disabled locally — never in prod)
+docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
 ## Verify on first deploy

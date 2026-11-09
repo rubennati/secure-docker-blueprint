@@ -18,7 +18,11 @@ The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed dire
 Runs on `https://localhost:8443` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/mongodb volumes/local/config
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # https://localhost:8443
 docker compose -f docker-compose.local.yml --env-file .env.local down

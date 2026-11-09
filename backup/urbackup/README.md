@@ -18,6 +18,9 @@ Runs on `http://localhost:55414` without Traefik, DNS or a certificate.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/database volumes/local/backups
+sudo chown 0:101 volumes/local/database volumes/local/backups
+sudo chmod 775 volumes/local/database volumes/local/backups
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:55414
 docker compose -f docker-compose.local.yml --env-file .env.local down

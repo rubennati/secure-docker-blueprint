@@ -140,8 +140,12 @@ endpoints actually trust.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill ADMIN_PASSWORD
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24)" >> .env.local
+
 mkdir -p volumes/local/etc volumes/local/datastore
+sudo chown 0:0 volumes/local/etc volumes/local/datastore
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # https://localhost:8889
 docker compose -f docker-compose.local.yml --env-file .env.local down

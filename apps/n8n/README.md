@@ -19,7 +19,12 @@ Data lives in `./volumes/data/` (SQLite DB, credentials, workflow exports).
 Runs on `http://localhost:5678` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'N8N_ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/data volumes/local/files
+sudo chown -R 1000:1000 volumes/local/data volumes/local/files
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:5678
 docker compose -f docker-compose.local.yml --env-file .env.local down

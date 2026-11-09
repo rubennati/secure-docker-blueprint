@@ -34,7 +34,12 @@ itself with a certificate `ops/init.sh --local` creates, and runs under
 container — SQLite instead of PostgreSQL, sessions in memory.
 
 ```bash
-cp .env.local.example .env.local # fill the three empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'JWT_SECRET=%s\n' "$(openssl rand -hex 64)" >> .env.local
+printf 'SESSION_SECRET=%s\n' "$(openssl rand -hex 64)" >> .env.local
+printf 'STORAGE_ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 64)" >> .env.local
+
 ops/init.sh --local              # certificate and the user admin
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # https://auth.example.localhost:9091 — accept the self-signed certificate

@@ -164,7 +164,13 @@ skipped entirely — it holds no data worth keeping past a restart.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill DB_PASSWORD, DB_ADMIN_PASSWORD, IRIS_SECRET_KEY, IRIS_SECURITY_PASSWORD_SALT
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DB_ADMIN_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'IRIS_SECRET_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+printf 'IRIS_SECURITY_PASSWORD_SALT=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 mkdir -p volumes/local/{postgres,rabbitmq,downloads,templates,server_data}
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080

@@ -28,6 +28,10 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/postgres
+ssh-keygen -t rsa -b 4096 -m PEM -f volumes/local/ssh_private_key -N ""
+openssl genrsa -out volumes/local/api_private_key 4096
+openssl rsa -in volumes/local/api_private_key -pubout -out volumes/local/api_public_key
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down

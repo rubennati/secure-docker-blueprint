@@ -32,12 +32,18 @@ not use this repository's reverse proxy at all. See "Network exposure".
 
 ## Try it locally
 
-Runs on `http://localhost:3080` without Traefik, DNS or a certificate; port 3025 is the auth service.
+Runs on `https://localhost:3080` with a self-signed certificate, without Traefik or DNS; port 3025 is the auth service.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/config volumes/local/data
+docker run --rm --entrypoint=/usr/local/bin/teleport \
+  -v "$(pwd)/volumes/local/config:/etc/teleport" \
+  public.ecr.aws/gravitational/teleport-distroless:18.11.9 \
+  configure --roles=proxy,auth > volumes/local/config/teleport.yaml
+sudo chown 0:0 volumes/local/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:3080
+# https://localhost:3080/web — accept the self-signed certificate warning
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 

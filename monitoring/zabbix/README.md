@@ -27,6 +27,22 @@ Traefik ──http──→ zabbix-web :8080       nginx + PHP, the only routed 
                       └──→ zabbix-db :5432        (PostgreSQL, app-internal)
 ```
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate. The first start creates the schema and takes a few minutes.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1997:1997 volumes/alertscripts volumes/externalscripts
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080 — Admin / zabbix, then change it
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The port binds to `127.0.0.1`. `trapper.yml` works here too and publishes 10051
+just the same. It mounts the same `volumes/`, so run one at a time.
+
 ## Setup
 
 ```bash

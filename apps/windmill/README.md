@@ -108,7 +108,10 @@ Nothing has run with job isolation. Full log in
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local      # set DB_PASSWORD: openssl rand -hex 32
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
 mkdir -p volumes/local/postgres volumes/local/worker_cache
 sudo chown 1000:1000 volumes/local/worker_cache   # the workers run as uid 1000
 docker compose -f docker-compose.local.yml --env-file .env.local up -d

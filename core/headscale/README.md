@@ -25,6 +25,21 @@ Clients ────────────────────────
             (derp.yml, 3478/udp)
 ```
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate. It shows the control server running and takes the CLI; a client cannot join, because the embedded relay needs an https `server_url`.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1000:1000 volumes/lib
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local exec headscale /ko-app/headscale users list
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The port binds to `127.0.0.1`. It mounts the same `volumes/`, so run one at a time.
+
 ## Setup
 
 ```bash

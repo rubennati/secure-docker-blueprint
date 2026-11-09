@@ -45,6 +45,24 @@ output.
 
 `access-vpn` is the other gate. Neither replaces the other.
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1000:1000 volumes/
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The interface has no password here: the production file puts one at the proxy,
+and a loopback port has no proxy, so it is open to whoever reaches
+`127.0.0.1:8080`. `collector.yml` works here too, with the same `devices:` edit.
+It mounts the same `volumes/`, so run one at a time.
+
 ## Setup
 
 ```bash

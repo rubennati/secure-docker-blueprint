@@ -88,9 +88,15 @@ yield both halves.
 Run standalone on `http://localhost:8080` — plain env, no Traefik/Docker Secrets:
 
 ```bash
-cp .env.local.example .env.local   # fill values (openssl one-liners inside)
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 16)" >> .env.local
+printf 'AUTH_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080 — create the first account
+docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
 ## Verify on first deploy
