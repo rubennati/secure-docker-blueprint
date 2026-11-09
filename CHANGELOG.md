@@ -27,7 +27,9 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   newest version.** `scripts/ci/upstream-status.py` reported n8n 3.1.0, a GitHub
   pre-release, and the Portainer agent's 3.0.1 image tag, which has no release, as
   newer than their stable and LTS pins. A version upstream published only as a
-  pre-release is skipped, and a pin upstream names LTS is compared with LTS
+  pre-release is skipped, and so is an image tag of a minor line upstream has
+  released only as pre-releases so far (n8n pushes the next 2.47.x image before
+  its pre-release appears); a pin upstream names LTS is compared with LTS
   releases only. Release tags with a digit in the project name (`n8n@2.46.6`) are
   now read by their version, which also corrects n8n's release dates.
 
