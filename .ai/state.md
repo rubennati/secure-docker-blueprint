@@ -4,12 +4,12 @@
 
 **Last updated:** 2026-11-09
 
-- **Phase:** pre-1.0. Latest tag `v0.9.8` (2026-11-07), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.8..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.9` (2026-11-09), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.9..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Last completed:** the stack refresh — see *Unreleased* below and
+- **Last completed:** the stack refresh, released as v0.9.9 — see
   `CHANGELOG.md`. Actionable items are GitHub Issues; [`tasks.md`](tasks.md) holds
   only what no issue owns.
 - **Earlier:** the stabilization programme (PRs #115, #119, #124, #125, #126, then
@@ -94,13 +94,13 @@
 - **Released: v0.9.8** — hosts carry only their stacks: a partial checkout
   with `stacks` and `scripts/stacks.sh`, the VPN described as a recommendation,
   the README headline and reader corrections. No stack or pin changed; no host run.
-- **Unreleased (2026-11-09): stacks current, starting and closed.** 32 pins
+- **Released: v0.9.9 (2026-11-09) — every stack current, closed and checked on a host.** 32 pins
   at the newest upstream release, 62 faults fixed, 120 of 121 stacks verified on a
   host (`apps/vllm` needs a GPU), each with its date in [`../LIFECYCLE.md`](../LIFECYCLE.md).
   Secrets ship empty and compose refuses to start without them; CrowdSec's LAPI
   port comes only with the firewall-bouncer overlay; `DAC_READ_SEARCH` is in the
-  capability baseline (DEC-047 addendum). The release, v0.9.9 or v0.10.0 (DEC-074),
-  is next; its content is `CHANGELOG.md` → *Unreleased*.
+  capability baseline (DEC-047 addendum). Docs, stack READMEs and the website
+  agree; the site starts with five stacks and has a Monitoring section.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.
