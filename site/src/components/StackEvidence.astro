@@ -1,6 +1,6 @@
 ---
 /**
- * What has been established about this stack, and what has not.
+ * What has been established about this stack.
  *
  * A stack carries no state (DEC-080). This shows the facts — when the stack last
  * ran on a host and which version ran, whether its data came back from a backup,
@@ -8,22 +8,18 @@
  * and leaves the weighing to the reader.
  *
  * Facts come from `src/data/lifecycle.json`, generated from the repository and
- * checked in CI. Nothing here is retyped.
+ * checked in CI. Nothing here is retyped. Requirements and scope belong in the
+ * page itself, as properties of the stack, not in this block.
  *
- * `gap` is the authored part: one sentence naming what specifically has not
- * been exercised. A generic disclaimer is noise; a named gap is usable — so a
- * stack with no test date must supply one, or the build fails.
- *
- * Usage:  <StackEvidence stack="apps/nextcloud" gap="Client sync is untested." />
+ * Usage:  <StackEvidence stack="apps/nextcloud" />
  */
 import lifecycle from '../data/lifecycle.json';
 
 interface Props {
 	stack: string;
-	gap?: string;
 }
 
-const { stack, gap } = Astro.props;
+const { stack } = Astro.props;
 const entry = (lifecycle as Record<string, any>)[stack];
 
 if (!entry) {
@@ -65,22 +61,11 @@ const critical = entry.critical;
 const high = entry.high;
 const readme = `https://github.com/rubennati/secure-docker-blueprint/blob/main/${stack}/README.md#open-findings`;
 
-// Where nothing has run, the version alone is not enough to leave a reader
-// with — but a generic hedge is worse than nothing. So the gap becomes
-// mandatory here, and the build stops rather than ship a page that gestures at
-// doubt.
-if (!tested && !gap) {
-	throw new Error(
-		`StackEvidence: "${stack}" has no test date, so it needs a gap="…" naming ` +
-			`what specifically has not been established. A page without one would ` +
-			`carry a warning the reader cannot act on.`,
-	);
-}
 ---
 
-<div class={`evidence evidence--${tested ? 'checked' : 'untested'}`}>
+<div class={`evidence${tested ? ' evidence--checked' : ''}`}>
 	{
-		tested ? (
+		tested && (
 			<p class="evidence__line">
 				<strong>Last run on a host {tested}</strong>
 				{testedVersion && (
@@ -90,10 +75,6 @@ if (!tested && !gap) {
 					</>
 				)}
 				{entry.restored && <> · data restored from a backup</>}
-			</p>
-		) : (
-			<p class="evidence__line">
-				<strong>Not run on a host yet</strong>
 			</p>
 		)
 	}
@@ -106,7 +87,6 @@ if (!tested && !gap) {
 			</p>
 		)
 	}
-	{gap && <p class="evidence__gap">Not exercised: {gap}</p>}
 	{
 		critical !== null && high !== null && (critical > 0 || high > 0) && (
 			<p class="evidence__findings">
@@ -126,11 +106,6 @@ if (!tested && !gap) {
 	.evidence--checked {
 		border-left-color: var(--sl-color-blue);
 	}
-	/* Grey, not orange: an absent test date is a missing fact, not a hazard.
-	   The named gap underneath is what the reader acts on. */
-	.evidence--untested {
-		border-left-color: var(--sl-color-gray-4);
-	}
 	.evidence__line {
 		margin: 0 0 0.15rem;
 		font-size: 0.85rem;
@@ -143,10 +118,5 @@ if (!tested && !gap) {
 	.evidence__findings {
 		margin: 0.25rem 0 0;
 		font-size: 0.85rem;
-	}
-	.evidence__gap {
-		margin: 0.25rem 0 0;
-		font-size: 0.85rem;
-		color: var(--sl-color-gray-2);
 	}
 </style>

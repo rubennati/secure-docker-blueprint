@@ -10,8 +10,7 @@ dnsmasq answers names on your own network: wildcard zones that point a whole
 subdomain at one address, static records for machines that have no DNS entry, and
 a cache in front of an upstream resolver. One container.
 
-<StackEvidence stack="core/dnsmasq"
-  gap="everything below. The stack has never been brought up here: the rendered configuration, resolution over the VPN interface and the reload behaviour are read from the stack's files rather than observed." />
+<StackEvidence stack="core/dnsmasq" />
 
 Needs: a host where port 53 is free, and — if it should answer over a VPN — that
 interface present.

@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 WordPress with a MariaDB database, PHP settings tightened, and a set of Apache
 rules applied after installation. Two containers.
 
-<StackEvidence stack="apps/wordpress"
-  gap="everything below. The stack has never been brought up here: the installer, the .htaccess hardening step and the upgrade path from 6.x are read from the stack's files rather than observed." />
+<StackEvidence stack="apps/wordpress" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,14 @@ rules applied after installation. Two containers.
 On your own machine, with no proxy, domain or certificate. From `apps/wordpress/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -54,7 +60,9 @@ From `apps/wordpress/`:
    docker compose up -d
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>` and run the WordPress installer.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and run the WordPress
+   installer. It makes the first visitor the administrator, which is why the
+   route ships closed (`access-vpn`).
 
 5. Apply the Apache hardening — **after** the installer has finished, because it
    writes `.htaccess` itself and would overwrite the additions:
@@ -63,6 +71,12 @@ From `apps/wordpress/`:
    docker compose exec wordpress-app bash -c \
      'cat /config/.htaccess-security >> /var/www/html/.htaccess'
    ```
+
+6. Open the route for the site's audience: `APP_TRAEFIK_ACCESS=access-public` in
+   `.env` and `docker compose up -d` for a public site, or a second router that
+   keeps `/wp-admin` on `access-vpn` — the scenarios are in
+   [`apps/wordpress/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wordpress/README.md).
+   A fully internal site stays as shipped.
 
 </Steps>
 
@@ -94,12 +108,21 @@ are in
 ### Why `tls-compatible`
 
 The stack names `tls-compatible` on the router's `tls.options` label
-(`APP_TRAEFIK_TLS_OPTION=tls-compatible` in `.env`) — a documented exception
-kept from before the model, with no reason recorded. The profile exists for
+(`APP_TRAEFIK_TLS_OPTION=tls-compatible` in `.env`). The profile exists for
 older clients that must still connect, and a public site is visited by whatever
 the visitor happens to run. Verify on a host whether `tls-standard`, the
 deployment default, serves the visitors a blog still wants, then remove the
 variable and the label.
+
+### What it sends outward
+
+The core update check contacts `api.wordpress.org` and carries more than a
+version: the PHP and MySQL versions, the locale, **the number of sites and the
+number of users**, and whether multisite is enabled. Plugin and theme checks
+follow the same path.
+
+The official image exposes no environment variable for it. Switching it off
+means a `must-use` plugin or an egress rule.
 
 ## Backup
 

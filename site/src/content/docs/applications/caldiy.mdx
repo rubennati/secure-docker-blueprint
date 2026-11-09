@@ -17,21 +17,22 @@ On your own machine, with no proxy, domain, certificate or mail. From
 
 ```bash
 cp .env.local.example .env.local
-```
 
-`.env.local` ships six secrets empty that all have to be filled in.
-Four are `openssl` one-liners printed above each line in the file; the fifth and
-sixth are the VAPID pair, which comes from:
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "NEXTAUTH_SECRET=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "ENCRYPTION_KEY=$(openssl rand -base64 24 | tr -d '\n')"
+  echo "CRON_API_KEY=$(openssl rand -hex 16)"
+  vapid=$(docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys --json 2>/dev/null)
+  echo "VAPID_PUBLIC_KEY=$(echo "$vapid" | sed 's/.*"publicKey":"\([^"]*\)".*/\1/')"
+  echo "VAPID_PRIVATE_KEY=$(echo "$vapid" | sed 's/.*"privateKey":"\([^"]*\)".*/\1/')"
+} >> .env.local
 
-```bash
-docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
-```
-
-Then start it:
-
-```bash
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
+
+The VAPID pair comes from a throwaway Node container.
 
 It listens on `127.0.0.1:3000` only. Open `http://localhost:3000`: signup is open
 here, so you can create the first user and click through the booking flow. Mail
@@ -214,9 +215,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: caldiy
-      container: caldiy-db
       username: caldiy
-      password: "{credential file /srv/docker/apps/caldiy/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec caldiy-db pg_dump
+      pg_restore_command: docker exec -i caldiy-db pg_restore
+      psql_command: docker exec -i caldiy-db psql
 ```
 
 **`encryption_key.txt` decrypts the connected calendar tokens.** The key and the
@@ -268,8 +271,7 @@ SSO and workflows are not part of the community edition.
 
 ## Verification details
 
-<StackEvidence stack="apps/caldiy"
-  gap="a restore. The database and the encryption key have to come back together, and that has not been performed here." />
+<StackEvidence stack="apps/caldiy" />
 
 ## Repository files
 

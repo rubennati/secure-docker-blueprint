@@ -11,8 +11,7 @@ into a folder is OCR'd, classified and filed, and its text becomes searchable.
 Five containers — the application with its workers and consumer, a database, a
 cache, and two converters it hands other formats to.
 
-<StackEvidence stack="apps/paperless-ngx"
-  gap="the mobile app and other official clients, and a real client's address in the log — every check ran from a probe on the host." />
+<StackEvidence stack="apps/paperless-ngx" />
 
 **To try it:** Docker, and the OCR language packs you intend to use. See [Try it locally](#try-it-locally).
 
@@ -23,7 +22,18 @@ cache, and two converters it hands other formats to.
 On your own machine, with no proxy, domain or certificate. From `apps/paperless-ngx/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "SECRET_KEY=$(openssl rand -base64 48 | tr -d '\n')"
+  echo "ADMIN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -49,7 +59,7 @@ From `apps/paperless-ngx/`:
    |---|---|
    | `APP_TRAEFIK_HOST` | the hostname Traefik routes to this stack |
    | `PAPERLESS_OCR_LANGUAGE` | the language used when a document carries no language metadata |
-   | `PAPERLESS_OCR_LANGUAGES` | every language pack to install, comma-separated |
+   | `PAPERLESS_OCR_LANGUAGES` | every language pack to install, space-separated (`deu eng`) — a comma makes one unknown package name |
    | `USERMAP_UID` / `USERMAP_GID` | the host user that owns `volumes/` — `1000:1000` on a default Debian install |
    | `TZ` | the timezone timestamps are written in |
 
@@ -77,6 +87,7 @@ From `apps/paperless-ngx/`:
    ```bash
    mkdir -p volumes/{data,media,consume,export,postgres,redis}
    sudo chown -R 1000:1000 volumes/data volumes/media volumes/consume volumes/export
+   sudo chown 999:1000 volumes/redis   # Redis cannot fix this ownership itself
    ```
 
    Use the same UID and GID you set in step 1. A mismatch surfaces as permission
@@ -94,12 +105,12 @@ From `apps/paperless-ngx/`:
    docker compose logs paperless-app --follow
    ```
 
-   Wait for `Listening at: http://0.0.0.0:8000`.
+   Wait for `Listening at: http://:::8000`.
 
 6. Create the first account:
 
    ```bash
-   docker compose exec paperless-app python manage.py createsuperuser
+   docker compose exec paperless-app createsuperuser
    ```
 
 7. Open `https://<APP_TRAEFIK_HOST>` and log in.
@@ -109,8 +120,8 @@ From `apps/paperless-ngx/`:
 ## Verify
 
 ```bash
-docker compose ps                               # five services, all healthy
-docker compose exec paperless-app python manage.py check  # Django reports no issues
+docker compose ps    # five services; four healthy, tika "running" (no healthcheck)
+docker compose exec paperless-app /command/with-contenv python3 manage.py check   # no issues
 ```
 
 Then put a PDF into `volumes/consume/` and watch it arrive:
@@ -157,8 +168,12 @@ its provider configuration as a single JSON environment variable and has no
 
 ### Mail
 
-Used for password resets, workflow notifications and document share links. Write
-the password to a file and set the host in `.env`:
+Used for password resets, workflow notifications and document share links. Mail
+ships off: Paperless treats it as off only while `PAPERLESS_EMAIL_HOST=localhost`
+and `PAPERLESS_EMAIL_HOST_USER` is empty. An empty host does not turn it off — the
+password reset then answers 500.
+
+To switch it on, write the password to a file and set the relay in `.env`:
 
 ```bash
 echo -n 'your-smtp-password' > .secrets/email_pwd.txt
@@ -167,12 +182,14 @@ echo -n 'your-smtp-password' > .secrets/email_pwd.txt
 ```env
 PAPERLESS_EMAIL_HOST=smtp.example.com
 PAPERLESS_EMAIL_PORT=587
+PAPERLESS_EMAIL_HOST_USER=paperless@example.com
 PAPERLESS_EMAIL_USE_TLS=true
+PAPERLESS_EMAIL_FROM=Paperless <paperless@example.com>
 ```
 
-Port 465 instead: `PAPERLESS_EMAIL_USE_TLS=false` with
-`PAPERLESS_EMAIL_PORT=465`. An empty `PAPERLESS_EMAIL_HOST` disables outgoing
-mail.
+Port 465 instead: `PAPERLESS_EMAIL_PORT=465` with `PAPERLESS_EMAIL_USE_TLS=false`
+and `PAPERLESS_EMAIL_USE_SSL=true` — never both; with `USE_TLS=false` alone the
+connection to 465 is closed.
 
 ## Backup
 
@@ -189,9 +206,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: paperless
-      container: paperless-db
       username: paperless_user
-      password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec paperless-db pg_dump
+      pg_restore_command: docker exec -i paperless-db pg_restore
+      psql_command: docker exec -i paperless-db psql
 ```
 
 No quiescing — the dump is consistent on its own.

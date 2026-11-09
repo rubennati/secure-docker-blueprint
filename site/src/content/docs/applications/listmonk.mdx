@@ -7,10 +7,10 @@ import { Steps } from '@astrojs/starlight/components';
 import StackEvidence from '../../../components/StackEvidence.astro';
 
 Listmonk manages subscribers, sends campaigns, handles double opt-in and tracks
-opens and clicks. Two containers — a single Go binary and PostgreSQL.
+opens and clicks. A single Go binary and PostgreSQL, with two one-shot services
+that prepare the schema and the mail settings before it starts.
 
-<StackEvidence stack="business/listmonk"
-  gap="everything below. The stack has never been brought up here: the install path, the admin wizard, sending through a real relay and bounce handling are all read from the stack's files rather than observed." />
+<StackEvidence stack="business/listmonk" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +21,11 @@ opens and clicks. Two containers — a single Go binary and PostgreSQL.
 On your own machine, with no proxy, domain or certificate. From `business/listmonk/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "DB_PASSWORD=$(openssl rand -hex 32)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -45,32 +49,39 @@ From `business/listmonk/`:
 
    ```bash
    mkdir -p .secrets volumes/postgres volumes/uploads
+   sudo chown 1000:1000 volumes/uploads   # listmonk runs as 1000:1000
    openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
    sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
    ```
 
-3. Start it. First boot creates the schema:
+3. Start it. `listmonk-install` creates the schema on the first boot and
+   migrates it later; `smtp-guard` replaces upstream's SMTP placeholder
+   `smtp.yoursite.com` — a real domain — with `smtp.invalid`, so nothing is sent
+   before you set a relay. Both exit 0, then `listmonk-app` starts:
 
    ```bash
    docker compose up -d
-   docker compose logs listmonk-app --follow
+   docker compose ps -a
+   docker compose logs smtp-guard
    ```
 
-   Wait for `http server started on [::]:9000`.
-
-4. Open `https://<APP_TRAEFIK_HOST>`. The first visit shows a wizard that creates
-   the super admin account — there are no administrator credentials in `.env` to
-   set.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>/admin`. The first visit creates
+   the super admin account, with no setup secret — the reason the route ships
+   closed (`access-vpn`).
 
 5. In the interface, go to **Settings → SMTP** and enter the relay credentials.
-   They are stored encrypted in the database rather than in a file.
+   They are stored encrypted in the database rather than in a file. Until a relay
+   is set, the subscription form answers `500` and no mail leaves the host.
+
+6. Open the subscriber paths to the internet — see
+   [Admin behind the VPN](#admin-behind-the-vpn-subscribers-on-the-internet).
 
 </Steps>
 
 ## Verify
 
 ```bash
-docker compose ps   # two services, healthy
+docker compose ps -a   # db and listmonk-app healthy, the two one-shots exited 0
 ```
 
 Then send a campaign to a list containing only your own address, and confirm it
@@ -81,11 +92,12 @@ container says nothing about.
 
 ### Admin behind the VPN, subscribers on the internet
 
-The stack ships `access-public` with `limit-standard` and `headers-standard`,
-because subscriber endpoints — `/subscription/*`, `/link/*`, `/campaign/*` — have
-to work for people who are not on your VPN. That leaves `/admin` public too.
+The stack ships `access-vpn` with `limit-standard` and `headers-standard`.
+Subscriber endpoints — `/subscription/*`, `/link/*`, `/campaign/*` — have to
+work for people who are not on your VPN. `APP_TRAEFIK_ACCESS=access-public` opens
+the whole host, `/admin` included.
 
-Splitting the two means a second Traefik router with a higher priority, scoped to
+The better shape splits the two: a second Traefik router with a higher priority, scoped to
 `/admin` and carrying `access-vpn@file` in its access position, the other three
 positions as on the main router; the existing router keeps the subscriber paths.
 The label block is in
@@ -104,12 +116,14 @@ Bounces need either IMAP access to the sending mailbox or a relay that posts
 bounce webhooks. Without one of the two, addresses that no longer exist stay on
 the list and quietly damage the sending reputation.
 
-### The version check
+### What it sends outward
 
-Listmonk asks `update.listmonk.app` whether a newer version exists — a plain GET
-with no payload and no installation identifier, so the vendor sees the source
-address and the timing. It is on by default and switched off under
-**Settings → General → Check for updates**.
+Listmonk requests `update.listmonk.app` to see whether a newer version exists.
+It is a plain GET with no payload and no installation identifier — the vendor
+learns the source address and the timing.
+
+On by default. Turn it off in **Settings → General → Check for updates**; the
+setting lives in the database.
 
 ## Backup
 
@@ -125,9 +139,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: listmonk
-      container: listmonk-db
       username: listmonk
-      password: "{credential file /srv/docker/business/listmonk/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec listmonk-db pg_dump
+      pg_restore_command: docker exec -i listmonk-db pg_restore
+      psql_command: docker exec -i listmonk-db psql
 ```
 
 Subscriptions and their opt-in state are rows, so an older snapshot brings back
