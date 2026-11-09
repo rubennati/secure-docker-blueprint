@@ -191,6 +191,12 @@ services:
       OVERWRITEPROTOCOL: https
       OVERWRITEHOST: ${APP_TRAEFIK_HOST}
       OVERWRITECLIURL: https://${APP_TRAEFIK_HOST}
+      # Apply the two overwrites above only to requests that came through
+      # Traefik — the regex of this stack's edge subnet (.env). A call from an
+      # office server over office.yml then gets URLs at the address it used
+      # (nginx), not at the closed public name (README, "Office servers behind a
+      # closed route"). Empty: the overwrites apply to every request.
+      OVERWRITECONDADDR: ${NC_OVERWRITECONDADDR:-}
       # PHP
       PHP_MEMORY_LIMIT: ${PHP_MEMORY_LIMIT}
       PHP_UPLOAD_LIMIT: ${PHP_UPLOAD_LIMIT}
