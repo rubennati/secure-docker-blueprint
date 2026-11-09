@@ -46,6 +46,12 @@
 
 ## Version notes
 
+- Moved to `2.46.7` on 2026-11-09 (released the same day, upstream's `stable`
+  channel; not a pre-release) and run on the lab host. One fix: resume attempts
+  for waiting and queued executions are limited (n8n-io/n8n#42862). Pinned by
+  the digest of the multi-arch index,
+  `sha256:e97b4f576cd21de5c7676858f7006126581faeca8046d9d23fda0e06468008d4`.
+  No configuration change.
 - Moved to `2.46.6` on 2026-11-05 (released 2026-11-04, upstream's `stable`
   channel), across 2.42 to 2.46, not run on a host at this tag. Pinned by the
   digest of the multi-arch index (linux/amd64, linux/arm64),
