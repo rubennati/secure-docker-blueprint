@@ -3768,8 +3768,8 @@
     "quiet": false,
     "restored": false,
     "role": "SSH access through agents on each target that connect out, so targets open no inbound port",
-    "tested": "2026-11-08",
-    "tested_version": "?",
+    "tested": "2026-11-09",
+    "tested_version": null,
     "upstream": "https://github.com/shellhub-io/shellhub",
     "upstream_status": "current",
     "version": "0.29.3"

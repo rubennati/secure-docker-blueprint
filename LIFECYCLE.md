@@ -36,7 +36,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`core/orion-belt`](core/orion-belt/) | `1.4.0` · 2026-10-24 | = Pin | [1 · 27](core/orion-belt/README.md#open-findings) | [2026-11-08](core/orion-belt/UPSTREAM.md) |
 | [`core/portainer`](core/portainer/) | `2.45.3` · 2026-10-21 | = Pin | [0 · 6](core/portainer/README.md#open-findings) | [2026-11-08](core/portainer/UPSTREAM.md) |
 | [`core/portainer-agent`](core/portainer-agent/) | `2.45.3` · 2026-10-21 | `3.0.1` · 2026-11-03 | [0 · 6](core/portainer-agent/README.md#open-findings) | [2026-11-08](core/portainer-agent/UPSTREAM.md) |
-| [`core/shellhub`](core/shellhub/) | `v0.29.3` · 2026-11-05 | = Pin | [1 · 28](core/shellhub/README.md#open-findings) | [2026-11-08](core/shellhub/UPSTREAM.md) · ran `?` |
+| [`core/shellhub`](core/shellhub/) | `v0.29.3` · 2026-11-05 | = Pin | [1 · 28](core/shellhub/README.md#open-findings) | [2026-11-09](core/shellhub/UPSTREAM.md) |
 | [`core/step-ca`](core/step-ca/) | `0.30.2` · 2026-03-23 | = Pin | [4 · 70](core/step-ca/README.md#open-findings) | [2026-11-08](core/step-ca/UPSTREAM.md) |
 | [`core/teleport`](core/teleport/) | `18.11.9` | not checked at this pin | — | [2026-11-08](core/teleport/UPSTREAM.md) |
 | [`core/traefik`](core/traefik/) | `v3.7.17` · 2026-10-30 | = Pin | [0 · 7](core/traefik/README.md#open-findings) | [2026-11-01](core/traefik/UPSTREAM.md) |
