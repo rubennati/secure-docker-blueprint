@@ -1,19 +1,17 @@
 ---
 title: What each application is for
-description: Every application the repository ships — the problem it solves, what it needs beyond the proxy, and a guide for each one.
+description: The applications with a guide here — the problem each one solves and what it needs beyond the proxy.
 ---
 
 These are the services you actually use — the reason for the server rather than
 part of it. Every one of them expects [Traefik](/infrastructure/traefik/) to be
 running first; they publish no ports themselves and are reached through it.
 
-Each one has a guide: installation walked through, a *Verify* section, what to
-back up, how to update it, and the failures that service really produces. Each
-guide also states how much of it has been confirmed on a running host — some
-were brought up and checked, some are written from the repository files and have
-never been started here. Where an application's data has been restored from a
-backup on a live host, its guide and the [catalogue](/catalogue/) say so; for
-the rest, the restore is documented and unrehearsed.
+Each one has a guide: installation, a *Verify* section, what to back up, how to
+update it, and the failures that service really produces. Each guide opens with
+when the stack last ran on a host; where its data has been restored from a
+backup, the guide and the [catalogue](/catalogue/) say so. Every stack the
+repository ships, with or without a guide, is in the [catalogue](/catalogue/).
 
 Most also ship a `docker-compose.local.yml`, which runs the service on your own
 machine with no proxy, DNS or certificate — see [what every server

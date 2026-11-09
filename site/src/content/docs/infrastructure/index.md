@@ -16,11 +16,17 @@ and involves no proxy, no DNS and no certificate:
 ```bash
 cd apps/vaultwarden
 cp .env.local.example .env.local
+# the secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -hex 32)"
+} >> .env.local
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
-Each file's header carries its own commands and the address to open — some stacks
-need a directory created or its ownership set first. Check whether the one you
+Each guide's *Try it locally* block, and each file's header, carries the
+commands for that stack — the secrets it needs, and for some a directory created
+or its ownership set first. Check whether the one you
 want has the file:
 
 ```bash
@@ -62,8 +68,8 @@ firewall.
 
 The scoping matters more here than the feature list. Behind a VPN-only access
 policy CrowdSec sees almost nothing, because the requests are refused before they
-reach a log it reads. Measured on this blueprint: 120 requests against a VPN-only
-host moved its counter by three. It earns its place the moment a service faces
+reach a log it reads: 120 requests against a VPN-only host move its counter by
+about three. It earns its place the moment a service faces
 the open internet, and not much before.
 
 [CrowdSec — intrusion detection →](/infrastructure/crowdsec/)
@@ -84,7 +90,7 @@ proxy, because it is the name layer the proxy relies on.
 and renews TLS certificates for the things Traefik never sees — a NAS, a router,
 a mail server.
 
-## Also server-wide, without a guide
+## Single sign-on — optional, server-wide
 
 **Single sign-on.** Two providers, and they are alternatives.
 [Authentik](/infrastructure/authentik/) is set up once and then attached per
@@ -106,8 +112,9 @@ them — [OnlyOffice](/applications/onlyoffice/).
 **Backups.** Server-wide, but a different job with its own failure modes, and it
 has its own section — [backup and restore](/operations/backup/).
 
-**Monitoring and alerting.** The repository ships stacks for it. There is no
-guide here yet.
+**Monitoring and alerting.** Uptime checks, notifications, job heartbeats and
+host metrics have their own section, Monitoring — Uptime Kuma, ntfy,
+Healthchecks, Gatus and Beszel.
 
 ## Where to go from here
 
