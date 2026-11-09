@@ -74,7 +74,7 @@ From `apps/heimdall/`:
 ```bash
 docker compose ps                       # one service, healthy
 curl -sSI https://<APP_TRAEFIK_HOST>/                         # 401 — the gate asks
-curl -fsSI -u 'ops:the-password' https://<APP_TRAEFIK_HOST>/  # 200 with the credentials
+curl -fsSI -u ops https://<APP_TRAEFIK_HOST>/  # asks for the password; 200 with it
 ```
 
 Then add one tile and reload. A dashboard that keeps the tile confirms the

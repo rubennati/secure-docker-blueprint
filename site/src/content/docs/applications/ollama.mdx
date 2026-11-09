@@ -85,7 +85,7 @@ From `apps/ollama/`:
 ```bash
 docker compose ps                     # one service, healthy
 docker compose exec ollama ollama list
-curl -u ops:'the-password' https://<APP_TRAEFIK_HOST>/api/generate \
+curl -u ops https://<APP_TRAEFIK_HOST>/api/generate \
   -d '{"model":"smollm2:135m","prompt":"The capital of France is","stream":false}'
 ```
 
