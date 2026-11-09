@@ -77,7 +77,7 @@ Jobs on the host that runs this stack — `core/host-watchdog`, the Traefik watc
 `core/traefik/ops/scripts`, `backup/borgmatic` — ping the loopback port instead of the
 public name:
 
-```
+```text
 http://127.0.0.1:8001/ping/<uuid>        # HC_LOCAL_PORT, 8001 by default
 ```
 
