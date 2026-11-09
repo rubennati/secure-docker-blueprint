@@ -44,6 +44,10 @@
 
 ## Version notes
 
+- Moved to `v7.13.0` on 2026-11-09, run on the lab host. Features for the v8
+  layout (struct-of-arrays, configurable tile size), inline feedback for
+  throttled logins, and an SSRF hardening for unusual IP forms. No migration or
+  variable labelled.
 - Moved to `v7.12.1` on 2026-11-05, not run on a host at this tag. No breaking change
   and no manual step in the notes. The standard image moves to FrankenPHP 1.13.3
   and builds its own ImageMagick 7.1.2 with JPEG XL support, and turns off PHP's `session.upload_progress`; entrypoint,
