@@ -92,7 +92,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — healthy — **verified locally, 2026-09-19**
 - [x] `_FILE` secrets picked up correctly (no missing-required-property errors) and the app answers with a real HTTP response — **verified locally, 2026-09-19**

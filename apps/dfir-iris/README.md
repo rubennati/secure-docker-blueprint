@@ -76,18 +76,17 @@ since v1.29.
 **What was not carried over 1:1, and why that's acceptable:**
 
 - nginx's security headers (CSP, `X-Frame-Options: DENY`, HSTS, strict
-  cache-control) are replaced by this stack's `APP_TRAEFIK_SECURITY` chain
+  cache-control) are replaced by this stack's `APP_TRAEFIK_HEADERS` profile
   rather than reproduced label-for-label. nginx's own CSP allowlisted
   `analytics.dfir-iris.org` for an optional upstream analytics beacon; this
   stack's headers do not carry that allowance forward, so any such call
   fails closed here — a narrower default than upstream's own, not a gap.
 - nginx gave two upload paths (`/manage/cases/upload_files`,
   `/datastore/file/add*`) a 10-minute timeout and unbuffered request
-  bodies, for large evidence-file uploads. This stack has not yet verified
-  whether Traefik's own default timeouts are generous enough for a
-  comparably large upload — see UPSTREAM.md and README.md's Preview →
-  Ready gate. If large evidence uploads time out in practice, this is the
-  first place to look.
+  bodies, for large evidence-file uploads. Here every upload runs under
+  Traefik's entrypoint timeouts: the whole request has to arrive within
+  `TRAEFIK_READ_TIMEOUT` (60 s by default, `core/traefik/.env`). For evidence
+  files that take longer to send, raise it there.
 
 **What was not changed:** app, worker, db and rabbitmq are all present,
 unmodified in function — no upstream component was dropped to make this
@@ -172,7 +171,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — all four services running, three with healthchecks passing — **verified locally, 2026-09-19**
 - [x] Real Docker Secrets picked up by db, app and worker; database migrations, module registration and post-init all completed; the generated admin password was printed once as expected — **verified locally, 2026-09-19**

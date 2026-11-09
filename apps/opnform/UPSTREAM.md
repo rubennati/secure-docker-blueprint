@@ -43,7 +43,7 @@ Key design choices:
 | **Mail driver defaults to `log`** | Safe default — user sets SMTP explicitly |
 | **`app-internal` network (`internal: true`)** | Isolate Postgres + Redis |
 | **`security_opt: no-new-privileges`** on all services | Baseline |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Forms are meant to be filled by external users; `access-vpn` would be OK if your forms are internal-only |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first sign-up becomes the admin; open the route (`access-public`) after that, as forms are meant to be filled by external users |
 
 ## Version notes
 

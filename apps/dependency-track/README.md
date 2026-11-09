@@ -133,7 +133,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — all three healthy — **verified locally, 2026-09-19**
 - [x] Real Docker Secrets picked up via Dependency-Track's own `${file::...}` syntax; database migrations and seeding completed; `GET /api/version` returned 200 — **verified locally, 2026-09-19**

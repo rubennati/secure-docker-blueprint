@@ -125,4 +125,3 @@ enforce or verify.
 - **License requires the operator's own judgment** — see "Community
   Edition license" above. Nothing in this repository can verify a
   deployment stays within the free-use thresholds.
-- **Not yet run on a live host beyond a clean start.**

@@ -45,7 +45,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080/healthcheck → "true"   (JWT disabled locally — never in prod)
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 Run on the lab host on 2026-11-02 (`docs/labs/ingress/2026-11-01-results.md`, "Office servers"):
 

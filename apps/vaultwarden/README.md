@@ -257,7 +257,7 @@ This means a proxy (Traefik) is injecting `X-Frame-Options`. Vaultwarden must co
 
 ### HTTP Response validation error
 
-If **Admin → Diagnostics** shows `HTTP Response validation: Error`, check that the domain in `VW_DOMAIN` (derived from `APP_TRAEFIK_HOST`) matches the actual URL used to access the vault, and that HTTPS is enforced end-to-end.
+If **Admin → Diagnostics** shows `HTTP Response validation: Error`, check that the domain in `DOMAIN` (derived from `APP_TRAEFIK_HOST`) matches the actual URL used to access the vault, and that HTTPS is enforced end-to-end.
 
 ## Backup
 

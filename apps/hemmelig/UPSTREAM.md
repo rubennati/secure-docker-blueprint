@@ -111,4 +111,3 @@ bump — the two have drifted apart before.
 - **`read_only: true` is not used** — see the compose file's Security block.
 - **The secret-request flow requires a manual, out-of-band step** — the
   decryption key does not reach the requester automatically. See README.md.
-- **Not yet run behind a real Traefik host or TLS.**

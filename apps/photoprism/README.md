@@ -119,7 +119,7 @@ cache. Exclude the cache subdirectory, keep the sidecars.
 ## Known Issues
 
 - **`DB_PWD_INLINE` duplicates the DB password** — PhotoPrism's `PHOTOPRISM_DATABASE_PASSWORD` env var has no `_FILE` support. MariaDB side uses `MARIADB_PASSWORD_FILE` from a Docker Secret; PhotoPrism needs the same value inline.
-- **Memory** — PhotoPrism's indexer can spike to several GB when processing large RAW/video files. Provision at least 4 GB swap. Do not set memory limits or the indexer gets OOM-killed.
+- **Memory** — the app container is limited to 2 GB with no swap (`memory` and `memswap_limit` in `docker-compose.yml`). PhotoPrism's indexer can spike to several GB on large RAW or video files; a library with many of them needs both values raised, or the indexer is OOM-killed.
 - **MariaDB seccomp/apparmor workaround** — upstream uses `seccomp:unconfined + apparmor:unconfined` due to an [io_uring bug with older kernels](https://github.com/MariaDB/mariadb-docker/issues/434). Left at defaults; uncomment the block in `docker-compose.yml` if MariaDB crashes.
 - **Activation code** — PhotoPrism has a [membership program](https://www.photoprism.app/kb/activation) to unlock some features. Store any activation code in `.env` (gitignored) — never commit it.
 - **PhotoPrism uses date-based tags** (e.g. `260305` = 2026-03-05) — update `APP_TAG` in `.env.example` when upgrading. Use `photoprism/photoprism:preview` to test preview builds.

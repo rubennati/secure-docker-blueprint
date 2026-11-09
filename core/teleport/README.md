@@ -162,9 +162,6 @@ For the general restore procedure and verification checklist, see
 - **License requires your own judgment** — see the top of this file and
   [UPSTREAM.md](UPSTREAM.md#community-edition-license--read-before-deploying-this).
 - **No OIDC/SAML in Community Edition** — see Security Model.
-- **Not yet run on a live host beyond a clean start** — no real node join,
-  no `tsh` session, no restart or upgrade tested. See
-  [UPSTREAM.md](UPSTREAM.md#what-was-actually-verified-and-how).
 - **Self-signed certificate by default** — replace it with one from a real
   CA before relying on this for anything beyond a first look.
 

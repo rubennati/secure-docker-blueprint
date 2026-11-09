@@ -44,9 +44,9 @@ file pins the newest Silo release, the same tag `monitoring/langfuse` uses. See
 |--------|--------|
 | Eight Docker Secrets through `config/entrypoint.sh` | Plane reads every setting from the environment and has no `_FILE` variant. Upstream's defaults are `plane`/`plane` for PostgreSQL and RabbitMQ and `access-key`/`secret-key` for MinIO |
 | A second wrapper for RabbitMQ | 3.13 rejects `RABBITMQ_DEFAULT_PASS_FILE` as deprecated and exits. Its suggested alternative is a configuration file, which would put the password on the host |
-| No published ports | Upstream's proxy publishes 80 and 443. Traefik fronts the bundled proxy instead, which keeps MinIO and the four interfaces off `proxy-public` |
+| No published ports | Upstream's proxy publishes 80 and 443. Traefik fronts the bundled proxy instead, which keeps the object store and the four interfaces off `proxy-public` |
 | Network aliases on the internal network | Measured below |
-| `user:` on the backend, live, Valkey and MinIO | Every Plane image declares root |
+| `user:` on the backend, live, Valkey and the object store | Every Plane image declares root |
 | `cap_add` per service rather than none | Measured below — three different images need three different sets |
 | `CORS_ALLOWED_ORIGINS` set to the host | Upstream leaves it empty |
 | `CERT_*` deliberately unset | Measured below |
@@ -132,7 +132,8 @@ stack since the withdrawal started empty.
   rate limiting) and raises sanitize-html, djangorestframework, sharp, js-yaml,
   fast-uri, qs, morgan and postcss-selector-parser; npm is removed from the
   runtime images. Upstream's bundled object store is now `pgsty/silo` pinned to a
-  release tag — relevant to the MinIO item in `.ai/tasks.md`, not changed here.
+  release tag, the image this stack runs (see "Object store: Silo instead of
+  MinIO").
 
 ## Upgrade checklist
 

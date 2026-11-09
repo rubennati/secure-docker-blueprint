@@ -13,9 +13,8 @@
 - **Domain:** Backup
 - **Role:** Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics
 
-No `Last verified` line: behind Traefik, the interface can be signed into only with
-the password inside its URL — see
-[Known limitation](#known-limitation-the-interfaces-sign-in).
+Behind Traefik, the interface can be signed into only with the password inside
+its URL — see [Known limitation](#known-limitation-the-interfaces-sign-in).
 
 The origin is the rclone project's author and copyright holder, located in
 Guildford, UK. rclone and Rclone Web are both MIT.

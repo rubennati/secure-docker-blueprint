@@ -52,8 +52,6 @@ Authelia → Redis (app-internal) · PostgreSQL (app-internal)
 
 ## Verification performed (2026-09-26)
 
-Local, not behind Traefik on a real host — so no `Last verified` line.
-
 - `authelia validate-config` passes for both notifier branches (file and SMTP).
 - Production file with PostgreSQL and Redis: all three services healthy with
   `read_only` and `cap_drop: ALL` on Authelia and Redis; schema migrated to

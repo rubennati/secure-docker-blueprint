@@ -212,7 +212,8 @@ Borgmatic's integrations map onto stacks this blueprint already ships. This tabl
 
 | Borgmatic integration | In this repository | How it connects |
 |---|---|---|
-| PostgreSQL · MySQL · MariaDB · SQLite | 31 · 3 · 17 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
+| PostgreSQL | 31 stacks | dump hook with the server's own client through `docker exec` (FA-03), nothing on the host |
+| MySQL · MariaDB · SQLite | 3 · 17 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
 | MongoDB | `apps/heyform`, `apps/unifi`, `business/opensign`, `monitoring/checkmate` | `container:` dump hook, plus the MongoDB tools on the host |
 | Healthchecks | `monitoring/healthchecks` | `healthchecks.ping_url` — on the same host its loopback port, `http://127.0.0.1:8001/ping/<uuid>` |
 | Uptime Kuma | `monitoring/uptime-kuma` | `uptime_kuma.push_url` |

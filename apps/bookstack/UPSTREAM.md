@@ -31,7 +31,7 @@
 | **Traefik labels instead of port `:8011:80`** | Blueprint routes via Traefik |
 | **`security_opt: no-new-privileges`** on both services | Baseline |
 | **`cap_drop: ALL` + minimal `cap_add`** on MariaDB | Hardening consistent with Ghost, WordPress MariaDB services |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Wikis are usually meant to be readable; fine-tune based on whether you want public read or team-only |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first login is the default `admin@admin.com` / `password`; change it over the VPN, then open the route (`access-public`) if the wiki is meant to be read from outside |
 
 ## Version notes
 

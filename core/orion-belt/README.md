@@ -147,8 +147,6 @@ For the general PostgreSQL restore procedure and verification checklist, see
 - **No `_FILE` secret support on the server's own credentials** — mitigated
   only by keeping `.env` out of git; see UPSTREAM.md for the documented,
   unbuilt `ORION_CONFIG_FILE` path that could close this.
-- **Not yet run on a live host beyond a clean start** — no agent
-  registered, no SSH session proxied, no restart or upgrade tested.
 
 ## Open findings
 

@@ -12,7 +12,8 @@
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Self-destructing links for handing someone a credential once
-- **Verification snapshot:** 2026-09-19 — local Compose stack booted and exercised (see README.md's Preview → Ready gate); not yet run behind a real Traefik host
+- **Verification snapshot:** 2026-09-19 — local Compose stack booted and
+  exercised
 
 ## What we use
 
@@ -111,4 +112,3 @@ Secret Requests on; it requires a different, licensed product from upstream.
 - **Memcached backend only** — Yopass also supports Redis and file/S3
   storage; this stack does not use them, since Memcached already matches
   every value stored here (TTL-based, no durability needed).
-- **Not yet run behind a real Traefik host or TLS.**

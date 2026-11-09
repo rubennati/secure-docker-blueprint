@@ -117,7 +117,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — healthy — **verified locally, 2026-09-19**
 - [x] Migrations apply cleanly and `GET /api/health/ready` reports `"status":"healthy"` across database, storage and memory checks — **verified locally, 2026-09-19**

@@ -49,7 +49,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 curl http://localhost:9980/   # → "OK"
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] Container starts and reports healthy through coolwsd's own probe (lab host)
 - [x] **LibreOffice sandbox starts** with `MKNOD` and `no-new-privileges:true` — not the chroot jail: coolwsd

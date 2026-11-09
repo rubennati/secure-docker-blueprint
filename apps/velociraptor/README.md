@@ -147,7 +147,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — healthy, zero `cap_add`, running under `read_only: true` — **verified locally, 2026-09-19**
 - [x] Real Docker Secret picked up for the initial admin password; GUI and frontend both confirmed serving TLS on their respective ports — **verified locally, 2026-09-19**

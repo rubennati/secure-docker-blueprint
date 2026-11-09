@@ -39,10 +39,7 @@ docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
 # Public key  → VAPID_PUBLIC_KEY in .env
 # Private key → .secrets/vapid_private_key.txt  (Docker Secret — never in .env)
 
-# 3. Update ALLOWED_HOSTNAMES in .env to match APP_TRAEFIK_HOST:
-#    ALLOWED_HOSTNAMES='"cal.yourdomain.com"'
-
-# 4. Start
+# 3. Start — ALLOWED_HOSTNAMES follows APP_TRAEFIK_HOST by itself
 docker compose up -d
 docker compose logs caldiy-app --follow
 # Watch for: "ready on port 3000"
@@ -50,7 +47,7 @@ docker compose logs caldiy-app --follow
 # https://<APP_TRAEFIK_HOST>, over the VPN — the router ships closed (below)
 # Setup wizard runs on first visit — first user becomes the owner.
 
-# 5. Open the booking pages once the owner exists: in .env
+# 4. Open the booking pages once the owner exists: in .env
 #    APP_TRAEFIK_ACCESS=access-public
 docker compose up -d   # recreates the app with the new label
 ```

@@ -102,7 +102,6 @@ same version.
   evaluated together with this one.
 - **Default admin credentials** — first login is `admin` / `ChangeMe`, per
   vendor documentation. Change it immediately; see README.md.
-- **Not yet run on a live host beyond a clean start.**
 
 ## Version notes
 

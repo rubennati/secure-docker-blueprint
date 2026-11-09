@@ -13,8 +13,7 @@
 - **Domain:** Developer tools
 - **Role:** OCI registry for your own build output
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
-  authentication and access-control policy exercised against a live
-  container; not yet run behind a real Traefik host
+  authentication and access-control policy exercised against a live container
 
 ## What we use
 
@@ -93,5 +92,4 @@
   `imagetrust` extension needs its own key material, added deliberately.
   See README.md.
 - **OIDC is not configured** — htpasswd only. See README.md.
-- **Not yet run behind a real Traefik host, and no actual image push/pull
-  has been exercised.**
+

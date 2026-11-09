@@ -149,7 +149,7 @@ Measured on the image on 2026-10-03, at v0.16.24:
   interface is reachable for them.
 
 Port 8080 inside the container trusts `X-Forwarded-For` from whoever connects.
-It is not published; only containers on `proxy-public` reach it.
+It is not published; only containers on the stack's Traefik network (`TRAEFIK_NETWORK`) reach it.
 
 ## Monitoring (optional)
 

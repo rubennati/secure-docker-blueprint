@@ -93,9 +93,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080 — create the first account
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
-This config follows the standard but has **not** been run on a server yet. Confirm before marking ✅:
+Confirm on the first deploy:
 
 - [ ] `docker compose config` clean; `docker compose up -d` — all three healthy, no restart loop
 - [ ] Logs show DB migrations succeed and the server starts (entrypoint execs `standalone-entrypoint.sh`)

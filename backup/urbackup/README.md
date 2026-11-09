@@ -80,9 +80,9 @@ Two baseline deviations are inherent to a backup server and documented in [`UPST
 
 `SYS_ADMIN` is commented out in the compose file. Enable it only if the backup volume is btrfs and you use snapshot-backed storage.
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
-Everything below is unconfirmed. Each item must pass before this stack moves out of Preview:
+Check on the first deploy:
 
 - [x] Container starts and stays healthy — the image has neither `curl` nor `wget`; the healthcheck uses bash's `/dev/tcp` (lab host)
 - [x] Web interface reachable through Traefik, TLS valid, access policy enforced (lab host)
@@ -91,8 +91,6 @@ Everything below is unconfirmed. Each item must pass before this stack moves out
 - [ ] A file restored from that backup and its content verified — the four backed-up files downloaded from the server matched their checksums, but the restore to the client stopped at the client's own check ("No permissions to create files") on the LXC client; not repeated on a VM or bare-metal client
 - [ ] Resource limits survive a full backup without an OOM kill
 - [ ] Storage path confirmed excluded from Borgmatic's sources
-
-Once all pass: set `Last verified` in `UPSTREAM.md`, update the status here and in [`../README.md`](../README.md), and regenerate `LIFECYCLE.md`.
 
 ## Backup
 

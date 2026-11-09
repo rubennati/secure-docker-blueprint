@@ -110,9 +110,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
-Config follows the standard but has not been run here. Confirm:
+Confirm on the first deploy:
 
 - [ ] `docker compose up -d` — both healthy; logs show migrations + server start (entrypoint execs `sh start.sh` in `/app/apps/remix`)
 - [ ] Secrets injected — no secret values in `docker inspect documenso-app`

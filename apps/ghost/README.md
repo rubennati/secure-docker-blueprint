@@ -17,7 +17,7 @@ Optional ActivityPub stack (`activitypub.yml`):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `activitypub` | `ghcr.io/tryghost/activitypub` | ActivityPub backend — keys, federation, Fediverse API |
+| `ghost-activitypub` | `ghcr.io/tryghost/activitypub` | ActivityPub backend — keys, federation, Fediverse API |
 | `activitypub-migrate` | `ghcr.io/tryghost/activitypub-migrations` | One-shot migration runner, exits after schema init |
 
 Ghost's built-in mailer (`mail__transport: SMTP`) is required for member signup confirmation emails and newsletter sending. Without working SMTP, signups silently fail.
@@ -99,7 +99,7 @@ docker compose logs ghost-app --tail 50       # Ghost startup, DB migration mess
 docker compose logs db --tail 20        # MySQL ready-for-connections
 
 # With ActivityPub:
-docker compose logs activitypub --tail 30       # booted + no key errors
+docker compose logs ghost-activitypub --tail 30 # booted + no key errors
 docker compose logs activitypub-migrate         # migrations ran, exited 0
 ```
 

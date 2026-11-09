@@ -45,7 +45,8 @@ docker compose up -d
 
 ```bash
 docker compose ps                              # healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
+curl -sSI https://<APP_TRAEFIK_HOST>/          # 401 — the basicAuth gate
+curl -fsSI -u ops:<password> https://<APP_TRAEFIK_HOST>/   # 200 OK
 ```
 
 ## Security Model

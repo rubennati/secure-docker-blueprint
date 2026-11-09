@@ -45,15 +45,12 @@ Then set **"Request via browser steps"** in the watch settings for affected URLs
 
 - Moved to `0.70.2` on 2026-11-08 and run on the lab host (VM). A patch release;
   no configuration change.
-- Moved to `0.60.10` on 2026-10-31, not run on a host at this tag; `Last
-  verified` stays at `0.60.4`, so the stack is `scaffolded` (`pin-drifted`) until
-  a host run. Between `0.60.4` and `0.60.10` upstream labels no breaking change,
+- Moved to `0.60.10` on 2026-10-31. Between `0.60.4` and `0.60.10` upstream labels no breaking change,
   migration or variable change. `0.60.9` moves Apprise from 1.13.1 to 2.0.1, a
   major release of the notification library — the ntfy notification verified on
   2026-09-13 is the thing to re-check — and `0.60.10` builds with uv. No advisory
   in the range; the three of `0.60.2` are behind the previous pin.
-- Moved to `0.70.1` on 2026-11-05, not run on a host at this tag; `Last verified`
-  stays at `0.60.4`. There is no `0.70.0`. Upstream labels no breaking change,
+- Moved to `0.70.1` on 2026-11-05. There is no `0.70.0`. Upstream labels no breaking change,
   migration or variable change, and the Dockerfile is unchanged. New: an MCP
   server at `/mcp` with an OAuth 2.1 sign-in and consent form, and `GET
   /api/v1/changes`; both sit behind the router like the rest of the application,

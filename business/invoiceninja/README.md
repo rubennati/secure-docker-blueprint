@@ -178,8 +178,9 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 
 ## Backup
 
-A restore has not been rehearsed for this stack — the procedure below is written
-from the compose file, not from a run.
+The MySQL entry and the `app_storage` volume below restore with identical rows
+and files ([`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log),
+2026-11-03 and 2026-11-08).
 
 | | |
 |---|---|

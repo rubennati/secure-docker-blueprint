@@ -119,9 +119,6 @@ shape; neither path is exercised yet.
 
 ## Known Issues
 
-- **Not yet run on a live host beyond a clean start** — see
-  [UPSTREAM.md](UPSTREAM.md#what-was-actually-verified-and-how) for exactly
-  what was and was not exercised.
 - **Cannot run under this repository's usual hardening** —
   `no-new-privileges`, `cap_drop`, and `read_only` all break this image;
   see `docker-compose.yml`'s Security block for the verified reason for

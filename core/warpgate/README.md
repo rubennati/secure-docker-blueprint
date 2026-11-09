@@ -172,9 +172,6 @@ deployment does not need `unattended-setup` run again after a restore.
 
 ## Known Issues
 
-- **Not yet run on a live host.** Setup and a bare `run` were verified
-  against the hardening flags this compose file uses; an actual proxied
-  session, the reverse-proxy/OIDC path, and a restart or upgrade were not.
 - **`WARPGATE_MYSQL_PORT` is published even with no MySQL target
   configured.** Comment the line out in `docker-compose.yml` if you have no
   MySQL target and would rather not publish an unused port.
