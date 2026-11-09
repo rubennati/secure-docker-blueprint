@@ -1,0 +1,181 @@
+---
+title: Portainer
+description: A web interface onto Docker — containers, logs, volumes, networks and images — reaching the daemon through a filtering socket proxy, VPN-only, with the first administrator guarded by a setup token.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Portainer CE, the community edition, shows what Docker is running and lets you act
+on it from the browser: containers, logs, volumes, networks and images, with
+restart, exec, stop and image pulls a click away. It reaches the Docker daemon
+through a socket proxy that decides which API calls pass; Portainer itself never
+holds the socket. Two services: Portainer and the socket proxy. For stacks
+deployed from Git, [Dockhand](/infrastructure/dockhand/) is the other management
+interface here.
+
+<StackEvidence stack="core/portainer" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `core/portainer/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local logs app | grep setup_token
+```
+
+Open `http://localhost:9000` within five minutes, paste the token into **Setup
+token** and create the administrator. Stop it again with the same command and
+`down`.
+
+## Installation
+
+From `core/portainer/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   There is no secret to generate: the first administrator is created in the
+   interface.
+
+2. List `portainer-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render
+   and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Start it and read the setup token, which Portainer prints once:
+
+   ```bash
+   docker compose up -d
+   docker compose logs portainer-app | grep setup_token
+   ```
+
+4. Within five minutes of the start, open `https://<APP_TRAEFIK_HOST>`, paste the
+   token into **Setup token**, and create the administrator with a strong
+   password.
+
+5. Turn on two-factor authentication in the user settings.
+
+</Steps>
+
+The setup token is what keeps whoever reaches the page during those five minutes
+from claiming the instance. Portainer asks for the same token when it restores
+from a backup. Past the five minutes the setup locks until the container
+restarts.
+
+## Verify
+
+```bash
+docker compose ps                  # two services, healthy
+docker compose logs socket-proxy   # the API calls the proxy handles
+```
+
+In the interface, list the containers, open one's logs and pull an image.
+
+## Going further
+
+### What the socket proxy allows
+
+The proxy's environment in `docker-compose.yml` is the permission set:
+
+| Variables | Grant |
+|---|---|
+| `CONTAINERS`, `SERVICES`, `NETWORKS`, `VOLUMES`, `IMAGES`, `SYSTEM` | read access |
+| `EXEC`, `POST`, `DELETE` | changes |
+| `ALLOW_START`, `ALLOW_STOP`, `ALLOW_RESTARTS` | container lifecycle |
+
+As shipped, that is full access for a trusted administrator. Anything that can
+change containers is equivalent to root on the host. For a read-only view, set
+`POST`, `DELETE` and `EXEC` to `"0"`.
+
+### Who can reach it
+
+The route ships `access-vpn`, `limit-strict` and `headers-standard`, and names
+`tls-strict` as its TLS option. If the interface comes up blank or half-rendered
+on a cold cache, the proxy answered 429 to its first load: move to
+`limit-standard`, which keeps the headers and widens the burst to 500.
+
+### Further hosts
+
+The Portainer Agent, `core/portainer-agent/`, puts another host into the same
+interface. Edge agents connect back to the central Portainer on TCP 8000, which
+this stack does not publish: it carries no TLS and only `EDGE_KEY` as
+authentication. Publish it on a VPN address only, never `0.0.0.0`. The steps are
+in the agent's README. [Dockhand](/infrastructure/dockhand/) with Hawser covers
+several hosts over HTTPS through Traefik, without an extra port.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | an embedded key-value store in `volumes/data` — no database server, no dump hook |
+| **State** | `volumes/data` — users, environments, stacks, registries, access policies |
+| **Quiescing** | stop the container or snapshot the filesystem; the store is written continuously |
+
+For [borgmatic](/operations/backup/), back up `volumes/data` with the container
+stopped. Portainer's own backup function, in the interface, writes one encrypted
+archive; write it to a path the file backup covers.
+
+What a loss costs is the environment definitions and access policies, not the
+containers — everything Portainer manages keeps running while it is down.
+
+## Updates
+
+Portainer migrates its database at start, one way.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/portainer/portainer/releases).
+
+2. Back up `volumes/data` — the complete Portainer state.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs portainer-app --tail 100
+   ```
+
+4. Log in, and check that the environments still connect and the users are there.
+
+</Steps>
+
+To roll back, restore `volumes/data` **and** set the previous `APP_TAG`.
+
+## Troubleshooting
+
+**The setup page refuses to create the administrator.** The five-minute window
+has passed. `docker compose restart portainer-app`, read the new token, and open
+the page again.
+
+**The interface loads blank or half-rendered.** `limit-strict` answered 429 to
+the first load — see [Who can reach it](#who-can-reach-it).
+
+**An action fails with a permission error from Docker.** The socket proxy does
+not grant that API call. Check its variables, then `docker compose up -d`.
+
+**An edge agent loops on a failed handshake.** The environment was not saved in
+the interface before `EDGE_ID` and `EDGE_KEY` were copied.
+
+## Repository files
+
+- [`core/portainer/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/portainer/README.md) — setup, socket proxy, edge agents
+- [`core/portainer/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/portainer/.env.example)
+- [`core/portainer-agent/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/portainer-agent/README.md) — the agent for further hosts
+- [`core/portainer/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/portainer/UPSTREAM.md) — upgrade checklist and rollback
+
+## Official sources
+
+- [Portainer documentation](https://docs.portainer.io/)
+- [Setup token FAQ](https://docs.portainer.io/faqs/installing/setup-token)
+- [Portainer on GitHub](https://github.com/portainer/portainer)
