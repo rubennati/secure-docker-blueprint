@@ -188,7 +188,7 @@
     "tested_version": null,
     "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
     "upstream_status": "not checked",
-    "version": "1.23.2"
+    "version": "1.23.3"
   },
   "apps/ciso-assistant": {
     "archived": false,
@@ -1162,8 +1162,8 @@
   },
   "apps/n8n": {
     "archived": false,
-    "checked": "2026-11-08",
-    "critical": 1,
+    "checked": null,
+    "critical": null,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -1192,21 +1192,21 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 23,
-    "last_release": "2026-11-04",
+    "high": null,
+    "last_release": null,
     "name": "n8n",
-    "newest": "3.1.0",
-    "newest_date": "2026-11-03",
+    "newest": null,
+    "newest_date": null,
     "path": "apps/n8n",
-    "pinned_date": "2026-11-04",
+    "pinned_date": null,
     "quiet": false,
     "restored": true,
     "role": "Visual workflow automation",
-    "tested": "2026-11-08",
+    "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://n8n.io/",
-    "upstream_status": "behind",
-    "version": "2.46.6"
+    "upstream_status": "not checked",
+    "version": "2.46.7"
   },
   "apps/nextcloud": {
     "archived": false,

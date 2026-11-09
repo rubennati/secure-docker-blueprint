@@ -4,7 +4,7 @@
 
 Generated 2026-11-09 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 80 pin the newest upstream release, 4 pin an older one. 120 have a test date on a host, 17 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 80 pin the newest upstream release, 3 pin an older one. 120 have a test date on a host, 17 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -52,7 +52,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/bookstack`](apps/bookstack/) | `version-v26.09.2` · 2026-10-20 | not determinable | [1 · 31](apps/bookstack/README.md#open-findings) | [2026-11-08](apps/bookstack/UPSTREAM.md) |
 | [`apps/caldiy`](apps/caldiy/) | `v6.2.0-6` · 2026-03-01 | = Pin | [24 · 711](apps/caldiy/README.md#open-findings) | [2026-11-08](apps/caldiy/UPSTREAM.md) |
 | [`apps/calnode`](apps/calnode/) | `0.14.0` | not checked at this pin | — | [2026-11-08](apps/calnode/UPSTREAM.md) |
-| [`apps/calrs`](apps/calrs/) | `1.23.2` | not checked at this pin | — | [2026-11-09](apps/calrs/UPSTREAM.md) |
+| [`apps/calrs`](apps/calrs/) | `1.23.3` | not checked at this pin | — | [2026-11-09](apps/calrs/UPSTREAM.md) |
 | [`apps/ciso-assistant`](apps/ciso-assistant/) | `v4.2.2` | not checked at this pin | — | [2026-11-08](apps/ciso-assistant/UPSTREAM.md) |
 | [`apps/collabora`](apps/collabora/) | `26.04.6.1.1` | not checked at this pin | — | [2026-11-09](apps/collabora/UPSTREAM.md) |
 | [`apps/dashy`](apps/dashy/) | `4.9.17` | not checked at this pin | — | [2026-11-08](apps/dashy/UPSTREAM.md) |
@@ -80,7 +80,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/mailpit`](apps/mailpit/) | `v1.33.1` | not checked at this pin | — | [2026-11-08](apps/mailpit/UPSTREAM.md) |
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `8.1.2` | not checked at this pin | — | [2026-11-08](apps/mailserver-jeboehm/UPSTREAM.md) |
 | [`apps/monicahq`](apps/monicahq/) | `4.1.2-apache` · 2024-05-04 | = Pin · ⚠️ no release since 2024-05-04 | [4 · 50](apps/monicahq/README.md#open-findings) | [2026-11-09](apps/monicahq/UPSTREAM.md) · with restore · ran `4.1.2` |
-| [`apps/n8n`](apps/n8n/) | `2.46.6` · 2026-11-04 | `3.1.0` · 2026-11-03 | [1 · 23](apps/n8n/README.md#open-findings) | [2026-11-08](apps/n8n/UPSTREAM.md) · with restore |
+| [`apps/n8n`](apps/n8n/) | `2.46.7` | not checked at this pin | — | [2026-11-09](apps/n8n/UPSTREAM.md) · with restore |
 | [`apps/nextcloud`](apps/nextcloud/) | `35.0.2-fpm-alpine` · 2026-11-06 | = Pin | [1 · 28](apps/nextcloud/README.md#open-findings) | [2026-11-09](apps/nextcloud/UPSTREAM.md) · with restore |
 | [`apps/nocodb`](apps/nocodb/) | `2026.10.1` · 2026-10-29 | = Pin | 0 · 0 | [2026-11-08](apps/nocodb/UPSTREAM.md) |
 | [`apps/obot`](apps/obot/) | `v0.28.0` | not checked at this pin | — | [2026-11-08](apps/obot/UPSTREAM.md) |

@@ -10,7 +10,7 @@
 - **Origin:** France · Olivier Lambert · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages and availability read from a CalDAV calendar you already run
-- **Last verified:** 2026-11-09 (1.23.2) — lab host (VM), IPv4 LAN, moved from 1.23.0 on a new installation: 79 migrations applied, the sign-in page served through Traefik, the same after `down`/`up`
+- **Last verified:** 2026-11-09 (1.23.3) — lab host (VM), IPv4 LAN, moved from 1.23.2 on a new installation: 79 migrations applied, the sign-in page served through Traefik before and after `down`/`up`, the refused client answered `403`; with `CALRS_TRUSTED_PROXIES` at its default the failed sign-ins were logged and rate-limited under the client's own address, not Traefik's (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 
