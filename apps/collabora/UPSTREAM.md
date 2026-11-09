@@ -11,7 +11,7 @@
 - **Origin:** UK · Collabora Productivity Ltd · non-EU
 - **Domain:** Documents and e-signature
 - **Role:** Office document editing server based on LibreOffice
-- **Last verified:** 2026-11-08 (26.04.6.1.1) — lab host (VM), IPv4 LAN: moved from 26.04.5.2.1, discovery and capabilities served, the admin console asking for credentials, the same after `down`/`up`; the route is public by design, so check 3's refusal does not apply; `/cool/convert-to` answered a client outside every list (the report's suggestion); the editor with Nextcloud was not opened (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (26.04.6.1.1) — lab host (VM), IPv4 LAN, with Nextcloud 35.0.2 behind its closed route: a .docx opened, was edited, saved and reopened through Collabora, `/cool/convert-to` answered 403 on the public route to the trusted and the refused client, previews rendered through Nextcloud's internal address, the same after `down`/`up`
 
 ## What we use
 
