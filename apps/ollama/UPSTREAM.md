@@ -10,7 +10,7 @@
 - **Origin:** United States · Ollama Inc. (California) · non-EU
 - **Domain:** AI and local AI
 - **Role:** Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU
-- **Last verified:** 2026-09-21 (0.34.2) — behind Traefik with TLS: models to 3.2B parameters pulled and served through the route on CPU, concurrent requests, a restart, and a restore of `volumes/data`
+- **Last verified:** 2026-11-08 (0.40.15) — lab host (VM), IPv4 LAN, CPU only: moved from 0.40.14, a 0.5B model pulled and answering through the route behind the basicAuth gate, two concurrent requests, the model kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -102,6 +102,8 @@ Docker VM with six CPUs and 12 GB of memory and no GPU:
 
 ## Version notes
 
+- Moved to `0.40.15` on 2026-11-08 and run on the lab host (VM). A patch release
+  (a `launch` integration added); no change to the server's configuration.
 - Moved `ollama/ollama` to `0.40.14` on 2026-11-05 (released 2026-11-03), across
   0.34.3 to 0.40.14, not run on a host at this tag; the `-rc` tags of 0.40.15 are
   pre-releases and were not taken. The run-as-non-root, `read_only`, `cap_drop: ALL`

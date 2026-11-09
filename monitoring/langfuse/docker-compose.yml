@@ -8,7 +8,7 @@
 # Six services, all required by upstream's supported self-hosted setup:
 # langfuse-web (UI + API), langfuse-worker (async ingestion), PostgreSQL
 # (transactional data), ClickHouse (traces and analytics), Redis (queue, cache)
-# and MinIO (event and media blobs).
+# and Silo, a maintained MinIO fork (event and media blobs).
 #
 # Spec: docs/standards/compose-structure.md · security-baseline.md
 # =============================================================================
@@ -70,11 +70,11 @@ services:
     # Node's default heap (about 512 MB) is exhausted during startup of this
     # release: it ran out of memory at a 1 GB container limit until the heap was
     # raised. Upstream also asks for 2 GiB for the web service.
-    memswap_limit: 2g
+    memswap_limit: 3g
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 3g   # 2x the peak on the stack-refresh lab host (1056 MiB)
           cpus: "2.00"
           pids: 200
         reservations:
@@ -409,11 +409,13 @@ services:
       start_period: 10s
 
   # --------------------------------------------------------
-  # MINIO (S3-compatible blob store for event and media payloads)
+  # OBJECT STORE (Silo — pgsty/silo, a maintained MinIO fork; S3-compatible
+  # blob store for event and media payloads). It reads MinIO's variables, so
+  # the service keeps the name `minio` and the endpoint stays http://minio:9000.
   # --------------------------------------------------------
   minio:
     # --- Identity ---
-    image: quay.io/minio/minio:${MINIO_TAG}
+    image: pgsty/silo:${SILO_TAG}
     container_name: ${CONTAINER_NAME_MINIO}
     restart: unless-stopped
     user: "1000:1000"
@@ -439,7 +441,7 @@ services:
 
     # --- Configuration ---
     # The bucket is created before the server starts, as upstream does.
-    entrypoint: ["/bin/sh", "-c", "mkdir -p /data/langfuse && exec minio server --address :9000 --console-address :9001 /data"]
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /data/langfuse && exec silo server --address :9000 --console-address :9001 /data"]
     environment:
       MINIO_ROOT_USER: ${MINIO_USER}
       MINIO_ROOT_PASSWORD_FILE: /run/secrets/MINIO_PASSWORD
@@ -460,7 +462,7 @@ services:
 
     # --- Health & Observability ---
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "silo", "healthcheck", "ready"]
       interval: 30s
       timeout: 10s
       retries: 5

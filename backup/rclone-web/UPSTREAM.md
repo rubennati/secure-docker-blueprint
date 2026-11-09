@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (1.76.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the remote-control API answered `core/version` and `rc/noop` with the login from `ops/init.sh` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/rclone/rclone
@@ -106,6 +108,8 @@ remote at a real storage provider; transfers of size; serves; backup and restore
 
 ## Version notes
 
+- Moved to `1.76.0` on 2026-11-08 and run on the lab host (VM). A minor release;
+  its notes name no change to the remote-control API used here.
 - Moved to `1.75.2` on 2026-10-31 (released 2026-10-09), not run at this tag. The
   GitHub release page carries no entries and points to the changelog at
   rclone.org, which was not reachable from the session that moved the pin;

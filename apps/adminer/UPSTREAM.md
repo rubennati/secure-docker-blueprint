@@ -10,7 +10,7 @@
 - **Origin:** Czech Republic · Jakub Vrána · EU
 - **Domain:** Developer tools
 - **Role:** Web interface onto a database another stack already runs
-- **Last verified:** 2026-05-02 (v4.8.1-standalone)
+- **Last verified:** 2026-11-08 (6.3.0-standalone) — lab host (VM), IPv4 LAN: the login page served through the route before and after `down`/`up`, the refused client answered `403`; no database connected through it (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

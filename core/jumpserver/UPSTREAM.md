@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v5.1.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the web UI served before and after `down`/`up`, the default `admin`/`ChangeMe` demanding a new password (upstream answers the API with a 500 for it), the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/jumpserver/jumpserver

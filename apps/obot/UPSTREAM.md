@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v0.28.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the bootstrap token signed in (`302`), a wrong token refused (`401`), before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/obot-platform/obot/pkgs/container/obot
@@ -103,6 +105,13 @@ cannot reach this host's own services unless that is changed.
 
 ## Version notes
 
+- Moved to `v0.28.0` on 2026-11-08 and run on the lab host (VM) as a new
+  installation. 0.28.0 routes every model through one LLM gateway (`/api/llm-
+  proxy/v1`) and adds Keycloak and OneLogin as authentication providers.
+  Upstream warns that existing installations with model providers should wait:
+  provider credentials, models, aliases and access policies move to the gateway.
+  An existing installation with providers configured reads upstream's migration
+  notes before moving.
 - Moved to `v0.27.0` on 2026-11-05, not run on a host at this tag. Crossing
   `v0.26.2` runs a data migration on start that turns MCP servers exposed by
   access rules into virtual MCP servers (vMCPs); `v0.27.0` rejects MCP connections

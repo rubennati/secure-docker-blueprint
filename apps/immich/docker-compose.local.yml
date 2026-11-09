@@ -1,6 +1,8 @@
 # Immich — local
 #
 #   cp .env.local.example .env.local
+#   mkdir -p volumes/local/redis
+#   sudo chown 999:999 volumes/local/redis
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   http://localhost:2283
 #   docker compose -f docker-compose.local.yml --env-file .env.local down

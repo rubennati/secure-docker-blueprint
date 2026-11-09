@@ -11,7 +11,7 @@
 - **Origin:** US · NocoDB Inc · non-EU
 - **Domain:** Automation and data
 - **Role:** Spreadsheet-style interface on top of a database
-- **Last verified:** 2026-05-02 (v0.301.5)
+- **Last verified:** 2026-11-08 (2026.10.1) — lab host (VM), IPv4 LAN, after the README correction (data directory owned by root, admin password set): the super-admin from `.env` signed in through the API before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

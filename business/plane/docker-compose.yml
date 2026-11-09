@@ -3,8 +3,8 @@
 # Thirteen services from six application images. The shape is upstream's; what
 # differs is in UPSTREAM.md, and the short version is: nothing here publishes a
 # port except through Traefik, every credential is a Docker Secret rather than
-# a default like `plane`/`plane`, and the MinIO image upstream names no longer
-# exists on Docker Hub.
+# a default like `plane`/`plane`, and the object store is upstream's own
+# `pgsty/silo` (a maintained MinIO fork), pinned to a release tag.
 
 # --------------------------------------------------------
 # SHARED ENVIRONMENT
@@ -193,15 +193,16 @@ services:
       start_period: 60s
 
   # --------------------------------------------------------
-  # MINIO
+  # OBJECT STORE (Silo)
   # Uploads. Reached only through the bundled proxy, which is itself only
   # reached through Traefik — so this stays off proxy-public entirely.
   #
-  # `quay.io/minio/minio`, not the `minio/minio` upstream names: that Docker
-  # Hub repository no longer exists.
+  # `pgsty/silo`, the MinIO fork upstream's compose names since v1.4.3. It
+  # reads MinIO's variables and answers on the same port, so the service keeps
+  # upstream's name `plane-minio` and nothing that talks to it changes.
   # --------------------------------------------------------
   plane-minio:
-    image: quay.io/minio/minio:${MINIO_TAG}
+    image: pgsty/silo:${SILO_TAG}
     container_name: ${CONTAINER_NAME_MINIO}
     restart: unless-stopped
     <<: *hardening
@@ -228,7 +229,7 @@ services:
     networks:
       - app-internal
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "silo", "healthcheck", "ready"]
       interval: 30s
       timeout: 10s
       retries: 5

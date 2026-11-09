@@ -40,6 +40,7 @@ network with this one. Validate a change before restarting:
 
 ```bash
 docker run --rm -v "$PWD/config/config.yaml:/config/config.yaml:ro" \
+  -v "$PWD/.secrets/agw_ui_htpasswd.txt:/run/secrets/AGW_UI_HTPASSWD:ro" \
   cr.agentgateway.dev/agentgateway:v1.7.0 -f /config/config.yaml --validate-only
 ```
 

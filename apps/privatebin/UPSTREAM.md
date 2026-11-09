@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (2.1.1) — lab host (VM), IPv4 LAN, run in a parallel batch: a paste stored through the JSON API (the data directory writable) before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/privatebin/nginx-fpm-alpine

@@ -1,0 +1,16 @@
+# --------------------------------------------------------
+# COLLABORA'S INTERNAL ADDRESS — with office.yml, for Collabora only
+# --------------------------------------------------------
+# apps/collabora closes /cool/convert-to on its public route: the path converts
+# any uploaded file without a WOPI token. Nextcloud's previews of office files
+# use it, so Nextcloud calls Collabora internally instead — through nginx, which
+# office.yml already joins to Collabora's edge network, on port 9980. PHP-FPM is
+# not joined. The connector settings are in the README, "Office servers behind
+# a closed route".
+#
+#   OFFICE_NETWORK=collabora-edge
+#   COMPOSE_FILE=docker-compose.yml:office.yml:office-collabora.yml
+services:
+  nextcloud-nginx:
+    volumes:
+      - ./nginx/collabora-internal.conf:/etc/nginx/office.d/collabora-internal.conf:ro

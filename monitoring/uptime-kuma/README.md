@@ -42,7 +42,7 @@ docker compose logs uptime-kuma-app --follow
 ## Verify
 
 ```bash
-curl -fsSI https://<APP_TRAEFIK_HOST>/        # 200 OK
+curl -fsSI https://<APP_TRAEFIK_HOST>/        # 302 to /setup-database on a new instance, 200 once set up
 ```
 
 ## Security Model

@@ -76,6 +76,10 @@ sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
 
 ### Step 4: Generate Admin Token (Argon2 Hash)
 
+Optional. `VW_ADMIN_TOKEN` ships empty, which keeps the admin panel off. Set it
+only when you need the panel — never to a plain word: Vaultwarden accepts a
+plain-text token as it stands.
+
 ```bash
 docker run --rm -it vaultwarden/server:1.37.5 /vaultwarden hash
 ```

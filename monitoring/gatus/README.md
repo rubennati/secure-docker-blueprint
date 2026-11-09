@@ -71,7 +71,9 @@ sqlite_databases:
 ```
 
 Confirm the filename on the running instance. With the optional PostgreSQL backend
-enabled instead, use `postgresql_databases:` with the `container:` option.
+enabled instead, use `postgresql_databases:` with `pg_dump_command`, `pg_restore_command`
+and `psql_command` through `docker exec <container>`, as `backup/borgmatic/README.md`
+describes.
 
 **Restore order:** restore `config.yaml`, then the database if the history matters,
 then start.

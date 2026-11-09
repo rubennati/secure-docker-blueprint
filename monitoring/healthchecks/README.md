@@ -40,7 +40,7 @@ openssl rand -base64 60 | tr -d '\n='
 
 # 3. Create data directory — app runs as uid 999, must own the volume
 mkdir -p volumes/data
-chown -R 999:999 volumes/data
+sudo chown -R 999:999 volumes/data
 
 # 4. Start
 docker compose up -d
@@ -71,6 +71,31 @@ Create a test check in the UI:
 - From another terminal: `curl <ping-url>`
 - Back in UI → Check should now show "up" with timestamp
 
+## Pings from the same host
+
+Jobs on the host that runs this stack — `core/host-watchdog`, the Traefik watchdog in
+`core/traefik/ops/scripts`, `backup/borgmatic` — ping the loopback port instead of the
+public name:
+
+```
+http://127.0.0.1:8001/ping/<uuid>        # HC_LOCAL_PORT, 8001 by default
+```
+
+Through Traefik such a ping arrives as the gateway address of the edge network, not as
+the host's address, so a closed access policy refuses it — and that gateway must not go
+into `TRUSTED_RANGES`, since every container on the network would pass with it. The
+loopback port avoids the proxy: it is published on `127.0.0.1` only, so nothing outside
+the host reaches it, and the route keeps its closed policy. No public `/ping/` route is
+needed for these jobs. The UI shows ping URLs under `SITE_ROOT`; replace
+`https://<APP_TRAEFIK_HOST>` with `http://127.0.0.1:8001` in the job's configuration, the
+UUID stays the same.
+
+Verified on the lab host (VM) on 2026-11-09 (v5.0.3), with the route on
+`access-trusted`: the Traefik watchdog and the Docker daemon watchdog, each started from
+its shipped systemd unit, and borgmatic 2.2.0 (`start` and `finish`) all reached their
+checks through `127.0.0.1:8001`; the same ping through the route from the host answered
+`403`, and the port did not answer from another machine on the LAN.
+
 A green check proves the ping path, not the alarm. Attach a notification
 channel, stop pinging, and let the grace time expire — the down notification
 has to arrive where it is supposed to. Done on 2026-09-08 (v4.4): ntfy to a
@@ -93,6 +118,7 @@ phone and email to the mail sink, down and up, within a second each.
 - **`no-new-privileges:true`** — baseline hardening.
 - **Registration closed (`HC_REGISTRATION_OPEN=False`)** by default — only the superuser you create can log in and invite others. Flip to `True` if you want self-service signup (only for trusted networks).
 - **SECRET_KEY in `.env`** (gitignored) — upstream does not support `_FILE` env vars for this. Rotating the secret invalidates all sessions (acceptable).
+- **The loopback port serves the whole application, not only `/ping/`.** Anyone with a shell on the host can open the login page on `127.0.0.1:8001`; the login still applies. Nothing off the host reaches it.
 - **Ping URLs are public-information once shared** — anyone with the URL can ping a check. Each URL is a UUID and unguessable but does not need authentication; if you need stricter control, use signed ping URLs (Healthchecks v2+ feature, in UI per-check).
 
 ## Backup

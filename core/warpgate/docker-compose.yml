@@ -96,6 +96,9 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8888"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
+      # Warpgate serves its own self-signed certificate; without this transport
+      # Traefik refused the backend and answered 500.
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serverstransport=backend-selfsigned@file"
 
     # --- Health & Observability ---
     # The image ships its own healthcheck — exec form since the distroless

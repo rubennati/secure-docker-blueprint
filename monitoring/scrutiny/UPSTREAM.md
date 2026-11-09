@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v0.10.0-web) — lab host (VM), IPv4 LAN, run in a parallel batch: `/api/health` true behind the basicAuth gate before and after `down`/`up`, the refused client answered `403`; in a VM it sees no real SMART data (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/AnalogJ/scrutiny/pkgs/container/scrutiny

@@ -10,7 +10,7 @@
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
-- **Last verified:** 2026-09-21 (v1.5.0) — behind Traefik with TLS: both routes, a provider credential from a Docker Secret, an MCP target under `/mcp`, a restart, and a restore
+- **Last verified:** 2026-11-08 (1.7.0) — lab host (VM), IPv4 LAN: `ops/init.sh` rendered the config, which validated once the README's command mounted the UI htpasswd (corrected), `/v1/models` answered with the client key and `401` without it before and after `down`/`up`, the UI behind its basicAuth gate, the refused client answered `403`; no completion through a backend (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

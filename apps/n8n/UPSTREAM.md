@@ -13,7 +13,7 @@
 - **Origin:** Germany · n8n GmbH · EU
 - **Domain:** Automation and data
 - **Role:** Visual workflow automation
-- **Last verified:** 2026-11-03 (2.41.7) — lab host behind Traefik 3.7.17 on its edge network: the owner, login, a webhook workflow with a Code node in the task runner, a stored credential, and the README's quiesced backup restored into a throwaway instance that decrypts it (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-02 (v2.19.2)
+- **Last verified:** 2026-11-09 (2.46.7) — lab host (VM), IPv4 LAN, moved from 2.46.6 on a new installation: a webhook workflow imported and published with the n8n CLI answered `{"sum":42}` through Traefik before and after `down`/`up`, the refused client answered `403`; 3.x not taken — 3.1.0 is still a GitHub pre-release (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -46,6 +46,12 @@
 
 ## Version notes
 
+- Moved to `2.46.7` on 2026-11-09 (released the same day, upstream's `stable`
+  channel; not a pre-release) and run on the lab host. One fix: resume attempts
+  for waiting and queued executions are limited (n8n-io/n8n#42862). Pinned by
+  the digest of the multi-arch index,
+  `sha256:e97b4f576cd21de5c7676858f7006126581faeca8046d9d23fda0e06468008d4`.
+  No configuration change.
 - Moved to `2.46.6` on 2026-11-05 (released 2026-11-04, upstream's `stable`
   channel), across 2.42 to 2.46, not run on a host at this tag. Pinned by the
   digest of the multi-arch index (linux/amd64, linux/arm64),

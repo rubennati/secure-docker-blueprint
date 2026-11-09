@@ -29,7 +29,8 @@ db.createUser({
   pwd: "${APP_PWD}",
   roles: [
     { db: "${UNIFI_APP_DB}", role: "dbOwner" },
-    { db: "${UNIFI_APP_DB}_stat", role: "dbOwner" }
+    { db: "${UNIFI_APP_DB}_stat", role: "dbOwner" },
+    { db: "${UNIFI_APP_DB}_audit", role: "dbOwner" }
   ]
 })
 EOF

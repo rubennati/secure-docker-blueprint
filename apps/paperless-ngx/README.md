@@ -218,30 +218,17 @@ Drop a PDF into `./volumes/consume/` and watch the logs — it should be consume
 ```yaml
 postgresql_databases:
     - name: paperless
-      container: paperless-db
       username: paperless_user
-      password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
-      # The client's major version must be the server's: postgres 18 (DB_TAG)
-      pg_dump_command: /usr/lib/postgresql/18/bin/pg_dump
-      pg_restore_command: /usr/lib/postgresql/18/bin/pg_restore
-      psql_command: /usr/lib/postgresql/18/bin/psql
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec paperless-db pg_dump
+      pg_restore_command: docker exec -i paperless-db pg_restore
+      psql_command: docker exec -i paperless-db psql
 ```
 
-**The PostgreSQL client on the host has to be version 18, the server's.**
-borgmatic runs `pg_dump` and `pg_restore` on the host. A client newer than the
-server writes settings the server does not know: with Debian 13's
-`postgresql-client`, version 17, the backup of a `postgres:16` server ran, but
-its restore stopped on `SET transaction_timeout = 0`, a setting 16 does not
-know (lab host). Install 18 beside it from the PostgreSQL project's
-repository and name its programs in the entry, as above — `pg_dump` on the
-`PATH` stays the newest installed version:
-
-```bash
-sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh   # from Debian's postgresql-common
-sudo apt install postgresql-client-18
-```
-
-When `DB_TAG` moves to another major version, the three paths move with it.
+**The dump runs with the server's own client, inside `paperless-db`** (FA-03): no
+PostgreSQL client on the host, no password, and the client's version follows `DB_TAG`
+by itself. The database container has to be running for the backup, and its `memory`
+and `pids` limits apply to `pg_dump` as well.
 
 **`volumes/media` is the archive.** The database holds tags, correspondents and
 the text extracted from each document; the documents themselves are files. Losing

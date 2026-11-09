@@ -2,6 +2,8 @@
 #
 #   cp .env.local.example .env.local
 #   ops/init.sh
+#   mkdir -p volumes/storage
+#   sudo chown -R 33:33 volumes/storage volumes/app.env
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   open http://localhost:8080        # the web installer, or run the artisan
 #                                     # command from ops/install.sh by hand

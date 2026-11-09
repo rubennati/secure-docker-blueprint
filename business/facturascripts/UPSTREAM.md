@@ -12,7 +12,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Invoicing, accounting and inventory for small businesses, extended through plugins
-- **Last verified:** 2026-09-22 (2026.5) — behind Traefik with TLS: the unattended install, the login and wizard, a customer, the in-app updater across a restart, and the README's restore
+- **Last verified:** 2026-11-08 (2026.72) — lab host (VM), IPv4 LAN: moved from 2026.7, `ops/install.sh` ran the unattended installer and closed the web installer, the administrator logged in and reached the first-use wizard before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the terms on facturascripts.com, which name the site's owner
 and apply Spanish law.
@@ -110,6 +110,9 @@ local file; an upgrade to a newer image; backup and restore.
 
 ## Version notes
 
+- Moved to `2026.72` on 2026-11-08 and run on the lab host (VM). The image
+  repository publishes no release notes; the unattended install and the login
+  ran unchanged.
 - Moved to `2026.7` on 2026-11-05 (image published 2026-10-21), not run on a
   host at this tag. `2026.7` is the image behind `latest`; the automatic pick
   `2026.72` is the `beta` tag and was not used. The image tag changes PHP,

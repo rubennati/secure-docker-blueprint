@@ -13,7 +13,7 @@
 - **Origin:** Germany · PhotoPrism AG · EU
 - **Domain:** Photos
 - **Role:** Photo library with machine-learning classification and WebDAV
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (261029) — lab host (VM), IPv4 LAN, run in a parallel batch: the administrator from `.env` opened a session through the API, the app served before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

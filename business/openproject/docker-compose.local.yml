@@ -76,6 +76,8 @@ services:
     container_name: openproject-local-cache
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # no cap_add: the image runs as its own user and needs none (measured)
     networks: [openproject-local]
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.1 11211"]

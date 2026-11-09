@@ -1,7 +1,7 @@
 # zot — local
 #
 #   cp .env.local.example .env.local
-#   mkdir -p volumes/local/registry
+#   mkdir -p volumes/local/registry/.tmp
 #   sudo chown 1000:1000 volumes/local/registry
 #   ZOT_LOCAL_PASSWORD='<choose-a-local-password>'
 #   docker run --rm httpd:2.4-alpine htpasswd -Bbn admin "$ZOT_LOCAL_PASSWORD" > htpasswd.local
@@ -20,6 +20,8 @@ services:
     cap_drop: [ALL]
     read_only: true
     tmpfs: [/tmp]
+    environment:
+      TMPDIR: /var/lib/registry/.tmp
     volumes:
       - ./config/config.json:/etc/zot/config.json:ro
       - ./htpasswd.local:/run/secrets/zot_htpasswd:ro

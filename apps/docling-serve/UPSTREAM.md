@@ -10,7 +10,7 @@
 - **Origin:** LF AI & Data Foundation (US non-profit) · originated at IBM Research Zurich, Switzerland · non-EU
 - **Domain:** AI and local AI
 - **Role:** Document understanding as an API: layout, tables and Markdown or JSON export for AI pipelines
-- **Last verified:** 2026-09-22 (v1.34.0) — behind Traefik with TLS: a PDF converted through the route with the key from the Docker Secret, a URL conversion, and a restart
+- **Last verified:** 2026-11-08 (1.38.2) — lab host (VM), IPv4 LAN: a PDF converted to Markdown through the route with the API key before and after `down`/`up`, `401` without the key, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

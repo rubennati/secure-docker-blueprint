@@ -190,8 +190,8 @@ services:
     entrypoint: ["/bin/sh", "/config/entrypoint.sh"]
     # Compose clears the image's CMD when `entrypoint` is set, so the start
     # command is repeated here. Upstream's CMD probes three paths for the
-    # built server; v3.0.3 has it at dist/src/main.js.
-    command: ["node", "--enable-source-maps", "./dist/src/main.js"]
+    # built server; since v3.0.6 it is at dist/main.js (v3.0.3: dist/src/main.js).
+    command: ["node", "--enable-source-maps", "./dist/main.js"]
     environment:
       NODE_ENV: production
 

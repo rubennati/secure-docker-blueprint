@@ -11,7 +11,7 @@
 - **Origin:** United States · BerriAI, Inc. · non-EU
 - **Domain:** AI and local AI
 - **Role:** OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log
-- **Last verified:** 2026-09-21 (v1.101.0) — behind Traefik with TLS: a provider credential stored encrypted through the admin API, a virtual key limited to it, the admin login, a restart, and a database restore
+- **Last verified:** 2026-11-08 (1.108.3) — lab host (VM), IPv4 LAN: moved from v1.108.0, a model added through the admin API with its credential stored encrypted, a virtual key restricted to it listing only that model, the UI served, both kept after `down`/`up`, the refused client answered `403`; no completion through a real provider (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -95,6 +95,9 @@ throwaway Ollama container serving `smollm2:135m`:
 
 ## Version notes
 
+- Moved to `v1.108.3` on 2026-11-08 and run on the lab host (VM), the digest re-
+  resolved. 1.108.1 to 1.108.3 are fixes; upstream: "No action needed to
+  upgrade".
 - Moved to `v1.108.0` on 2026-11-05 (released 2026-11-04), not run on a host at
   this tag. Breaking changes on the way from v1.101.4:
   v1.104.0 refuses to start with an unset, empty or publicly known master key

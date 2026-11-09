@@ -88,9 +88,11 @@ Documenso's embed flow here.
 ```yaml
 postgresql_databases:
     - name: documenso
-      container: documenso-db
       username: documenso
-      password: "{credential file /srv/docker/business/documenso/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec documenso-db pg_dump
+      pg_restore_command: docker exec -i documenso-db pg_restore
+      psql_command: docker exec -i documenso-db psql
 ```
 
 **`cert.p12` is not a secret like the others.** Every signature this instance has

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (3.1.1) — lab host (VM), IPv4 LAN, run in a parallel batch: an application created with the administrator from the secret file and a message sent with its token, the message kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/gotify/server/pkgs/container/server

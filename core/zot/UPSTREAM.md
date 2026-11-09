@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v2.1.23) — lab host (VM), IPv4 LAN, run in a parallel batch: after the TMPDIR correction: an image pushed from the lab container with the htpasswd user and listed in the catalog, `401` without credentials, the image present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/project-zot/zot/pkgs/container/zot

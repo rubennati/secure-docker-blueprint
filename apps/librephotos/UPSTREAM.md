@@ -10,7 +10,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Photos
 - **Role:** Photo library with face recognition and search
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (1.5.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the administrator from `.env` obtained a token through the API, all four services up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

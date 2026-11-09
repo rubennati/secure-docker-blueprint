@@ -14,7 +14,7 @@
 - **Role:** Helpdesk and ticket system across mail, chat and phone
 - **Pinning:** Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the highest
   build of the target release, not the first
-- **Last checked:** 2026-08-16
+- **Last verified:** 2026-11-08 (7.2.2-0045) — lab host (VM), IPv4 LAN, fresh install on 7.2.2-0038 with the PR #340 hardening (Postgres 18.6, Redis, memcached with cap_drop), then moved to 7.2.2-0045: Elasticsearch healthy, an agent created with `rails r` (the wizard was not run through the API), a ticket created through the API and found by the search before and after the move and after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -60,6 +60,10 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
 
 ## Version notes
 
+- Moved to `7.2.2-0045` on 2026-11-08, a rebuild of the same 7.2.2 release
+  (the suffix is the package build), and run on the lab host (VM): started over
+  an installation created on `7.2.2-0038` with a ticket in it, which was present
+  and found by the Elasticsearch search afterwards.
 - memcached moved to `1.6.45` on 2026-10-31, not run at this tag. 1.6.42
   (2026-05-18) is upstream's security release — a timing side channel in SASL
   password authentication and a crash on an oversized auth token, no CVEs

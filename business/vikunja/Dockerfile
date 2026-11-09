@@ -17,8 +17,8 @@
 # the name changing — so the digest is what actually fixes the image, and the tag
 # stays because it is the readable half. Re-resolve both together on an upgrade:
 #   docker buildx imagetools inspect vikunja/vikunja:<tag> --format '{{.Manifest.Digest}}'
-ARG APP_TAG=2.3.0
-ARG APP_DIGEST=sha256:f6b80393c1998cd5cd0dc38d24762c59ab4c10000a6f1032ef5b554e262cab93
+ARG APP_TAG=2.8.0
+ARG APP_DIGEST=sha256:35d937baf3b5d5803bed6b9e11d007448b7b536df9e4346dc35551e1072636c3
 FROM busybox:1.38.0-musl@sha256:8635836765b0c4c43970660219739baa58b0883c2e429e4b8918f7dd1519455c AS shell
 RUN mkdir /files-init
 

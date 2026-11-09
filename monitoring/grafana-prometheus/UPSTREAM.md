@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (13.3.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the administrator from the secret file listed the Prometheus datasource and a query through it returned `up`, before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/grafana/grafana · https://hub.docker.com/r/prom/prometheus

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (16.1.0) — lab host (VM), IPv4 LAN, run in a parallel batch: an OpenPGP-encrypted secret stored through `/create/secret`, read once and `404` on the second read, before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/jhaals/yopass
@@ -57,6 +59,9 @@ Secret Requests on; it requires a different, licensed product from upstream.
 
 ## Version notes
 
+- Moved to `16.1.0` on 2026-11-08 and run on the lab host (VM). Upstream calls
+  16.1.0 a drop-in replacement with the same frontend, flags and environment
+  variables; the API path is `/create/secret`.
 - Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors, not
   run on a host at this tag; the checks under "What was actually verified" ran
   on 14.10.0. Nothing this stack sets changes: `MEMCACHED`, `PORT` and the

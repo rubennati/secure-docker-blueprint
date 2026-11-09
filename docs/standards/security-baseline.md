@@ -77,8 +77,10 @@ start, because nothing inside the container can change it any more.
 | `redis`, `valkey` (official) | the same five | `user: "999:1000"` on Alpine, `"999:999"` on Debian; no capability | yes, tmpfs on `/tmp` | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40); IDs from the upstream Dockerfiles |
 | `nginx` (official) | `CHOWN`, `SETGID`, `SETUID` | — | with tmpfs on the cache, run and tmp paths | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
 | `nginxinc/nginx-unprivileged` | — | already; no capability | yes | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
-| `mariadb` | `CHOWN`, `DAC_OVERRIDE`, `SETGID`, `SETUID` | — | not established | in use in eleven stacks; not measured |
-| `mysql`, `mongo`, `memcached` | sets in use differ | — | not established | needs a host test |
+| `mariadb` | `SETGID`, `SETUID`; `DAC_OVERRIDE` as well where the entrypoint reads the operator's mode-600 password files (`apps/nextcloud`) | — | not established | measured on the stack-refresh lab host (2026-11-09): the image's own volume and `apps/nextcloud`'s named volume, first start and `down`/`up`; a bind-mounted data directory owned by another user was not measured |
+| `mysql` (official) | `DAC_OVERRIDE`, `SETGID`, `SETUID` | — | not established | measured on the stack-refresh lab host: the image's own volume and `business/invoiceninja`, first start and `down`/`up` |
+| `mongo` (official) | `CHOWN`, `DAC_READ_SEARCH`, `SETGID`, `SETUID` with a bind-mounted data directory — `CHOWN` takes it over on the first start, `DAC_READ_SEARCH` lets the entrypoint search it on every later one (an entry in `CAP_ADD_EXCEPTIONS`); `SETGID`, `SETUID` alone in the image's own volume | — | not established | measured on the stack-refresh lab host: `apps/unifi`, `business/opensign`, first start and two `down`/`up` |
+| `memcached` (official) | none — the image starts as its own user | already | not established | measured on the stack-refresh lab host: `business/openproject`, `business/zammad` |
 | linuxserver.io and other s6-overlay images | not established | never `user:`, see below | — | — |
 
 A Redis that reads its password from a secret through `sh` before handing over to

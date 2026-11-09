@@ -9,7 +9,7 @@
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
-- **Last verified:** 2026-11-02 (1.37.4) — lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-09 (1.37.5) — lab host (VM), IPv4 LAN, after the admin-token correction: `/alive` and a database-backed API request answered through Traefik, the admin panel off with the empty token, the same after `down`/`up`
 
 ## What we changed and why
 

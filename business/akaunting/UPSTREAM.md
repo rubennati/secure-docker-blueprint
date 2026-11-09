@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports
-- **Last verified:** 2026-09-22 (3.1.21) — behind Traefik with TLS: the install, the login and company wizard, a customer, the reports, a restart, and the README's restore; creating records needs an akaunting.com API key
+- **Last verified:** 2026-11-08 (3.3.0-v) — lab host (VM), IPv4 LAN: `ops/install.sh` ran upstream's installer and closed the web installer (a second run changed nothing), the administrator logged in before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the governing-law clause of Akaunting's terms of service
 (law of Turkey, courts of Istanbul).

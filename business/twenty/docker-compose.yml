@@ -120,11 +120,11 @@ services:
     read_only: true
 
     # --- Resources ---
-    memswap_limit: 1G          # == memory: no swap
+    memswap_limit: 1536m          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 1536m   # 2x the peak on the stack-refresh lab host (716 MiB)
           cpus: "1.00"
           pids: 200
         reservations:

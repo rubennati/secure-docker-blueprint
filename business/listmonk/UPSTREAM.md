@@ -10,7 +10,7 @@
 - **Origin:** India · Zerodha (Kailash Nadh) · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Newsletter and mailing-list manager
-- **Last verified:** 2026-11-03 (v6.2.0) — lab host behind Traefik 3.7.17 on its edge network: the super admin on the first visit, login, a double opt-in list, the public subscription form, the opt-in and a campaign mail; the README's borgmatic entry did not restore (the host's PostgreSQL client), the PostgreSQL 16 client did (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (Last checked)
+- **Last verified:** 2026-11-08 (v6.2.0) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 18.6 with cap_drop): the super admin created on the first visit, a subscriber added through the API, the SMTP placeholder replaced by `smtp-guard`, the refused client answered `403`, data present after `down`/`up`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

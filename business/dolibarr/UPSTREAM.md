@@ -10,7 +10,7 @@
 - **Origin:** France · Dolibarr Association · EU
 - **Domain:** Business operations
 - **Role:** ERP and CRM: contacts, quotes, invoices, stock and accounting
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (24.0.2) — lab host (VM), IPv4 LAN, at the closed default: the first-run install with the administrator from the secret files, a login landing on the setup completion page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

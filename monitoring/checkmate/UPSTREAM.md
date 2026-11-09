@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v3.13.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the first account registered as superadmin, a second superadmin refused (`Invite not found`), the state kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/bluewave-labs/Checkmate/pkgs/container/checkmate

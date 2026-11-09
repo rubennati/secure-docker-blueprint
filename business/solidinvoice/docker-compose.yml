@@ -42,11 +42,11 @@ services:
     # running — about 1.4 GiB of process memory (the main process alone 1.38 GiB)
     # plus 0.6 GiB in the tmpfs, which counts against this limit. At 1G the
     # container was killed for memory 25 times in a row and never came up.
-    memswap_limit: 3G          # == memory: no swap
+    memswap_limit: 6g          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 3G
+          memory: 6g   # 2x the peak on the stack-refresh lab host (2569 MiB)
           cpus: "1.00"
           pids: 200
         reservations:

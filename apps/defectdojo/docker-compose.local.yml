@@ -3,6 +3,9 @@
 #   cp .env.local.example .env.local
 #   cp .env.local.example .env       # ops/init.sh reads DB_NAME and DB_USER from .env
 #   ops/init.sh
+#   mkdir -p volumes/media volumes/valkey
+#   sudo chown 1001:1001 volumes/media
+#   sudo chown 999:1000 volumes/valkey
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   open http://localhost:8080        # log in as ADMIN_USER, .secrets/dd_admin_password.txt
 #   docker compose -f docker-compose.local.yml --env-file .env.local down

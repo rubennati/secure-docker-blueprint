@@ -78,12 +78,12 @@ services:
     # A ceiling against runaway growth, not an appetite. TRAEFIK_MEMORY in .env
     # carries the measurement and the reason; the default here keeps an existing
     # .env working.
-    memswap_limit: ${TRAEFIK_MEMORY:-256m}   # == memory: no swap
+    memswap_limit: ${TRAEFIK_MEMORY:-512m}   # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: ${TRAEFIK_MEMORY:-256m}
-          pids: 50
+          memory: ${TRAEFIK_MEMORY:-512m}
+          pids: 64     # 2x the peak on the stack-refresh lab host (28)
         reservations:
           memory: 64M
 

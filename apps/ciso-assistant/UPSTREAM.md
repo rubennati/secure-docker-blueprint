@@ -13,7 +13,7 @@
 - **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
 - **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
 - **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
-- **Last verified:** 2026-09-22 (v4.0.5) — behind Traefik with TLS: the interface and the `/api` split, a framework imported into a compliance assessment, Huey's scheduled tasks, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (4.2.2) — lab host (VM), IPv4 LAN: moved from v4.2.1; the first start ran its migrations for about ten minutes, as the README says; the frontend needed 768m instead of 512m (corrected); the administrator from the secret file logged in through the API before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from intuitem's legal notice (RCS Versailles, France).
 
@@ -109,6 +109,9 @@ into an assessment; backup and restore.
 
 ## Version notes
 
+- Moved to `v4.2.2` on 2026-11-08 and run on the lab host (VM). A patch release
+  with a security hardening change (upstream #5229) and a new framework library;
+  the frontend needed 768m instead of 512m on this host (`docker-compose.yml`).
 - Moved to `v4.2.1` on 2026-11-05, backend and frontend together, not run on a
   host at this tag. `v4.2.0` moves the frontend to SvelteKit 3 and adapter-node 6,
   which drops the `ORIGIN` variable; this stack uses `PROTOCOL_HEADER` and

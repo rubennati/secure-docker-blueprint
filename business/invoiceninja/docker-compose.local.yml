@@ -67,6 +67,8 @@ services:
     depends_on:
       app: {condition: service_healthy}
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]   # the master chowns its cache directories and the workers switch to uid 101 (measured)
     environment:
       TZ: ${TZ}
     volumes:
@@ -88,6 +90,8 @@ services:
     container_name: invoiceninja-local-mysql
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE, SETUID, SETGID]   # the entrypoint switches to the mysql user and reads its files as root (measured)
     environment:
       TZ: ${TZ}
       MYSQL_DATABASE: ${DB_DATABASE}
