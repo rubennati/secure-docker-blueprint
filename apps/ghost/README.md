@@ -17,7 +17,7 @@ Optional ActivityPub stack (`activitypub.yml`):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `activitypub` | `ghcr.io/tryghost/activitypub` | ActivityPub backend — keys, federation, Fediverse API |
+| `ghost-activitypub` | `ghcr.io/tryghost/activitypub` | ActivityPub backend — keys, federation, Fediverse API |
 | `activitypub-migrate` | `ghcr.io/tryghost/activitypub-migrations` | One-shot migration runner, exits after schema init |
 
 Ghost's built-in mailer (`mail__transport: SMTP`) is required for member signup confirmation emails and newsletter sending. Without working SMTP, signups silently fail.
@@ -39,7 +39,12 @@ The ActivityPub service has the same limitation — `ops/activitypub-entrypoint.
 Runs on `http://localhost:2368` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/content
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:2368
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -77,7 +82,7 @@ reaches it first becomes the owner. The stack therefore ships with `access-vpn`
 (final audit FA-01): the setup happens over the VPN, and the blog becomes public by
 the operator's decision in step 5.
 With mail configured, a staff login from a new browser waits for a six-digit code
-Ghost mails to the staff address (lab host, 6.63.0).
+Ghost mails to the staff address (6.63.0).
 
 Shipped access is `access-vpn` until setup; a public blog then runs `access-public`, with `limit-standard` and `headers-standard` — the standard headers and rate limit.
 
@@ -99,7 +104,7 @@ docker compose logs ghost-app --tail 50       # Ghost startup, DB migration mess
 docker compose logs db --tail 20        # MySQL ready-for-connections
 
 # With ActivityPub:
-docker compose logs activitypub --tail 30       # booted + no key errors
+docker compose logs ghost-activitypub --tail 30 # booted + no key errors
 docker compose logs activitypub-migrate         # migrations ran, exited 0
 ```
 
@@ -131,7 +136,7 @@ mysql_databases:
       username: ghost_user
       password: "{credential file /srv/docker/apps/ghost/.secrets/db_pwd.txt}"
       # MySQL's self-signed certificate: the host's client refuses it and the
-      # dump fails (lab host). The connection stays on the host.
+      # dump fails. The connection stays on the host.
       tls: false
 ```
 

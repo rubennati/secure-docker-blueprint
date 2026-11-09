@@ -1,6 +1,6 @@
 # OpenProject — Upstream
 
-- **Last verified:** 2026-11-08 (17.9.6) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 18.6, memcached with cap_drop), after the seeder and worker limits were raised to 1G: the seeder ran the migrations and the demo data, the health checks passed, a work package created through the API v3 found again after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (17.9.6) — over IPv4, a new installation with Postgres 18.6, memcached with cap_drop: the seeder ran the migrations and the demo data, the health checks passed, a work package created through the API v3 found again after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -29,8 +29,7 @@ https://github.com/opf/openproject/releases
 
 ## Version notes
 
-- Moved to `17.9.6-slim` on 2026-11-05 (released 2026-10-30), not run on a host
-  at this tag. No breaking change listed for 17.8.1 to 17.9.6; the seeder applies
+- Moved to `17.9.6-slim` on 2026-11-05 (released 2026-10-30). No breaking change listed for 17.8.1 to 17.9.6; the seeder applies
   the migrations. 17.9.0 converts the length settings of number custom fields
   into minimum and maximum values and asks administrators to check them
   afterwards. 17.9.2 fixes fresh 17.9 installations creating projects without a
@@ -40,8 +39,7 @@ https://github.com/opf/openproject/releases
   used here). Advisories fixed: GHSA-4p83-c4wg-59q4, GHSA-c5j2-2mfg-49h7,
   GHSA-r374-cr8p-hmp9 (17.8.1), GHSA-998q-c58p-qf78 (17.9.3),
   GHSA-2qr3-mhmh-xfwj (17.9.5). GHSA-rg3v-wmh9-hhq6 is fixed only in 18.0.0.
-- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05, not run on a
-  host at this tag. PostgreSQL 18 support: "officially supports PostgreSQL
+- Moved `postgres` from `17-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: "officially supports PostgreSQL
   version 16 or above" since 16.0.0
   (https://www.openproject.org/docs/installation-and-operations/system-requirements/);
   upstream's packaged installs still ship 17. The 18 image keeps its cluster

@@ -30,6 +30,8 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/postgres volumes/local/recordings volumes/local/hostkey
+sudo chown 0:0 volumes/local/recordings volumes/local/hostkey
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -100,7 +102,7 @@ project and unaudited codebase, treat a compromise here as total until
 proven otherwise — do not assume any blast-radius containment beyond what
 is explicitly documented.
 
-**What session recordings contain.** Not exercised in this deployment.
+**What session recordings contain.** Recording is off until you enable it in the console.
 `ORION_RECORDING_ENCRYPTION_KEY` exists to encrypt them at rest — if you
 enable recording in the console, generate and set a real key first, or
 recordings are stored unencrypted in `./volumes/recordings`.
@@ -147,8 +149,6 @@ For the general PostgreSQL restore procedure and verification checklist, see
 - **No `_FILE` secret support on the server's own credentials** — mitigated
   only by keeping `.env` out of git; see UPSTREAM.md for the documented,
   unbuilt `ORION_CONFIG_FILE` path that could close this.
-- **Not yet run on a live host beyond a clean start** — no agent
-  registered, no SSH session proxied, no restart or upgrade tested.
 
 ## Open findings
 

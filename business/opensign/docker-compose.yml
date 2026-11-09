@@ -12,7 +12,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Measured on the stack-refresh lab host: the entrypoint chowns the bind-mounted
+    # The entrypoint chowns the bind-mounted
     # data directory the README creates (CHOWN), searches it on every later start
     # through directories only the mongodb user may enter (DAC_READ_SEARCH), then
     # switches to that user (SETUID, SETGID).

@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v0.29.7) — lab host (VM), IPv4 LAN, run in a parallel batch: a user created with the CLI and listed, `/health` passing through the route before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v0.29.7) — over IPv4: a user created with the CLI and listed, `/health` passing through the route before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -36,7 +36,7 @@ older planned list in `apps/README.md` predates that sharpened rule.
 
 ## What we use
 
-- `ghcr.io/juanfont/headscale:v0.29.4`, one container, SQLite.
+- `ghcr.io/juanfont/headscale:v0.29.7`, one container, SQLite.
 - `config/config.yaml`, trimmed from upstream's 478-line example to what this
   stack sets or deliberately keeps.
 - `derp.yml`, an opt-in overlay for the embedded relay.
@@ -109,7 +109,7 @@ the map the fetch is no longer what clients depend on.
 
 ## Version notes
 
-- Moved to `v0.29.7` on 2026-10-31 (released 2026-10-30), not run at this tag.
+- Moved to `v0.29.7` on 2026-10-31 (released 2026-10-30).
   No breaking change, config key change or database migration in 0.29.5 to
   0.29.7. 0.29.6 moves to Go 1.27.3, which rejects chains with the compromised
   eMudhra keys (CVE-2026-111943), and raises x/net, x/text and gRPC. 0.29.7 is a
@@ -140,5 +140,5 @@ the map the fetch is no longer what clients depend on.
 curl -s https://raw.githubusercontent.com/juanfont/headscale/main/config-example.yaml
 
 # Every command, and what this version accepts
-docker run --rm ghcr.io/juanfont/headscale:v0.29.4 --help
+docker run --rm ghcr.io/juanfont/headscale:v0.29.7 --help
 ```

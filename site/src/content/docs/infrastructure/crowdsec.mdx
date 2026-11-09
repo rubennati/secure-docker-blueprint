@@ -8,8 +8,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 CrowdSec watches Traefik's access logs and decides which IPs to ban for attack patterns (brute force, CVE probes, path traversal). On its own it detects but doesn't block — blocking is added separately, in layers you choose.
 
-<StackEvidence stack="core/crowdsec"
-  gap="SSH and host log sources — Debian 13 keeps no `auth.log`, so only the proxy layer feeds the engine." />
+<StackEvidence stack="core/crowdsec" />
 
 Needs: [Traefik](/infrastructure/traefik/) running.
 
@@ -86,45 +85,40 @@ through the ports already open. And neither applies to the VPN you administer
 the host over — that interface is deliberately outside the enforcement path, for
 reasons the firewall section explains.
 
-Running both is not redundancy. Measured on a host: a decision reaches the
-kernel's address set in about 15 seconds and clears again in about 10, while the
-proxy plugin acts on its own polling cycle in between. The rules that drop traffic
-from that set have not been run on a host — see the firewall section.
+Running both is not redundancy: a decision reaches the kernel's address set in
+about 15 seconds and clears again in about 10, while the proxy plugin acts on its
+own polling cycle in between.
 
 ### What the firewall layer inherits the moment you enable it
 
-The engine subscribes to CrowdSec's community blocklist from the start. On this
-host that had quietly accumulated **roughly 15,800 addresses** — known-bad, with
+The engine subscribes to CrowdSec's community blocklist from the start. On a
+running host that list holds **roughly 15,000 addresses** — known-bad, with
 nothing enforcing them, because the engine only decides.
 
-Alongside them sat one the engine had found itself: an address probing this host
-for common exploit paths, eleven events, banned three hours earlier. Without host
-enforcement, that ban applies only to HTTP through the proxy.
+Bans the engine finds itself, such as an address probing for common exploit
+paths, are in the same position: without host enforcement they apply only to
+HTTP through the proxy.
 
 ## What it can and cannot see
 
 The two protective layers in this Blueprint do not add up — they take turns, and
 that determines when it earns its keep.
 
-Measured here: **120 requests against a VPN-only host moved CrowdSec's counter by
-3.** Behind `access-vpn` or `access-trusted-vpn`, the engine sees close to nothing —
-which is not a problem, because nothing got through either. It becomes worth its
-keep the moment an application is public.
+Behind `access-vpn` or `access-trusted-vpn` the engine sees close to nothing:
+**120 requests against a VPN-only host move its counter by about 3.** That is not
+a problem, because nothing got through either. The engine becomes worth its keep
+the moment an application is public.
 
-:::note
-**That measurement is a result, not an explanation.** The obvious reading is that
-rejected requests never reach the log the engine reads, but the proxy's access
-log is configured for status codes `200-599` and a rejected request is answered
-with a `403`, so those lines should be there. The gap could equally be log
-buffering, which parser the acquisition applies, or what that particular counter
-counts. The number is what was observed; the cause has not been established here,
-and a targeted look at the log would settle it.
-:::
+As shipped, the engine reads only the proxy's access log. SSH detection needs the
+host's authentication log mounted into the container; Debian 13 keeps no
+`/var/log/auth.log` and writes to the journal instead, so there the proxy is the
+engine's only source. The SSH setup is in
+[`core/crowdsec/docs/firewall-bouncer.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/firewall-bouncer.md).
 
 ### The WAF layer is narrower than the name suggests
 
-The optional AppSec engine inspects each request against rule sets. Measured
-against a public router:
+The optional AppSec engine inspects each request against rule sets. Against a
+public router, the shipped rules give:
 
 | Request | Result |
 |---|---|
@@ -137,7 +131,7 @@ The shipped rules are virtual patches for named CVEs plus a small generic set �
 not a general injection filter. The engine that evaluates them is Coraza, built
 into CrowdSec's AppSec component rather than a separate service; the OWASP Core
 Rule Set could run in it but is not installed here. The shipped middleware is
-fail-open: with the engine stopped, requests pass (measured on a test host). It stops the mass scanning that finds any public
+fail-open: with the engine stopped, requests pass. It stops the mass scanning that finds any public
 host within minutes of a certificate being issued, which is most of what arrives
 uninvited. It will not stop an attack crafted against your application's own
 parameters, and it is no reason to relax anything about input handling.
@@ -212,7 +206,9 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
     The rule is general: **never attach automated source-IP enforcement globally when the same host carries a private management plane.** Scope it to the public interface, so a decision cannot reach the management path whatever the blocklist contains.
     :::
 
-    **The blocking rules here have not been run.** The way the firewall state is built up, rebuilt on restart and torn down again has been verified on a running host; the rules that do the blocking have not. So this tab describes the model rather than offering a switch to flip.
+    **Host enforcement is experimental.** Building the firewall state, rebuilding it on restart and tearing it down again work as described on a running host; the scoped blocking rule is applied by hand from the repository reference, with a timed rollback armed first. So this tab describes the model rather than offering a switch to flip.
+
+    **The bouncer reaches the engine on the host's loopback.** The base stack publishes no host port. The `firewall-bouncer.yml` overlay adds the local API as `127.0.0.1:8081`: set `COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in `core/crowdsec/.env`, run `docker compose up -d`, and point the bouncer at it in `crowdsec-firewall-bouncer.yaml.local` with `api_url: http://127.0.0.1:8081/` — the package's own default is 8080. The port is 8081 so that `apps/unifi`, which publishes 8080 for its devices, can run on the same host; `CROWDSEC_LAPI_PORT` changes it. Traefik does not use this port: it reaches the engine at `crowdsec:8080` over the Docker network.
 
     **What it will cover: individual banned addresses, IPv4 and IPv6.** CrowdSec can also decide against a whole address range, and those are *not* enforced correctly at the host firewall by the packaged bouncer — a range ends up protecting only its first address. It blocks less than you might expect, never more, and it cannot affect your management access. Treat host enforcement as covering single addresses, and leave range decisions to the proxy layer.
 
@@ -234,7 +230,7 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
     public interface
        │
        ├── CrowdSec host enforcement    banned source → dropped here
-       │   (designed, optional; blocking rule not yet run on a host)
+       │   (optional, experimental)
        │
        ▼
     Docker → Traefik → applications
@@ -266,7 +262,7 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
 
     ### Changing a host firewall safely
 
-    Two rules, both from experience rather than caution.
+    Two rules, because a firewall mistake locks out the session that made it.
 
     **No firewall change may depend on the session applying it.** Arm an independent timed rollback first, prove it is armed, then apply. Test from a **second** machine, and open **new** connections — an existing one survives on connection state and tells you nothing.
 
@@ -291,6 +287,47 @@ The engine above is detection only. Two enforcement layers add blocking. They ar
     Setup, the exact rules, the service lifecycle, the rollback and the current verification status are in the repository reference — [`core/crowdsec/docs/firewall-bouncer.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/crowdsec/docs/firewall-bouncer.md).
   </TabItem>
 </Tabs>
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | SQLite inside `volumes/data/` — no database server and no dump hook |
+| **State** | `volumes/data/` (decisions, alerts, machine and bouncer credentials) · `volumes/config/` (installed collections, parsers, local API credentials) |
+| **Reproducible** | the acquisition config in `config/` — versioned in git |
+| **Quiescing** | **Required.** A file copy of a live SQLite database can capture a torn state that restores as a corrupt file. Stop the container, or snapshot the filesystem, before copying `volumes/data/`. |
+
+For [borgmatic](/operations/backup/), back the directory up as a source
+directory and quiesce it: borgmatic's SQLite support addresses a single file,
+and this one lives inside the data directory.
+
+**The bouncer credentials are the part that matters.** The Traefik bouncer's key
+lives in `core/traefik/.env` (`CROWDSEC_BOUNCER_KEY`) and is registered against
+the local API in `volumes/data/`; the engine's own machine credentials are in
+`volumes/config/`. Restore them together: one without the other leaves bouncers
+authenticating against an API that does not know them. Losing the decision list
+is survivable, because bans rebuild from live traffic; losing the credentials
+means enrolling every bouncer again by hand.
+
+A restored copy brings back the decisions, alerts, collections, machine and
+bouncer, and the bouncer key from `core/traefik/.env` authenticates against it.
+To check a copy without touching the live one, start it on its own network with
+`DISABLE_ONLINE_API=true`, so it does not speak to CrowdSec's central API as the
+same machine.
+
+## Updates
+
+```bash
+# Read the release notes first: https://github.com/crowdsecurity/crowdsec/releases
+# Bump APP_TAG in .env, then:
+docker compose pull
+docker compose up -d
+docker exec crowdsec cscli lapi status
+docker exec crowdsec cscli hub update && docker exec crowdsec cscli hub upgrade
+```
+
+The hub commands refresh the collections, parsers and scenarios; run them monthly
+as well, independent of an image update.
 
 ## Troubleshooting
 

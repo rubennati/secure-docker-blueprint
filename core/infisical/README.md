@@ -14,7 +14,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `infisical-app` | `infisical/infisical:v0.167.6` | Backend + web UI + API (port 8080) |
+| `infisical-app` | `infisical/infisical:v0.167.7` | Backend + web UI + API (port 8080) |
 | `db` | `postgres:18.6-alpine` | Encrypted secret store, users, projects |
 | `redis` | `redis:7.4.12-alpine` | Cache + job queue |
 
@@ -88,14 +88,20 @@ yield both halves.
 Run standalone on `http://localhost:8080` — plain env, no Traefik/Docker Secrets:
 
 ```bash
-cp .env.local.example .env.local   # fill values (openssl one-liners inside)
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 16)" >> .env.local
+printf 'AUTH_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080 — create the first account
+docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
-This config follows the standard but has **not** been run on a server yet. Confirm before marking ✅:
+Confirm on the first deploy:
 
 - [ ] `docker compose config` clean; `docker compose up -d` — all three healthy, no restart loop
 - [ ] Logs show DB migrations succeed and the server starts (entrypoint execs `standalone-entrypoint.sh`)

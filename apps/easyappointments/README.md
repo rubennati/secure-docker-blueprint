@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `easyappointments-app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
+| `easyappointments-app` | `alextselegidis/easyappointments:1.6.1` | PHP + Apache + scheduling UI |
 | `db` | `mariadb:11.4.13` | Customers, providers, services, appointments |
 
 ## When to pick Easy!Appointments
@@ -27,7 +27,13 @@ Compared to Cal.com / Cal.diy:
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/storage
+sudo chown -R 33:33 volumes/local/storage
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -88,7 +94,7 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
   `composer.json`, `README.md`, `CHANGELOG.md` and `LICENSE` answered `200` (final audit,
   FA-34). A second router, `<project>-files`, of priority 1000 matches `/vendor/` and those
   files and answers `404` through a deny list nobody is on; it keeps the four positions, so the
-  refusal carries the security headers. Measured on the lab host (1.6.1): those paths
+  refusal carries the security headers. At 1.6.1 those paths
   `404` — also `/./vendor/…` and `/assets/../vendor/…`; case and encoding variants reach
   Apache's own `404` — while `/`, the booking page, the login page, `/assets/…` and the REST
   API (customer, appointment, availability) work unchanged. `config-sample.php` executes as
@@ -96,8 +102,8 @@ After install, log in at `/index.php/user/login` (backend) or `/index.php/backen
 
 ## Mail
 
-The stack passes no mail settings: notifications for bookings are not configured
-by this compose file, and none were sent on the lab host.
+The stack passes no mail settings, so it sends no booking notifications until
+mail is configured in the application.
 
 ## Backup
 

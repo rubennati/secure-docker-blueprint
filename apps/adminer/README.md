@@ -45,7 +45,7 @@ docker network connect wordpress-internal adminer-app
 
 # Now in Adminer login form:
 # Server:   wordpress-db
-# Username: wordpress_user
+# Username: wp_user
 # Password: (from apps/wordpress/.secrets/db_pwd.txt)
 # Database: wordpress
 ```

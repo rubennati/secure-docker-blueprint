@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v0.10.0-web) — lab host (VM), IPv4 LAN, run in a parallel batch: `/api/health` true behind the basicAuth gate before and after `down`/`up`, the refused client answered `403`; in a VM it sees no real SMART data (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v0.10.0-web) — over IPv4: `/api/health` true behind the basicAuth gate before and after `down`/`up`, the refused client answered `403`; in a VM it sees no real SMART data (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -91,13 +91,13 @@ already collected; it sends nothing away.
 ## Version notes
 
 - Moved to `v0.9.5` on 2026-10-31 (released 2026-09-30), web and collector
-  together, not run at this tag. The release body is empty; the commits fix the
+  together. The release body is empty; the commits fix the
   smartctl `when_failed` string, flag a non-zero NVMe `critical_warning` as a
   SMART failure, evaluate SCSI thresholds against SCSI metadata and fix the
   notification repeat check. No breaking change, InfluxDB requirement change or
   advisory.
 - Moved to `v0.10.0` on 2026-11-05 (released 2026-11-01), web and collector
-  together, not run on a host at this tag. The web app migrates its database
+  together. The web app migrates its database
   at start: it stores an estimated upload period and a per-device
   `friendly_name`, now edited in the device settings rather than in the
   configuration. New optional `scrutiny.yaml` keys: a `devices` list by
@@ -113,7 +113,7 @@ already collected; it sends nothing away.
   stack does not use. No advisory named.
 - `INFLUXDB_DIGEST` moved to
   `sha256:e4572d094ac3272f06528ea904ce6b4cb3bb19be2db3b3b1acbd27ba5c3a73e2` on
-  2026-11-05, not run on a host at this digest. Same tag `2.9.1`, rebuilt by
+  2026-11-05. Same tag `2.9.1`, rebuilt by
   Docker Official Images on 2026-11-05 with updated base packages, which clears
   the CVE findings of the old digest. InfluxDB itself is unchanged, so there is
   no migration.

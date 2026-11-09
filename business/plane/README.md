@@ -15,8 +15,8 @@ about 1.4 GiB at rest.
 > a maintained MinIO fork published under release tags — the image upstream's own
 > compose names since v1.4.3. It reads
 > MinIO's variables and answers on the same port, so the service keeps the name
-> `plane-minio` and nothing that talks to it changes. A data directory written
-> by the old MinIO image was not tested against it — see [`UPSTREAM.md`](UPSTREAM.md).
+> `plane-minio` and nothing that talks to it changes. Start Silo on a fresh data
+> directory; for data written by the old MinIO image, see [`UPSTREAM.md`](UPSTREAM.md).
 
 Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
@@ -63,6 +63,22 @@ Then, before anyone else can reach the host name:
    change it.
 
 `access-vpn` is what makes steps 1 to 3 survivable rather than a race.
+
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate. Thirteen containers and about 1.4 GiB at rest; the first start runs the migrator and takes a few minutes.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1000:1000 volumes/redis volumes/uploads volumes/logs
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080/god-mode — claim it, then close sign-up
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The port binds to `127.0.0.1`; Traefik and the Docker Secrets mechanism are not
+used. It mounts the same `volumes/`, so run one at a time.
 
 ## Security model
 
@@ -116,7 +132,7 @@ Then, before anyone else can reach the host name:
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/business/plane/volumes/uploads
+  - /srv/docker/business/plane/volumes/uploads
 ```
 
 Restore: put the volumes back with `redis`, `uploads` and `logs` owned by

@@ -9,7 +9,7 @@
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
-- **Last verified:** 2026-11-09 (1.37.5) — lab host (VM), IPv4 LAN, after the admin-token correction: `/alive` and a database-backed API request answered through Traefik, the admin panel off with the empty token, the same after `down`/`up`
+- **Last verified:** 2026-11-09 (1.37.5) — over IPv4: `/alive` and a database-backed API request answered through Traefik, the admin panel off with the empty token, the same after `down`/`up`
 
 ## What we changed and why
 
@@ -88,7 +88,7 @@ Upstream reference:
 
 ## Version notes
 
-- Moved to `1.37.4` on 2026-10-31 (released 2026-10-05), not run at this tag. A
+- Moved to `1.37.4` on 2026-10-31 (released 2026-10-05). A
   security release: GHSA-69q9-v8p6-xvx3 (high, 8.1), GHSA-7jg8-8m5x-6j9r,
   GHSA-v576-3wvq-xh3c, GHSA-q5x6-grh5-fqgc, GHSA-64mc-4p6f-r7x9,
   GHSA-7ccc-c43j-4p36 and GHSA-qwx4-wcv4-mpcv; upstream advises rotating an
@@ -99,8 +99,7 @@ Upstream reference:
   `POST /api/accounts/prelogin` are removed; the feature flags are removed and
   `EXPERIMENTAL_CLIENT_FEATURE_FLAGS` only warns (not set here); `DUO_USE_IFRAME`
   is ignored (not set here); `MARIADB_TLS_DISABLE_PEER_VERIFICATION` is new.
-- Moved to `1.37.5` on 2026-11-05 (released 2026-11-01), not run on a host at
-  this tag. A security release: GHSA-x9cq-f669-vrr4 (website icons, medium) and
+- Moved to `1.37.5` on 2026-11-05 (released 2026-11-01). A security release: GHSA-x9cq-f669-vrr4 (website icons, medium) and
   GHSA-9pjj-f9g5-3x4c (emergency access, medium), both still private upstream.
   The bundled web vault is v2026.10.1. Invalid configuration values now stop
   the start with an error: numeric options have tighter ranges, and the rate
@@ -109,8 +108,7 @@ Upstream reference:
   ranges. Not checked: whether the empty strings the compose file passes for
   unset options (`PUSH_RELAY_URI`, `PUSH_IDENTITY_URI`, `SMTP_HOST`) pass the
   new validation; watch the first start.
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: the MariaDB backend page names no
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: the MariaDB backend page names no
   version range, and its examples use the untagged `mariadb` image
   (https://github.com/dani-garcia/vaultwarden/wiki/Using-the-MariaDB-(MySQL)-Backend).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs

@@ -203,8 +203,8 @@ worth keeping.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/heyform/volumes/upload
-  - /srv/secure-docker-blueprint/apps/heyform/.secrets
+  - /srv/docker/apps/heyform/volumes/upload
+  - /srv/docker/apps/heyform/.secrets
 
 mongodb_databases:
   - name: heyform

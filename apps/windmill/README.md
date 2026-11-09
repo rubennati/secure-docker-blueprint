@@ -108,7 +108,10 @@ Nothing has run with job isolation. Full log in
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local      # set DB_PASSWORD: openssl rand -hex 32
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
 mkdir -p volumes/local/postgres volumes/local/worker_cache
 sudo chown 1000:1000 volumes/local/worker_cache   # the workers run as uid 1000
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
@@ -186,10 +189,6 @@ backup as `db_pwd.txt`. Full architecture:
 | `postgres:18.6` | 0 · 2 | — | 1 · 25 |
 
 <!-- findings:end -->
-
-The image, `ghcr.io/windmill-labs/windmill:1.862.0`, carries one CRITICAL finding in `linux-libc-dev` (CVE-2026-99083). It is the newest release, built before Debian's fix.
-
-**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

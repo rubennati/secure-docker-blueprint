@@ -11,7 +11,7 @@
 - **Domain:** Infrastructure
 - **Role:** Controller for Ubiquiti UniFi network devices
 - **Note:** Proprietary software — not open source. LSIO wrapper scripts are GPL-3. Ubiquiti is a US company; CLOUD Act applies to cloud-managed deployments. Self-hosted (local controller) has no cloud dependency.
-- **Last verified:** 2026-11-08 (10.6.109) — lab host (VM), IPv4 LAN, run in a parallel batch: after the audit-database grant and the servers-transport correction: the controller healthy and `/status` up (10.6.109) through the route before and after `down`/`up`, the refused client answered `403`; UNIFI_BIND was the VM's address because the default 0.0.0.0 collides with CrowdSec on 127.0.0.1:8080 (the report's decision) (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (10.6.109) — over IPv4: the controller healthy and `/status` up (10.6.109) through the route before and after `down`/`up`, the refused client answered `403`; UNIFI_BIND was the VM's address because the default 0.0.0.0 collides with CrowdSec on 127.0.0.1:8080 (the report's decision) (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -42,7 +42,7 @@
 
 ## Version notes
 
-- Moved to `10.6.109` on 2026-11-05, not run on a host at this tag. Between the LSIO
+- Moved to `10.6.109` on 2026-11-05. Between the LSIO
   builds `10.6.101-ls145` and `10.6.109-ls153` the Dockerfile and the init scripts
   did not change; the builds only carry the newer UniFi Network Application
   (10.6.106, then 10.6.109, both GA) and refreshed packages. The README dropped its

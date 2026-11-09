@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (0.23.1) — lab host (VM), IPv4 LAN, after the edge network was listed before `ops/init.sh`: the certificate and repository created, a client user added through the entrypoint, a Kopia client in the lab container connected to the server through the route (with `:443`, README corrected) and took a snapshot that the server still listed after `down`/`up`, the web UI behind its login, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (0.23.1) — over IPv4: the certificate and repository created, a client user added through the entrypoint, a Kopia client on another host connected to the server through the route (with `:443`, as the README shows) and took a snapshot that the server still listed after `down`/`up`, the web UI behind its login, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 

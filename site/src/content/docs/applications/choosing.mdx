@@ -26,6 +26,7 @@ services at once. [Guide →](/applications/nextcloud/)
 
 **Seafile** if sync performance over large directory trees is the deciding
 factor. It does file sync and does not try to be a suite.
+[Guide →](/applications/seafile/)
 
 **Seafile Pro** adds full-text search and antivirus scanning under a commercial
 licence. [Guide →](/applications/seafile-pro/)
@@ -41,22 +42,22 @@ archives — see document editing, next.
 
 ## Document editing in the browser
 
-All three plug into Nextcloud or Seafile as a shared backend, and none has been
-exercised on a running host here — pick on capability and governance, not on
-which one is proven.
+All three plug into Nextcloud as a shared backend; OnlyOffice and Euro-Office
+also plug into Seafile, and Collabora does with settings this blueprint does not
+ship. Pick on capability and governance.
 
-**Collabora** is the light one — around 1 GB idle, LibreOffice underneath. Take
-it when the host is small. No guide here yet.
+**Collabora** is the light one — one stateless container, about 400 MiB idle and
+650 MiB with three editors open, LibreOffice underneath. Take it when the host is
+small. [Guide →](/applications/collabora/)
 
 **Euro-Office** is an EU-governed fork of OnlyOffice, maintained by a group that
 includes Nextcloud, IONOS, XWiki and Proton. Same editor, different governance.
-Take it when the supplier's jurisdiction is part of the decision. No guide here
-yet.
+Take it when the supplier's jurisdiction is part of the decision.
 
 **OnlyOffice** stays closest to Microsoft formats. Take it when documents move
-back and forth with people using Word and Excel. [Guide →](/applications/onlyoffice/)
-— its evidence line names what opening a document through it has not confirmed
-yet.
+back and forth with people using Word and Excel. OnlyOffice and Euro-Office each
+bring their own database, queue and cache, about 1.5–2 GB in all.
+[Guide →](/applications/onlyoffice/)
 
 ## Dashboards
 
@@ -108,7 +109,7 @@ people will edit it.
 
 **Cal.diy** is the community edition of Cal.com and asks the most of the host.
 
-**Easy!Appointments** has run since 2013 on PHP and MySQL, and installs without a
+**Easy!Appointments** has run since 2013 on PHP and MariaDB, and installs without a
 build step.
 
 **Tymeslot** is the newest of the three: an Elixir application in two containers
@@ -119,15 +120,16 @@ several times a week.
 
 **Documenso** and **OpenSign** both replace DocuSign for self-hosted signing.
 Documenso is US-registered with development largely from Hamburg; OpenSign is
-registered in India. Neither has a guide here yet.
+registered in India. [Documenso guide →](/applications/documenso/)
 
 ## Uptime monitoring
 
 **Gatus** is configured in YAML and nothing else, which is what you want when the
 monitoring configuration belongs in the same repository as everything else.
+[Guide →](/monitoring/gatus/)
 
 **Uptime Kuma** is configured in its interface. Rich probe types, SQLite behind
-it, quick to get running.
+it, quick to get running. [Guide →](/monitoring/uptime-kuma/)
 
 ## Project management
 
@@ -158,13 +160,14 @@ it as a hosted service is what the license rules out.
 **PrivateBin** for anything that is not specifically a credential — a
 config fragment, a recovery code, a note — or when a plain permissive
 licence matters more than the request workflow.
+[Guide →](/applications/privatebin/)
 
 ## Single sign-on
 
 | | Authentik | Keycloak |
 |---|---|---|
 | Containers | five | two |
-| Memory limits as shipped | 5.25 GB across the stack | 2 GB |
+| Memory limits as shipped | 5.75 GB across the stack | 2 GB |
 | Runtime | Python | Java |
 | Licence · origin | MIT · Netherlands, EU | Apache-2.0 · US, CNCF |
 | A login in front of an application without OIDC | yes — the embedded outpost, wired into Traefik as `auth-authentik@file` | no |
@@ -173,9 +176,9 @@ licence matters more than the request workflow.
 | Ecosystem | one company, since 2019 | most frameworks ship an adapter; Red Hat's supported edition; since 2014 |
 
 **Authentik** when the point is a login in front of applications that have
-none — that path is wired in this blueprint and was verified on a host on
-2026-11-02 (login redirect, identity header, fails closed); Authentik's own
-restore is not yet documented.
+none — that path is wired into Traefik: an unauthenticated request is sent to the
+login, the application receives the identity header, and the route fails closed
+when Authentik does not answer.
 [Guide →](/infrastructure/authentik/)
 
 **Keycloak** when your applications speak OpenID Connect or SAML themselves,
@@ -189,16 +192,15 @@ Neither is small, and running both means two places where users exist.
 - [Data sovereignty](/sovereignty/) — licence, jurisdiction, and what each
   service sends outward
 - [Applications](/applications/) — the services that have a full guide
-- The [repository](https://github.com/rubennati/secure-docker-blueprint#whats-included)
+- The [repository](https://github.com/rubennati/secure-docker-blueprint#stacks)
   lists every service it ships, each with its own README
 
 ## What this page is
 
-Editorial comparison, as of **31 July 2026**. The distinctions come from
-configuring and running these stacks in this repository, not from a benchmark and
-not from external citation — [how sources are chosen and checked](/sources/) sets
-the standard the security pages meet, and a comparison of this kind does not meet
-it.
+An editorial comparison of the stacks as this repository ships them, not a
+benchmark and not an external citation — [how sources are chosen and
+checked](/sources/) sets the standard the security pages meet, and a comparison of
+this kind does not meet it.
 
 Feature sets, licences and resource appetite all move. Where a difference would
 change your decision, confirm it against the project itself rather than against

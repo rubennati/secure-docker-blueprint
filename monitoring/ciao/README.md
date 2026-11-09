@@ -132,11 +132,11 @@ password secret; leave `SMTP_HOST` empty to keep it off.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/ciao/volumes/db
+  - /srv/docker/monitoring/ciao/volumes/db
 
 sqlite_databases:
   - name: ciao
-    path: /srv/secure-docker-blueprint/monitoring/ciao/volumes/db/production.sqlite3
+    path: /srv/docker/monitoring/ciao/volumes/db/production.sqlite3
 ```
 
 Restore: stop the container, put `volumes/db` back, keep it owned by uid 1000,

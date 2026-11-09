@@ -39,10 +39,7 @@ docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
 # Public key  → VAPID_PUBLIC_KEY in .env
 # Private key → .secrets/vapid_private_key.txt  (Docker Secret — never in .env)
 
-# 3. Update ALLOWED_HOSTNAMES in .env to match APP_TRAEFIK_HOST:
-#    ALLOWED_HOSTNAMES='"cal.yourdomain.com"'
-
-# 4. Start
+# 3. Start — ALLOWED_HOSTNAMES follows APP_TRAEFIK_HOST by itself
 docker compose up -d
 docker compose logs caldiy-app --follow
 # Watch for: "ready on port 3000"
@@ -50,7 +47,7 @@ docker compose logs caldiy-app --follow
 # https://<APP_TRAEFIK_HOST>, over the VPN — the router ships closed (below)
 # Setup wizard runs on first visit — first user becomes the owner.
 
-# 5. Open the booking pages once the owner exists: in .env
+# 4. Open the booking pages once the owner exists: in .env
 #    APP_TRAEFIK_ACCESS=access-public
 docker compose up -d   # recreates the app with the new label
 ```
@@ -77,9 +74,20 @@ policy.
 Run the app standalone on `http://localhost:3000` — no Traefik, Cloudflare, or Docker Secrets:
 
 ```bash
-cp .env.local.example .env.local   # fill values (openssl one-liners inside)
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'NEXTAUTH_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 24 | tr -d '\n')" >> .env.local
+printf 'CRON_API_KEY=%s\n' "$(openssl rand -hex 16)" >> .env.local
+vapid=$(docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys)
+printf 'VAPID_PUBLIC_KEY=%s\nVAPID_PRIVATE_KEY=%s\n' \
+  "$(echo "$vapid" | sed -n '/Public Key:/{n;p;}')" \
+  "$(echo "$vapid" | sed -n '/Private Key:/{n;p;}')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000 — signup is ON so you can create the first user
+docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
 Secrets are plain env in `.env.local` (gitignored) — **local only**, never production.

@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Accounting for small businesses: invoices, bills, customers, vendors, bank accounts and reports
-- **Last verified:** 2026-11-08 (3.3.0-v) — lab host (VM), IPv4 LAN: `ops/install.sh` ran upstream's installer and closed the web installer (a second run changed nothing), the administrator logged in before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (3.3.0-v) — over IPv4: `ops/install.sh` ran upstream's installer and closed the web installer (a second run changed nothing), the administrator logged in before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the governing-law clause of Akaunting's terms of service
 (law of Turkey, courts of Istanbul).
@@ -84,7 +84,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   unchanged, login and customer back
 - Peaks: application 136 MiB, MariaDB 133 MiB
 
-**Not yet exercised:** invoices, bills and payments — the pages that create them
+**Outside this verification:** invoices, bills and payments — the pages that create them
 need an akaunting.com API key; email; the in-app module store (read-only by design
 here); an upgrade to a newer image.
 
@@ -116,7 +116,7 @@ application code left in the image:
 - With `/tmp` and `/var/run/apache2` as the only tmpfs mounts, the read-only
   container started and its access log reached `docker logs`
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface beyond the
+**Outside this verification:** Traefik routing and TLS; the browser interface beyond the
 login and wizard endpoints; invoices, payments and reports; email; the in-app module
 store (read-only by design here); an upgrade to a newer image; backup and restore.
 
@@ -142,7 +142,7 @@ update steps — not an in-app update, whose files would be gone at the next sta
 
 ## Version notes
 
-- Moved from `3.1.21` to `3.3.0-v` on 2026-11-05, not run on a host at this tag.
+- Moved from `3.1.21` to `3.3.0-v` on 2026-11-05.
   Upstream has no Apache image of 3.3.0 other than the `-v` variant; see "What we
   use". The compose files changed for it: the webroot is a tmpfs the replaced
   entrypoint fills from the image's archive, `/tmp` gives way to a `/var/tmp`

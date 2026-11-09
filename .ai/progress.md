@@ -31,12 +31,12 @@ session-level detail is in
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
-dates, why ✅ has ten criteria, and why v0.7.0 did not end with a working
+dates, why a test date rests on ten criteria, and why v0.7.0 did not end with a working
 configuration.
 
 ## Since v0.6.0, outside the plan
 
-Recorded in `ROADMAP.md` under "Since v0.6.0 — work outside the plan": a repo-wide
+Recorded in `CHANGELOG.md`: a repo-wide
 dependency sweep, the reference app and structure checker, four new previews, the
 Cal.diY fork and hardening track, supply-chain hardening, and the unified status
 model with a generated lifecycle view. None of it changed the milestone order.

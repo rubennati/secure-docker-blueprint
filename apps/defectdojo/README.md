@@ -89,6 +89,9 @@ Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22).
 cp .env.local.example .env.local
 cp .env.local.example .env      # ops/init.sh reads DB_NAME and DB_USER from .env
 ops/init.sh
+mkdir -p volumes/media volumes/valkey
+sudo chown 1001:1001 volumes/media
+sudo chown 999:1000 volumes/valkey
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080 — about five minutes on the first start
 docker compose -f docker-compose.local.yml --env-file .env.local down

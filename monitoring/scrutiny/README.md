@@ -45,6 +45,24 @@ output.
 
 `access-vpn` is the other gate. Neither replaces the other.
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1000:1000 volumes/
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The interface has no password here: the production file puts one at the proxy,
+and a loopback port has no proxy, so it is open to whoever reaches
+`127.0.0.1:8080`. `collector.yml` works here too, with the same `devices:` edit.
+It mounts the same `volumes/`, so run one at a time.
+
 ## Setup
 
 ```bash
@@ -115,7 +133,7 @@ The overlay exists because the host is not always yours to install on.
   test machine's virtual disk, and Scrutiny published the reading anyway. On
   real hardware that code means something; in a VM it usually means the
   hypervisor's emulation is thin.
-- **NVMe is untested here**, and needs the capability this stack leaves out.
+- **NVMe needs the capability this stack leaves out.**
 - **Notifications are not configured.** Scrutiny supports many channels through
   Shoutrrr; none is set up and none has been delivered.
 - **`limit-standard` is not measured** against the interface.
@@ -136,8 +154,8 @@ The overlay exists because the host is not always yours to install on.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/scrutiny/volumes/influxdb
-  - /srv/secure-docker-blueprint/monitoring/scrutiny/volumes/scrutiny-config
+  - /srv/docker/monitoring/scrutiny/volumes/influxdb
+  - /srv/docker/monitoring/scrutiny/volumes/scrutiny-config
 ```
 
 Restore: put the volumes back owned by `1000:1000`, restore the secrets and

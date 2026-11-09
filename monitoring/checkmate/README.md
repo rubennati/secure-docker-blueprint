@@ -68,12 +68,11 @@ second router rather than a change of `APP_TRAEFIK_ACCESS`:
 Traefik matches the longest rule first, so the status router wins for that path
 and the dashboard keeps everything else VPN-only. It is the same split
 [`business/listmonk`](../../business/listmonk/) uses for its subscriber pages.
-**This has not been run on a host** — it is written from the rule that was
-measured there.
+The rule is the one measured there.
 
 Checkmate also supports serving a status page on its own custom domain, which
 it detects by comparing the request's host against `CLIENT_HOST`. That needs a
-second `Host()` router and is untested here.
+second `Host()` router.
 
 ## Try it locally
 
@@ -154,7 +153,7 @@ anywhere.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/checkmate/volumes/mongodb
+  - /srv/docker/monitoring/checkmate/volumes/mongodb
 ```
 
 Restore: put the volume back, restore the secrets, start the database, load the

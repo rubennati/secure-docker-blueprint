@@ -74,7 +74,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 3g   # 2x the peak on the stack-refresh lab host (1056 MiB)
+          memory: 3g   # 2x the measured peak (1056 MiB)
           cpus: "2.00"
           pids: 200
         reservations:

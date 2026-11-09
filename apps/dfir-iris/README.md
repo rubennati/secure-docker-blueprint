@@ -52,9 +52,9 @@ people) once in use.** Treat it accordingly:
   do.
 - **No `read_only`** on `app`/`worker` (documented, not silently dropped)
   — the app writes case attachments, generated reports and templates
-  under its own install tree beyond the three named volumes, and this has
-  not been narrowly verified enough to isolate without risking a silent
-  write failure on an untested code path. See UPSTREAM.md.
+  under its own install tree beyond the three named volumes, and those
+  paths are not mapped narrowly enough to isolate without risking a silent
+  write failure. See UPSTREAM.md.
 - **Backups contain everything sensitive this stack holds** — see Backup.
   Encrypt the backup archive itself; this stack does not do that for you.
 - **MFA**: available per-user in IRIS's own settings (TOTP), not enforced
@@ -76,18 +76,17 @@ since v1.29.
 **What was not carried over 1:1, and why that's acceptable:**
 
 - nginx's security headers (CSP, `X-Frame-Options: DENY`, HSTS, strict
-  cache-control) are replaced by this stack's `APP_TRAEFIK_SECURITY` chain
+  cache-control) are replaced by this stack's `APP_TRAEFIK_HEADERS` profile
   rather than reproduced label-for-label. nginx's own CSP allowlisted
   `analytics.dfir-iris.org` for an optional upstream analytics beacon; this
   stack's headers do not carry that allowance forward, so any such call
   fails closed here — a narrower default than upstream's own, not a gap.
 - nginx gave two upload paths (`/manage/cases/upload_files`,
   `/datastore/file/add*`) a 10-minute timeout and unbuffered request
-  bodies, for large evidence-file uploads. This stack has not yet verified
-  whether Traefik's own default timeouts are generous enough for a
-  comparably large upload — see UPSTREAM.md and README.md's Preview →
-  Ready gate. If large evidence uploads time out in practice, this is the
-  first place to look.
+  bodies, for large evidence-file uploads. Here every upload runs under
+  Traefik's entrypoint timeouts: the whole request has to arrive within
+  `TRAEFIK_READ_TIMEOUT` (60 s by default, `core/traefik/.env`). For evidence
+  files that take longer to send, raise it there.
 
 **What was not changed:** app, worker, db and rabbitmq are all present,
 unmodified in function — no upstream component was dropped to make this
@@ -165,14 +164,20 @@ skipped entirely — it holds no data worth keeping past a restart.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill DB_PASSWORD, DB_ADMIN_PASSWORD, IRIS_SECRET_KEY, IRIS_SECURITY_PASSWORD_SALT
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DB_ADMIN_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'IRIS_SECRET_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+printf 'IRIS_SECURITY_PASSWORD_SALT=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 mkdir -p volumes/local/{postgres,rabbitmq,downloads,templates,server_data}
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — all four services running, three with healthchecks passing — **verified locally, 2026-09-19**
 - [x] Real Docker Secrets picked up by db, app and worker; database migrations, module registration and post-init all completed; the generated admin password was printed once as expected — **verified locally, 2026-09-19**

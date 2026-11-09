@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (4.39.28) — lab host (VM), IPv4 LAN, run in a parallel batch: `/api/health` OK through the route, all three services up before and after `down`/`up`, the refused client answered `403`; no login flow driven (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (4.39.28) — over IPv4: `/api/health` OK through the route, all three services up before and after `down`/`up`, the refused client answered `403`; no login flow driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -38,7 +38,7 @@ Authelia → Redis (app-internal) · PostgreSQL (app-internal)
 | Change | Reason |
 |--------|--------|
 | `user: "1000:1000"` | The image defaults to root, chowns `/config` and drops to `PUID:PGID`, which also default to `0` |
-| `read_only: true` plus a writable `/app/.healthcheck.env` | Authelia rewrites that file at every start and exits without naming the cause when it cannot (measured on 4.39.28) |
+| `read_only: true` plus a writable `/app/.healthcheck.env` | Authelia rewrites that file at every start and exits without naming the cause when it cannot (as of 4.39.28) |
 | Healthcheck against `/api/health` directly | The image's `healthcheck.sh` exits 0 whenever the file above lacks its `X_AUTHELIA_HEALTHCHECK` line |
 | `X_AUTHELIA_CONFIG_FILTERS: template` | Domain, database and mail values come from `.env`; `mustEnv` stops the start when one is missing |
 | No template expression in comments | The template filter renders comments too; `{{ … }}` in one stops the start |
@@ -51,8 +51,6 @@ Authelia → Redis (app-internal) · PostgreSQL (app-internal)
 | Local file: TLS served by Authelia, `*.example.localhost`, SQLite, in-memory sessions | Authelia refuses a portal that is not https and a cookie on bare `localhost`; browsers resolve `*.localhost` themselves |
 
 ## Verification performed (2026-09-26)
-
-Local, not behind Traefik on a real host — so no `Last verified` line.
 
 - `authelia validate-config` passes for both notifier branches (file and SMTP).
 - Production file with PostgreSQL and Redis: all three services healthy with
@@ -76,8 +74,7 @@ restore.
 
 ## Version notes
 
-- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05, not run
-  on a host at this tag. PostgreSQL 18 support: Authelia supports any version
+- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: Authelia supports any version
   the PostgreSQL project still supports and tests against the newest
   (https://www.authelia.com/reference/integrations/database-integrations/). The
   18 image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
@@ -90,8 +87,8 @@ restore.
   dump.sql` (errors that the bootstrap role and database already exist are
   expected); then `docker compose up -d`. A return to the old major is only a
   restore of that dump.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

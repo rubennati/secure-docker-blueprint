@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v0.31.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the service healthy behind its basicAuth gate before and after `down`/`up`, the refused client answered `403`; no Paperless-ngx connected (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v0.31.0) — over IPv4: the service healthy behind its basicAuth gate before and after `down`/`up`, the refused client answered `403`; no Paperless-ngx connected (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -36,7 +36,7 @@ no location. **Origin** above records that rather than a guess.
 
 | Change | Reason |
 |--------|--------|
-| A basic-auth middleware on the router, plus `acc-tailscale` | The application has no authentication. Measured against v0.28.0: `/api/tags`, `/api/documents`, `/api/prompts` and `/api/settings` each answered 200 without credentials |
+| A basic-auth middleware on the router, plus `access-vpn` | The application has no authentication. Measured against v0.28.0: `/api/tags`, `/api/documents`, `/api/prompts` and `/api/settings` each answered 200 without credentials |
 | `APP_BASIC_AUTH_USERS` in `.env`, with every `$` doubled | Traefik's basic-auth middleware reads its users from the label, so the value cannot be a Docker Secret — `secrets.md` Pattern 3. The doubling is not cosmetic: measured, `ops:$apr1$…` from `.env` reaches the container label as `ops:/ZWf571`, because Compose expands `$apr1` and the rest as variable names. With `$$` the label carries the real hash |
 | `config/entrypoint.sh` exports `PAPERLESS_API_TOKEN` and the model key | No `_FILE` variant exists for either. Verified against a stub API: the token from the Docker Secret is sent as `Authorization: Token …` |
 | `user: "${APP_UID}:${APP_GID}"` | Started as root the image's entrypoint creates a user from `PUID`/`PGID`, `chown -R`s `/app` and drops privileges — which fails against a read-only filesystem. Its non-root branch skips all of that and execs the binary directly |
@@ -70,7 +70,7 @@ run, and the restore in the README.
 
 ## Version notes
 
-- Moved to `v0.31.0` on 2026-11-05, not run on a host at this tag. `v0.29.0`
+- Moved to `v0.31.0` on 2026-11-05. `v0.29.0`
   replaces MuPDF with PDFium (WebAssembly); rendering peaks at about 320 MiB
   instead of about 270 MiB, which the 512 MiB limit still covers. `v0.30.0` warns
   at startup unless `config/`, `prompts/` and `db/` are volumes (all three are
@@ -98,5 +98,5 @@ run, and the restore in the README.
 curl -s https://raw.githubusercontent.com/icereed/paperless-gpt/main/README.md
 
 # What the image's entrypoint does as root and as a non-root user
-docker run --rm --entrypoint sh ghcr.io/icereed/paperless-gpt:v0.28.0 -c 'cat /app/entrypoint.sh'
+docker run --rm --entrypoint sh ghcr.io/icereed/paperless-gpt:v0.31.0 -c 'cat /app/entrypoint.sh'
 ```

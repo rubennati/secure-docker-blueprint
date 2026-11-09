@@ -70,6 +70,8 @@ For **high-stakes production environments** (critical infrastructure, financial 
 
 ## Security Principles This Blueprint Follows
 
+- **Closed by default** — every stack's route ships VPN-only (`access-vpn`); the few built to be reached from outside say why
+- **Fail closed on secrets** — a required secret left empty stops `docker compose` and names the variable; no placeholder ever becomes a password
 - **Least privilege** — `cap_drop: ALL`, `no-new-privileges`, read-only filesystems where supported
 - **Secret isolation** — file-based Docker Secrets via `_FILE` variables or entrypoint wrappers by default; [documented exceptions](docs/standards/security-baseline.md#secrets) keep credentials in a gitignored `.env` when file-based delivery is not implemented
 - **Network segmentation** — databases and backends in internal networks, no internet exposure

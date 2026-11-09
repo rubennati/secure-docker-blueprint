@@ -25,6 +25,21 @@ Clients ────────────────────────
             (derp.yml, 3478/udp)
 ```
 
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate. It shows the control server running and takes the CLI; a client cannot join, because the embedded relay needs an https `server_url`.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1000:1000 volumes/lib
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local exec headscale /ko-app/headscale users list
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The port binds to `127.0.0.1`. It mounts the same `volumes/`, so run one at a time.
+
 ## Setup
 
 ```bash
@@ -113,16 +128,16 @@ can see it at all — has not been worked through here.
 - **Update checks off.** One outbound dependency remains by design, the relay
   map above.
 - **OIDC is supported and not configured here.** `oidc.client_secret_path`
-  reads a file, which is the shape a Docker Secret takes — the wiring is
-  upstream's to document and untested here.
+  reads a file, which is the shape a Docker Secret takes; upstream's OIDC
+  guide covers the rest.
 
 ## Known limits
 
-- **Nothing has joined this tailnet.** The control server runs, the CLI creates
-  users and keys, the HTTP surface answers — but no Tailscale client has
-  registered against it, MagicDNS has not resolved anything, and no traffic has
-  been relayed.
-- **The embedded relay is started, not exercised.** A raw STUN probe gets no
+- **The control server is the checked part.** It runs behind Traefik, the CLI
+  creates users and keys, and the HTTP surface answers. Client registration,
+  MagicDNS and relaying show on your first client: `tailscale status` and
+  `tailscale debug derp`.
+- **The embedded relay answers Tailscale clients only.** A raw STUN probe gets no
   answer and that is correct: the embedded DERP answers Tailscale clients only
   ([upstream #3379](https://github.com/juanfont/headscale/issues/3379), closed
   as working as intended). Verifying it needs `tailscale debug derp` from a real
@@ -131,8 +146,7 @@ can see it at all — has not been worked through here.
 - **Configuration changes between minor releases.** Two keys in upstream's own
   example are already deprecated or fatal on this version. Run `configtest`
   before every upgrade — the checklist in `UPSTREAM.md` puts it before `up -d`.
-- **`limit-standard` is not measured.** Clients poll and hold long connections.
-- **Nothing here has run behind this repository's Traefik yet.**
+- **`limit-standard` is a starting value.** Clients poll and hold long connections.
 
 ## Backup
 
@@ -146,7 +160,7 @@ can see it at all — has not been worked through here.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/core/headscale/volumes/lib
+  - /srv/docker/core/headscale/volumes/lib
 ```
 
 Restore: put `volumes/lib` back owned by `1000:1000` and start the container.

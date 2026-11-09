@@ -24,7 +24,11 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'SECRET_KEY_BASE=%s\n' "$(openssl rand -base64 64 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -92,7 +96,7 @@ docker compose ps
 services do not have one. OpenProject delivers mail from background jobs in
 `worker`, so a configured SMTP relay outside the host is unreachable from there.
 
-This has not been run on a host yet. If mail does not leave, or an outbound step
+If mail does not leave, or an outbound step
 during first-run seeding fails, give `worker` and `cron` a second network rather
 than removing `internal: true` — the pattern and what it costs are documented in
 [`apps/nextcloud/README.md`](../../apps/nextcloud/README.md#network-exception--why-the-application-containers-reach-the-internet).

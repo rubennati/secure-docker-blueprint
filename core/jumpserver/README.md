@@ -24,6 +24,7 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/data volumes/local/download
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -99,8 +100,8 @@ connections to targets, not the reverse.
 **MFA / OIDC.** Confirmed available in the Community Edition (GPL-3.0), not
 gated to Enterprise: local TOTP/Passkey/WebAuthn MFA, plus OIDC, SAML 2.0,
 CAS and LDAP/AD SSO. Both `core/authentik` and `core/keycloak` in this
-repository are usable OIDC providers. Not exercised end to end from this
-repository — configure and verify against your own instance.
+repository are usable OIDC providers; configure and verify the sign-in against
+your own instance.
 
 ## Backup
 
@@ -119,9 +120,6 @@ shape; neither path is exercised yet.
 
 ## Known Issues
 
-- **Not yet run on a live host beyond a clean start** — see
-  [UPSTREAM.md](UPSTREAM.md#what-was-actually-verified-and-how) for exactly
-  what was and was not exercised.
 - **Cannot run under this repository's usual hardening** —
   `no-new-privileges`, `cap_drop`, and `read_only` all break this image;
   see `docker-compose.yml`'s Security block for the verified reason for

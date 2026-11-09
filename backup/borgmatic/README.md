@@ -212,7 +212,8 @@ Borgmatic's integrations map onto stacks this blueprint already ships. This tabl
 
 | Borgmatic integration | In this repository | How it connects |
 |---|---|---|
-| PostgreSQL · MySQL · MariaDB · SQLite | 31 · 3 · 17 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
+| PostgreSQL | 31 stacks | dump hook with the server's own client through `docker exec` (FA-03), nothing on the host |
+| MySQL · MariaDB · SQLite | 3 · 17 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
 | MongoDB | `apps/heyform`, `apps/unifi`, `business/opensign`, `monitoring/checkmate` | `container:` dump hook, plus the MongoDB tools on the host |
 | Healthchecks | `monitoring/healthchecks` | `healthchecks.ping_url` — on the same host its loopback port, `http://127.0.0.1:8001/ping/<uuid>` |
 | Uptime Kuma | `monitoring/uptime-kuma` | `uptime_kuma.push_url` |
@@ -285,7 +286,7 @@ What it costs: the database container has to be running for a backup — as with
 `container:` before — and `pg_dump` runs inside the container's `memory` and `pids`
 limits, so a large database needs headroom there during the dump.
 
-**What was measured** (lab host (VM), 2026-11-08, borgmatic 2.2.0, borg 1.4.0, the
+**What was measured** (2026-11-08, borgmatic 2.2.0, borg 1.4.0, the
 [rehearsal log](RESTORE.md#rehearsal-log)) with the host's client — Debian 13's
 `postgresql-client` 17.11 — against the same entries through `docker exec`:
 

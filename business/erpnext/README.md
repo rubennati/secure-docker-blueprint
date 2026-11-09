@@ -162,7 +162,7 @@ read.
 
 <!-- findings:end -->
 
-The pinned image, `frappe/erpnext:v16.53.0`, ships with 6 CRITICAL vulnerabilities that have published fixes, all in the asset-build tooling under frappe's `node_modules` (loader-utils, shell-quote, and an old Go runtime inside esbuild). v16.53.0 is the newest v16 release.
+The pinned image, `frappe/erpnext:v16.54.0`, ships with 6 CRITICAL vulnerabilities that have published fixes, all in the asset-build tooling under frappe's `node_modules` (loader-utils, shell-quote, and an old Go runtime inside esbuild). v16.54.0 is the newest v16 release.
 
 **Risk:** these tools build the front-end assets and are not part of the running web or worker processes. Watch for the next v16 release.
 

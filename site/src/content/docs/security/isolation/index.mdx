@@ -129,13 +129,15 @@ tested and the thing running are different at some unknown point.
 
 ## What this blueprint covers
 
-`no-new-privileges` and dropped capabilities on every service, checked before a
-change is merged. Read-only root filesystems and non-root users where the image
-allows. No privileged containers. Neither the proxy nor any application container
-mounts the Docker socket — one dedicated filtering proxy does, and it is the only
-thing that does, exposing only the API operations discovery needs. Note that
-mounting a Unix socket `:ro` does not make the API read-only; the filtering rules
-are what limit it.
+`no-new-privileges` on every service, checked before a change is merged; the
+few exceptions record their reason and the accepted risk. Dropped capabilities,
+read-only root filesystems and non-root users where the image allows. No
+privileged containers. Neither the proxy nor any application container mounts the
+Docker socket: Traefik reads it through a filtering proxy that allows read calls
+only. The Docker-management tools are the documented exceptions — their own
+proxies allow changes, and the Portainer and Hawser agents mount the socket
+directly. Mounting a Unix socket `:ro` does not make the API read-only; the
+filtering rules are what limit it.
 One internal network per application.
 
 The choice of runtime, the host kernel, and whether a workload deserves a VM

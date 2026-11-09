@@ -10,7 +10,7 @@
 - **Decision facts checked:** not yet
 - **Domain:** Security operations
 - **Role:** Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure
-- **Last verified:** 2026-11-08 (3.5.0) — lab host (VM), IPv4 LAN: the initializer migrated, loaded 393 scanner definitions and created the administrator from `ADMIN_USER` and the secret file, an API token for it, a product type created and present after `down`/`up`, celery worker and beat running, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (3.5.0) — over IPv4: the initializer migrated, loaded 393 scanner definitions and created the administrator from `ADMIN_USER` and the secret file, an API token for it, a product type created and present after `down`/`up`, celery worker and beat running, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The licence names DefectDojo, Inc.; no jurisdiction was found in the pages checked.
 
@@ -68,7 +68,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
 - Peaks: uWSGI 552 MiB, initializer 324 MiB, Celery worker 182 MiB, Celery beat
   178 MiB, PostgreSQL 93 MiB, nginx 14 MiB, Valkey 13 MiB
 
-**Not yet exercised:** notifications and ticketing integrations; deduplication
+**Outside this verification:** notifications and ticketing integrations; deduplication
 switched on; scanners pushing results; large imports.
 
 ## Verification performed (2026-09-21)
@@ -94,14 +94,13 @@ peer container:
   absent from the configured environment and from every log; the administrator
   password not printed; uWSGI and PostgreSQL without a route out
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface; other scanner
+**Outside this verification:** Traefik routing and TLS; the browser interface; other scanner
 formats; notifications and ticketing integrations; Celery beat's scheduled jobs
 firing; backup and restore; an upgrade across versions.
 
 ## Version notes
 
-- Valkey moved to `9.1.3-alpine` on 2026-10-31 (released 2026-10-26), not run at
-  this tag; the stack's state is anchored on the application pin, which did not
+- Valkey moved to `9.1.3-alpine` on 2026-10-31 (released 2026-10-26); the stack's state is anchored on the application pin, which did not
   move. Upstream marks the release
   SECURITY: GHSA-f4q9-j22m-xqq9, a heap buffer overflow in cluster Pub/Sub
   message construction that an authenticated client could turn into code
@@ -109,7 +108,7 @@ firing; backup and restore; an upgrade across versions.
   HDEL and related commands, and `hide-user-data-from-log` also redacts error
   text.
 - Moved to `3.5.0` on 2026-11-05 (released 2026-11-02), django and nginx
-  together, not run on a host at this tag. Upstream's upgrade notes for 3.4.x
+  together. Upstream's upgrade notes for 3.4.x
   and 3.5.x name no manual step; database migrations run in the initializer.
   API changes: from 3.5.0 `/api/v2/findings/` applies the `engagement`,
   `product` and `prod_type` filters it used to ignore and rejects a

@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `unifi-app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
+| `unifi-app` | `lscr.io/linuxserver/unifi-network-application:10.6.109` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
 | `db` | `mongo:8.0.34` | Primary store. The image supports 3.6–7.0 from UniFi 8.1, and 8.0 from UniFi 9.0 |
 
 The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed directly on the host because Traefik cannot proxy UDP discovery or device-inform broadcasts.
@@ -18,7 +18,11 @@ The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed dire
 Runs on `https://localhost:8443` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/mongodb volumes/local/config
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # https://localhost:8443
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -115,7 +119,7 @@ database is the configuration and history, not the network.
 - **Adoption requires `STUN` / `inform` ports on the same broadcast domain as the devices** — if your controller is not on the LAN, you must either:
   - Configure each device with `set-inform http://<host>:8080/inform` via SSH, or
   - Use L2 adoption over a VPN (Tailscale subnet router, ZeroTier, etc.)
-- **Port 8080 on the host belongs to UniFi.** `core/crowdsec` publishes its LAPI for the host firewall bouncer on `127.0.0.1:8081` for that reason; an older CrowdSec `.env` with `CROWDSEC_LAPI_PORT=8080` makes this stack fail with `Bind for … 8080 … already allocated` — move CrowdSec, as its README describes. Both ran side by side on the lab host (VM) on 2026-11-09.
+- **Port 8080 on the host belongs to UniFi.** `core/crowdsec` publishes its LAPI for the host firewall bouncer on `127.0.0.1:8081` for that reason; an older CrowdSec `.env` with `CROWDSEC_LAPI_PORT=8080` makes this stack fail with `Bind for … 8080 … already allocated` — move CrowdSec, as its README describes. Both ran side by side on 2026-11-09.
 - **First boot can take 2-3 minutes** — MongoDB init + Java startup.
 - **`APP_TAG=latest`** — LSIO publishes rolling builds; pin to `version-X.Y.Z` for reproducibility.
 

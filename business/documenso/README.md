@@ -105,14 +105,27 @@ same care as the database, and keep a copy off the host.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local     # fill values; generate .secrets/cert.p12 first
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'NEXTAUTH_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'ENCRYPTION_KEY=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'ENCRYPTION_SECONDARY_KEY=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'SIGNING_PASSPHRASE=%s\n' "$(openssl rand -hex 16)" >> .env.local
+
+set -a; . ./.env.local; set +a
+mkdir -p .secrets
+openssl req -x509 -newkey rsa:4096 -keyout /tmp/k.pem -out /tmp/c.pem -days 3650 -nodes -subj "/CN=Documenso"
+openssl pkcs12 -export -out .secrets/cert.p12 -inkey /tmp/k.pem -in /tmp/c.pem -passout pass:"$SIGNING_PASSPHRASE"
+rm /tmp/k.pem /tmp/c.pem
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
+docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
-Config follows the standard but has not been run here. Confirm:
+Confirm on the first deploy:
 
 - [ ] `docker compose up -d` — both healthy; logs show migrations + server start (entrypoint execs `sh start.sh` in `/app/apps/remix`)
 - [ ] Secrets injected — no secret values in `docker inspect documenso-app`

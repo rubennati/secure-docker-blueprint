@@ -13,7 +13,7 @@
 - **Domain:** Business operations
 - **Role:** Invoicing, quotes and payments
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Last verified:** 2026-11-08 (5.13.53) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (MySQL 8.4, Redis with cap_drop): the first administrator from the secret files logged in through the API, a client and an invoice created and its PDF rendered, the invoice present after `down`/`up`, the refused client answered `403`; the README's MySQL entry restored into a throwaway server (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (5.13.53) — over IPv4, a new installation with MySQL 8.4, Redis with cap_drop: the first administrator from the secret files logged in through the API, a client and an invoice created and its PDF rendered, the invoice present after `down`/`up`, the refused client answered `403`; the README's MySQL entry restored into a throwaway server (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Pinned Versions
 
@@ -154,18 +154,14 @@ docker compose up -d
 
 ## Version notes
 
-- Moved to `5.13.52` on 2026-10-31 (released 2026-10-30), not run at this tag;
-  `Last verified` stays at `5.13.40`, and `LIFECYCLE.md` shows that version
-  beside the pin until a host run. `5.13.45` replaces `OIDC_WELL_KNOWN` with
+- Moved to `5.13.52` on 2026-10-31 (released 2026-10-30). `5.13.45` replaces `OIDC_WELL_KNOWN` with
   `OIDC_ISSUER`; this stack sets neither, an installation that configured OIDC
   renames it. No breaking change, no migration beyond `php artisan migrate`, no
   advisory in the range.
-- Moved to `5.13.53` on 2026-11-05 (released 2026-11-02), not run on a host at
-  this tag. A fix for a partial-payment regression in InvoicePay and static
+- Moved to `5.13.53` on 2026-11-05 (released 2026-11-02). A fix for a partial-payment regression in InvoicePay and static
   analysis cleanup; no migration, no variable change (only `config/ninja.php`
   changes in the application config), no advisory.
-- nginx moved from `1.29-alpine` to `1.31-alpine` on 2026-11-05, not run on a host at
-  this tag; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
+- nginx moved from `1.29-alpine` to `1.31-alpine` on 2026-11-05; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
   stable branch). The "Change:" entries from 1.30.0 to 1.31.8 do not touch this
   configuration: HTTP/2 and HTTP/3 requests carrying `Connection`, `Upgrade`, `TE`
   and similar headers are rejected, requests to backends always carry `:authority`
@@ -176,8 +172,7 @@ docker compose up -d
   CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
   CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
   CVE-2026-97629, CVE-2026-97205.
-- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05, not run on a host
-  at this tag; across 8.8 and 8.10, minor releases of the same major with no
+- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05; across 8.8 and 8.10, minor releases of the same major with no
   breaking change listed (they add commands, compact hashes and performance work).
   Redis does not load data files written by a newer version, so a rollback needs the
   backup of the Redis data. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1,

@@ -12,7 +12,7 @@ Every stack is at the newest upstream release or names why not, starts with the 
 ships, and ships closed. 120 of the 121 stacks are verified on a host: each starts
 healthy, answers through Traefik with a certificate, refuses an unauthorised request,
 passes its README's smoke test and comes back after `down`/`up`. `apps/vllm` needs a
-GPU and is not verified. 109 of the 114 local files run. A forgotten secret stops
+host with an NVIDIA GPU. 109 of the 114 local files run. A forgotten secret stops
 `docker compose` instead of becoming the password. Each stack shows its last verified
 date in `LIFECYCLE.md` and in its README.
 
@@ -64,6 +64,12 @@ date in `LIFECYCLE.md` and in its README.
   resource peak per service, 13 restores with identical row counts per table, all
   containers back within 58 s after a reboot, and the setup of a host from an empty
   Debian 13 machine.
+- **More of the blueprint on the website.** The home page starts with five stacks:
+  Nextcloud, Vaultwarden, Immich, Paperless-ngx and Uptime Kuma. A Monitoring section
+  covers Uptime Kuma, Gatus, Healthchecks, Beszel and ntfy; Collabora, Ollama, Open
+  WebUI, PrivateBin, Wiki.js, Authelia, Headscale and Portainer have their own pages.
+  Every local try-out on the site runs as written, and the backup blocks use the
+  PostgreSQL entry the stack READMEs ship.
 
 ### Changed
 

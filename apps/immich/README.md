@@ -18,7 +18,12 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://localhost:2283` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:999 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:2283
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -70,7 +75,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 
 ## Security Model
 
-- **First-user-wins admin** — until an admin exists, `POST /api/auth/admin-sign-up` makes the first caller the admin, with no setup secret; afterwards it answers `Admin setup is not available` (measured on the lab host at v3.3.6). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
+- **First-user-wins admin** — until an admin exists, `POST /api/auth/admin-sign-up` makes the first caller the admin, with no setup secret; afterwards it answers `Admin setup is not available` (v3.3.6). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`DB_PASSWORD` restricted to `[A-Za-z0-9]`** — Immich does not support special characters in the DB password. Keep generation aligned (see Setup step 2).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **Postgres on `app-internal` (`internal: true`)** — only the Immich services can reach it.
@@ -136,12 +141,12 @@ gunzip --stdout dump.sql.gz \
 | `--single-transaction` | a failure rolls the whole restore back instead of leaving a half-populated database that starts and looks plausible |
 | `ON_ERROR_STOP=on` | without it `psql` continues past errors and exits 0. This is the part that turns a failed restore into one you find out about later |
 
-Measured on the lab host (v3.2.0): this pipeline restored the `pg_dump` above
+At v3.2.0 this pipeline restored the `pg_dump` above
 with every row count and the originals intact. The upstream page's `pg_dumpall
 --clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
 block`. The `postgresql_databases` entry under Backup runs the server's own client
 through `docker exec`; the host's client 17 stopped on `transaction_timeout` against
-this PostgreSQL 14, the container's did not (lab host (VM), 2026-11-08: 73 tables,
+this PostgreSQL 14, the container's did not (2026-11-08: 73 tables,
 233,636 rows identical).
 
 Two preconditions upstream states, both of which invalidate a restore if missed:

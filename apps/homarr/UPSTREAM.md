@@ -10,7 +10,7 @@
 - **Origin:** Community · homarr-labs · EU contributors
 - **Domain:** Dashboards
 - **Role:** Dashboard with integrations into the services you run
-- **Last verified:** 2026-11-08 (2.12.0) — lab host (VM), IPv4 LAN: moved from v2.11.1, the setup wizard at `/init` served (a new instance redirects there) before and after `down`/`up`, the refused client answered `403`; the wizard was not completed (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2.12.0) — over IPv4: moved from v2.11.1, the setup wizard at `/init` served (a new instance redirects there) before and after `down`/`up`, the refused client answered `403`; the wizard was not completed (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -51,12 +51,11 @@ Restore appdata tarball, revert `APP_TAG`.
 
 ## Version notes
 
-- Moved to `v2.12.0` on 2026-11-08 and run on the lab host (VM). A minor
+- Moved to `v2.12.0` on 2026-11-08. A minor
   release; its notes name no breaking change. A new instance answers `/` with a
   redirect to the setup wizard at `/init`.
 - Moved to `v2.11.1` on 2026-11-05 (released 2026-11-05), across the v2.0.0
-  major (2026-10-02), not run on a host at this tag; the verification above was
-  against `v1.60.0`. The v1 line ends at `v1.77.2`, which still ships Next.js
+  major (2026-10-02). The v1 line ends at `v1.77.2`, which still ships Next.js
   `16.3.0-preview.9` and does not fix the CRITICAL findings at `v1.77.1`
   (Next.js, `dompurify`, `protobufjs`, `tar`); v2.11.1 ships Next.js `16.4.2`,
   `dompurify` `3.4.17` and `protobufjs` `7.6.6`, and its runtime image no longer

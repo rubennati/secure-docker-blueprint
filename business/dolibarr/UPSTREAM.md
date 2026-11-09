@@ -10,7 +10,7 @@
 - **Origin:** France · Dolibarr Association · EU
 - **Domain:** Business operations
 - **Role:** ERP and CRM: contacts, quotes, invoices, stock and accounting
-- **Last verified:** 2026-11-08 (24.0.2) — lab host (VM), IPv4 LAN, at the closed default: the first-run install with the administrator from the secret files, a login landing on the setup completion page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (24.0.2) — over IPv4, at the closed default: the first-run install with the administrator from the secret files, a login landing on the setup completion page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -43,8 +43,7 @@
   `23.0.4` is the newest 23.x image (2026-08-29). CVE-2026-23500 (critical, OS command
   injection via `MAIN_ODT_AS_PDF`) is fixed on this line. Moved on 2026-09-13; schedule 24.x as
   its own piece of work.
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: Dolibarr requires MariaDB 10.3 or
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: Dolibarr requires MariaDB 10.3 or
   newer with no upper bound
   (https://wiki.dolibarr.org/index.php?title=Prerequisites).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
@@ -57,7 +56,7 @@
   default collation `utf8mb4_uca1400_ai_ci` does not apply, as the stack sets
   `utf8mb4_unicode_ci` explicitly.
 - Moved to `24.0.2` on 2026-11-05 (image published 2026-10-31), the major the
-  note above deferred, not run on a host at this tag. Dolibarr 24 is a schema
+  note above deferred. Dolibarr 24 is a schema
   migration: per the image README
   (https://github.com/Dolibarr/dolibarr-docker), remove
   `volumes/documents/install.lock`, then pull and start; with

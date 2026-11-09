@@ -23,7 +23,7 @@ standard before making a small change.
 | Network and HTTPS routing | [Networks](networking.md), [Traefik security](traefik-security.md), [router labels](traefik-labels.md) |
 | Recovery and host integration | [Restore](restore.md), [host-installed files](host-files.md), [log rotation](logrotate.md) |
 | Documentation | [Purpose and ownership](documentation-workflow.md), [writing style](writing-style.md) |
-| Validation and contribution | [CI checks](ci.md), [verification status model](status-model.md), [commits and public content](commit-rules.md) |
+| Validation and contribution | [CI checks](ci.md), [status model — facts per stack](status-model.md), [commits and public content](commit-rules.md) |
 
 Verification results belong to the generated [Lifecycle overview](../../LIFECYCLE.md).
 The [Roadmap](../../ROADMAP.md) owns planned work; each stack's README and

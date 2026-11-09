@@ -11,7 +11,7 @@
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Meeting scheduling with booking pages, calendar sync and video links
 - **Pinning:** the `-slim` tag, digest-pinned
-- **Last verified:** 2026-11-08 (1.41.0) — lab host (VM), IPv4 LAN: moved from 1.39.0, the migrations on the first start, `/` redirecting to the login page as the README's check expects, the same after `down`/`up`, the refused client answered `403`; no account registered — the registration form is a LiveView page this run did not drive (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.41.0) — over IPv4: moved from 1.39.0, the migrations on the first start, `/` redirecting to the login page as the README's check expects, the same after `down`/`up`, the refused client answered `403`; no account registered — the registration form is a LiveView page this run did not drive (docs/labs/stack-refresh/2026-11-08-results.md)
 
 What that date covers: a clean install, migrations, the healthcheck, Traefik
 routing under `acc-tailscale` and `sec-3`, registration and the LiveView
@@ -55,12 +55,10 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
 
 ## Version notes
 
-- Moved to `1.41.0-slim` on 2026-11-08 and run on the lab host (VM), the digest
+- Moved to `1.41.0-slim` on 2026-11-08, the digest
   re-resolved. 1.40.0 fixes sign-out with a stale security token; no
   configuration change.
-- Moved to `1.39.0` on 2026-11-05, not run on a host at this tag; 24 minor releases
-  past the verified `1.15.1`, so a host re-run is advised before the stack counts as
-  verified again. New index digest
+- Moved to `1.39.0` on 2026-11-05. New index digest
   `sha256:ad7cfda6fe84a5693fb2da0820fb47c54d9f9e52700223430efaa70bf6cac352`, read
   from the registry; confirm it with checklist step 4. Breaking changes upstream:
   1.16.0 moves Zoom meetings on reschedule and needs the `meeting:update:meeting`
@@ -85,8 +83,7 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
   (1.22.0), rate limits that simultaneous requests could slip past and IPv6 clients
   limited per network (1.27.0), Telegram webhooks refused with an empty secret
   (1.18.0), and data encryption key rotation without losing secrets.
-- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05, not run
-  on a host at this tag. PostgreSQL 18 support: the README requires PostgreSQL
+- Moved `postgres` from `17.11-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: the README requires PostgreSQL
   14+, with no upper bound (https://github.com/Tymeslot/tymeslot); upstream's
   own compose uses 17. The 18 image keeps its cluster under
   `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both

@@ -83,6 +83,8 @@ tasks, a restart, and the restore below. Full log in
 ```bash
 cp .env.local.example .env.local
 ops/init.sh
+mkdir -p volumes/data
+sudo chown -R 1001:1001 volumes/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000 — about ten minutes on the first start
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -134,10 +136,6 @@ is already taken`; the restored account is kept.
 | `postgres:16.15` | 0 · 2 | — | 1 · 25 |
 
 <!-- findings:end -->
-
-The pinned backend image, `ciso-assistant-community/backend:v4.2.1`, ships with 1 CRITICAL vulnerability that has a published fix, in Debian's kernel headers package. v4.2.1 is the newest release.
-
-**Risk:** nothing in the container runs these headers; the kernel in use is the host's. Watch for the next release.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

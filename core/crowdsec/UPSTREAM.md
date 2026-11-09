@@ -11,7 +11,7 @@
 - **Origin:** France · CrowdSec SAS · EU
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced
-- **Last verified:** 2026-11-09 (v1.8.2) — lab host (VM), IPv4 LAN: the Traefik bouncer pulling decisions, the AllowList applied from `ops/allowlist.sh` after its correction, a manual decision against an allowlisted address measured, the same after `down`/`up` and a reboot
+- **Last verified:** 2026-11-09 (v1.8.2) — over IPv4: the Traefik bouncer pulling decisions, the AllowList applied from `ops/allowlist.sh`, a manual decision against an allowlisted address measured, the same after `down`/`up` and a reboot
 
 ## Architecture
 
@@ -85,9 +85,7 @@ Full architecture and the current verification status:
 
 ## Version / tag notes
 
-- **Moved to `v1.8.2` on 2026-11-05** (released 2026-10-26), across 1.8.0 and 1.8.1,
-  not run on a host at this tag; the ingress lab checks behind **Last verified**
-  were run at v1.7.8 and have not been repeated. The move was made because the
+- **Moved to `v1.8.2` on 2026-11-05** (released 2026-10-26), across 1.8.0 and 1.8.1. The move was made because the
   v1.7.8 image carries CRITICAL findings in the image scan that are fixed in
   the v1.8.2 image, rebuilt on Go 1.27 and Alpine 3.24. It ends the hold recorded on
   2026-09-13, which waited for the bot-detection behaviour to be checked.

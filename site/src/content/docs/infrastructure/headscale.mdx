@@ -1,0 +1,223 @@
+---
+title: Headscale
+description: Your own control server for Tailscale clients — node registry, keys and access policy for a tailnet you run, closed to declared ranges by default, with an optional relay of your own.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Headscale is a control server for Tailscale clients: it holds the node registry,
+the keys and the access policy of a tailnet, so that the tailnet is run by you
+instead of for you. The clients are Tailscale's own apps; the control server is
+not theirs — upstream states it is not associated with Tailscale Inc. The VPN
+that `access-vpn` admits can be this one. One container, SQLite and its keys in
+`volumes/lib`.
+
+<StackEvidence stack="core/headscale" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and a
+network address your clients join from.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `core/headscale/`:
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1000:1000 volumes/lib
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local \
+  exec headscale /ko-app/headscale users create ops
+```
+
+The control server answers on `http://localhost:8080`. The local stack is for
+seeing it run and working the CLI: a client registers only against an `https`
+server URL, which the installation below provides. Stop it again with the same
+command and `down`.
+
+## Installation
+
+From `core/headscale/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the address every node is told to come back to — changing it later means registering every node again |
+   | `APP_TAILNET_DOMAIN` | the DNS suffix inside the tailnet: `laptop` becomes `laptop.tailnet.internal`. It must not contain `APP_TRAEFIK_HOST` |
+   | `APP_UID` / `APP_GID` | the owner of `volumes/lib` — `1000:1000` |
+
+2. Create the data directory for the user Headscale runs as:
+
+   ```bash
+   ops/init.sh
+   sudo chown -R 1000:1000 volumes/lib
+   ```
+
+3. List `headscale-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render
+   and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+4. Start it and create a user and a pre-auth key. `--user` takes the numeric ID
+   from `users list`, not the name:
+
+   ```bash
+   docker compose up -d
+   docker compose exec headscale /ko-app/headscale users create ops
+   docker compose exec headscale /ko-app/headscale users list
+   docker compose exec headscale /ko-app/headscale preauthkeys create --user 1 --expiration 1h
+   ```
+
+5. Join a client from a range the route admits:
+
+   ```bash
+   tailscale up --login-server https://<APP_TRAEFIK_HOST> --authkey <the key>
+   ```
+
+6. Copy `volumes/lib/noise_private.key` somewhere this host cannot reach. It is
+   generated on the first start and is the tailnet's identity.
+
+</Steps>
+
+There is no password and no setup wizard. Nodes authenticate with the pre-auth
+keys you issue, which expire.
+
+## Verify
+
+```bash
+docker compose ps
+docker compose exec headscale /ko-app/headscale nodes list
+```
+
+The client you joined is listed and online. From it, `tailscale status` shows the
+other nodes, and `tailscale ping <node>` reaches one.
+
+## Going further
+
+### Letting clients in
+
+The route ships `access-trusted`: reachable from the ranges `TRUSTED_RANGES`
+declares in `core/traefik/.env`, and nowhere else. A node needs the server to
+join; afterwards it keeps working from anywhere. `access-vpn` cannot work here —
+this server would be that VPN's control plane.
+
+| Approach | When it fits |
+|---|---|
+| stay on `access-trusted` | every node joins from a declared range |
+| an IP allow-list in front | you know the addresses nodes register from |
+| an SSH tunnel for the join | one node, once, without changing the policy |
+| `access-public` | nodes join from anywhere; a pre-auth key or an OIDC sign-in carries it, and the endpoint is not a user interface |
+
+### Your own relay
+
+Two clients talk directly when they can. When NAT or a firewall stops them, the
+traffic goes through a DERP relay — by default Tailscale's, from the map
+Headscale fetches at `controlplane.tailscale.com`. `derp.yml` turns on
+Headscale's own:
+
+```bash
+docker compose -f docker-compose.yml -f derp.yml up -d
+```
+
+| | Tailscale's relays (default) | Your own (`derp.yml`) |
+|---|---|---|
+| Traffic content | end-to-end encrypted; the relay sees none of it | the same |
+| Metadata | Tailscale sees which endpoints relay, when, how much | nobody outside your host |
+| Host ports | none | 3478/udp — STUN is not HTTP, so Traefik cannot route it |
+| Dependency | relays operated by someone else | yours to keep running |
+
+The STUN port binds to `APP_DERP_STUN_BIND`, which ships `0.0.0.0`. Narrow it to
+one interface, or filter it in front of the host — see
+[firewalls](/security/firewalls/). The relay answers Tailscale clients only; a
+plain STUN probe gets no answer. `tailscale debug derp` from a client checks it.
+
+### Hardening
+
+Non-root, read-only, every capability dropped. Metrics and gRPC stay on loopback —
+the metrics endpoint has no authentication. `logtail`, which upstream points at
+Tailscale's logging service, is off, and so are update checks. OIDC sign-in is
+supported by Headscale and reads its client secret from a file
+(`oidc.client_secret_path`); the stack does not configure it.
+
+## Backup
+
+| | |
+|---|---|
+| **The identity** | `volumes/lib/noise_private.key` — lose it and every node registers again. Keep a copy off this host |
+| **The registry** | `volumes/lib/db.sqlite` — nodes, users, pre-auth keys, policy. Stop the container before copying |
+| **The relay key** | `volumes/lib/derp_server_private.key` — only with `derp.yml`; a new one is harmless |
+| **Rebuildable** | `config/config.yaml` is in git |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+source_directories:
+    - /srv/docker/core/headscale/volumes/lib
+```
+
+Copying `db.sqlite` while Headscale runs leaves a half-written file beside its
+write-ahead log; stop the container for the copy. Restore: put `volumes/lib`
+back, owned by `1000:1000`, and start. Nodes reconnect on their own as long as
+the noise key and the host name are the ones they registered against.
+
+## Updates
+
+At 0.x the configuration format changes between minor releases.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/juanfont/headscale/releases) and
+   the breaking changes in the changelog.
+
+2. Raise `APP_TAG` in `.env`, then test the configuration against the new version
+   **before** starting it:
+
+   ```bash
+   docker compose run --rm headscale configtest
+   ```
+
+3. ```bash
+   docker compose pull && docker compose up -d
+   docker compose exec headscale /ko-app/headscale nodes list
+   ```
+
+   Every node is still registered.
+
+</Steps>
+
+## Troubleshooting
+
+**Headscale refuses to start.** Check first whether `APP_TAILNET_DOMAIN`
+contains `APP_TRAEFIK_HOST`; Headscale refuses a control server
+name inside the tailnet suffix. Choose a suffix outside it.
+
+**`preauthkeys create` fails with `strconv.ParseUint`.** `--user` was given a
+name. Use the numeric ID from `users list`.
+
+**A client cannot join.** It is not in a range the route admits — see
+[Letting clients in](#letting-clients-in).
+
+**Headscale exits with a permission error on `volumes/lib`.** The directory is
+not owned by `APP_UID:APP_GID`.
+
+## Repository files
+
+- [`core/headscale/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/headscale/README.md) — architecture, letting clients in, the relay
+- [`core/headscale/config/config.yaml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/headscale/config/config.yaml)
+- [`core/headscale/derp.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/headscale/derp.yml) — the embedded relay
+- [`core/headscale/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/headscale/.env.example)
+- [`core/headscale/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/headscale/UPSTREAM.md) — maturity and upgrade checklist
+
+## Official sources
+
+- [Headscale documentation](https://headscale.net)
+- [Headscale on GitHub](https://github.com/juanfont/headscale)

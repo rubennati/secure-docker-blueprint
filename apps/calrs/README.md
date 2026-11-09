@@ -104,6 +104,7 @@ below. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-09-22
 cp .env.local.example .env.local
 ops/init.sh
 mkdir -p volumes/data
+sudo chown 999:999 volumes/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000 — register; the first account is the administrator
 docker compose -f docker-compose.local.yml --env-file .env.local down

@@ -39,9 +39,11 @@ Web applications publish no ports. **From outside the host**, a web application 
 reached through the proxy and nowhere else, which is why there is exactly one
 place where TLS is configured, one place where rate limits live, and one place
 to look when something is unreachable. The exceptions are the stacks whose
-protocol is not HTTP — UniFi, OpenCanary and the access gateways under `core/`
-(Teleport, Warpgate, ShellHub and others): each publishes its ports on a
-host address the operator must set, and their examples ship `0.0.0.0`.
+protocol is not HTTP — UniFi, OpenCanary, Velociraptor, the mail servers,
+Zabbix's trapper and the access gateways under `core/` (Teleport, Warpgate,
+ShellHub and others): each publishes its ports on a host address the operator
+must set, and most examples ship `0.0.0.0`. Healthchecks and CrowdSec's
+firewall-bouncer overlay publish one port each on loopback only.
 
 Containers on one Docker network address each other directly. On its own edge
 network a front end reaches the proxy and nothing else; a stack placed on the
@@ -81,12 +83,16 @@ reaches the container. In practice this is one variable in that service's `.env`
 | `access-trusted-vpn` | the declared ranges and your VPN |
 | `access-blocked` | nothing — the route exists but answers no one |
 
-**Check each service's default before starting it.** Vaultwarden, Paperless-ngx,
-Invoice Ninja and Ghost ship `access-vpn`. Nextcloud, Seafile and Seafile Pro ship
-`access-trusted-vpn`, which admits the VPN and the additional client ranges you
-configure; it does not automatically admit Docker networks. WordPress, BookStack
-and Immich ship `access-public`. Read `APP_TRAEFIK_ACCESS` in the service's
-`.env.example`, then set the policy in your `.env` for the audience you intend.
+**Every stack ships closed.** Most ship `access-vpn` — WordPress, BookStack,
+Immich and Ghost included — so their first-run setup happens over the VPN, and you
+open the route afterwards where clients outside the VPN need it. Nextcloud,
+Seafile and Seafile Pro ship `access-trusted-vpn`, which admits the VPN and the
+additional client ranges you configure; it does not automatically admit Docker
+networks. Only stacks that are public by design ship `access-public`: the office
+editors (Collabora, OnlyOffice, Euro-Office), the share-link tools (PrivateBin,
+Yopass, Hemmelig), ntfy, and the two development templates. Read
+`APP_TRAEFIK_ACCESS` in the service's `.env.example`, then set the policy in your
+`.env` for the audience you intend.
 
 :::caution
 An access policy is a proxy setting, not a firewall. `access-public` removes the

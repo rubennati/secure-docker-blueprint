@@ -1,0 +1,269 @@
+---
+title: Authelia
+description: A login portal with two-factor authentication in front of any service Traefik routes — users and rules in files, deny by default, no identity integration needed in the app.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Authelia puts a login with two-factor authentication in front of services that
+have none of their own, or whose own you would rather not expose. Traefik asks
+Authelia through forward-auth whether a request may pass; the application behind
+it needs no identity integration and receives the signed-in user as request
+headers. Users and access rules are edited in files — there is no admin
+interface. Three containers: the portal, PostgreSQL for second factors, Redis for
+sessions.
+
+<StackEvidence stack="core/authelia" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain whose
+parent covers the portal and every app it protects, and SMTP for one-time codes
+once there is more than one user.
+
+## Try it locally
+
+Authelia refuses a portal without HTTPS and a session cookie on a bare
+`localhost`. The local stack therefore serves TLS itself, with a certificate
+`ops/init.sh --local` creates, under `auth.example.localhost` — browsers resolve
+`.localhost` names to `127.0.0.1` on their own. One container, with SQLite and
+sessions in memory. From `core/authelia/`:
+
+```bash
+cp .env.local.example .env.local
+for v in JWT_SECRET SESSION_SECRET STORAGE_ENCRYPTION_KEY; do
+  echo "$v=$(openssl rand -hex 64)"; done >> .env.local
+ops/init.sh --local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Open `https://auth.example.localhost:9091`, accept the self-signed certificate
+and sign in as `admin` with the password in `volumes/local/admin_pwd.txt`.
+Registering a second factor asks for a one-time code, which the local stack writes
+to `volumes/local/data/notification.txt`. Stop it again with the same command and
+`down`.
+
+## Installation
+
+From `core/authelia/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the portal, e.g. `auth.example.com` |
+   | `SESSION_COOKIE_DOMAIN` | the parent of the portal and of every protected app — `example.com` for `auth.example.com` and `wiki.example.com` |
+   | `SMTP_ADDRESS`, `SMTP_USERNAME`, `SMTP_FROM_*` | the relay for one-time codes and reset links |
+   | `TZ` | the timezone in the logs |
+
+   Apps on another domain cannot share the sign-in. Without `SMTP_ADDRESS`,
+   codes and reset links go to `volumes/data/notification.txt` — enough for one
+   administrator.
+
+2. Create the secrets, the data directories and the first user:
+
+   ```bash
+   ops/init.sh                      # user admin; or: ops/init.sh <name> <email>
+   ```
+
+   Authelia generates the first user's password and its Argon2 hash; the
+   password goes to `.secrets/admin_pwd.txt` and never appears on a command line.
+   The script sets ownership with a throwaway container, so no `sudo` is needed.
+   Running it again overwrites nothing. With a relay, write its password to
+   `.secrets/smtp_password.txt`.
+
+3. List `authelia-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render
+   and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+5. Open `https://<APP_TRAEFIK_HOST>`, sign in as `admin` and register a second
+   factor — TOTP or a security key.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                                     # three services, healthy
+docker compose logs authelia | grep -i "startup complete"
+```
+
+Then protect one application as below and open it: the browser goes to the
+portal and comes back signed in.
+
+## Putting a login in front of a service
+
+<Steps>
+
+1. Define the middleware once, in a file under `core/traefik/config/dynamic/` —
+   Traefik reloads it on its own:
+
+   ```yaml
+   http:
+     middlewares:
+       authelia:
+         forwardAuth:
+           address: "http://authelia-app:9091/api/authz/forward-auth"
+           authResponseHeaders:
+             - Remote-User
+             - Remote-Groups
+             - Remote-Email
+             - Remote-Name
+   ```
+
+   Traefik makes this call itself and reaches `authelia-app` over Authelia's
+   edge network. `trustForwardHeader` stays unset, so Authelia sees the headers
+   Traefik built, not ones a client supplied.
+
+2. In the `.env` of the stack to protect, put the middleware in the auth
+   position, then `docker compose up -d` there:
+
+   ```ini
+   APP_TRAEFIK_AUTH=authelia@file
+   ```
+
+3. Decide who may enter, in `config/configuration.yml`. The shipped rule requires
+   two factors on every host under `SESSION_COOKIE_DOMAIN` and denies everything
+   else. Rules are read top to bottom and the first match wins, so a rule for one
+   app goes above the wildcard:
+
+   ```yaml
+   access_control:
+     default_policy: 'deny'
+     rules:
+       - domain: 'wiki.example.com'
+         subject: 'group:admins'
+         policy: 'two_factor'
+       - domain: '*.example.com'
+         policy: 'two_factor'
+   ```
+
+</Steps>
+
+## Going further
+
+### Who can reach the portal
+
+The portal ships `access-vpn`, with `limit-standard` and `headers-standard`, like
+the apps behind it. A public app needs a public login page: once one protected
+app is `access-public`, set the portal to `access-public` as well.
+
+### Users
+
+Users live in `volumes/data/users_database.yml`, with their password hashes.
+Add one by generating a hash and adding an entry:
+
+```bash
+docker run --rm authelia/authelia:<APP_TAG> authelia crypto hash generate argon2 --random --random.length 32
+```
+
+The output carries the password, shown once, and its digest for the `password:`
+field.
+
+### Choosing between Authelia, Authentik and Keycloak
+
+| | Authelia | [Authentik](/infrastructure/authentik/) | [Keycloak](/infrastructure/keycloak/) |
+|---|---|---|---|
+| Built around | forward-auth for a reverse proxy | identity provider with flows and outposts | realms, clients, federation |
+| Users and rules | YAML files | web interface | web interface |
+| Protocols to apps | headers through the proxy | forward-auth, OIDC, SAML, LDAP, RADIUS | OIDC, SAML, LDAP federation |
+
+### Hardening
+
+The container runs read-only, as `1000:1000`, with no capabilities. Secrets reach
+Authelia through its `_FILE` variables. Authelia rewrites
+`/app/.healthcheck.env` at every start, so that one file is mounted writable.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | PostgreSQL, container `authelia-db`, database `authelia`, user `authelia` — second factors, per-user settings, sign-in history |
+| **Password** | `.secrets/db_pwd.txt` |
+| **Also needed** | `volumes/data/users_database.yml` (users and hashes) · `.secrets/storage_encryption_key.txt` |
+| **Rebuildable** | `volumes/redis` (sessions — users sign in again) · `volumes/runtime` |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+postgresql_databases:
+    - name: authelia
+      username: authelia
+      pg_dump_command: docker exec authelia-db pg_dump
+      pg_restore_command: docker exec -i authelia-db pg_restore
+      psql_command: docker exec -i authelia-db psql
+```
+
+**The dump is useless without `storage_encryption_key.txt`.** It encrypts the
+second factors in the database; without it every user registers TOTP and
+security keys again. Keep `.secrets/` in the same backup.
+
+Restore order: database, users file and secrets, then the containers. Authelia
+migrates the schema at start and refuses a schema newer than its own version.
+
+## Updates
+
+Configuration keys are renamed between minor versions, and the old names are
+removed after a deprecation period.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/authelia/authelia/releases).
+
+2. Raise `APP_TAG` in `.env` and check the configuration against the new version:
+
+   ```bash
+   docker compose run --rm --no-deps authelia authelia validate-config --config /config/configuration.yml
+   ```
+
+3. Back up the database, `volumes/data` and `.secrets/`.
+
+4. ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+5. Sign in through a protected app.
+
+</Steps>
+
+## Troubleshooting
+
+**Every protected app answers 403 or loops back to the portal.** The host is not
+covered by a rule in `access_control`, or it is not under
+`SESSION_COOKIE_DOMAIN`, so the cookie does not reach it.
+
+**Authelia refuses to start, naming an unknown setting.** Authelia reads every
+`AUTHELIA_*` environment variable as a setting. Configuration keys renamed in a
+new version do the same — run `validate-config`.
+
+**No one-time code arrives.** `SMTP_ADDRESS` is empty, so codes are written to
+`volumes/data/notification.txt`.
+
+**Users have to register their second factor again after a restore.**
+`storage_encryption_key.txt` was not restored with the database.
+
+## Repository files
+
+- [`core/authelia/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authelia/README.md) — architecture, protecting an app, security model
+- [`core/authelia/config/configuration.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authelia/config/configuration.yml) — access rules and settings
+- [`core/authelia/ops/init.sh`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authelia/ops/init.sh) — secrets, directories and the first user
+- [`core/authelia/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authelia/.env.example)
+- [`core/authelia/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/authelia/UPSTREAM.md) — upgrade checklist
+
+## Official sources
+
+- [Authelia documentation](https://www.authelia.com/configuration/prologue/introduction/)
+- [Authelia on GitHub](https://github.com/authelia/authelia)

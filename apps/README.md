@@ -55,7 +55,7 @@ Five 1:1-booking apps.
 | App | Stack | When to use |
 |---|---|---|
 | [Cal.diy](caldiy/) | Next.js + Postgres + Redis | MIT community edition of Cal.com (community fork, personal use). |
-| [calnode](calnode/) | Single Go binary + SQLite | Booking pages, admin interface and a REST API in one container. The first-run setup route is public until it has run once; pre-1.0. |
+| [calnode](calnode/) | Single Go binary + SQLite | Booking pages, admin interface and a REST API in one container. The first-run setup route answers whoever reaches it until it has run once, so the stack ships behind the VPN; pre-1.0. |
 | [calrs](calrs/) | Single Rust binary + SQLite | Availability read from a CalDAV server you already run. Registration is open until the first administrator exists. |
 | [Easy!Appointments](easyappointments/) | PHP + MariaDB | Lightweight PHP alternative, established 2013, GPL-3.0. |
 | [Tymeslot](tymeslot/) | Elixir/Phoenix + Postgres | Calendar sync with Google, Outlook, Apple and CalDAV, video links, reminder mail; AGPL-3.0, releases several times a week. |
@@ -72,7 +72,7 @@ Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so
 | [OpnForm](opnform/) | API (Laravel) + UI (Nuxt) + Postgres + Redis | Self-hosted form builder (Typeform alternative) |
 | [n8n](n8n/) | Single container + SQLite | Visual workflow automation (Zapier alternative) |
 
-> **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. All three on `proxy-public`, addressable as `http://<app>-app:<port>` for internal calls.
+> **Cloud-free data-collection chain:** `OpnForm → n8n → NocoDB` — forms collect, n8n transforms, NocoDB stores + presents. Each ships on its own edge network; set `TRAEFIK_NETWORK=proxy-public` in all three to call each other as `http://<app>-app:<port>`.
 
 ### File sync & documents
 
@@ -196,7 +196,7 @@ it is revisited once the announced rewrite is released. See
 
 | App | Stack | Description |
 |---|---|---|
-| [UniFi Network App](unifi/) | Controller (LSIO) + MongoDB 4.4 | Ubiquiti UniFi device controller |
+| [UniFi Network App](unifi/) | Controller (LSIO) + MongoDB 8.0 | Ubiquiti UniFi device controller |
 
 ### AI & local models
 

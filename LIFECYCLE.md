@@ -4,7 +4,7 @@
 
 Generated 2026-11-09 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 114 pin the newest upstream release, 3 pin an older one. 120 have a test date on a host, 17 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-09.
+121 stacks. 114 pin the newest upstream release, 3 pin an older one. 120 have a test date on a host, 25 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-09.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -23,10 +23,10 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 |---|---|---|---|---|
 | [`core/acme-certs`](core/acme-certs/) | `0.2.1` · 2026-05-04 | = Pin | [3 · 46](core/acme-certs/README.md#open-findings) | [2026-11-08](core/acme-certs/UPSTREAM.md) |
 | [`core/authelia`](core/authelia/) | `4.39.28` · 2026-09-17 | = Pin | [1 · 26](core/authelia/README.md#open-findings) | [2026-11-08](core/authelia/UPSTREAM.md) |
-| [`core/authentik`](core/authentik/) | `2026.8.5` · 2026-10-21 | = Pin | [2 · 47](core/authentik/README.md#open-findings) | [2026-11-08](core/authentik/UPSTREAM.md) |
+| [`core/authentik`](core/authentik/) | `2026.8.5` · 2026-10-21 | = Pin | [2 · 47](core/authentik/README.md#open-findings) | [2026-11-08](core/authentik/UPSTREAM.md) · with restore |
 | [`core/crowdsec`](core/crowdsec/) | `v1.8.2` · 2026-10-26 | = Pin | [0 · 10](core/crowdsec/README.md#open-findings) | [2026-11-09](core/crowdsec/UPSTREAM.md) · with restore |
 | [`core/dnsmasq`](core/dnsmasq/) | `2.93` · 2026-08-20 | = Pin | 0 · 0 | [2026-11-08](core/dnsmasq/UPSTREAM.md) |
-| [`core/dockhand`](core/dockhand/) | `v1.0.57` · 2026-11-04 | = Pin | [1 · 33](core/dockhand/README.md#open-findings) | [2026-11-08](core/dockhand/UPSTREAM.md) |
+| [`core/dockhand`](core/dockhand/) | `v1.0.57` · 2026-11-04 | = Pin | [1 · 33](core/dockhand/README.md#open-findings) | [2026-11-08](core/dockhand/UPSTREAM.md) · with restore |
 | [`core/hawser`](core/hawser/) | `0.2.53` · 2026-10-30 | = Pin | [0 · 3](core/hawser/README.md#open-findings) | [2026-11-08](core/hawser/UPSTREAM.md) |
 | [`core/headscale`](core/headscale/) | `v0.29.7` · 2026-10-30 | = Pin | [0 · 4](core/headscale/README.md#open-findings) | [2026-11-08](core/headscale/UPSTREAM.md) |
 | [`core/host-watchdog`](core/host-watchdog/) | *host-installed* | — | — | [2026-11-09](core/host-watchdog/UPSTREAM.md) |
@@ -72,7 +72,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/homarr`](apps/homarr/) | `v2.12.0` · 2026-11-06 | = Pin | [0 · 2](apps/homarr/README.md#open-findings) | [2026-11-08](apps/homarr/UPSTREAM.md) |
 | [`apps/homepage`](apps/homepage/) | `v2.7.0` · 2026-10-23 | = Pin | [0 · 9](apps/homepage/README.md#open-findings) | [2026-11-08](apps/homepage/UPSTREAM.md) |
 | [`apps/httpbin`](apps/httpbin/) | `0.10.4` · 2026-06-16 | = Pin | [4 · 27](apps/httpbin/README.md#open-findings) | [2026-11-09](apps/httpbin/UPSTREAM.md) |
-| [`apps/immich`](apps/immich/) | `v3.3.6` · 2026-11-04 | = Pin | [16 · 102](apps/immich/README.md#open-findings) | [2026-11-08](apps/immich/UPSTREAM.md) |
+| [`apps/immich`](apps/immich/) | `v3.3.6` · 2026-11-04 | = Pin | [16 · 102](apps/immich/README.md#open-findings) | [2026-11-08](apps/immich/UPSTREAM.md) · with restore |
 | [`apps/it-tools`](apps/it-tools/) | `2024.10.22-7ca5933` · 2024-10-22 | = Pin · ⚠️ no release since 2024-10-22 | [2 · 27](apps/it-tools/README.md#open-findings) | [2026-11-09](apps/it-tools/UPSTREAM.md) |
 | [`apps/librephotos`](apps/librephotos/) | `1.5.1` · 2026-10-31 | = Pin | [1 · 33](apps/librephotos/README.md#open-findings) | [2026-11-08](apps/librephotos/UPSTREAM.md) |
 | [`apps/litellm`](apps/litellm/) | `v1.108.3` · 2026-11-07 | = Pin | [1 · 27](apps/litellm/README.md#open-findings) | [2026-11-08](apps/litellm/UPSTREAM.md) |
@@ -88,7 +88,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/onlyoffice`](apps/onlyoffice/) | `10.0.0` · 2026-10-12 | = Pin | [0 · 2](apps/onlyoffice/README.md#open-findings) | [2026-11-08](apps/onlyoffice/UPSTREAM.md) |
 | [`apps/open-webui`](apps/open-webui/) | `v0.13.0` · 2026-11-03 | = Pin | [4 · 31](apps/open-webui/README.md#open-findings) | [2026-11-08](apps/open-webui/UPSTREAM.md) |
 | [`apps/opencanary`](apps/opencanary/) | `0.9.10` · 2026-09-21 | = Pin | [8 · 111](apps/opencanary/README.md#open-findings) | [2026-11-08](apps/opencanary/UPSTREAM.md) |
-| [`apps/opnform`](apps/opnform/) | `2.8.4` · 2026-11-05 | = Pin | [2 · 34](apps/opnform/README.md#open-findings) | [2026-11-08](apps/opnform/UPSTREAM.md) |
+| [`apps/opnform`](apps/opnform/) | `2.8.4` · 2026-11-05 | = Pin | [2 · 34](apps/opnform/README.md#open-findings) | [2026-11-08](apps/opnform/UPSTREAM.md) · with restore |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `v0.31.0` · 2026-10-14 | = Pin | [0 · 6](apps/paperless-gpt/README.md#open-findings) | [2026-11-08](apps/paperless-gpt/UPSTREAM.md) |
 | [`apps/paperless-ngx`](apps/paperless-ngx/) | `3.4.2` · 2026-11-03 | = Pin | [2 · 39](apps/paperless-ngx/README.md#open-findings) | [2026-11-08](apps/paperless-ngx/UPSTREAM.md) · with restore |
 | [`apps/photoprism`](apps/photoprism/) | `261029` · 2026-10-29 | = Pin | [1 · 26](apps/photoprism/README.md#open-findings) | [2026-11-08](apps/photoprism/UPSTREAM.md) |
@@ -124,16 +124,16 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`business/invoiceninja`](business/invoiceninja/) | `5.13.53` · 2026-11-02 | = Pin | [3 · 95](business/invoiceninja/README.md#open-findings) | [2026-11-08](business/invoiceninja/UPSTREAM.md) · with restore |
 | [`business/kimai`](business/kimai/) | `2.71.0` · 2026-10-25 | = Pin | [2 · 29](business/kimai/README.md#open-findings) | [2026-11-08](business/kimai/UPSTREAM.md) · with restore |
 | [`business/leantime`](business/leantime/) | `3.13.2` · 2026-10-31 | = Pin | [4 · 39](business/leantime/README.md#open-findings) | [2026-11-08](business/leantime/UPSTREAM.md) |
-| [`business/listmonk`](business/listmonk/) | `v6.2.0` · 2026-06-26 | = Pin | [2 · 53](business/listmonk/README.md#open-findings) | [2026-11-08](business/listmonk/UPSTREAM.md) |
+| [`business/listmonk`](business/listmonk/) | `v6.2.0` · 2026-06-26 | = Pin | [2 · 53](business/listmonk/README.md#open-findings) | [2026-11-08](business/listmonk/UPSTREAM.md) · with restore |
 | [`business/matomo`](business/matomo/) | `5.14.2-apache` · 2026-10-22 | = Pin | [1 · 28](business/matomo/README.md#open-findings) | [2026-11-08](business/matomo/UPSTREAM.md) |
-| [`business/openproject`](business/openproject/) | `17.9.6-slim` · 2026-10-30 | `17.9.7-slim` · 2026-11-09 | [3 · 53](business/openproject/README.md#open-findings) | [2026-11-08](business/openproject/UPSTREAM.md) |
+| [`business/openproject`](business/openproject/) | `17.9.6-slim` · 2026-10-30 | `17.9.7-slim` · 2026-11-09 | [3 · 53](business/openproject/README.md#open-findings) | [2026-11-08](business/openproject/UPSTREAM.md) · with restore |
 | [`business/opensign`](business/opensign/) | `main` · 2026-11-02 | not determinable | [30 · 996](business/opensign/README.md#open-findings) | [2026-11-08](business/opensign/UPSTREAM.md) |
 | [`business/plane`](business/plane/) | `v1.4.3` · 2026-10-28 | = Pin | [8 · 112](business/plane/README.md#open-findings) | [2026-11-08](business/plane/UPSTREAM.md) |
 | [`business/plausible`](business/plausible/) | `v3.2.1` · 2026-05-15 | = Pin | [1 · 50](business/plausible/README.md#open-findings) | [2026-11-08](business/plausible/UPSTREAM.md) |
 | [`business/solidinvoice`](business/solidinvoice/) | `3.1.2` · 2026-10-21 | = Pin | [0 · 2](business/solidinvoice/README.md#open-findings) | [2026-11-08](business/solidinvoice/UPSTREAM.md) |
 | [`business/twenty`](business/twenty/) | `v2.56.1` · 2026-11-05 | = Pin | [1 · 35](business/twenty/README.md#open-findings) | [2026-11-08](business/twenty/UPSTREAM.md) |
-| [`business/vikunja`](business/vikunja/) | `2.8.0` · 2026-11-05 | = Pin | [1 · 25](business/vikunja/README.md#open-findings) | [2026-11-08](business/vikunja/UPSTREAM.md) |
-| [`business/zammad`](business/zammad/) | `7.2.2-0045` · 2026-11-06 | = Pin | [1 · 33](business/zammad/README.md#open-findings) | [2026-11-08](business/zammad/UPSTREAM.md) |
+| [`business/vikunja`](business/vikunja/) | `2.8.0` · 2026-11-05 | = Pin | [1 · 25](business/vikunja/README.md#open-findings) | [2026-11-08](business/vikunja/UPSTREAM.md) · with restore |
+| [`business/zammad`](business/zammad/) | `7.2.2-0045` · 2026-11-06 | = Pin | [1 · 33](business/zammad/README.md#open-findings) | [2026-11-08](business/zammad/UPSTREAM.md) · with restore |
 
 ## `monitoring/`
 

@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Easy!Appointments lets customers book time slots with a provider. Two containers
 — PHP with Apache, and MariaDB. No build step and no Node.js.
 
-<StackEvidence stack="apps/easyappointments"
-  gap="a restore. The database and the storage directory have to come back from the same point in time, and that has not been performed here." />
+<StackEvidence stack="apps/easyappointments" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,17 @@ Easy!Appointments lets customers book time slots with a provider. Two containers
 On your own machine, with no proxy, domain or certificate. From `apps/easyappointments/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/storage
+sudo chown -R 33:33 volumes/local/storage
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -91,6 +100,13 @@ routing forms, team scheduling and workflows — and a heavier stack. If the nee
 one-to-one booking on a host with a modest memory budget, this is the simpler
 answer.
 
+### Mail
+
+The compose file passes no mail settings. Booking notifications are configured in
+the interface — Admin → Settings → Business → Email — and the SMTP host and
+credentials live in the database, not in `.env`. Until they are set, nobody is
+told about a booking.
+
 ## Backup
 
 | | |
@@ -113,6 +129,9 @@ mariadb_databases:
 Appointments are database rows, so an older database comes back without the
 bookings made since — and the people who made them still expect to be seen.
 Reconcile against the notification mail before resuming.
+
+The database and `volumes/storage` come back from the same backup run, so
+generated files match the rows that reference them.
 
 Restore order: database, then the application.
 

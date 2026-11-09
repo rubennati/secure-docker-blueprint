@@ -10,8 +10,7 @@ Heimdall is a start page for your services: tiles you arrange yourself, with
 optional per-service status. One container, and a SQLite database inside its
 configuration directory.
 
-<StackEvidence stack="apps/heimdall"
-  gap="a request from a client off the host — the basic-auth gate was checked through a route that admits the host only." />
+<StackEvidence stack="apps/heimdall" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -64,8 +63,9 @@ From `apps/heimdall/`:
    docker compose logs heimdall-app --follow
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>`. There is no login at first — everything
-   else, from tiles to accounts, is configured in the interface.
+4. Open `https://<APP_TRAEFIK_HOST>` and pass the basic-auth prompt. Heimdall
+   has no account at first — everything else, from tiles to accounts, is
+   configured in the interface.
 
 </Steps>
 
@@ -73,7 +73,8 @@ From `apps/heimdall/`:
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/                         # 401 — the gate asks
+curl -fsSI -u ops https://<APP_TRAEFIK_HOST>/  # asks for the password; 200 with it
 ```
 
 Then add one tile and reload. A dashboard that keeps the tile confirms the

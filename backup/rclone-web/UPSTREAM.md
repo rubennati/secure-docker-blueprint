@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (1.76.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the remote-control API answered `core/version` and `rc/noop` with the login from `ops/init.sh` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (1.76.0) — over IPv4: the remote-control API answered `core/version` and `rc/noop` with the login from `ops/init.sh` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -13,17 +13,16 @@
 - **Domain:** Backup
 - **Role:** Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics
 
-No `Last verified` line: behind Traefik, the interface can be signed into only with
-the password inside its URL — see
-[Known limitation](#known-limitation-the-interfaces-sign-in).
+Behind Traefik, the interface can be signed into only with the password inside
+its URL — see [Known limitation](#known-limitation-the-interfaces-sign-in).
 
 The origin is the rclone project's author and copyright holder, located in
 Guildford, UK. rclone and Rclone Web are both MIT.
 
 ## What we use
 
-- `rclone/rclone:1.75.1` — the official image. `rclone gui` serves the Rclone Web
-  release embedded at build time (1.1.11 in this tag) and needs no download at
+- `rclone/rclone:1.76.0` — the official image. `rclone gui` serves the Rclone Web
+  release embedded at build time and needs no download at
   runtime. Upstream's README runs `rclone/rclone:latest`.
 - Interface on port 5522, remote control API on port 5533, as upstream's example.
 
@@ -79,7 +78,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   ownership restored — the remote back
 - Peak 22 MiB (limit 1 GiB)
 
-**Not yet exercised:** a remote at a real storage provider; transfers of size;
+**Outside this verification:** a remote at a real storage provider; transfers of size;
 serves.
 
 ## Verification performed (2026-09-21)
@@ -103,14 +102,14 @@ a throwaway `proxy-public` network without Traefik, with `volumes/config` and
   preflight from `http://localhost:5522` was answered with that origin and the
   `Authorization` header allowed
 
-**Not yet exercised:** Traefik routing and TLS; the interface in a browser; a
+**Outside this verification:** Traefik routing and TLS; the interface in a browser; a
 remote at a real storage provider; transfers of size; serves; backup and restore.
 
 ## Version notes
 
-- Moved to `1.76.0` on 2026-11-08 and run on the lab host (VM). A minor release;
+- Moved to `1.76.0` on 2026-11-08. A minor release;
   its notes name no change to the remote-control API used here.
-- Moved to `1.75.2` on 2026-10-31 (released 2026-10-09), not run at this tag. The
+- Moved to `1.75.2` on 2026-10-31 (released 2026-10-09). The
   GitHub release page carries no entries and points to the changelog at
   rclone.org, which was not reachable from the session that moved the pin;
   breaking changes and advisories in the point release are therefore not

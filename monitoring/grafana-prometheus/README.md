@@ -26,6 +26,23 @@ kind: anything that can reach it can read every metric, run any query and read
 the scrape configuration. Grafana is what you open, and Grafana is what has a
 password.
 
+## Try it locally
+
+Runs on `http://localhost:3000` without Traefik, DNS or a certificate.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 472:472 volumes/grafana
+sudo chown -R 65534:65534 volumes/prometheus
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:3000 — the user in .env.local, the password in .secrets/
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The port binds to `127.0.0.1`. The host-collector overlays work here too — see
+"Collecting from the host". It mounts the same `volumes/`, so run one at a time.
+
 ## Setup
 
 ```bash
@@ -144,7 +161,7 @@ you own, and a decision rather than a default.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/grafana-prometheus/volumes/grafana
+  - /srv/docker/monitoring/grafana-prometheus/volumes/grafana
 ```
 
 `volumes/prometheus` is not in that list. It is large, it expires anyway, and

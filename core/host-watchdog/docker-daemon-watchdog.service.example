@@ -21,7 +21,7 @@
 Description=Docker daemon watchdog — one bounded restart attempt on confirmed API failure
 Wants=network-online.target
 # Not ordered after docker.service: while Docker's start job hangs, a run
-# ordered after it waited in the queue and sent no failure ping (lab host).
+# ordered after it waited in the queue and sent no failure ping.
 After=network-online.target
 
 [Service]

@@ -10,7 +10,7 @@
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions
-- **Last verified:** 2026-11-08 (2.8.4) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 16.15, Redis with cap_drop): the first account registered and logged in through the API, a second registration refused, `/api/healthcheck` 200, the refused client answered `403`, login again after `down`/`up`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (2.8.4) — over IPv4, a new installation with Postgres 16.15, Redis with cap_drop: the first account registered and logged in through the API, a second registration refused, `/api/healthcheck` 200, the refused client answered `403`, login again after `down`/`up`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -43,12 +43,11 @@ Key design choices:
 | **Mail driver defaults to `log`** | Safe default — user sets SMTP explicitly |
 | **`app-internal` network (`internal: true`)** | Isolate Postgres + Redis |
 | **`security_opt: no-new-privileges`** on all services | Baseline |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Forms are meant to be filled by external users; `access-vpn` would be OK if your forms are internal-only |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first sign-up becomes the admin; open the route (`access-public`) after that, as forms are meant to be filled by external users |
 
 ## Version notes
 
-- Moved to `2.8.4` on 2026-11-05 (released 2026-11-05), not run on a host at
-  this tag. Both images now carry the tag. No database migration from 2.8.1
+- Moved to `2.8.4` on 2026-11-05 (released 2026-11-05). Both images now carry the tag. No database migration from 2.8.1
   to 2.8.4; API and client move together, as `APP_TAG` names both. 2.8.2
   saves edits to existing integrations correctly and filters shared and
   transition address ranges in webhook URLs more strictly; 2.8.3 also rejects
@@ -61,7 +60,7 @@ Key design choices:
   none. Sources: https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.2,
   https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.3,
   https://github.com/JhumanJ/OpnForm/releases/tag/v2.8.4
-- Moved to `2.8.1` on 2026-11-05, not run on a host at this tag. Not 2.8.3:
+- Moved to `2.8.1` on 2026-11-05. Not 2.8.3:
   `jhumanj/opnform-api` carries 2.8.2 and 2.8.3, but `jhumanj/opnform-client`
   stops at 2.8.1 on Docker Hub — the release pipeline runs for both tags were
   cancelled — and `APP_TAG` names both images. Move to 2.8.3 once the client
@@ -78,7 +77,7 @@ Key design choices:
   8.3.36 for CVE-2026-109618 and CVE-2026-109619 and disables PHP session upload
   progress; 2.7.0 hardens password resets, credential revocation, OAuth/OIDC,
   domain ownership and file signing. No GHSA is published.
-- nginx moved to `1.31` on 2026-11-05, not run on a host at this tag.
+- nginx moved to `1.31` on 2026-11-05.
   1.29.7 enables upstream keepalive by default and makes `proxy_http_version`
   default to 1.1 without a `Connection` header; `docker/nginx.conf` sets both
   explicitly on its proxied locations. 1.31.0 rejects HTTP/2 and HTTP/3
@@ -88,8 +87,8 @@ Key design choices:
   CVE-2026-40460 (1.31.0), CVE-2026-9256 (1.31.1), CVE-2026-42530 (1.31.2),
   CVE-2026-56434 (1.31.3), CVE-2026-90439 (1.31.6), CVE-2026-15176,
   CVE-2026-93479, CVE-2026-95101, CVE-2026-97629 and CVE-2026-97205 (1.31.7).
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

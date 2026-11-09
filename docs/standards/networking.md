@@ -108,8 +108,9 @@ container.
   what bounds reachability here.
 - IPv4-only, for the same reason as `app-internal` — nothing outside the Docker host
   connects, so there is no client source IP to preserve.
-- Host port publication is a separate mechanism and is unaffected: the engine still
-  publishes its LAPI on `127.0.0.1` for the host-installed firewall bouncer.
+- Host port publication is a separate mechanism: the base compose publishes no port.
+  With the host-installed firewall bouncer, the `firewall-bouncer.yml` overlay publishes
+  the LAPI on `127.0.0.1:${CROWDSEC_LAPI_PORT:-8081}`.
 
 Add another one when two core services need a private channel and the alternative is
 placing one of them on `proxy-public`.
@@ -205,10 +206,14 @@ ports:
 ```
 
 **Avoid.** Only when the service cannot be routed through Traefik, and always with a
-host address from a required `*_BIND` variable (`port-no-host-address`). The
-catalogue publishes this way in `apps/unifi`, `apps/opencanary` and the access
-gateways under `core/` (Teleport, ShellHub, Warpgate, JumpServer, Orion Belt,
-step-ca, and Headscale with its opt-in `derp.yml`); their examples ship `0.0.0.0`. dnsmasq runs with `network_mode: host`.
+host address (`port-no-host-address`): from a required `*_BIND` variable, or a fixed
+`127.0.0.1` for a port only jobs on the same host use. The catalogue publishes
+through a `*_BIND` variable in `apps/unifi`, `apps/opencanary`, `apps/velociraptor`
+and the access gateways under `core/` (Teleport, ShellHub, Warpgate, JumpServer,
+Orion Belt, step-ca, and Headscale with its opt-in `derp.yml`); their examples ship
+`0.0.0.0`. On loopback only: `monitoring/healthchecks` (`HC_LOCAL_PORT`, for the
+watchdogs and borgmatic) and `core/crowdsec` with its `firewall-bouncer.yml` overlay
+(`CROWDSEC_LAPI_PORT`). dnsmasq runs with `network_mode: host`.
 
 Database ports **never** exposed on host.
 

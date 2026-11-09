@@ -22,6 +22,7 @@ Runs on `http://localhost:3000` without Traefik, DNS or a certificate.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/config
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -52,7 +53,8 @@ Further configuration = edit files in `config/`, Homepage hot-reloads on change.
 
 ```bash
 docker compose ps                              # healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
+curl -sSI https://<APP_TRAEFIK_HOST>/          # 401 — the basicAuth gate
+curl -fsSI -u ops:<password> https://<APP_TRAEFIK_HOST>/   # 200 OK
 ```
 
 ## Security Model

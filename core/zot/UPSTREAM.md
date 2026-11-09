@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v2.1.23) — lab host (VM), IPv4 LAN, run in a parallel batch: after the TMPDIR correction: an image pushed from the lab container with the htpasswd user and listed in the catalog, `401` without credentials, the image present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v2.1.23) — over IPv4: an image pushed from another host with the htpasswd user and listed in the catalog, `401` without credentials, the image present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -13,13 +13,12 @@
 - **Domain:** Developer tools
 - **Role:** OCI registry for your own build output
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
-  authentication and access-control policy exercised against a live
-  container; not yet run behind a real Traefik host
+  authentication and access-control policy exercised against a live container
 
 ## What we use
 
-- `ghcr.io/project-zot/zot:v2.1.21` — the **full** build, not
-  `zot-minimal`. Confirmed via the image's own startup log
+- `ghcr.io/project-zot/zot:v2.1.23` — the **full** build, not
+  `zot-minimal`, as the image's own startup log shows
   (`binary-type` reports `events-imagetrust-lint-metrics-mgmt-profile-scrub-search-sync-ui-userprefs`).
   The minimal build only implements the bare OCI Distribution Specification
   and has none of the UI, embedded CVE scanning, or image-trust extensions
@@ -52,21 +51,20 @@
   assumed from the config schema.
 - Ran the actual production `docker-compose.yml` (with a temporary port
   override for the test only) end to end with the same result.
-- **Not verified:** an actual `docker push`/`docker pull` round trip, the
-  embedded CVE scan actually flagging a known-vulnerable image, Cosign/
+- **Outside this check:** the embedded CVE scan actually flagging a known-vulnerable image, Cosign/
   Notation signature verification (`imagetrust`, not configured — see
   README.md), OIDC login, garbage collection actually reclaiming a deleted
-  tag's blobs, and behavior across a restart or upgrade.
+  tag's blobs, and an upgrade. Push, catalog and a restart are covered by
+  **Last verified** above.
 
 ## Version notes
 
-- Moved to `v2.1.22` on 2026-10-31 (released 2026-10-06), not run at this tag.
+- Moved to `v2.1.22` on 2026-10-31 (released 2026-10-06).
   No breaking change, configuration or storage-format change; the release sets
   `Strict-Transport-Security` on TLS responses, stops proxying local API keys to
   an upstream token service, tightens input validation, stops storing signature
   layers in MetaDB and clears three Dependabot alerts. No CVE or GHSA named.
-- Moved to `v2.1.23` on 2026-11-05 (released 2026-11-02), not run on a host at
-  this tag. No breaking change, configuration or storage-format change; new
+- Moved to `v2.1.23` on 2026-11-05 (released 2026-11-02). No breaking change, configuration or storage-format change; new
   options are opt-in (disabling anonymous catalog listing, per-repository byte
   quotas, an OpenID `discoveryurl`, per-user repository namespaces). Security
   items, no CVE or GHSA named: bearer tokens without a grant for a repository
@@ -93,5 +91,3 @@
   `imagetrust` extension needs its own key material, added deliberately.
   See README.md.
 - **OIDC is not configured** — htpasswd only. See README.md.
-- **Not yet run behind a real Traefik host, and no actual image push/pull
-  has been exercised.**

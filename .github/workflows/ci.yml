@@ -163,11 +163,11 @@ jobs:
   # ─────────────────────────────────────────────
   # 4. SENTINEL VALUE CHECK
   # ─────────────────────────────────────────────
-  # .env.example files contain __REPLACE_ME__ as a forcing function
-  # so deployers must substitute real values. This job fails if any
-  # committed .env file (not .env.example) still contains a sentinel —
-  # catching the case where someone committed an unsubstituted .env.
-  # Runtime deployments are not covered by CI; this only catches git.
+  # A committed .env file (not .env.example) is a deployment's configuration;
+  # one that still contains __REPLACE_ME__ was committed unfilled. Secrets in
+  # .env.example ship empty and are required in compose with ${VAR:?…}
+  # (check-structure.py, placeholder-secret); this job covers committed .env
+  # files only — runtime deployments are not in git.
   sentinel:
     name: Sentinel value check
     runs-on: ubuntu-latest
@@ -222,11 +222,11 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 6. CANONICAL STRUCTURE (docs/standards/*-structure.md)
-  # Fails on the dangerous rules — :latest tags, plaintext secrets,
-  # unprotected .secrets/, a datastore on proxy-public — and, since the host
-  # resilience work, on a service without resource limits. A service with a
-  # memory limit and no swap policy, and a missing healthcheck, are reported,
-  # not blocking.
+  # Fails on the dangerous rules — :latest tags, plaintext or __REPLACE_ME__
+  # secrets, an access-public default without a public posture, a missing auth
+  # posture, unprotected .secrets/, a datastore on proxy-public, a port on
+  # internal-only networks — and on a service without resource limits or swap
+  # policy. A missing healthcheck is reported, not blocking.
   # ─────────────────────────────────────────────
   structure-canonical:
     name: Canonical structure
@@ -244,8 +244,9 @@ jobs:
 
   # ─────────────────────────────────────────────
   # 7. STATUS MODEL (docs/standards/status-model.md)
-  # Catches a status claim that is not backed — the owner and a category README
-  # disagreeing, ✅ without a verification date, or LIFECYCLE.md left stale.
+  # Catches a generated view left stale against its sources — LIFECYCLE.md,
+  # lifecycle.json, a README findings block — or a stack name that no longer
+  # exists. A stack carries facts, not states (DEC-080).
   # ─────────────────────────────────────────────
   lifecycle:
     name: Status model

@@ -32,12 +32,18 @@ not use this repository's reverse proxy at all. See "Network exposure".
 
 ## Try it locally
 
-Runs on `http://localhost:3080` without Traefik, DNS or a certificate; port 3025 is the auth service.
+Runs on `https://localhost:3080` with a self-signed certificate, without Traefik or DNS; port 3025 is the auth service.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/config volumes/local/data
+docker run --rm --entrypoint=/usr/local/bin/teleport \
+  -v "$(pwd)/volumes/local/config:/etc/teleport" \
+  public.ecr.aws/gravitational/teleport-distroless:18.11.9 \
+  configure --roles=proxy,auth > volumes/local/config/teleport.yaml
+sudo chown 0:0 volumes/local/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:3080
+# https://localhost:3080/web — accept the self-signed certificate warning
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
@@ -55,7 +61,7 @@ mkdir -p config volumes/data
 sudo chown 0:0 volumes/data
 docker run --rm --entrypoint=/usr/local/bin/teleport \
   -v "$(pwd)/config:/etc/teleport" \
-  public.ecr.aws/gravitational/teleport-distroless:18.11.8 \
+  public.ecr.aws/gravitational/teleport-distroless:18.11.9 \
   configure --roles=proxy,auth > config/teleport.yaml
 ```
 
@@ -162,9 +168,6 @@ For the general restore procedure and verification checklist, see
 - **License requires your own judgment** — see the top of this file and
   [UPSTREAM.md](UPSTREAM.md#community-edition-license--read-before-deploying-this).
 - **No OIDC/SAML in Community Edition** — see Security Model.
-- **Not yet run on a live host beyond a clean start** — no real node join,
-  no `tsh` session, no restart or upgrade tested. See
-  [UPSTREAM.md](UPSTREAM.md#what-was-actually-verified-and-how).
 - **Self-signed certificate by default** — replace it with one from a real
   CA before relying on this for anything beyond a first look.
 

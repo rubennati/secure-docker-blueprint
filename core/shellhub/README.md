@@ -28,6 +28,10 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/postgres
+ssh-keygen -t rsa -b 4096 -m PEM -f volumes/local/ssh_private_key -N ""
+openssl genrsa -out volumes/local/api_private_key 4096
+openssl rsa -in volumes/local/api_private_key -pubout -out volumes/local/api_public_key
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -101,7 +105,7 @@ PAM would.
 **What session recordings contain.** Confirmed by upstream docs: session
 recordings and audit logs are kept server-side, with the same scope as any
 SSH session recorder — keystrokes and terminal output for what was
-recorded. Exact retention/storage behavior was not exercised here.
+recorded. Retention and storage follow upstream's defaults; check them in the UI before relying on them.
 
 **Which ports must be reachable from where.** The SSH port from every
 managed device's network (outbound) and from wherever you connect (inbound)
@@ -142,8 +146,8 @@ For the general PostgreSQL restore procedure and verification checklist, see
   to `telemetry.shellhub.io` by default since v0.28.0; this stack sets
   `SHELLHUB_TELEMETRY=false` on the server. See
   [UPSTREAM.md](UPSTREAM.md#version-notes).
-- **Not yet exercised beyond a clean start** — no agent registered, no SSH
-  session proxied, no restart or upgrade tested.
+- **The checked scope is a clean start** — agent registration, a proxied SSH
+  session, a restart and an upgrade lie outside it.
 - **OIDC-in-Community-Edition status unconfirmed** — see Security Model.
 
 ## Open findings

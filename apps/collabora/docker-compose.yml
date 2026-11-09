@@ -16,7 +16,7 @@ services:
     # cap_add MKNOD: Collabora builds a per-document LibreOffice jail (chroot)
     # and needs mknod for it. no-new-privileges is kept per baseline — if the
     # sandbox fails to start on your host, that is the first thing to relax.
-    # Measured (step 8 lab host): with this set coolwsd builds no chroot jail — it
+    # With this set coolwsd builds no chroot jail — it
     # runs each document in a Landlock jail instead (README, "Sandbox").
     security_opt:
       - no-new-privileges:true
@@ -94,7 +94,7 @@ services:
 
     # --- Health & Observability ---
     # The image has no shell and no curl; a CMD-SHELL test never ran, the container
-    # stayed unhealthy and Traefik left it out of its routing (step 8 lab host).
+    # stayed unhealthy and Traefik left it out of its routing.
     # coolwsd's own probe is the image's HEALTHCHECK.
     healthcheck:
       test: ["CMD", "/usr/bin/coolwsd", "--probe", "--use-env-vars"]

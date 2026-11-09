@@ -82,8 +82,8 @@ needs. Store the issued value exactly as received — do not re-encode it.
   the command that generates it above the line, and the compose file refuses an
   empty required one with `${VAR:?Set VAR in .env}`: `docker compose` then stops
   and names the variable. It never ships as `__REPLACE_ME__` — a forgotten
-  placeholder would itself become the password (it opened Vaultwarden's admin
-  panel on a lab host). `check-structure.py` fails it as `placeholder-secret`. See
+  placeholder would itself become the password (Vaultwarden's admin panel opens
+  with it). `check-structure.py` fails it as `placeholder-secret`. See
   [Env Structure](env-structure.md).
 - **By default, a real secret lives in its own file under `.secrets/`**, one file per
   secret, wired into the container as a Docker file-based secret

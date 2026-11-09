@@ -10,7 +10,7 @@
 - **Origin:** Canada · Monica HQ · non-EU
 - **Domain:** Business operations
 - **Role:** Personal CRM for the people in your life
-- **Last verified:** 2026-11-09 (4.1.2) — lab host (VM), IPv4 LAN, a new installation with the README's key step: an account registered in the browser (the app requires mixed case and a symbol), signed in again after `down`/`up`
+- **Last verified:** 2026-11-09 (4.1.2) — over IPv4, a new installation with the README's key step: an account registered in the browser (the app requires mixed case and a symbol), signed in again after `down`/`up`
 
 ## What we use
 

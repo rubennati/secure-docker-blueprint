@@ -22,10 +22,11 @@ itself stays unversioned — this gate constrains the tag, not the content.
 1. Run the Consistency Chain from `docs/maintenance.md`
 2. All local gates clean — see [`quality-gates.md`](../quality-gates.md)
 3. `CHANGELOG.md`: `[Unreleased]` → `[X.Y.Z]`, comparison links updated
-4. `ROADMAP.md`: milestone moved to Shipped, "Last updated" bumped
+4. `ROADMAP.md`: shipped items removed from the open lists
 5. `README.md`: version badge
 6. Record significant release verification in the relevant host or maintenance record, when new evidence exists
-7. Every `🚧` re-checked for honesty; every `✅` re-checked against dependency updates
+7. `upstream-status.json` refreshed from the image scan and `LIFECYCLE.md` regenerated;
+   the stacks whose pin moved past their tested version read for likely breakage
 8. Tag, then `gh release create vX.Y.0 --draft` for minor versions — patch versions
    are git tags only
 

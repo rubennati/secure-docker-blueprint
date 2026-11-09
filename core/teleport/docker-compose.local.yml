@@ -4,7 +4,7 @@
 #   mkdir -p volumes/local/config volumes/local/data
 #   docker run --rm --entrypoint=/usr/local/bin/teleport \
 #     -v "$(pwd)/volumes/local/config:/etc/teleport" \
-#     public.ecr.aws/gravitational/teleport-distroless:18.11.8 \
+#     public.ecr.aws/gravitational/teleport-distroless:18.11.9 \
 #     configure --roles=proxy,auth > volumes/local/config/teleport.yaml
 #   sudo chown 0:0 volumes/local/data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d

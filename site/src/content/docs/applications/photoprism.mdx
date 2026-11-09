@@ -10,8 +10,7 @@ PhotoPrism indexes a photo library, classifies what is in the pictures, and
 recognises faces and places. Two containers — the Go server with its models, and
 MariaDB.
 
-<StackEvidence stack="apps/photoprism"
-  gap="everything below. The stack has never been brought up here: the first index run, the model download and the memory behaviour under large RAW or video files are read from the stack's files rather than observed." />
+<StackEvidence stack="apps/photoprism" />
 
 **To try it:** Docker, and the first start still downloads roughly 1 GB of classification models. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,15 @@ MariaDB.
 On your own machine, with no proxy, domain or certificate. From `apps/photoprism/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -hex 32)"
+  echo "ADMIN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -103,9 +110,11 @@ the server answers long before indexing works.
 ### Memory during indexing
 
 The indexer can reach several gigabytes while processing large RAW files or
-video. The stack sets no memory limit for that reason: a ceiling the indexer
-touches ends as an out-of-memory kill mid-run. Provide at least 4 GB of swap
-instead.
+video. `photoprism-app` runs with a 2 GB memory limit and no swap
+(`memswap_limit` equals the limit). A ceiling the indexer touches ends as an
+out-of-memory kill mid-run, so a library of large RAW files or video needs a
+higher limit: raise `memory` and `memswap_limit` together in
+`docker-compose.yml` and run `docker compose up -d`.
 
 ### Date-based versions
 
@@ -118,6 +127,17 @@ contains.
 Upstream works around an `io_uring` issue by running MariaDB with seccomp and
 AppArmor unconfined. This stack keeps the defaults; the block is present in
 `docker-compose.yml` and commented out, to be enabled only if that crash appears.
+
+### What it sends outward
+
+On first run and on renewal, PhotoPrism posts to `my.photoprism.app/v1/hello`
+with a **persistent client serial**, the version, the operating system, the
+architecture and the CPU core count. The serial does not rotate, so the vendor
+can follow this installation over time.
+
+**There is no supported way to switch it off.** `hub.Disable()` exists but is
+reachable only through the test configuration. Blocking it needs an egress rule
+on the host or the network.
 
 ## Backup
 
@@ -169,8 +189,10 @@ Restore order: database, then originals and sidecars, then the application.
 
 ## Troubleshooting
 
-**The indexer stops partway through a large file.** Out of memory. Add swap
-rather than a memory limit.
+**The indexer stops partway through a large file.** Out of memory against the
+2 GB limit — `docker inspect photoprism-app --format '{{.State.OOMKilled}}'`
+answers `true`. Raise the limit as under
+[Memory during indexing](#memory-during-indexing).
 
 **Login fails with the password from `.env`.** `ADMIN_PASSWORD` is read only at
 first start. If the stack has run before, the password is whatever is stored in

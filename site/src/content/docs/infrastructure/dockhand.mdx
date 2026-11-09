@@ -10,8 +10,7 @@ Dockhand deploys and updates Compose stacks by watching a Git repository: you
 push, it applies. Three containers — the interface, PostgreSQL, and a proxy that
 stands between it and the Docker daemon.
 
-<StackEvidence stack="core/dockhand"
-  gap="everything below. The stack has never been brought up here: the first login, adding the local environment through the socket proxy and a Git-driven deploy are read from the stack's files rather than observed." />
+<StackEvidence stack="core/dockhand" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,14 @@ stands between it and the Docker daemon.
 On your own machine, with no proxy, domain or certificate. From `core/dockhand/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -64,7 +70,9 @@ From `core/dockhand/`:
    docker compose up -d
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>` and create the first account.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>`. A new instance starts
+   without authentication: whoever reaches the route manages every connected
+   Docker host, so the VPN-only route is the only gate until step 6.
 
 5. Add the Docker environment when Dockhand asks for one. For the daemon on this
    host:
@@ -79,6 +87,13 @@ From `core/dockhand/`:
 
    Plain HTTP is correct here: the proxy is reachable only from containers on the
    stack's internal network, never from the host or the internet.
+
+6. Turn authentication on in Dockhand's settings and create your account.
+   Afterwards the session endpoint reports it:
+
+   ```bash
+   curl -s https://<APP_TRAEFIK_HOST>/api/auth/session   # "authEnabled":true
+   ```
 
 </Steps>
 
@@ -125,9 +140,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: dockhand
-      container: dockhand-db
       username: dockhand
-      password: "{credential file /srv/docker/core/dockhand/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec dockhand-db pg_dump
+      pg_restore_command: docker exec -i dockhand-db pg_restore
+      psql_command: docker exec -i dockhand-db psql
 ```
 
 **`encryption_key.txt` decrypts what the database holds.** A database restored
@@ -174,3 +191,9 @@ match the database.
 - [`core/dockhand/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dockhand/README.md) — setup, security model, the environment dialog
 - [`core/dockhand/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dockhand/UPSTREAM.md) — source and upgrade checklist
 - [`core/hawser/`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/hawser/README.md) — the agent for additional hosts
+
+## Official sources
+
+- [Dockhand on GitHub](https://github.com/Finsys/dockhand)
+- [Releases](https://github.com/Finsys/dockhand/releases)
+- [Licence](https://github.com/Finsys/dockhand/blob/main/LICENSE.md)

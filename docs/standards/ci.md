@@ -90,12 +90,10 @@ pattern; [`commit-rules.md`](commit-rules.md#public-content) covers them.
 
 ### 2 — Compose validation
 
-Runs `docker compose config --quiet` once per stack directory, over the 59
-directories `python3 scripts/ci/check-structure.py --list` reports. That is the
+Runs `docker compose config --quiet` once per stack directory, over every
+directory `python3 scripts/ci/check-structure.py --list` reports. That is the
 single discovery in this repository; jobs 2 and 3 and `check-baseline.py` all use
-it. The `find` this job used to run returned 56 files against the checkers' 71 —
-the fourteen Seafile split-compose fragments and `backup/urbackup` were never
-syntax-validated.
+it, so a split-compose fragment is validated like every other compose file.
 
 Validation is per directory rather than per file because a split-compose
 fragment does not stand alone: `apps/seafile/seadoc.yml` declares a service that
@@ -104,7 +102,9 @@ also picks up `COMPOSE_FILE` from the `.env`, so what parses is what the operato
 starts.
 
 Before validation, any `.env.example` in the same directory is temporarily
-copied to `.env` so variable substitution does not cause false failures.
+copied to `.env`, and every secret the compose file requires with `${VAR:?…}` —
+it ships empty — is filled with a stand-in value, as an operator fills it before
+the first start. Variable substitution then fails only on a real gap.
 
 **What it catches:** YAML syntax errors, unknown keys, missing required variables,
 invalid volume/network references.  
@@ -144,15 +144,11 @@ existing service the overlay weakens.
 
 ### 3 — Structure check
 
-Two checks run in one job:
-
 | Check | Rule |
 |---|---|
-| README + .env.example | Every directory containing a `docker-compose.yml` must have both files |
-| No `:latest` tags | `image:` lines must reference a pinned tag — `:latest` is forbidden |
+| README + .env.example | Every stack directory the discovery reports has both files |
 
-The `:latest` grep matches only real `image:` lines (leading whitespace required),
-so commented-out examples are not flagged.
+Tag pinning is job 6's rule, which also refuses major-only tags.
 
 **Blocks merge:** yes
 
@@ -261,17 +257,28 @@ reached the repository is a configuration nobody filled in.
 ### 6 — Canonical structure
 
 Runs `scripts/ci/check-structure.py`. Severity is per rule rather than per
-category: `:latest` or major-only tags, a plaintext secret in `.env.example`, a
-`.gitignore` that does not cover `.secrets/`, a datastore on `proxy-public`, a
-service without resource limits, and a memory limit without a stated swap policy
-(`memswap_limit`) all fail.
+category. These fail, among others:
+
+| Rule | What triggers it |
+|---|---|
+| `latest-tag` | a `:latest` or major-only tag |
+| `plaintext-secret` | a password, secret or token with a real value in `.env.example` |
+| `placeholder-secret` | a credential left as `__REPLACE_ME__` — a secret ships empty, and the compose file requires it with `${VAR:?Set VAR in .env}` |
+| `public-default` | an `access-public` default whose auth posture is not `public` and which carries no `# public by design: <reason>` line — a stack ships closed |
+| `auth-posture` | an `*_TRAEFIK_AUTH` variable without a `# auth posture:` line, a posture that does not fit the value, or `none` behind an open access policy |
+| `internal-port` | a published port on a service whose networks are all `internal: true` — Docker binds nothing for it |
+| `db-exposed` | a datastore on `proxy-public` or with a host port |
+| `gitignore-gap` | a `.gitignore` that does not cover `.env`, `.secrets/` or `volumes/` |
+| `no-resources`, `no-swap-policy` | a service without memory and pids limits, or a memory limit without `memswap_limit` |
+| `burst-exposure` | a whole-first-load rate-limit bucket behind an open access policy |
+
+The full list, with the warnings, is the checker's docstring.
 
 The tag rule reads **every committed `*.env*.example` file in a stack**, not just
 `.env.example`, and matches both pinning styles — `<NAME>_TAG` and the whole
-reference in `<NAME>_IMAGE`. Neither was true before: 84 example files were
-outside the check, and `APP_IMAGE=x:latest` passed where `APP_TAG=latest` failed,
-for the same defect. Someone evaluating a stack from the local path is the person
-least able to tell which version they ended up running. The structural rules —
+reference in `<NAME>_IMAGE`, so `APP_IMAGE=x:latest` fails like `APP_TAG=latest`.
+Someone evaluating a stack from the local path is the person least able to tell
+which version they ended up running. The structural rules —
 section order, `COMPOSE_PROJECT_NAME` first — still describe `.env.example`
 alone, because they describe that file's shape rather than reproducibility.
 
@@ -286,11 +293,12 @@ until each binds its port.
 `local-pin-drift` fails when a stack's local file pins a different version of an
 image its production file also pins. It joins on the image repository, so a
 local stack that deliberately runs a *different* image is never compared. The
-rule is in [`compose-structure.md`](compose-structure.md); the reason it needed
-a checker is that the Version Chain never named `.env.local.example`, so 41 pins
-drifted behind production without a decision. A missing healthcheck and `env_file:` are reported as
-warnings — the numeric values behind the limits still need measuring on a real
-host, which is v0.10.0; whether a policy is stated at all is settled.
+rule is in [`compose-structure.md`](compose-structure.md); it needs a checker
+because a local file's pin drifts behind production unnoticed when nothing
+compares the two. A missing healthcheck
+and `env_file:` are reported as warnings. That every service states its limits is
+enforced; the values follow
+[`compose-structure.md`](compose-structure.md#block-rules).
 
 **Blocks merge:** yes, on FAIL rules only
 
@@ -310,9 +318,8 @@ to claim (DEC-080).
 or origin, or when `sovereignty.json` is stale.
 
 `scripts/ci/security-coverage.py --check` fails when `docs/security-coverage.md`
-no longer matches the compose files it is counted from. The hardening figures
-were maintained by hand until then and went stale twice in three days, because a
-stack landing between two edits moves a denominator nobody remembers.
+no longer matches the compose files it is counted from: a stack that lands moves
+every denominator, so the figures are counted rather than typed.
 
 `scripts/ci/site-catalogue.py --check` fails when a stack has no `Domain` or
 `Role` in its `UPSTREAM.md`, when a catalogue entry names a stack that no longer
@@ -356,12 +363,12 @@ secrets.
 |---|---|---|
 | **FAIL** | `unchecked-dir` | A directory under a stack root holds tracked files and neither checker enumerates it |
 | **FAIL** | `unknown-root` | A tracked top-level directory is neither a stack root nor a declared non-stack area |
+| **FAIL** | `unlisted-stack` | A stack its category `README.md` does not link |
 | **WARN** | `structure-blind` | Covered by the lifecycle report only — no compose file, so tags and secrets are verified by hand |
 
 Adding a new top-level category therefore fails CI until the category is either
-added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason.
-Three coverage gaps surfaced by accident within one day, and each had let real
-stacks go unchecked for months.
+added to a checker's roots or declared in `NON_STACK_ROOTS` with the reason, so
+no stack can sit outside every check.
 
 **Blocks merge:** yes, on `dev` and on `main`.
 
@@ -369,14 +376,14 @@ stacks go unchecked for months.
 
 ### 9 — Docs QA
 
-Three checks over the documentation:
+Four checks over the documentation:
 
 | Check | Command | Scope |
 |---|---|---|
 | Markdown style | `npx markdownlint-cli2` | every tracked Markdown file |
 | Internal links and anchors | `scripts/ci/check-links.py` | relative paths and heading anchors — external URLs fail for reasons unrelated to the commit and are excluded |
 | Prose register | `scripts/ci/check-prose.py --hints` | every tracked Markdown file |
-| Checker regression tests | `python3 -m unittest discover -s scripts/ci` | the prose checker's own behaviour |
+| Checker regression tests | `python3 -m unittest discover -s scripts/ci` | every checker's own behaviour, one `test_*.py` per script |
 
 The regression tests do not read the Docker daemon of the machine they run on.
 Every test that runs `core/traefik/ops/scripts/validate.sh` passes it
@@ -447,6 +454,36 @@ runs inside job 4 on every pull request.
 
 ---
 
+## Outside the ten — `Trivy` and `Stack status`
+
+`.github/workflows/trivy.yml` runs on a pull request into `main`, on a push to
+`main`, weekly and on manual dispatch.
+
+- **IaC config scan** — `trivy config` over the repository, results to the GitHub
+  Security tab. Required on `main`.
+- **Image CVE scan** — every image the checkers discover, CRITICAL and HIGH, each
+  to its own report in the `trivy-image-scan-results` artifact, with a count-level
+  summary on the job page. A finding in an upstream image is information: it
+  appears in the summary, in the stack's `## Open findings` and in `LIFECYCLE.md`,
+  and blocks nothing ([DEC-079](../../.ai/decisions.md#dec-079)).
+  `scripts/ci/trivy-gate.py` names every CRITICAL finding that
+  `.trivy-baseline.json` does not record. The job fails only on the repository's
+  own errors: an exception without its reason, an unreadable report, an image
+  that left no trace. Not a required check.
+- **Stack status** — after the scan, outside pull requests,
+  `scripts/ci/upstream-status.py` writes per stack the pin and its release date,
+  the newest upstream release, an archived or quiet upstream and the findings at
+  the pin: to the pinned issue labelled `stack-status` on `main`, and to the
+  `stack-status` artifact as `upstream-status.json`, which the
+  [Version Chain](../maintenance.md#version-chain) commits. It decides nothing.
+
+Locally built images (`*-local:*`) are not pulled and therefore not scanned
+([`custom-application.md`](custom-application.md#what-verifies-this-and-what-does-not)).
+
+**Blocks merge:** the IaC config scan on `main`; nothing else.
+
+---
+
 ## Running locally
 
 ```bash
@@ -468,9 +505,9 @@ python3 scripts/ci/check-prose.py --changed-only --base HEAD
 Output:
 
 ```text
-  ✓ 48 files checked, no violations
+  ✓ <n> files checked, no violations
 
-  48 files  ·  0 failures  ·  0 warnings  ·  12 skipped
+  <n> files  ·  0 failures  ·  0 warnings  ·  <n> skipped
 ```
 
 Failures print the file, service, rule, and remediation hint.

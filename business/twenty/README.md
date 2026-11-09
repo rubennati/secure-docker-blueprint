@@ -51,7 +51,7 @@ The worker is on `app-internal` only, with no route out. That is enough for the
 CRM itself, but syncing a mailbox or a calendar from Google or Microsoft runs in
 the worker and needs to reach those providers. To use it, add the worker to a
 network with outbound access, the same way `apps/windmill` does for its workers.
-Not configured here, and not exercised.
+The shipped stack keeps the worker without a route out.
 
 ## Credentials
 
@@ -99,6 +99,8 @@ and the restore below. Full log in
 ```bash
 cp .env.local.example .env.local
 ops/init.sh
+mkdir -p volumes/redis
+sudo chown 999:999 volumes/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000 — sign up; the first account creates the workspace
 docker compose -f docker-compose.local.yml --env-file .env.local down

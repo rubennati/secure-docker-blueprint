@@ -606,7 +606,7 @@ networks:
     internal: true
 
   # Not internal: Docker publishes no port of a container that is attached only
-  # to internal networks (measured on Docker 29: no host binding at all). Only
+  # to internal networks (Docker 29 binds nothing on the host). Only
   # plane-proxy joins it, for its port; the other services stay on app-internal.
   published:
     name: plane-local-published

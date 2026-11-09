@@ -20,7 +20,14 @@ Attachments and images live in `./volumes/config/www/uploads/` (inside the LSIO 
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" >> .env.local
+
+mkdir -p volumes/local/config volumes/local/mysql
+sudo chown -R 1000:1000 volumes/local/config
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -73,7 +80,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/login    # 200 OK
 
 ## Security Model
 
-- **Default admin credentials must be changed on first login** — BookStack ships with `admin@admin.com` / `password`, and on the lab host (VM) at v26.09.2 that login reached the settings of a new instance. The route therefore ships at `access-vpn`: log in over the VPN, change the account, then open the route for readers.
+- **Default admin credentials must be changed on first login** — BookStack ships with `admin@admin.com` / `password`, and at v26.09.2 that login reaches the settings of a new instance. The route therefore ships at `access-vpn`: log in over the VPN, change the account, then open the route for readers.
 - **`APP_KEY`** encrypts sessions and password-reset tokens. Rotating invalidates all existing sessions (acceptable).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **MariaDB is on `app-internal` (`internal: true`)** — not reachable from outside the app.

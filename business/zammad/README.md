@@ -17,7 +17,7 @@ Heavy stack — 9 services. Upstream default deployment.
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
 | `db` | `postgres:18.6-alpine` | Primary data store |
 | `redis` | `redis:8.10.3-alpine` | Background job queue |
-| `memcached` | `memcached:1.6.41` | Rails cache |
+| `memcached` | `memcached:1.6.45` | Rails cache |
 | `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:9.5.6` | Full-text ticket search |
 
 ## Resource requirements
@@ -35,7 +35,12 @@ On a small VPS, consider `ELASTICSEARCH_ENABLED=false` — tickets will still wo
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/zammad-storage
+sudo chown 999:1000 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -73,7 +78,7 @@ docker compose logs railsserver --follow
 
 ## Security Model
 
-- **First-visit wizard creates the owner account** — until it has run (`/api/v1/getting_started` answers `setup_done: false` without authentication, measured on the lab host at 7.2.2), whoever opens the UI first becomes the owner. The route therefore ships at `access-vpn`: run the wizard over the VPN, then open it.
+- **First-visit wizard creates the owner account** — until it has run (`/api/v1/getting_started` answers `setup_done: false` without authentication at 7.2.2), whoever opens the UI first becomes the owner. The route therefore ships at `access-vpn`: run the wizard over the VPN, then open it.
 - **`DB_PWD_INLINE` duplicates the DB password** — Zammad reads `POSTGRESQL_PASS` from env only.
 - **Elasticsearch has no auth here** — it's on `app-internal` only, not reachable from outside. If you move it off-host, add xpack.security.
 - **`no-new-privileges:true`** on all services.

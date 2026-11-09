@@ -10,7 +10,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `uptime-kuma-app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
+| `uptime-kuma-app` | `louislam/uptime-kuma:2.5.9` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 
@@ -100,7 +100,7 @@ For the general SQLite restore procedure and verification checklist, see
 
 ## Known Issues
 
-- **The container runs as root.** Measured on 2.5.3: `dumb-init` and the server are uid 0, and the compose file drops no capability, so the data directory needs no particular owner and the server creates root-owned files in it (`docker-tls/`). A `user:` line would be the hardening step; it needs the data directory chowned to that user first and is not done here — the stack was verified as shipped.
+- **The container runs as root.** As of 2.5.3, `dumb-init` and the server are uid 0, and the compose file drops no capability, so the data directory needs no particular owner and the server creates root-owned files in it (`docker-tls/`). A `user:` line would be the hardening step; it needs the data directory chowned to that user first and is not done here — the stack was verified as shipped.
 - **No built-in backup** — stop the app, `cp -r volumes/data/` to backup target, start again. Do NOT `pg_dump`-style-dump a running SQLite DB.
 - **Heavy monitor counts (>500)** can cause SQLite contention. Switch to MariaDB if that becomes a problem (env: `UPTIME_KUMA_DB_TYPE=mariadb`).
 

@@ -23,10 +23,15 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
-docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:8080
-docker compose -f docker-compose.local.yml --env-file .env.local down
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'BOOTSTRAP_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/postgres volumes/local/data && sudo chown 1000:0 volumes/local/data
+docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080/admin — sign in as the bootstrap administrator
+docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local down
 ```
 
 `.env.local` holds plain values, not Docker Secrets — local only.
@@ -108,7 +113,7 @@ embedded outpost and the `auth-authentik@file` Traefik middleware do.
   `Permissions-Policy`, is the `header-permissions@file` block the compose
   file places *before* the profile: Traefik applies the response changes of
   the first middleware last, so a block placed after the profile would be
-  overwritten by it (measured on v3.6). The console stays protected by its
+  overwritten by it (as of v3.6). The console stays protected by its
   own CSP `frame-ancestors 'self'`, and the realm's *Security Defenses* tab
   owns the values. `frame-self@file` is not the answer: it sets `SAMEORIGIN`
   on every response, including `login-status-iframe.html`, which an

@@ -105,8 +105,24 @@ def _exception_count(table: dict) -> int:
     return sum(len(services) for services in table.values())
 
 
+def _sentinels_in(text: str) -> int:
+    """`__REPLACE_ME__` as the value of a variable, not in a comment.
+
+    A comment that names the placeholder — "this ships empty rather than as
+    __REPLACE_ME__" — is nothing an operator has to replace.
+    """
+    total = 0
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#") or "=" not in stripped:
+            continue
+        value = stripped.split("=", 1)[1].split(" #", 1)[0]
+        total += value.count("__REPLACE_ME__")
+    return total
+
+
 def sentinel_occurrences() -> int:
-    """`__REPLACE_ME__` across the committed `.env.example` files.
+    """`__REPLACE_ME__` values across the committed `.env.example` files.
 
     Counted over the deployable scope: it measures what an operator has to fill
     in, and nobody deploys the excepted directories.
@@ -119,7 +135,7 @@ def sentinel_occurrences() -> int:
         example = app / ENV_EXAMPLE
         if not example.exists():
             continue
-        total += example.read_text(encoding="utf-8", errors="replace").count("__REPLACE_ME__")
+        total += _sentinels_in(example.read_text(encoding="utf-8", errors="replace"))
     return total
 
 
@@ -233,7 +249,7 @@ def render(facts: dict) -> str:
         "|---|---|",
         f"| Network isolation — a network with `internal: true` "
         f"| {of_files(facts['structure']['internal-network'])} |",
-        f"| `__REPLACE_ME__` sentinels an operator must replace "
+        f"| `__REPLACE_ME__` values an operator must replace "
         f"| {facts['structure']['sentinels']} occurrences across `.env.example` files |",
         "",
         "## Soft controls",

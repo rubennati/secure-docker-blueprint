@@ -99,7 +99,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local up -d
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — both healthy — **verified locally, 2026-09-19**
 - [x] `GET /` returns 200 — **verified locally, 2026-09-19**

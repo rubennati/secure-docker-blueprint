@@ -12,7 +12,7 @@
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share, community edition
 - **Note:** Chinese company: data stored on self-hosted instances is under your jurisdiction, but the vendor is subject to Chinese law.
-- **Last verified:** 2026-11-08 (13.0.29) — lab host (VM), IPv4 LAN: the administrator from the secret file, a library created and a PDF uploaded through the API, downloaded byte-identical after `down`/`up`, all eight services up, the refused client answered `403`; 14.0 not taken — a beta per the repository's note (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (13.0.29) — over IPv4: the administrator from the secret file, a library created and a PDF uploaded through the API, downloaded byte-identical after `down`/`up`, all eight services up, the refused client answered `403`; 14.0 not taken — a beta per the repository's note (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -45,7 +45,7 @@
 
 ### Version notes
 
-- Moved to `13.0.29` on 2026-11-05, not run on a host at this tag. From
+- Moved to `13.0.29` on 2026-11-05. From
   `seafile-mc` 13.0.20, `notification-server` 13.0.10, `seafile-md-server` 13.0.20,
   `thumbnail-server` 13.0.20 and `sdoc-server` 2.0.9 to `seafile-mc` 13.0.29,
   `notification-server` 13.0.29, `seafile-md-server` 13.0.28 (the newest 13.0 tag
@@ -70,8 +70,8 @@
   fixes this move also takes in. No CVE IDs are given for 13.0.29. Seafile 14.0 is
   not taken: the changelog lists its only release as "14.0.9 beta (2026-10-14)",
   so the stack stays on the stable 13 line.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

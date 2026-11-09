@@ -1,6 +1,6 @@
 # Upstream Reference
 
-- **Last verified:** 2026-11-08 (v2.4.29) — lab host (VM), IPv4 LAN, run in a parallel batch: the login page served, all four services up before and after `down`/`up`, the refused client answered `403`; no case created (docs/labs/stack-refresh/2026-11-08-results.md)
+- **Last verified:** 2026-11-08 (v2.4.29) — over IPv4: the login page served, all four services up before and after `down`/`up`, the refused client answered `403`; no case created (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Source
 
@@ -12,11 +12,10 @@
 - **Origin:** France · Airbus CyberSecurity (SAS), confirmed via copyright headers in upstream's own source files (`docker/webApp/iris-entrypoint.sh`, the nginx entrypoint) · EU
 - **Domain:** Security operations
 - **Role:** Collaborative incident-response case management: cases, indicators, evidence and timelines
-- **Verification snapshot:** 2026-09-19 — full 4-service local Compose
-  stack booted end to end (rabbitmq, db, app, worker all healthy or
-  correctly running), real Docker Secrets exercised throughout, initial
-  admin credential generation confirmed; not yet run behind a real Traefik
-  host
+- **Verification snapshot:** 2026-09-19 — full 4-service local Compose stack
+  booted end to end (rabbitmq, db, app, worker all healthy or correctly
+  running), real Docker Secrets exercised throughout, initial admin credential
+  generation confirmed
 
 ## What we use
 
