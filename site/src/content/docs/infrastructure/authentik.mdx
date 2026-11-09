@@ -41,11 +41,11 @@ and Redis sit only on the stack's internal network. The worker also joins an
 outbound network, because it sends mail and runs the version check; nothing reaches it
 from outside.
 
-:::danger
-The first-run setup is open to anyone until an administrator exists — whoever
-reaches it first becomes the administrator. Complete it immediately after the
-first start, or start with `APP_TRAEFIK_ACCESS=access-vpn`, finish the setup from
-the VPN and only then switch to `access-public`.
+:::note
+The first-run setup lets whoever reaches it create the administrator. The
+deployed stack therefore ships with `APP_TRAEFIK_ACCESS=access-vpn`: you finish
+the setup over the VPN and open the route to `access-public` afterwards, because
+users must be able to log in from anywhere.
 :::
 
 ## Installation
@@ -84,10 +84,17 @@ From `core/authentik/`:
 
    Wait for `Startup complete`.
 
-4. Open the root URL `https://<APP_TRAEFIK_HOST>/`, which starts the setup
-   flow, and create the administrator now. Authentik 2026.5 refuses
+4. Over the VPN, open the root URL `https://<APP_TRAEFIK_HOST>/`, which starts
+   the setup flow, and create the administrator. Since 2026.5 Authentik refuses
    `/if/flow/initial-setup/` when it is opened directly. The flow stops working
    once an administrator exists.
+
+5. Open the route, so users can log in from anywhere:
+
+   ```bash
+   sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-public/' .env
+   docker compose up -d
+   ```
 
 </Steps>
 
@@ -143,13 +150,12 @@ and without a valid session).
 The middleware address does not have to be on this host. One Authentik instance
 can protect services on several machines, as long as Traefik can reach it.
 
-:::note[Open: OIDC with Authentik behind a closed route]
+:::note[OIDC needs Authentik on its public route]
 Applications that log in through OpenID Connect themselves — Nextcloud,
 Paperless-ngx, Vikunja — call Authentik's public name from their own server
-container, not only from the browser. Authentik ships `access-public`, and that
-path works. With Authentik restricted to the VPN, how those server-side calls
-reach it is not decided yet; the variants are recorded as an open decision and
-none is documented as the setup.
+container, not only from the browser. That works with Authentik on
+`access-public`, as step 5 sets it. A setup that keeps Authentik restricted to
+the VPN while applications use OIDC is outside what this guide covers.
 :::
 
 The per-application steps, including the variant that protects only part of a

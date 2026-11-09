@@ -124,14 +124,36 @@ Buypass as alternatives. ZeroSSL registers the address in `ACME_EMAIL` first.
 
 | | |
 |---|---|
-| **State** | `volumes/output/` — the issued certificates and their private keys · the acme.sh account data |
+| **State** | `volumes/acme/` — the acme.sh account key and the issued certificate store |
 | **Also needed** | `.secrets/cf_token.txt` |
+| **Reproducible** | `volumes/output/` — rendered from `volumes/acme/` on the next issue or renewal |
 | **Database** | None. |
 
-The private keys under `volumes/output/` are what a device is trusting. They can
-be reissued from scratch, so losing them costs a round of uploads rather than
-data — but anyone who reads them can impersonate the device until the
-certificates expire.
+The account key in `volumes/acme/` is the part that matters. Certificates can
+always be reissued; a lost account key means registering again with the CA and
+losing the issuance history and rate-limit standing tied to it. It is small and
+almost never changes, which makes it easy to leave out of a backup.
+
+The private keys in both folders are what a device is trusting: anyone who reads
+them can impersonate the device until the certificates expire.
+
+**Restore order:** restore `volumes/acme/` and the token, then let the tool
+regenerate `volumes/output/` rather than restoring it.
+
+## Updates
+
+The image is this project's own build of acme.sh; there is no third-party
+release feed for it.
+
+```bash
+# Bump APP_TAG in .env, then:
+docker compose pull
+docker compose up -d
+docker compose exec acme-certs acme.sh --version
+```
+
+Changes in the bundled client are listed in the
+[acme.sh releases](https://github.com/acmesh-official/acme.sh/releases).
 
 ## Troubleshooting
 

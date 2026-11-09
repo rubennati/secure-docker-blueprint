@@ -70,7 +70,9 @@ From `core/dockhand/`:
    docker compose up -d
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>` and create the first account.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>`. A new instance starts
+   without authentication: whoever reaches the route manages every connected
+   Docker host, so the VPN-only route is the only gate until step 6.
 
 5. Add the Docker environment when Dockhand asks for one. For the daemon on this
    host:
@@ -85,6 +87,13 @@ From `core/dockhand/`:
 
    Plain HTTP is correct here: the proxy is reachable only from containers on the
    stack's internal network, never from the host or the internet.
+
+6. Turn authentication on in Dockhand's settings and create your account.
+   Afterwards the session endpoint reports it:
+
+   ```bash
+   curl -s https://<APP_TRAEFIK_HOST>/api/auth/session   # "authEnabled":true
+   ```
 
 </Steps>
 
@@ -182,3 +191,9 @@ match the database.
 - [`core/dockhand/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dockhand/README.md) — setup, security model, the environment dialog
 - [`core/dockhand/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/dockhand/UPSTREAM.md) — source and upgrade checklist
 - [`core/hawser/`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/hawser/README.md) — the agent for additional hosts
+
+## Official sources
+
+- [Dockhand on GitHub](https://github.com/Finsys/dockhand)
+- [Releases](https://github.com/Finsys/dockhand/releases)
+- [Licence](https://github.com/Finsys/dockhand/blob/main/LICENSE.md)

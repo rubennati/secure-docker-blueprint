@@ -67,10 +67,9 @@ install separately — blocks them, either inside the proxy or at the host
 firewall.
 
 The scoping matters more here than the feature list. Behind a VPN-only access
-policy CrowdSec sees almost nothing, because the requests are refused before they
-reach a log it reads: 120 requests against a VPN-only host move its counter by
-about three. It earns its place the moment a service faces
-the open internet, and not much before.
+policy CrowdSec sees almost nothing: 120 requests against a VPN-only host move
+its counter by about three, and none of them got through either. It earns its
+place the moment a service faces the open internet, and not much before.
 
 [CrowdSec — intrusion detection →](/infrastructure/crowdsec/)
 
