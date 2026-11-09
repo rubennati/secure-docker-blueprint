@@ -166,9 +166,9 @@ docker exec crowdsec cscli decisions list --ip <their address>   # expect nothin
 Most such decisions did not originate on your server: the engine subscribes to a
 community blocklist of roughly 15,000 addresses, and a shared mobile carrier
 address or a VPN exit can carry a legitimate visitor with it. If a decision
-survives the delete, it came from one of those other origins — see
-[the CrowdSec guide](/infrastructure/crowdsec/#troubleshooting) for how to widen
-the removal, and why that step deserves a look before you run it.
+comes back after the delete, deleting harder is not the fix: find out where it
+comes from, and exempt the address with an allowlist, which covers every origin —
+see [the CrowdSec guide](/infrastructure/crowdsec/#troubleshooting).
 
 ## Layer 5 — TLS and DNS
 

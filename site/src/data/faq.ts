@@ -92,7 +92,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Can I try a service without setting up a server?',
         answer:
-          'Yes, for most stacks. They carry a second Compose file that runs the application on one machine, without a domain, TLS or a reverse proxy, and every guide whose stack has one starts with it under Try it locally. It is for trying the application out, not for running it: its values sit in a plain env file rather than in Docker Secrets.',
+          'Yes, for most stacks. They carry a second Compose file that runs the application on one machine, without a domain, TLS or a reverse proxy, and every guide whose stack has one starts with it under Try it locally. The block generates the secrets the stack needs, which ship empty, into that file. It is for trying the application out, not for running it: its values sit in a plain env file rather than in Docker Secrets.',
       },
       {
         question: 'Can I deploy only some services to a new server?',

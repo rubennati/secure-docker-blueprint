@@ -10,17 +10,19 @@ A service set up from this blueprint sits behind a reverse proxy on its own
 network, with its credentials mounted as files rather than set in the
 environment, and a backup you have restored from at least once.
 
-No web application here publishes a port; the proxy does. (A few stacks whose
-protocol is not HTTP — UniFi, OpenCanary, the access gateways — publish their
-own, on a host address you set.) That single
+No web application here publishes a port; the proxy does. (The stacks whose
+protocol is not HTTP — UniFi, OpenCanary, the mail servers, the access gateways
+and a few more — publish their own, on a host address you set; Healthchecks
+publishes one on loopback only.) That single
 decision is what makes the rest of it manageable — one place for certificates,
 one place for access rules, one place to look when something is unreachable.
 
 ## Only trying an application
 
 Most applications run on your own machine first, with Docker alone — no server,
-proxy, domain or certificate. Each guide's *Try it locally* section has the two
-commands and the address. That shows the application, not the protection around
+proxy, domain or certificate. Each guide's *Try it locally* section has the
+commands — copy the env file, generate the secrets it needs, start — and the
+address. That shows the application, not the protection around
 it; the path below is for a server.
 
 ## The path, in the order it has to happen
