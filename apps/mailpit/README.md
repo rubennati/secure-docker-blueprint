@@ -43,8 +43,10 @@ mkdir -p volumes/data
 
 # 3. The UI and API login — a bcrypt htpasswd, one user per line (MP_UI_AUTH_FILE)
 mkdir -p .secrets && chmod 700 .secrets
-docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$(openssl rand -base64 24)" > .secrets/mailpit_htpasswd.txt
-chmod 600 .secrets/mailpit_htpasswd.txt     # keep the password from that line in your password manager
+MP_PW="$(openssl rand -base64 24)"; echo "$MP_PW"   # the password for user ops — store it now, it is not shown again
+docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$MP_PW" > .secrets/mailpit_htpasswd.txt
+unset MP_PW
+chmod 600 .secrets/mailpit_htpasswd.txt
 
 # 4. Start
 docker compose up -d

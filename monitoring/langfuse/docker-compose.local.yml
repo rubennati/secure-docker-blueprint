@@ -281,7 +281,7 @@ services:
       start_period: 10s
 
   minio:
-    image: quay.io/minio/minio:${MINIO_TAG}
+    image: pgsty/silo:${SILO_TAG}
     container_name: langfuse-local-minio
     restart: unless-stopped
     user: "1000:1000"
@@ -299,7 +299,7 @@ services:
           pids: 200
         reservations:
           memory: 128m
-    entrypoint: ["/bin/sh", "-c", "mkdir -p /data/langfuse && exec minio server --address :9000 --console-address :9001 /data"]
+    entrypoint: ["/bin/sh", "-c", "mkdir -p /data/langfuse && exec silo server --address :9000 --console-address :9001 /data"]
     environment:
       MINIO_ROOT_USER: ${MINIO_USER}
       MINIO_ROOT_PASSWORD_FILE: /run/secrets/MINIO_PASSWORD
@@ -312,7 +312,7 @@ services:
       - /tmp
     networks: [langfuse-local]
     healthcheck:
-      test: ["CMD", "mc", "ready", "local"]
+      test: ["CMD", "silo", "healthcheck", "ready"]
       interval: 30s
       timeout: 10s
       retries: 5

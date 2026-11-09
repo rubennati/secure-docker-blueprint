@@ -30,6 +30,8 @@ configuration.
 
 ```bash
 cp .env.example .env            # host name, the two account names
+# ops/init.sh runs the image through docker compose, which needs kopia-edge:
+# list it in core/traefik/.env EDGE_NETWORKS, render and recreate Traefik first
 ops/init.sh                     # passwords, the server certificate, the repository
 docker compose up -d
 docker compose logs kopia-server --follow    # watch for: SERVER ADDRESS: https://[::]:51515
@@ -59,7 +61,7 @@ On the machine itself, with Kopia installed there:
 
 ```bash
 kopia repository connect server \
-    --url https://kopia.example.com \
+    --url https://kopia.example.com:443 \
     --override-username laptop --override-hostname alice
 kopia snapshot create /home/alice
 ```

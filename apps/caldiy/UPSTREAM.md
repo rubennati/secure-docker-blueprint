@@ -13,7 +13,7 @@
 - **Origin:** Fork · rubennati · upstream: US · Cal.com Inc · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Appointment booking pages, the community edition of Cal.com
-- **Last verified:** 2026-07-26 (v6.2.0-3). The database image moved from `postgres:17.4` to `17.11` on a live host on 2026-09-13 — same major, data directory reused, application healthy afterwards; the application pin itself was not re-verified.
+- **Last verified:** 2026-11-08 (v6.2.0-6) — lab host (VM), IPv4 LAN: VAPID keys generated as `.env.example` describes, the first owner created through the setup API, a second setup answered `No setup needed.` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Why a fork?
 

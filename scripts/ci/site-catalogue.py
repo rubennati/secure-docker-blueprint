@@ -100,7 +100,7 @@ INFRASTRUCTURE = {
     "postgres": "PostgreSQL", "pgvector": "PostgreSQL", "pgautoupgrade": "PostgreSQL",
     "timescale": "PostgreSQL", "mariadb": "MariaDB", "mysql": "MySQL", "percona": "MySQL",
     "redis": "Redis", "valkey": "Valkey", "memcached": "Memcached",
-    "minio": "object storage", "seaweedfs": "object storage",
+    "minio": "object storage", "silo": "object storage", "seaweedfs": "object storage",
     "elasticsearch": "Elasticsearch", "opensearch": "OpenSearch",
     "clickhouse": "ClickHouse", "rabbitmq": "RabbitMQ", "mongo": "MongoDB",
     "nats": "NATS", "kafka": "Kafka", "qdrant": "Qdrant", "weaviate": "Weaviate",

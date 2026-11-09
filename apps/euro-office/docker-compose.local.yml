@@ -12,11 +12,16 @@ services:
     container_name: euro-office-local-app
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    # The production wrapper: it creates the log directories an empty bind mount
+    # hides (nginx exits without /var/log/euro-office/documentserver), then execs
+    # the image's own start script. JWT stays off here, so it exports no secret.
+    entrypoint: ["/bin/bash", "/config/entrypoint.sh", "/entrypoint.sh"]
     environment:
       JWT_ENABLED: "false"
       WOPI_ENABLED: "true"
       TZ: ${TZ}
     volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/local/data:/var/www/euro-office/Data
       - ./volumes/local/logs:/var/log/euro-office
     ports:

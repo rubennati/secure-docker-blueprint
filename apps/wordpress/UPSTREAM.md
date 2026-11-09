@@ -9,7 +9,7 @@
 - **Origin:** US · Automattic / WordPress Foundation · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Content management system for sites and blogs
-- **Last checked:** 2026-04-15
+- **Last verified:** 2026-11-08 (7.1.4-php8.3-apache) — lab host (VM), IPv4 LAN, at the closed default: the installer run, the administrator logged in before and after `down`/`up`, the REST index answering, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

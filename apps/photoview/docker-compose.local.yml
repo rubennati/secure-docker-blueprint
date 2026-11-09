@@ -2,6 +2,7 @@
 #
 #   cp .env.local.example .env.local
 #   mkdir -p ./volumes/local/photos
+#   sudo chown -R 999:999 volumes/local/media-cache
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   http://localhost:8080
 #   docker compose -f docker-compose.local.yml --env-file .env.local down

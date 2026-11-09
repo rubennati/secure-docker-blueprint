@@ -737,10 +737,10 @@ docker exec crowdsec cscli lapi status
 
 # What port is configured?
 grep CROWDSEC_LAPI_PORT .env
-# Default: CROWDSEC_LAPI_PORT=8080
+# Default: CROWDSEC_LAPI_PORT=8081
 
 # Is the LAPI port exposed on the host?
-# Replace 8080 with the value from CROWDSEC_LAPI_PORT if changed
+# Replace 8081 with the value from CROWDSEC_LAPI_PORT if changed
 ss -tlnp | grep "$(grep CROWDSEC_LAPI_PORT .env | cut -d= -f2)"
 # Expected: 127.0.0.1:<port> listening
 ```
@@ -801,7 +801,7 @@ sudo journalctl -u crowdsec-firewall-bouncer -n 30
 # 2. Can the bouncer reach the LAPI?
 docker exec crowdsec cscli lapi status
 ss -tlnp | grep "$(grep CROWDSEC_LAPI_PORT .env | cut -d= -f2)"
-# Default port is 8080 — check .env if different
+# Default port is 8081 — check .env if different
 
 # 3. API key still valid?
 docker exec crowdsec cscli bouncers list

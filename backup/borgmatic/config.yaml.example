@@ -203,6 +203,9 @@ checks:
 # so. Both services below are already in this blueprint under monitoring/.
 # Use one; two is noise.
 
+# A monitoring/healthchecks on this same host: ping its loopback port,
+# http://127.0.0.1:8001/ping/<uuid> (HC_LOCAL_PORT) — through the public name a
+# closed access policy refuses the host. Verified with borgmatic 2.2.0.
 healthchecks:
     ping_url: https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000
     states:

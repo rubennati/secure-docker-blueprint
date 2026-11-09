@@ -1,6 +1,8 @@
 # OpnForm — local
 #
 #   cp .env.local.example .env.local
+#   mkdir -p volumes/local/redis
+#   sudo chown 999:1000 volumes/local/redis
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   docker compose -f docker-compose.local.yml --env-file .env.local logs -f api
 #   http://localhost:8080
@@ -197,6 +199,8 @@ services:
       api: {condition: service_started}
       ui: {condition: service_started}
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]   # the master chowns its cache directories and the workers switch to uid 101 (measured)
     environment:
       NGINX_MAX_BODY_SIZE: ${NGINX_MAX_BODY_SIZE:-64m}
     volumes:

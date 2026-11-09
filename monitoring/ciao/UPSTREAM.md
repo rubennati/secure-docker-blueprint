@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (1.12.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the dashboard behind its basicAuth gate (`200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/brotandgames/ciao

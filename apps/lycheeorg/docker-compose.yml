@@ -178,11 +178,11 @@ services:
 
     # --- Storage ---
     volumes:
-      - ./volumes/conf:/conf
-      - ./volumes/uploads:/uploads
-      - ./volumes/sym:/sym
-      - ./volumes/logs:/logs
-      - ./volumes/tmp:/lychee-tmp
+      # The v7 image's paths (upstream docker-compose.yaml); /conf, /uploads and
+      # /sym were the v6 image's and are no longer read.
+      - ./volumes/uploads:/app/public/uploads
+      - ./volumes/logs:/app/storage/logs
+      - ./volumes/tmp:/app/storage/tmp
 
     # --- Health & Observability ---
     # healthcheck: inherited from the image, which declares its own.

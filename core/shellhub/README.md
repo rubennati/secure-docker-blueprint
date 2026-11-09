@@ -42,9 +42,13 @@ openssl rand -hex 32 > .secrets/db_pwd.txt
 ssh-keygen -t rsa -b 4096 -m PEM -f .secrets/ssh_private_key -N ""
 openssl genrsa -out .secrets/api_private_key 4096
 openssl rsa -in .secrets/api_private_key -pubout -out .secrets/api_public_key
+# server and gateway run as root without capabilities (no DAC_OVERRIDE): a
+# 0600 key owned by your user is unreadable to them — hand both keys to root
+sudo chown 0:0 .secrets/api_private_key .secrets/ssh_private_key
+sed -i "s|^SHELLHUB_POSTGRES_PASSWORD=.*|SHELLHUB_POSTGRES_PASSWORD=$(cat .secrets/db_pwd.txt)|" .env
 ```
 
-Copy `.secrets/db_pwd.txt`'s contents into `.env` as
+The `sed` line copies `.secrets/db_pwd.txt`'s contents into `.env` as
 `SHELLHUB_POSTGRES_PASSWORD` — see `.env.example`'s Secrets section for why
 this one value cannot be a Docker Secret on the `server`/`gateway` side even
 though the database itself uses one.
@@ -121,9 +125,12 @@ login here.
 ```yaml
 postgresql_databases:
   - name: shellhub
-    container: shellhub-db
 source_directories:
     - /srv/docker/core/shellhub/.secrets
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec shellhub-db pg_dump
+    pg_restore_command: docker exec -i shellhub-db pg_restore
+    psql_command: docker exec -i shellhub-db psql
 ```
 
 For the general PostgreSQL restore procedure and verification checklist, see

@@ -2,6 +2,7 @@
 #
 #   cp .env.local.example .env.local
 #   mkdir -p volumes/local/etc volumes/local/datastore
+#   sudo chown 0:0 volumes/local/etc volumes/local/datastore
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   https://localhost:8889 — admin / (the password you set)
 #   docker compose -f docker-compose.local.yml --env-file .env.local down

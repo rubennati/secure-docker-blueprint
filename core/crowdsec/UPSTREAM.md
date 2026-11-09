@@ -11,7 +11,7 @@
 - **Origin:** France · CrowdSec SAS · EU
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced
-- **Last verified:** 2026-11-01 (v1.7.8) — lab host: engine on `crowdsec-security` only, the Traefik access log acquired, the Traefik bouncer plugin v1.7.1 pulling, a `cscli` ban enforced and lifted per address family, the AppSec virtual-patching rule answering 403, fail-open with the engine stopped; no firewall bouncer (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-09 (v1.8.2) — lab host (VM), IPv4 LAN: the Traefik bouncer pulling decisions, the AllowList applied from `ops/allowlist.sh` after its correction, a manual decision against an allowlisted address measured, the same after `down`/`up` and a reboot
 
 ## Architecture
 
@@ -26,7 +26,7 @@
 | Change | Reason |
 |--------|--------|
 | Relative Traefik log path | `../traefik/volumes/logs` — works when both are in `core/` |
-| LAPI on localhost only | `127.0.0.1:8080` — not exposed to network |
+| LAPI on localhost only | `127.0.0.1:8081` — not exposed to network; 8081 on the host because `apps/unifi` publishes 8080 (device inform). Inside the container the LAPI stays on 8080 |
 | `no-new-privileges` | Security hardening |
 | Custom acquis.yaml + appsec.yaml | Mounted read-only for reproducibility |
 | AppSec on `0.0.0.0:7422` | Upstream defaults to `127.0.0.1:7422`, which assumes the web server shares the host. Traefik is a separate container here, so a loopback bind is unreachable. Membership of `crowdsec-security` takes over the boundary the loopback bind provides upstream. |

@@ -442,7 +442,7 @@ The key is shown once. To replace a lost one, delete the entry and add it again.
 In the `.yaml.local` override:
 
 ```yaml
-api_url: http://127.0.0.1:8080/
+api_url: http://127.0.0.1:8081/   # CROWDSEC_LAPI_PORT — the package's own default is 8080
 api_key: <key from step 2>
 mode: nftables
 deny_action: DROP

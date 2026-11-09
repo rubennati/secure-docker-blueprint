@@ -34,15 +34,20 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Edit: APP_TRAEFIK_HOST, TZ
+# Edit: APP_TRAEFIK_HOST, TZ, NC_ADMIN_EMAIL and NC_ADMIN_PASSWORD — NocoDB
+#   refuses to start while NC_ADMIN_EMAIL is set and the password is empty
+#   (min 8 characters, an uppercase letter, a number and a special character)
 
 # 2. Generate JWT secret
 mkdir -p .secrets
 openssl rand -hex 64 > .secrets/nc_jwt_secret.txt
 # This encrypts every API token NocoDB issues. Back it up off-host.
 
-# 3. Create data volume
+# 3. Create data volume. NocoDB runs as root without capabilities
+#    (cap_drop: ALL, no DAC_OVERRIDE), so root may not write into a
+#    directory another user owns — hand it to root
 mkdir -p volumes/data
+sudo chown 0:0 volumes/data
 
 # 4. Start
 docker compose up -d

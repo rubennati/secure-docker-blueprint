@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v2.4.29) — lab host (VM), IPv4 LAN, run in a parallel batch: the login page served, all four services up before and after `down`/`up`, the refused client answered `403`; no case created (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/dfir-iris/iris-web/pkgs/container/iriswebapp_app

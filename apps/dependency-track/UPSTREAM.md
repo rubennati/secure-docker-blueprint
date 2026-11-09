@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (5.2.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the API on its own host name answered its version, the default `admin`/`admin` refused until changed, frontend and API up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/DependencyTrack/dependency-track/pkgs/container/apiserver · https://github.com/DependencyTrack/dependency-track/pkgs/container/frontend

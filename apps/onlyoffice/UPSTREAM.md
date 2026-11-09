@@ -11,7 +11,7 @@
 - **Origin:** Latvia · Ascensio System SIA · EU
 - **Domain:** Documents and e-signature
 - **Role:** Document editing server for Nextcloud, Seafile and similar
-- **Last verified:** 2026-11-02 (9.4.0) — lab host on its edge network: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud (`office.yml`) and Seafile CE and Pro (`onlyoffice-callback.yml`), and from a JWT-signed editor page; the command service and conversion refuse a missing or foreign token; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-06-14
+- **Last verified:** 2026-11-08 (10.0.0) — lab host (VM), IPv4 LAN: `/healthcheck` true before and after `down`/`up`; the route is public by design, so check 3's refusal does not apply, and both the conversion and the command service refused a request without a JWT; no editor session with a consuming app (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

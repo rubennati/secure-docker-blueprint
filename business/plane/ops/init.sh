@@ -37,7 +37,7 @@ unset MQ_PWD
 openssl rand -hex 32 | tr -d '\n' > .secrets/secret_key.txt
 openssl rand -hex 32 | tr -d '\n' > .secrets/live_server_secret_key.txt
 
-# MinIO. Upstream's defaults are literally `access-key` and `secret-key`.
+# Silo. Upstream's defaults are literally `access-key` and `secret-key`.
 openssl rand -hex 12 | tr -d '\n' > .secrets/aws_access_key_id.txt
 openssl rand -hex 32 | tr -d '\n' > .secrets/aws_secret_access_key.txt
 

@@ -42,10 +42,15 @@ cp .env.example .env
 mkdir -p .secrets volumes/postgres volumes/recordings volumes/hostkey
 openssl rand -hex 32 > .secrets/db_pwd.txt
 openssl rand -hex 32 > .secrets/jwt_secret.txt
+# The app runs as root without capabilities (no DAC_OVERRIDE): hand it the
+# directories it writes, or it cannot save its SSH host key
+sudo chown 0:0 volumes/recordings volumes/hostkey
+sed -i "s|^ORION_JWT_SECRET=.*|ORION_JWT_SECRET=$(cat .secrets/jwt_secret.txt)|" .env
+sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(cat .secrets/db_pwd.txt)|" .env
 ```
 
-Copy `.secrets/jwt_secret.txt`'s contents into `.env` as `ORION_JWT_SECRET`,
-and `.secrets/db_pwd.txt`'s contents into `.env` as `POSTGRES_PASSWORD` —
+The two `sed` lines copy `.secrets/jwt_secret.txt` into `.env` as `ORION_JWT_SECRET`
+and `.secrets/db_pwd.txt` as `POSTGRES_PASSWORD` —
 see `.env.example`'s Secrets section for why this one value has to match a
 Docker Secret's contents by hand rather than reference it directly.
 
@@ -123,9 +128,12 @@ evidence.
 ```yaml
 postgresql_databases:
   - name: orionbelt
-    container: orion-belt-db
 source_directories:
     - /srv/docker/core/orion-belt/volumes/hostkey
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec orion-belt-db pg_dump
+    pg_restore_command: docker exec -i orion-belt-db pg_restore
+    psql_command: docker exec -i orion-belt-db psql
 ```
 
 For the general PostgreSQL restore procedure and verification checklist, see

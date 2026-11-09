@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (4.39.28) — lab host (VM), IPv4 LAN, run in a parallel batch: `/api/health` OK through the route, all three services up before and after `down`/`up`, the refused client answered `403`; no login flow driven (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/authelia/authelia

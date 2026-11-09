@@ -81,8 +81,15 @@ services:
         # where 38 services all answered to `app`.
         aliases:
           - crowdsec
+    # LAPI for the optional host-firewall bouncer only. Bound to 127.0.0.1, so
+    # only the host itself reaches it, never the LAN or the internet. The bouncer
+    # is a package on the host: it cannot resolve the Docker name `crowdsec` and
+    # the container has no fixed address. Traefik does not use this port; it
+    # reaches the LAPI over crowdsec-security at crowdsec:8080. Without the
+    # firewall bouncer this entry can be removed. Host port 8081 by default, so
+    # it does not collide with apps/unifi's inform port 8080 (README, "LAPI port
+    # on the host").
     ports:
-      # LAPI on localhost only — for the host-firewall remediation bouncer
       - "127.0.0.1:${CROWDSEC_LAPI_PORT}:8080"
 
     # --- Health & Observability ---

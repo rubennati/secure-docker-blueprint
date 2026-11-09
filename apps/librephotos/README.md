@@ -94,9 +94,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 ```yaml
 postgresql_databases:
     - name: librephotos
-      container: librephotos-db
       username: librephotos
-      password: "{credential file /srv/docker/apps/librephotos/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec librephotos-db pg_dump
+      pg_restore_command: docker exec -i librephotos-db pg_restore
+      psql_command: docker exec -i librephotos-db psql
 ```
 
 **`SCAN_DIRECTORY` points outside the stack directory** and holds the only

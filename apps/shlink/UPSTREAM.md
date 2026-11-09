@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (5.1.8) — lab host (VM), IPv4 LAN, run in a parallel batch: a short URL created through the REST API with the initial key and redirecting with `302` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/shlinkio/shlink/pkgs/container/shlink

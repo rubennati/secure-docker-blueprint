@@ -9,7 +9,7 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Dockhand, connecting outbound so the managed host publishes no port
-- **Last checked:** 2026-04-14
+- **Last verified:** 2026-11-08 (0.2.53) — Hawser in edge mode in the lab container (LXC, unprivileged), managed from Dockhand v1.0.57 on the lab host (VM): `connected: true` over `wss://` through Traefik, containers listed, a log read, one stopped and started, reconnected by itself after Dockhand's `down`/`up`; no port published on the agent host (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we changed and why
 

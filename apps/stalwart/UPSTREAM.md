@@ -13,7 +13,7 @@
 - **Origin:** United States and United Kingdom · Stalwart Labs LLC · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail and collaboration server — SMTP, IMAP, JMAP, calendars, contacts and files in one binary
-- **Last verified:** not yet — needs a host with port 25 open and public DNS
+- **Last verified:** 2026-11-08 (v1.0.3) — lab host (VM), IPv4 LAN, run in a parallel batch: the readiness check and the web admin served through the route before and after `down`/`up`, the refused client answered `403`; inbound mail impossible on this host and the management API not driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 Part of the development was funded through NLnet's NGI0 funds.
 

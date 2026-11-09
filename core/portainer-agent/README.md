@@ -33,7 +33,7 @@ Parallel to [`core/hawser/`](../hawser/) (the Dockhand agent). Pick whichever UI
 
 ### Step 1 — Expose port 8000 on the central Portainer host
 
-In `core/portainer/docker-compose.yml` on the host where central Portainer runs, add under the `app` service `# --- Networking ---` block:
+In `core/portainer/docker-compose.yml` on the host where central Portainer runs, add under the `portainer-app` service `# --- Networking ---` block:
 
 ```yaml
     ports:
@@ -45,7 +45,7 @@ Bind to the Tailscale / WireGuard interface only — never `0.0.0.0`. Port 8000 
 Apply and verify:
 
 ```bash
-docker compose up -d --force-recreate app
+docker compose up -d --force-recreate portainer-app
 ss -tlnp | grep 8000
 # Expected: LISTEN ... <your-tailscale-ip>:8000 ...
 ```

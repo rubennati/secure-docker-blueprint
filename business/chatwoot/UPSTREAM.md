@@ -12,7 +12,7 @@
 - **Domain:** Business operations
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox
 - **Edition gating:** everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
-- **Last verified:** 2026-09-22 (v4.18.0) — behind Traefik with TLS: the onboarding, the dashboard and its websocket, the API, a website widget, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (4.19.1) — lab host (VM), IPv4 LAN: the onboarding form created the administrator, a sign-in through the API before and after `down`/`up`, sidekiq healthy, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the governing-law clause of Chatwoot's terms of service
 (State of California).

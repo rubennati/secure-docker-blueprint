@@ -11,7 +11,7 @@
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Wiki with structure: shelves, books, chapters and pages
-- **Last verified:** 2026-05-03 (v25.02)
+- **Last verified:** 2026-11-08 (version-v26.09.2) — lab host (VM), IPv4 LAN: the stack started with an application key from the image's `appkey`, the default administrator logged in and reached the settings (the route now ships closed because of it), the login page served after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

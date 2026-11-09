@@ -10,7 +10,7 @@
 - **Origin:** France · Julien Nahum · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder with shareable forms and submissions
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (2.8.4) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 16.15, Redis with cap_drop): the first account registered and logged in through the API, a second registration refused, `/api/healthcheck` 200, the refused client answered `403`, login again after `down`/`up`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

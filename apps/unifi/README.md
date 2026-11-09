@@ -66,7 +66,7 @@ curl -fsSIk https://<APP_TRAEFIK_HOST>/manage/account/login    # 200 OK
 ## Security Model
 
 - **`MONGO_INITDB_ROOT_PASSWORD_FILE`** — Mongo root password is a Docker Secret; never lands in `.env`.
-- **Separate application user** — the controller uses its own MongoDB user (`unifi-app`) with `dbOwner` only on the `unifi` and `unifi_stat` databases. The Mongo root account is used only for one-time init.
+- **Separate application user** — the controller uses its own MongoDB user (`unifi-app`) with `dbOwner` only on the `unifi`, `unifi_stat` and `unifi_audit` databases. The Mongo root account is used only for one-time init.
 - **`DB_APP_PWD_INLINE` duplicates the app-user password** — see Known Issues.
 - **`no-new-privileges:true`** on both services.
 - **MongoDB on `app-internal` (`internal: true`)** — not reachable from outside.
@@ -115,6 +115,7 @@ database is the configuration and history, not the network.
 - **Adoption requires `STUN` / `inform` ports on the same broadcast domain as the devices** — if your controller is not on the LAN, you must either:
   - Configure each device with `set-inform http://<host>:8080/inform` via SSH, or
   - Use L2 adoption over a VPN (Tailscale subnet router, ZeroTier, etc.)
+- **Port 8080 on the host belongs to UniFi.** `core/crowdsec` publishes its LAPI for the host firewall bouncer on `127.0.0.1:8081` for that reason; an older CrowdSec `.env` with `CROWDSEC_LAPI_PORT=8080` makes this stack fail with `Bind for … 8080 … already allocated` — move CrowdSec, as its README describes. Both ran side by side on the lab host (VM) on 2026-11-09.
 - **First boot can take 2-3 minutes** — MongoDB init + Java startup.
 - **`APP_TAG=latest`** — LSIO publishes rolling builds; pin to `version-X.Y.Z` for reproducibility.
 

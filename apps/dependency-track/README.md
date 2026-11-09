@@ -107,9 +107,11 @@ gates OIDC or LDAP behind a paid tier — both are confirmed free.
 ```yaml
 postgresql_databases:
     - name: dtrack
-      container: dependency-track-db
       username: dtrack
-      password: "{credential file /srv/docker/apps/dependency-track/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec dependency-track-db pg_dump
+      pg_restore_command: docker exec -i dependency-track-db pg_restore
+      psql_command: docker exec -i dependency-track-db psql
 files:
     - path: /srv/docker/apps/dependency-track/.secrets/dt_kek.txt
     - path: /srv/docker/apps/dependency-track/volumes/data

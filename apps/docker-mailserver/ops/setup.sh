@@ -49,7 +49,7 @@ echo
 echo "docker-mailserver is set up."
 echo "  Mailbox:   postmaster@$DOMAIN"
 echo "  Password:  .secrets/postmaster_pwd.txt"
-echo "  DKIM:      $BASE/config/rspamd/dkim/rsa-2048-mail-$DOMAIN.public.dns.txt"
+echo "  DKIM:      $BASE/config/rspamd/dkim/$DOMAIN-mail.public.dns.txt"
 if [ "${1:-}" != "--local" ]; then
   echo
   echo "Next: the DNS records — README, 'DNS'."

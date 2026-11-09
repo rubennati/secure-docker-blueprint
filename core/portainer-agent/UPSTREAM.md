@@ -11,7 +11,7 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Portainer
-- **Last verified:** 2026-05-05 (v2.39.1)
+- **Last verified:** 2026-11-08 (2.45.3) — the Edge agent in the lab container (LXC, unprivileged), managed from Portainer 2.45.3 on the lab host (VM): connected through the tunnel on port 8000 after the Edge identifier was associated, containers listed, created, started, logged, stopped and removed, reconnected by itself after Portainer's `down`/`up`; no port published on the agent host (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we changed and why
 

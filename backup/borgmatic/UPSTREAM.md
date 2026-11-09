@@ -12,7 +12,7 @@
 - **Role:** Deduplicated, encrypted server backup, installed on the host
 - **Author:** Dan Helfman
 - **Based on version:** `2.1.6`
-- **Last verified:** 2026-07-29 (2.1.6)
+- **Last verified:** 2026-11-09 (2.2.0) — lab host (VM), borg 1.4.0, installed with pipx: thirteen restore rehearsals of stack databases — PostgreSQL 14, 16 and 18 through the server's own client in its container (FA-03), MariaDB and MySQL with the README entries — each restored into a fresh container with row counts identical per table
 
 ### Borg, the storage engine underneath
 
