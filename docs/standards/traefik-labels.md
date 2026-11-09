@@ -178,6 +178,10 @@ Two routers of one stack that serve the same host name must name the same
 option, or none: Traefik resolves the conflict by serving `default` to both
 and logs it; CI refuses it (`tls-conflict`).
 
+Under the wildcard certificate a browser reuses one HTTP/2 connection across
+host names; a host whose option differs from the connection's gets
+`421 Misdirected Request` ([`traefik-security.md`](traefik-security.md#tls-profiles-tls-profilesyml)).
+
 ## Special Cases
 
 ### A per-app block

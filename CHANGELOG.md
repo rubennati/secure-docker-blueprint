@@ -8,6 +8,10 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **Why a browser can get `421 Misdirected Request`** (`core/traefik/README.md` → Troubleshooting, `docs/standards/traefik-security.md`, `docs/standards/traefik-labels.md`). Under the wildcard certificate a browser reuses one HTTP/2 connection across host names; a host whose router takes another TLS option than that connection gets 421. The entry names the quick way out and the lasting one: one option for both hosts.
+
 ### Changed
 
 - **The image scan runs weekly and by hand** (`.github/workflows/trivy.yml`, [DEC-081](.ai/decisions.md#dec-081)). A pull request into `main` and the push after its merge run the IaC config scan, which takes seconds and is the required Trivy check on `main`; the image CVE scan and the stack status run on the weekly schedule and when started by hand, as a pin move and a release already are. A finding blocks nothing, so a scan on the pull request and again after the merge repeated that run on the same tree, about 25 minutes each.

@@ -680,6 +680,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 | WAF blocking valid requests | Set `CROWDSEC_APPSEC_ENABLED=false` in `.env`, run `render.sh` and recreate Traefik (`--force-recreate`). Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
+| `421 Misdirected Request` for one host while another works | Both hosts share a certificate (the wildcard) and an address, so the browser reuses the HTTP/2 connection of one for the other. When their routers take different TLS options, one stack naming `tls-strict` or `tls-compatible` and the other `default`, Traefik refuses the reused connection with 421; the access log shows it per request. Closing the other tabs of the domain gives a new connection. The lasting fix is one option for both: drop a stack's `tls.options` label where its reason does not hold ([TLS options](../../docs/standards/traefik-security.md#tls-profiles-tls-profilesyml)) |
 
 ## Authentik forward-auth (optional)
 
