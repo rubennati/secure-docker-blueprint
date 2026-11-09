@@ -1,6 +1,8 @@
 # Lychee — local
 #
 #   cp .env.local.example .env.local
+#   mkdir -p volumes/local/redis
+#   sudo chown 999:1000 volumes/local/redis
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   # open http://localhost:8000
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
