@@ -184,11 +184,11 @@
     "quiet": false,
     "restored": false,
     "role": "Scheduling with booking pages and availability read from a CalDAV calendar you already run",
-    "tested": "2026-11-08",
+    "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
     "upstream_status": "not checked",
-    "version": "1.23.0"
+    "version": "1.23.2"
   },
   "apps/ciso-assistant": {
     "archived": false,
@@ -562,8 +562,8 @@
   },
   "apps/euro-office": {
     "archived": false,
-    "checked": "2026-11-08",
-    "critical": 0,
+    "checked": null,
+    "critical": null,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Documents and e-signature",
@@ -575,21 +575,21 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 3,
-    "last_release": "2026-10-29",
+    "high": null,
+    "last_release": null,
     "name": "Euro-Office",
     "newest": null,
     "newest_date": null,
     "path": "apps/euro-office",
-    "pinned_date": "2026-08-28",
+    "pinned_date": null,
     "quiet": false,
     "restored": false,
     "role": "EU-governed fork of OnlyOffice, a drop-in document editing server",
-    "tested": "2026-11-02",
+    "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/euro-office/DocumentServer",
-    "upstream_status": "undetermined",
-    "version": "9.3.4-hotfix.1"
+    "upstream_status": "not checked",
+    "version": "9.3.7-1"
   },
   "apps/ghost": {
     "archived": false,
@@ -1013,8 +1013,8 @@
   },
   "apps/lycheeorg": {
     "archived": false,
-    "checked": "2026-11-08",
-    "critical": 1,
+    "checked": null,
+    "critical": null,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Photos",
@@ -1029,21 +1029,21 @@
       "summary": "3 services · MariaDB + Redis"
     },
     "gap": null,
-    "high": 29,
-    "last_release": "2026-11-07",
+    "high": null,
+    "last_release": null,
     "name": "Lychee",
-    "newest": "v7.12.2",
-    "newest_date": "2026-11-07",
+    "newest": null,
+    "newest_date": null,
     "path": "apps/lycheeorg",
-    "pinned_date": "2026-11-03",
+    "pinned_date": null,
     "quiet": false,
     "restored": true,
     "role": "Photo gallery",
-    "tested": "2026-11-08",
+    "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://lycheeorg.dev/",
-    "upstream_status": "behind",
-    "version": "7.12.1"
+    "upstream_status": "not checked",
+    "version": "7.13.0"
   },
   "apps/mailpit": {
     "archived": false,
@@ -1824,7 +1824,7 @@
     "path": "apps/shlink",
     "pinned_date": "2026-10-21",
     "quiet": false,
-    "restored": false,
+    "restored": true,
     "role": "URL shortener on your own domain with visit statistics and a REST API; no user accounts, API keys instead",
     "tested": "2026-11-08",
     "tested_version": null,
@@ -3513,8 +3513,8 @@
   },
   "core/infisical": {
     "archived": false,
-    "checked": "2026-11-08",
-    "critical": 1,
+    "checked": null,
+    "critical": null,
     "decision_facts": {
       "use_restrictions": {
         "checked": "2026-09-21",
@@ -3535,21 +3535,21 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 33,
-    "last_release": "2026-11-03",
+    "high": null,
+    "last_release": null,
     "name": "Infisical",
     "newest": null,
     "newest_date": null,
     "path": "core/infisical",
-    "pinned_date": "2026-11-03",
+    "pinned_date": null,
     "quiet": false,
-    "restored": false,
+    "restored": true,
     "role": "Central secret manager, an alternative to per-stack Docker Secrets",
-    "tested": "2026-11-08",
+    "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/Infisical/infisical",
-    "upstream_status": "current",
-    "version": "0.167.6"
+    "upstream_status": "not checked",
+    "version": "0.167.7"
   },
   "core/jumpserver": {
     "archived": false,
