@@ -13,6 +13,10 @@ FAIL (blocks CI — dangerous or leak-prone):
   plaintext-secret  a password/secret/token carries a real value in .env.example
   gitignore-gap     .gitignore missing or not covering .env / .secrets/ / volumes/
   db-exposed        a datastore joins proxy-public or publishes a host port
+  internal-port     a service publishes a port while every network it joins is
+                    `internal: true` — Docker binds nothing for it ("3000/tcp":
+                    null), so the port the file promises never answers (ShellHub's
+                    SSH port and five local files, stack-refresh lab, 2026-11-09)
   no-resources      service without a memory or pids limit
   no-swap-policy    service with a memory limit and no explicit memswap_limit —
                     coverage completed 2026-09-16 (every production service);
@@ -954,6 +958,34 @@ def check_compose(app: Path, findings: list[dict]) -> None:
         check_one_compose(app, path, findings)
 
 
+def check_internal_ports(app: Path, findings: list[dict]) -> None:
+    """A port published from internal networks only is never bound by Docker.
+
+    Every compose file of the stack is read on its own, the local file and the
+    overlays included. A network defined in another file of a split stack is not
+    known here and counts as not internal, so the rule stays silent rather than
+    guess."""
+    for path in sorted(app.glob("*.yml")):
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+        except yaml.YAMLError:
+            continue
+        internal = {name for name, net in (data.get("networks") or {}).items()
+                    if isinstance(net, dict) and net.get("internal") is True}
+        for name, svc in (data.get("services") or {}).items():
+            if not isinstance(svc, dict) or not svc.get("ports") or svc.get("network_mode"):
+                continue
+            nets = svc.get("networks")
+            if not nets:
+                continue
+            netnames = list(nets) if isinstance(nets, (list, dict)) else []
+            if netnames and all(n in internal for n in netnames):
+                findings.append({"level": "FAIL", "rule": "internal-port", "service": name,
+                                 "detail": f"{path.name}: publishes a port, but joins only internal networks "
+                                           f"({', '.join(netnames)}) — Docker binds nothing; add a network "
+                                           "that is not internal"})
+
+
 def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
     raw_text = path.read_text(encoding="utf-8", errors="replace")
     try:
@@ -1354,6 +1386,7 @@ def main() -> int:
         check_placeholder_secrets(app, findings)
         check_local_pins(app, findings)
         check_compose(app, findings)
+        check_internal_ports(app, findings)
         check_routers(app, findings)
         check_ports_and_labels(app, findings)
         check_network_name(app, findings)
