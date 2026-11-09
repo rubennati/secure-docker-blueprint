@@ -338,7 +338,7 @@ Based on **OWASP Docker Security Cheat Sheet**.
 
 ---
 
-#### `trivy.yml` — runs on a pull request to `main`, push to `main`, weekly Monday 04:00 UTC, manual dispatch
+#### `trivy.yml` — runs on a pull request to `main`, push to `main`, weekly Monday 04:00 UTC, manual dispatch; the image scan weekly and by hand only
 
 This is the canonical description of both jobs. Nothing elsewhere in this
 document restates their coverage, severity or exit behavior — it points here.
@@ -353,23 +353,18 @@ document restates their coverage, severity or exit behavior — it points here.
 
 **Job 2: Image CVE scan**
 
-- Runs in full on a push to `main`, on the weekly schedule and on manual
-  dispatch. On a pull request it runs in full only when a file of the pull
-  request can change what it sees — a YAML file outside `.github/` and
-  `site/` (every compose file and overlay), an `.env.example`,
-  `.trivy-baseline.json`, the discovery, gate or summary script, or the
-  workflow itself; otherwise the job ends green in seconds and its summary
-  says that nothing was scanned and why (since 2026-10-23 — a lock-file pull
-  request to `main` used to run the 200-image scan for 38 minutes and fail on
-  the baseline). On a pull request to `main` it shows what the change
-  brings; a finding does not block the merge (DEC-079). The push that follows the
-  merge scans the tree that landed (since 2026-10-31): the workflow's latest
-  run on `main`, which the README badge shows, is then a run of that tree
-  rather than the weekly run against the tree before it. That run blocks
-  nothing; the weekly run covers the CVEs published after it.
+- Runs on the weekly schedule on `main` and on manual dispatch, on any
+  branch ([DEC-081](../.ai/decisions.md#dec-081)). A pin move and a release
+  are scanned by hand on their branch
+  ([`maintenance.md`](maintenance.md), Version Chain step 7, Release Chain
+  step 4); the weekly run finds the CVEs published since against pins that
+  did not move. On a pull request and a push the job shows as skipped: a
+  finding blocks nothing (DEC-079), so a scan there would repeat the run by
+  hand on the same tree. The README badge shows the workflow's latest run on
+  `main`; after a merge that is the IaC scan of the tree that landed.
 - Image references come from `scripts/ci/list-images.sh`, which reads the same
   discovery `check-structure.py --list` uses — every compose file in the
-  repository, not a curated subset. A new stack is scanned the day it lands.
+  repository, not a curated subset. A new stack is scanned in the next run.
   Excluded: locally built images (e.g. `vikunja-local`), which have no
   registry copy to pull.
 - Severity: CRITICAL, HIGH. `--ignore-unfixed` is set, so a CVE with no
@@ -435,8 +430,7 @@ document restates their coverage, severity or exit behavior — it points here.
 
 **Job 3: Stack status**
 
-- Runs after the image scan on every trigger except a pull request, whose
-  scan may be partial or skipped. `scripts/ci/upstream-status.py` writes one
+- Runs after the image scan, weekly and by hand. `scripts/ci/upstream-status.py` writes one
   row per stack: the pinned tag of the primary image and when that image was
   published, the newest upstream tag in the same shape (prefix, number of
   parts, suffix) and when it was published, and the CRITICAL and HIGH
