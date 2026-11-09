@@ -59,6 +59,10 @@ services:
       # from it, so it has to be the address guests actually reach.
       CALRS_BASE_URL: https://${APP_TRAEFIK_HOST}
       CALRS_DATA_DIR: /var/lib/calrs
+      # CALRS_TRUSTED_PROXIES (1.23.3) is left at calrs' default — loopback and
+      # private ranges — which covers Traefik on the stack's edge network, the
+      # only peer that reaches this port; the rate limits then count the client
+      # from Traefik's X-Forwarded-For. `calrs serve` logs the list at start.
       RUST_LOG: ${LOG_LEVEL}
       TZ: ${TZ}
     secrets:

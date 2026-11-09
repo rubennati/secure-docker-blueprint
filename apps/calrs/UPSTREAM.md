@@ -94,6 +94,15 @@ login; the public booking page as a guest sees it; backup and restore.
 
 ## Version notes
 
+- Moved to `1.23.3` on 2026-11-09 and run on the lab host. A security release:
+  the rate limits believe `X-Forwarded-For` only from a trusted proxy
+  (`CALRS_TRUSTED_PROXIES`, new; default loopback and private ranges, which
+  covers Traefik on the edge network, so the production file keeps the
+  default; the local file sets `none`, nothing sits in front of it); outbound
+  calendar requests connect only to the addresses they checked, at every
+  request, so a CalDAV or EWS source on a private IP literal stops until it is
+  on the private-host allowlist (`CALRS_ALLOW_PRIVATE_HOSTS`); captcha and
+  meeting webhook no longer follow redirects. No migrations.
 - Moved to `1.23.2` on 2026-11-09, run on the lab host. 1.23.1 is a security
   release (a new user could be attached to an existing user's scheduling
   account; the private-address check now also covers 64:ff9b:1::/48 and
