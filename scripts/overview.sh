@@ -86,7 +86,7 @@ scan_component() {
 }
 
 # Scan all component directories
-for category in "core:core" "apps:app" "monitoring:mon"; do
+for category in "core:core" "apps:app" "business:biz" "monitoring:mon" "backup:bak"; do
   dir_name="${category%%:*}"
   type_label="${category##*:}"
   target="${ROOT_DIR}/${dir_name}"
