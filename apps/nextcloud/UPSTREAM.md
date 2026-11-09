@@ -11,7 +11,7 @@
 - **Origin:** Germany · Nextcloud GmbH · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** File sync and share with calendars, contacts and collaborative editing
-- **Last verified:** 2026-11-08 (35.0.2-fpm-alpine) — lab host (VM), IPv4 LAN, a new installation with Collabora over office.yml and office-collabora.yml behind the closed route: a .docx opened, edited, saved and reopened in the browser, a .docx preview rendered, sign-in and redirects at the public name, the same after `down`/`up`
+- **Last verified:** 2026-11-09 (35.0.2-fpm-alpine) — lab host (VM), IPv4 LAN, a new installation with Collabora over office.yml and office-collabora.yml behind the closed route: a .docx opened, edited, saved and reopened in the browser, a .docx preview rendered, sign-in and redirects at the public name, the same after `down`/`up`
 - **Supported until:** 2027-09-15
 
 Nextcloud publishes a major version every four months and maintains each for one

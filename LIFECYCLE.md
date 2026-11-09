@@ -4,7 +4,7 @@
 
 Generated 2026-11-09 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 81 pin the newest upstream release, 5 pin an older one. 118 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 81 pin the newest upstream release, 5 pin an older one. 119 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -54,7 +54,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/calnode`](apps/calnode/) | `0.14.0` | not checked at this pin | — | [2026-11-08](apps/calnode/UPSTREAM.md) |
 | [`apps/calrs`](apps/calrs/) | `1.23.0` | not checked at this pin | — | [2026-11-08](apps/calrs/UPSTREAM.md) |
 | [`apps/ciso-assistant`](apps/ciso-assistant/) | `v4.2.2` | not checked at this pin | — | [2026-11-08](apps/ciso-assistant/UPSTREAM.md) |
-| [`apps/collabora`](apps/collabora/) | `26.04.6.1.1` | not checked at this pin | — | [2026-11-08](apps/collabora/UPSTREAM.md) |
+| [`apps/collabora`](apps/collabora/) | `26.04.6.1.1` | not checked at this pin | — | [2026-11-09](apps/collabora/UPSTREAM.md) |
 | [`apps/dashy`](apps/dashy/) | `4.9.17` | not checked at this pin | — | [2026-11-08](apps/dashy/UPSTREAM.md) |
 | [`apps/defectdojo`](apps/defectdojo/) | `3.5.0` · 2026-11-02 | = Pin | [3 · 95](apps/defectdojo/README.md#open-findings) | [2026-11-08](apps/defectdojo/UPSTREAM.md) |
 | [`apps/dependency-track`](apps/dependency-track/) | `5.2.1` · 2026-10-25 | = Pin | [3 · 36](apps/dependency-track/README.md#open-findings) | [2026-11-08](apps/dependency-track/UPSTREAM.md) |
@@ -81,7 +81,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/mailserver-jeboehm`](apps/mailserver-jeboehm/) | `8.1.2` | not checked at this pin | — | [2026-11-08](apps/mailserver-jeboehm/UPSTREAM.md) |
 | [`apps/monicahq`](apps/monicahq/) | `4.1.2-apache` · 2024-05-04 | = Pin · ⚠️ no release since 2024-05-04 | [4 · 50](apps/monicahq/README.md#open-findings) | [2026-11-03](apps/monicahq/UPSTREAM.md) · with restore |
 | [`apps/n8n`](apps/n8n/) | `2.46.6` · 2026-11-04 | `3.1.0` · 2026-11-03 | [1 · 23](apps/n8n/README.md#open-findings) | [2026-11-08](apps/n8n/UPSTREAM.md) · with restore |
-| [`apps/nextcloud`](apps/nextcloud/) | `35.0.2-fpm-alpine` · 2026-11-06 | = Pin | [1 · 28](apps/nextcloud/README.md#open-findings) | [2026-11-08](apps/nextcloud/UPSTREAM.md) · with restore |
+| [`apps/nextcloud`](apps/nextcloud/) | `35.0.2-fpm-alpine` · 2026-11-06 | = Pin | [1 · 28](apps/nextcloud/README.md#open-findings) | [2026-11-09](apps/nextcloud/UPSTREAM.md) · with restore |
 | [`apps/nocodb`](apps/nocodb/) | `2026.10.1` · 2026-10-29 | = Pin | 0 · 0 | [2026-11-08](apps/nocodb/UPSTREAM.md) |
 | [`apps/obot`](apps/obot/) | `v0.28.0` | not checked at this pin | — | [2026-11-08](apps/obot/UPSTREAM.md) |
 | [`apps/ollama`](apps/ollama/) | `0.40.15` | not checked at this pin | — | [2026-11-08](apps/ollama/UPSTREAM.md) |
@@ -161,7 +161,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`backup/borgmatic`](backup/borgmatic/) | *host-installed* | — | — | [2026-07-29](backup/borgmatic/UPSTREAM.md) |
 | [`backup/kopia`](backup/kopia/) | `0.23.1` · 2026-06-16 | = Pin | [2 · 58](backup/kopia/README.md#open-findings) | [2026-11-08](backup/kopia/UPSTREAM.md) |
 | [`backup/rclone-web`](backup/rclone-web/) | `1.76.0` | not checked at this pin | — | [2026-11-08](backup/rclone-web/UPSTREAM.md) |
-| [`backup/urbackup`](backup/urbackup/) | `2.5.x` · 2026-08-30 | = Pin | [4 · 19](backup/urbackup/README.md#open-findings) | — · [needs a client to back up and restore](backup/urbackup/UPSTREAM.md) |
+| [`backup/urbackup`](backup/urbackup/) | `2.5.x` · 2026-08-30 | = Pin | [4 · 19](backup/urbackup/README.md#open-findings) | [2026-11-09](backup/urbackup/UPSTREAM.md) |
 
 ## Source of truth
 
