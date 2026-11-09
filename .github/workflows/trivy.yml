@@ -9,26 +9,27 @@ name: Trivy
 #      stays 0, and so does the report step for a CRITICAL absent from
 #      .trivy-baseline.json: a finding in an upstream image is reported, never
 #      blocking (DEC-079) — see docs/standards/ci.md.
-#   3. Stack status — on the weekly, push and manual runs on main: per stack the
+#   3. Stack status — after every image scan: per stack the
 #      pinned tag, the newest upstream tag in the same shape, both release dates,
 #      whether upstream is archived or quiet, and the findings of this scan
-#      (scripts/ci/upstream-status.py), written to the pinned issue labelled
-#      `stack-status`. The same data, as upstream-status.json, is the artifact
-#      the maintainer commits at a pin move and before a release (DEC-080).
+#      (scripts/ci/upstream-status.py), written on main to the pinned issue
+#      labelled `stack-status`. The same data, as upstream-status.json, is the
+#      artifact the maintainer commits at a pin move and before a release
+#      (DEC-080).
 #
 # Triggers: PR to main, push to main, weekly Monday 04:00 UTC, manual
-# dispatch. The push, the weekly and the manual run scan in full. A pull
-# request scans in full only when it can change what the scan sees — a
-# compose file, an .env.example, the baseline, the image discovery, the gate,
-# the summary or this workflow; any other pull request (a lock file, a
-# document) ends the image job green in seconds, saying so, because a
-# 200-image scan of an unchanged tree would only repeat the weekly run's
-# work. On a pull request to main the scan shows what the change brings; a
-# finding does not turn it red (DEC-079). The
-# push that follows the merge scans the tree that landed, so the workflow's
-# latest run on main — what the README badge shows — is a run of that tree
-# rather than the weekly run against the tree before it; the weekly run
-# covers the CVEs published after it. The push run blocks nothing.
+# dispatch (DEC-081). The IaC config scan runs on every trigger: it takes
+# seconds, is a required check on main and uploads main's SARIF. The image
+# scan and the stack status run on the weekly schedule and on manual dispatch
+# only. Their answer changes with the calendar, not with a merge: a CVE is
+# published against an image whose pin has not moved. The weekly run finds
+# those on main; a pin move or a release is scanned by hand on its branch
+# (docs/maintenance.md, Version Chain step 7 and Release Chain step 4), and
+# that run's artifact is the upstream data the change commits. A scan on the
+# pull request into main and again on the push after its merge would repeat
+# that run on the same tree, about 25 minutes each, and change no outcome,
+# since a finding does not block (DEC-079). On a pull request and a push the
+# image job shows as skipped.
 #
 # Limitations (documented in docs/security-verification.md):
 #   - Image scanning covers every compose file check-structure.py --list reports.
@@ -116,10 +117,10 @@ jobs:
   # the results already collected for the others.
   image-scan:
     name: Image CVE scan
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read   # gh api …/pulls/<n>/files lists the changed files
     env:
       TRIVY_CACHE_DIR: ${{ github.workspace }}/.cache/trivy
     steps:
@@ -127,68 +128,13 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Decide whether this run can change what the scan sees
-        # Every trigger but a pull request scans in full. A pull request scans
-        # in full when one of its files can change the image list or the
-        # gate's verdict: a YAML file outside .github/ and site/ (every compose
-        # file and overlay, including the split stacks), an .env.example (the
-        # image tags), .trivy-baseline.json, the discovery and gate scripts, or
-        # this workflow. Otherwise the scan would repeat the weekly run on an
-        # unchanged tree — a lock-file pull request used to cost 38 minutes
-        # and fail on main's baseline — so the job ends here, green, and the
-        # summary says that nothing was scanned and why. The list of files
-        # comes from the pull request itself, through the paginated files
-        # API, not from a diff of the shallow checkout — `gh pr diff` is
-        # refused above 300 files (HTTP 406), which a release pull request
-        # exceeds. A list that cannot be read, or that is shorter than the
-        # event's file count, means a full scan: the job never ends green
-        # on a list it has not seen in full.
-        id: decide
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
-            echo "scan=true" >> "$GITHUB_OUTPUT"
-            echo "${{ github.event_name }} — full scan"
-            exit 0
-          fi
-          if ! gh api --paginate "repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files" --jq '.[].filename' > /tmp/changed.txt; then
-            echo "scan=true" >> "$GITHUB_OUTPUT"
-            echo "the pull request's file list could not be read — full scan"
-            exit 0
-          fi
-          listed=$(wc -l < /tmp/changed.txt | tr -d ' ')
-          expected="${{ github.event.pull_request.changed_files }}"
-          if [ -z "$expected" ] || [ "$listed" -ne "$expected" ]; then
-            echo "scan=true" >> "$GITHUB_OUTPUT"
-            echo "the file list is not complete ($listed of ${expected:-?} files) — full scan"
-            exit 0
-          fi
-          relevant=$({ grep -E '(^|/)[^/]+\.ya?ml$|(^|/)\.env\.example$|^\.trivy-baseline\.json$|^scripts/ci/(list-images\.sh|check-structure\.py|trivy-gate\.py|trivy-summarize\.py|requirements\.txt)$' /tmp/changed.txt \
-            | grep -vE '^(\.github/|site/)'; grep -x '.github/workflows/trivy.yml' /tmp/changed.txt; } 2>/dev/null; true)
-          if [ -n "$relevant" ]; then
-            echo "scan=true" >> "$GITHUB_OUTPUT"
-            printf 'files that can change the scan:\n%s\n' "$relevant"
-          else
-            echo "scan=false" >> "$GITHUB_OUTPUT"
-            echo "no file of this pull request can change the image list or the gate — not scanned"
-            {
-              echo "## Image CVE scan — not run"
-              echo
-              echo "None of the $(wc -l < /tmp/changed.txt | tr -d ' ') file(s) of this pull request can change the image list or the gate's verdict (no compose file, \`.env.example\`, baseline, discovery or gate script, or this workflow). The weekly run scans the tree in full."
-            } >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Install PyYAML (list-images.sh discovers compose files via check-structure.py)
-        if: steps.decide.outputs.scan == 'true'
         run: pip install --require-hashes -r scripts/ci/requirements.txt --quiet
 
       - name: Install gettext (provides envsubst for image list resolution)
-        if: steps.decide.outputs.scan == 'true'
         run: sudo apt-get install -y gettext-base --quiet
 
       - name: Install Trivy CLI
-        if: steps.decide.outputs.scan == 'true'
         run: |
           # Download pre-built binary and verify SHA256 before execution.
           # Both TRIVY_VERSION and TRIVY_CHECKSUM must be updated together on bumps.
@@ -203,7 +149,7 @@ jobs:
           trivy --version
 
       - name: Cache Trivy vulnerability database
-        # One entry per UTC day: every push/PR/manual run that day restores it
+        # One entry per UTC day: every run that day restores it
         # instead of downloading the ~300 MB database again. Trivy's own
         # staleness check (embedded in the cached metadata) still decides
         # whether to refresh it — this cache does not skip or widen that
@@ -212,11 +158,9 @@ jobs:
         # today's entry does not exist yet, so the very first run of a new
         # day still starts from a warm cache rather than nothing.
         id: date
-        if: steps.decide.outputs.scan == 'true'
         run: echo "date=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        if: steps.decide.outputs.scan == 'true'
         with:
           path: ${{ github.workspace }}/.cache/trivy/db
           key: trivy-db-${{ steps.date.outputs.date }}
@@ -224,7 +168,6 @@ jobs:
             trivy-db-
 
       - name: Extract image list from compose files
-        if: steps.decide.outputs.scan == 'true'
         run: |
           bash scripts/ci/list-images.sh | tee /tmp/images.txt
           echo "$(wc -l < /tmp/images.txt) images to scan"
@@ -236,7 +179,6 @@ jobs:
         # own reason go to failures.tsv instead, so "not scanned" is never
         # silently read as "scanned clean" — trivy-summarize.py below reports
         # it under its own heading, by name, with that reason.
-        if: steps.decide.outputs.scan == 'true'
         run: |
           mkdir -p /tmp/trivy-results
           : > /tmp/trivy-failures.tsv
@@ -262,7 +204,7 @@ jobs:
           done < /tmp/images.txt
 
       - name: Summarize results
-        if: always() && steps.decide.outputs.scan == 'true'
+        if: always()
         run: |
           python3 scripts/ci/trivy-summarize.py \
             --results-dir /tmp/trivy-results \
@@ -279,7 +221,6 @@ jobs:
         # exception without its stacks, reason, risk or findings, a report that
         # could not be read, and an image discovery resolved that left neither
         # a report nor a recorded failure — hence --images-total.
-        if: steps.decide.outputs.scan == 'true'
         run: |
           python3 scripts/ci/trivy-gate.py \
             --results-dir /tmp/trivy-results \
@@ -308,7 +249,7 @@ jobs:
   # whatever it finds (DEC-079). The token reads the upstream repositories'
   # releases, which the anonymous API limit would not cover.
   #
-  # Not on pull requests — their scan may be partial or skipped. On main the
+  # Runs with the image scan, on the schedule and by hand. On main the
   # table overwrites the body of the one open issue labelled `stack-status`,
   # created and pinned on the first run; a manual run from another branch
   # writes the table to its summary only. Nothing is committed by the job: both
@@ -317,7 +258,7 @@ jobs:
   stack-status:
     name: Stack status
     needs: image-scan
-    if: always() && github.event_name != 'pull_request'
+    if: always() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     permissions:
       contents: read

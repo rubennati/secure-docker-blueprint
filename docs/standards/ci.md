@@ -457,12 +457,14 @@ runs inside job 4 on every pull request.
 ## Outside the ten — `Trivy` and `Stack status`
 
 `.github/workflows/trivy.yml` runs on a pull request into `main`, on a push to
-`main`, weekly and on manual dispatch.
+`main`, weekly and on manual dispatch. Only the IaC config scan runs on all four;
+the image scan and the stack status run weekly and by hand
+([DEC-081](../../.ai/decisions.md#dec-081)).
 
 - **IaC config scan** — `trivy config` over the repository, results to the GitHub
   Security tab. Required on `main`.
-- **Image CVE scan** — every image the checkers discover, CRITICAL and HIGH, each
-  to its own report in the `trivy-image-scan-results` artifact, with a count-level
+- **Image CVE scan** — weekly on `main` and by hand on any branch: every image
+  the checkers discover, CRITICAL and HIGH, each to its own report in the `trivy-image-scan-results` artifact, with a count-level
   summary on the job page. A finding in an upstream image is information: it
   appears in the summary, in the stack's `## Open findings` and in `LIFECYCLE.md`,
   and blocks nothing ([DEC-079](../../.ai/decisions.md#dec-079)).
@@ -470,7 +472,7 @@ runs inside job 4 on every pull request.
   `.trivy-baseline.json` does not record. The job fails only on the repository's
   own errors: an exception without its reason, an unreadable report, an image
   that left no trace. Not a required check.
-- **Stack status** — after the scan, outside pull requests,
+- **Stack status** — after the scan,
   `scripts/ci/upstream-status.py` writes per stack the pin and its release date,
   the newest upstream release, an archived or quiet upstream and the findings at
   the pin: to the pinned issue labelled `stack-status` on `main`, and to the
