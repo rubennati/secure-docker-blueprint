@@ -22,8 +22,8 @@ Guildford, UK. rclone and Rclone Web are both MIT.
 
 ## What we use
 
-- `rclone/rclone:1.75.1` — the official image. `rclone gui` serves the Rclone Web
-  release embedded at build time (1.1.11 in this tag) and needs no download at
+- `rclone/rclone:1.76.0` — the official image. `rclone gui` serves the Rclone Web
+  release embedded at build time and needs no download at
   runtime. Upstream's README runs `rclone/rclone:latest`.
 - Interface on port 5522, remote control API on port 5533, as upstream's example.
 

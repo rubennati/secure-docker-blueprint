@@ -98,5 +98,5 @@ run, and the restore in the README.
 curl -s https://raw.githubusercontent.com/icereed/paperless-gpt/main/README.md
 
 # What the image's entrypoint does as root and as a non-root user
-docker run --rm --entrypoint sh ghcr.io/icereed/paperless-gpt:v0.28.0 -c 'cat /app/entrypoint.sh'
+docker run --rm --entrypoint sh ghcr.io/icereed/paperless-gpt:v0.31.0 -c 'cat /app/entrypoint.sh'
 ```

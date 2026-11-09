@@ -105,7 +105,7 @@ value changes, the integration stops working until both sides agree again.
 
 <!-- findings:end -->
 
-The previous pin, `collabora/code:26.04.5.2.1`, carried one CRITICAL finding in the DOMPurify copy bundled with the browser editor (GHSA-cg2g-xh64-v4q7); the current pin is not scanned yet.
+The image, `collabora/code:26.04.6.1.1`, carries one CRITICAL finding in the DOMPurify copy bundled with the browser editor (GHSA-cg2g-xh64-v4q7). It is the newest release.
 
 **Risk:** the flaw only applies to a specific sanitizer mode; whether the editor uses it has not been checked. Move to the next release.
 

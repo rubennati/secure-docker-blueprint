@@ -217,7 +217,3 @@ copying `mail-state`, or the queue is copied mid-write.
 | `ghcr.io/docker-mailserver/docker-mailserver:17.0.0` | — | — | 0 · 22 |
 
 <!-- findings:end -->
-
-The pinned image, `docker-mailserver:16.0.1`, ships with 8 CRITICAL vulnerabilities that have published fixes, in Debian 13 packages: libunbound (three, including remote code execution), glib, brotli and perl. 16.0.1 is the newest release, and upstream has not rebuilt it (docker-mailserver#4822).
-
-**Risk:** in this image only OpenDKIM uses libunbound, and this stack runs Rspamd with OpenDKIM, Amavis and SpamAssassin turned off. Keep those off and watch for the next release.

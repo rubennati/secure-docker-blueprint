@@ -15,7 +15,7 @@
 
 ## What we use
 
-- `ghcr.io/berriai/litellm-non_root:v1.108.0` — upstream's non-root variant with
+- `ghcr.io/berriai/litellm-non_root:v1.108.3` — upstream's non-root variant with
   a versioned release tag. Upstream's own quick-start pins the floating
   `main-stable`; not used here.
 - `postgres:18.6` — LiteLLM's virtual keys, budgets and spend log need a

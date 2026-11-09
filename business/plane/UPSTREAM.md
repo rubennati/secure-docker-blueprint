@@ -149,8 +149,8 @@ stack since the withdrawal started empty.
 
 ```bash
 # Upstream's Community Edition compose — the one setup.sh downloads
-curl -sL https://github.com/makeplane/plane/releases/download/v1.4.2/docker-compose.yml
+curl -sL https://github.com/makeplane/plane/releases/download/v1.4.3/docker-compose.yml
 
 # The proxy's Caddyfile, with upstream's service names in it
-docker run --rm --entrypoint sh makeplane/plane-proxy:v1.4.2 -c 'cat /etc/caddy/Caddyfile'
+docker run --rm --entrypoint sh makeplane/plane-proxy:v1.4.3 -c 'cat /etc/caddy/Caddyfile'
 ```

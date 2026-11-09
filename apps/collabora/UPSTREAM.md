@@ -15,7 +15,7 @@
 
 ## What we use
 
-- `collabora/code:26.04.3.2.1` — single stateless container (no DB, no volume)
+- `collabora/code:26.04.6.1.1` — single stateless container (no DB, no volume)
 - TLS terminated at Traefik (`ssl.termination=true`, `ssl.enable=false`)
 
 ## What we changed vs. upstream `docker run`

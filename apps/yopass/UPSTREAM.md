@@ -16,7 +16,7 @@
 
 ## What we use
 
-- `jhaals/yopass:16.0.1`, distroless build, runs as a fixed non-root UID
+- `jhaals/yopass:16.1.0`, distroless build, runs as a fixed non-root UID
 - `memcached:1.6.45-alpine` as the ephemeral store — the upstream-documented
   default backend, matching every value Yopass stores: TTL-based, no
   durability required or wanted

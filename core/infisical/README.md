@@ -14,7 +14,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `infisical-app` | `infisical/infisical:v0.167.6` | Backend + web UI + API (port 8080) |
+| `infisical-app` | `infisical/infisical:v0.167.7` | Backend + web UI + API (port 8080) |
 | `db` | `postgres:18.6-alpine` | Encrypted secret store, users, projects |
 | `redis` | `redis:7.4.12-alpine` | Cache + job queue |
 

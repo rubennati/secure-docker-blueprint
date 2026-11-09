@@ -134,6 +134,6 @@ the rest — also reach their vendors, which is what a notification channel is.
 curl -s https://raw.githubusercontent.com/bluewave-labs/Checkmate/develop/docker/docker-compose.yaml
 
 # Every setting the server reads, with its defaults and validation
-docker run --rm --entrypoint sh ghcr.io/bluewave-labs/checkmate:v3.12.0 \
+docker run --rm --entrypoint sh ghcr.io/bluewave-labs/checkmate:v3.13.1 \
     -c 'cat /app/server/dist/config/envValidation.js; cat /app/server/.env.example'
 ```

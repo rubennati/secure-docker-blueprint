@@ -23,7 +23,7 @@ distinction `core/orion-belt` records.
 
 ## What we use
 
-- `ghcr.io/olivierlambert/calrs:1.22.0` — upstream's own registry. Its README pins
+- `ghcr.io/olivierlambert/calrs:1.23.3` — upstream's own registry. Its README pins
   `:latest`; not used here.
 - One container. SQLite in the data directory; upstream ships no database service
   and the application needs none.

@@ -22,7 +22,7 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 - `chatwoot/chatwoot:v4.19.1` for web and worker. Upstream's production compose pins
   `:latest`; not used here. A `-ce` tag also exists; this stack uses the tag upstream's
   compose names.
-- `pgvector/pgvector:0.8.1-pg16` — upstream's production compose uses
+- `pgvector/pgvector:0.8.7-pg16` — upstream's production compose uses
   `pgvector/pgvector:pg16`.
 - `redis:8.10.3-alpine` — upstream's uses `redis:alpine`.
 - Local file storage, upstream's default.

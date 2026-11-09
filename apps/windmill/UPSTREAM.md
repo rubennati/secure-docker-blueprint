@@ -15,7 +15,7 @@
 
 ## What we use
 
-- Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.862.0`. Upstream's
+- Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.864.1`. Upstream's
   own `.env` defaults to the floating `:main` tag; not used here.
 - `postgres:18.6` — Windmill's own requirement (upstream's compose moved from 16
   to 18). Debian-based, not the `-alpine` variant most other stacks here pin,

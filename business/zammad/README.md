@@ -17,7 +17,7 @@ Heavy stack — 9 services. Upstream default deployment.
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
 | `db` | `postgres:18.6-alpine` | Primary data store |
 | `redis` | `redis:8.10.3-alpine` | Background job queue |
-| `memcached` | `memcached:1.6.41` | Rails cache |
+| `memcached` | `memcached:1.6.45` | Rails cache |
 | `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:9.5.6` | Full-text ticket search |
 
 ## Resource requirements

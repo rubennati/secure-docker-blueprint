@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `easyappointments-app` | `alextselegidis/easyappointments:latest` | PHP + Apache + scheduling UI |
+| `easyappointments-app` | `alextselegidis/easyappointments:1.6.1` | PHP + Apache + scheduling UI |
 | `db` | `mariadb:11.4.13` | Customers, providers, services, appointments |
 
 ## When to pick Easy!Appointments

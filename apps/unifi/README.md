@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `unifi-app` | `lscr.io/linuxserver/unifi-network-application:latest` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
+| `unifi-app` | `lscr.io/linuxserver/unifi-network-application:10.6.109` | Web UI (port 8443) + device inform (8080) + STUN (3478/udp) + discovery (10001/udp) |
 | `db` | `mongo:8.0.34` | Primary store. The image supports 3.6–7.0 from UniFi 8.1, and 8.0 from UniFi 9.0 |
 
 The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed directly on the host because Traefik cannot proxy UDP discovery or device-inform broadcasts.

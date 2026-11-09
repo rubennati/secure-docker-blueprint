@@ -19,8 +19,8 @@ The origin comes from intuitem's legal notice (RCS Versailles, France).
 
 ## What we use
 
-- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1` for backend and Huey,
-  and `…/frontend:v4.2.1`. Upstream's compose pins `:latest` with `pull_policy:
+- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2` for backend and Huey,
+  and `…/frontend:v4.2.2`. Upstream's compose pins `:latest` with `pull_policy:
   always`; not used here. Per upstream's licence file, the community binaries are
   AGPLv3; the commercially licensed code ships only in separate enterprise images.
 - `postgres:16.15` — upstream's template runs `postgres:16`.

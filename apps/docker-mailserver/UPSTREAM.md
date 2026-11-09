@@ -25,7 +25,7 @@ between 2025-03-01 and 2026-09-04. No advisory is published in the repository.
 
 ## What we use
 
-- `ghcr.io/docker-mailserver/docker-mailserver:16.0.1`, one container.
+- `ghcr.io/docker-mailserver/docker-mailserver:17.0.0`, one container.
 - `mail.yml`, an opt-in overlay that publishes 25, 465 and 993.
 - `ops/setup.sh`, which creates the postmaster mailbox and the DKIM key.
 

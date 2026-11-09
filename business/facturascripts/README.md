@@ -156,9 +156,9 @@ and run `docker compose up -d`.
 
 <!-- findings:end -->
 
-The pinned image, `facturascripts/facturascripts:2026.7`, ships with 2 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and kernel headers. 2026.7 is upstream's current stable image; the newer 2026.72 is published as beta.
+The pinned image, `facturascripts/facturascripts:2026.72`, ships with one CRITICAL vulnerability that has a published fix, in Debian 13's kernel headers package `linux-libc-dev` (CVE-2026-99083). It is the newest image, built before Debian's fix.
 
-**Risk:** nothing in the container runs the kernel headers, and brotli matters only if a process decompresses brotli data from a hostile server. Move when 2026.72 or later becomes the stable image.
+**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
 
 The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

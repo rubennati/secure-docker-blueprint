@@ -19,10 +19,9 @@ and apply Spanish law.
 
 ## What we use
 
-- `facturascripts/facturascripts:2026.7` — the image publisher's stable channel;
-  `latest` is the same image. Newer tags such as `2026.72` are published as
-  `beta`, although the GitHub release list does not mark them as pre-releases. PHP 8.4 and Apache on
-  Debian 13.
+- `facturascripts/facturascripts:2026.72` — the image the publisher's `beta`
+  channel points at; `latest` points at the older `2026.7` build. The GitHub
+  release list marks neither as a pre-release. PHP 8.4 and Apache on Debian 13.
 - `mariadb:11.4.13` — the repository's MariaDB LTS. Upstream's compose uses
   `mysql:8.2`.
 - **The image seeds the webroot; the in-app updater owns it afterwards.**

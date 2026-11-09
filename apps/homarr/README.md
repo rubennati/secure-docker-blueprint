@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `homarr-app` | `ghcr.io/homarr-labs/homarr:v2.11.1` | Next.js dashboard with built-in SQLite + internal Redis |
+| `homarr-app` | `ghcr.io/homarr-labs/homarr:v2.12.0` | Next.js dashboard with built-in SQLite + internal Redis |
 
 Data lives in `./volumes/appdata/`. Integrations encrypt their credentials using `SECRET_ENCRYPTION_KEY`.
 

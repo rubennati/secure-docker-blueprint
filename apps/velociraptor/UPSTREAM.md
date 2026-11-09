@@ -18,9 +18,9 @@
 
 ## What we use
 
-- `ghcr.io/velocidex/velociraptor-server:0.77.2` — the image tag omits the
-  `v` prefix the Git release tag (`v0.77.2`) carries; verified directly,
-  `v0.77.2` does not exist as an image tag
+- `ghcr.io/velocidex/velociraptor-server:0.77.3` — the image tag omits the
+  `v` prefix the Git release tag (`v0.77.3`) carries; a `v`-prefixed image
+  tag does not exist
 
 ## Docker-based server support since 0.77 — verified, not assumed from the prompt
 

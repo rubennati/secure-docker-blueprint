@@ -21,7 +21,7 @@ project's longevity.
 
 ## What we use
 
-- `ghcr.io/calnode/calnode:0.13.0` — upstream's own registry. Its quick start pins
+- `ghcr.io/calnode/calnode:0.14.0` — upstream's own registry. Its quick start pins
   `:latest`; not used here.
 - One container. SQLite at `/data/calnode.db`; upstream ships no database service.
 

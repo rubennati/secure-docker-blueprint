@@ -14,7 +14,7 @@
 
 ## What we use
 
-- Official image, pinned tag: `ollama/ollama:0.40.14` (3.4 GB, `amd64` and
+- Official image, pinned tag: `ollama/ollama:0.40.15` (`amd64` and
   `arm64`). It bundles the CUDA libraries, so the same image serves CPU and
   GPU hosts.
 - Entrypoint `/bin/ollama`, command `serve`, port `11434`. The image sets

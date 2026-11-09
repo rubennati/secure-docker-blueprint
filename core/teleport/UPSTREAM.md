@@ -42,7 +42,7 @@ enforce or verify.
 
 ## What we use
 
-- `public.ecr.aws/gravitational/teleport-distroless:18.11.8`, single
+- `public.ecr.aws/gravitational/teleport-distroless:18.11.9`, single
   container, `auth` and `proxy` roles combined — the realistic single-node
   shape for what this repository targets, not a production Teleport
   cluster's separated-role, HA topology

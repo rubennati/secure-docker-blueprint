@@ -10,7 +10,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `uptime-kuma-app` | `louislam/uptime-kuma:2.5.6` | Web UI + probe scheduler + SQLite store |
+| `uptime-kuma-app` | `louislam/uptime-kuma:2.5.9` | Web UI + probe scheduler + SQLite store |
 
 Data lives in `./volumes/data/` (SQLite DB, monitor state, uploaded icons).
 

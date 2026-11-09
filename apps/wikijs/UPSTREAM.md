@@ -31,7 +31,7 @@ findings at that pin have no fix on 2.x. This stack moved to 3.x; see
 
 ## What we use
 
-- `ghcr.io/requarks/wiki:3.1.0` — upstream's own registry. Debian-based
+- `ghcr.io/requarks/wiki:3.2.0` — upstream's own registry. Debian-based
   `node:26` with tini as init, uid 1000 (`node`), about 850 MB because it
   carries a headless Chrome for optional server-side rendering.
 - `postgres:18.6-alpine` for the database.

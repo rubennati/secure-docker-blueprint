@@ -18,8 +18,8 @@
 
 ## What we use
 
-- `ghcr.io/project-zot/zot:v2.1.21` — the **full** build, not
-  `zot-minimal`. Confirmed via the image's own startup log
+- `ghcr.io/project-zot/zot:v2.1.23` — the **full** build, not
+  `zot-minimal`, as the image's own startup log shows
   (`binary-type` reports `events-imagetrust-lint-metrics-mgmt-profile-scrub-search-sync-ui-userprefs`).
   The minimal build only implements the bare OCI Distribution Specification
   and has none of the UI, embedded CVE scanning, or image-trust extensions

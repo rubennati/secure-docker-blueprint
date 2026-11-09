@@ -10,7 +10,7 @@ Single-container deployment (HTTP fetcher only):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `changedetection-app` | `ghcr.io/dgtlmoon/changedetection.io:0.60.4` | Watcher + diff engine + notification dispatcher |
+| `changedetection-app` | `ghcr.io/dgtlmoon/changedetection.io:0.70.2` | Watcher + diff engine + notification dispatcher |
 
 For JavaScript-heavy sites (SPAs), uncomment the optional `browser` service in `docker-compose.yml` — it runs a Playwright Chrome instance.
 
@@ -143,6 +143,6 @@ configure.
 
 <!-- findings:end -->
 
-The image, `ghcr.io/dgtlmoon/changedetection.io:0.70.1`, carries one CRITICAL finding in the Rust `zip` library bundled with Selenium's driver manager (CVE-2026-115905). It is the newest release.
+The image, `ghcr.io/dgtlmoon/changedetection.io:0.70.2`, carries one CRITICAL finding in the Rust `zip` library bundled with Selenium's driver manager (CVE-2026-115905). It is the newest release.
 
 **Risk:** that tool only unpacks downloaded browser drivers, which this stack does not use. Move to the next release.

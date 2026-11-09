@@ -6,7 +6,7 @@
 
 - **Image:** https://hub.docker.com/r/zabbix/zabbix-server-pgsql · https://hub.docker.com/r/zabbix/zabbix-web-nginx-pgsql
 - **GitHub:** https://github.com/zabbix/zabbix-docker
-- **Docs:** https://www.zabbix.com/documentation/7.0/
+- **Docs:** https://www.zabbix.com/documentation/8.0/
 - **License:** AGPL-3.0
 - **Use restrictions:** none — https://www.zabbix.com/license · checked 2026-09-24
 - **Edition gating:** none — one edition, every feature in the open-source build; Zabbix sells support and services rather than features — https://www.zabbix.com/support · checked 2026-09-24
@@ -18,15 +18,15 @@
 
 ## Project maturity
 
-7.0 is the long-term-support line: full support to 2027-06-30, limited support
-to 2029-06-30. 8.0 is where new features land; this is where a deployment that
-wants to be left alone lives. The stack follows the patch releases of 7.0;
-`alpine-7.0.32` is the current one.
+8.0 is the current long-term-support line, where a deployment that wants to be
+left alone lives; its support dates are in Zabbix's
+[life cycle policy](https://www.zabbix.com/life_cycle_and_release_policy). The
+stack follows the patch releases of 8.0; `alpine-8.0.0` is the current one.
 
 ## What we use
 
-- `zabbix/zabbix-server-pgsql:alpine-7.0.32` — the collector, not routed.
-- `zabbix/zabbix-web-nginx-pgsql:alpine-7.0.32` — nginx and PHP, the only
+- `zabbix/zabbix-server-pgsql:alpine-8.0.0` — the collector, not routed.
+- `zabbix/zabbix-web-nginx-pgsql:alpine-8.0.0` — nginx and PHP, the only
   routed service.
 - `postgres:17.11-alpine` — pinned to 17 because that is the client the server
   image ships (`postgresql17-client`).
@@ -106,8 +106,8 @@ configure it to monitor.
 
 ## Upgrade checklist
 
-1. Read the release notes and the upgrade page for the 7.0 line —
-   https://www.zabbix.com/documentation/7.0/en/manual/installation/upgrade
+1. Read the release notes and the upgrade page for the 8.0 line —
+   https://www.zabbix.com/documentation/8.0/en/manual/installation/upgrade
 2. Raise `APP_TAG` in `.env` and in `.env.local.example`
 3. `docker compose pull && docker compose up -d` — the server migrates the
    schema itself on start, and a major upgrade can take a while on a large
@@ -121,9 +121,9 @@ configure it to monitor.
 ```bash
 # Upstream's own compose files — one bridge network, published ports, an agent
 # with privileged: true
-curl -s https://raw.githubusercontent.com/zabbix/zabbix-docker/7.0/docker-compose_v3_alpine_pgsql_latest.yaml
+curl -s https://raw.githubusercontent.com/zabbix/zabbix-docker/8.0/compose_pgsql.yaml
 
 # Every setting the server reads, with upstream's defaults
-docker run --rm --entrypoint sh zabbix/zabbix-server-pgsql:alpine-7.0.32 \
+docker run --rm --entrypoint sh zabbix/zabbix-server-pgsql:alpine-8.0.0 \
     -c 'cat /etc/zabbix/zabbix_server.conf'
 ```

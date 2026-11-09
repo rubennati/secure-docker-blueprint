@@ -55,7 +55,7 @@ mkdir -p config volumes/data
 sudo chown 0:0 volumes/data
 docker run --rm --entrypoint=/usr/local/bin/teleport \
   -v "$(pwd)/config:/etc/teleport" \
-  public.ecr.aws/gravitational/teleport-distroless:18.11.8 \
+  public.ecr.aws/gravitational/teleport-distroless:18.11.9 \
   configure --roles=proxy,auth > config/teleport.yaml
 ```
 

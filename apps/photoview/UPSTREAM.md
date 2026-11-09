@@ -14,8 +14,8 @@
 
 ## What we use
 
-- Upstream `photoview/photoview:2`
-- Official `mariadb:lts`
+- Upstream `photoview/photoview:2.4.0`
+- Official `mariadb:12.3.3`
 - Docker Secrets for MariaDB password + root password
 - Bind-mount `./volumes/media-cache`, `./volumes/mariadb`
 - Configurable `MEDIA_ROOT` (read-only bind into `/photos`)

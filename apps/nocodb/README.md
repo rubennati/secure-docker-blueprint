@@ -12,7 +12,7 @@ Single-container deployment with NocoDB's built-in SQLite:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `nocodb-app` | `nocodb/nocodb:latest` | Web UI + REST/GraphQL API |
+| `nocodb-app` | `nocodb/nocodb:2026.10.1` | Web UI + REST/GraphQL API |
 
 Data lives in `./volumes/data/` (SQLite DB, attachments, user uploads).
 

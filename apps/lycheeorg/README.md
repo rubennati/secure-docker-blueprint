@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `lychee-app` | `lycheeorg/lychee:v7.12.1` | PHP/Laravel app on FrankenPHP |
+| `lychee-app` | `lycheeorg/lychee:v7.13.0` | PHP/Laravel app on FrankenPHP |
 | `db` | `mariadb:12.3.3` | Primary store (albums, photo metadata, users) |
 | `redis` | `redis:8.10.3-alpine` | Cache + session driver |
 
