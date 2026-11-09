@@ -4,7 +4,7 @@
 
 Generated 2026-11-09 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 81 pin the newest upstream release, 5 pin an older one. 119 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
+121 stacks. 81 pin the newest upstream release, 5 pin an older one. 120 have a test date on a host, 15 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-08.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -29,7 +29,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`core/dockhand`](core/dockhand/) | `v1.0.57` · 2026-11-04 | = Pin | [1 · 33](core/dockhand/README.md#open-findings) | [2026-11-08](core/dockhand/UPSTREAM.md) |
 | [`core/hawser`](core/hawser/) | `0.2.53` · 2026-10-30 | = Pin | [0 · 3](core/hawser/README.md#open-findings) | [2026-11-08](core/hawser/UPSTREAM.md) |
 | [`core/headscale`](core/headscale/) | `v0.29.7` · 2026-10-30 | = Pin | [0 · 4](core/headscale/README.md#open-findings) | [2026-11-08](core/headscale/UPSTREAM.md) |
-| [`core/host-watchdog`](core/host-watchdog/) | *host-installed* | — | — | — · [host scripts without a container; they need a host of their own](core/host-watchdog/UPSTREAM.md) |
+| [`core/host-watchdog`](core/host-watchdog/) | *host-installed* | — | — | [2026-11-09](core/host-watchdog/UPSTREAM.md) |
 | [`core/infisical`](core/infisical/) | `v0.167.6` · 2026-11-03 | = Pin | [1 · 33](core/infisical/README.md#open-findings) | [2026-11-08](core/infisical/UPSTREAM.md) |
 | [`core/jumpserver`](core/jumpserver/) | `v5.1.1` · 2026-10-20 | = Pin | [19 · 234](core/jumpserver/README.md#open-findings) | [2026-11-08](core/jumpserver/UPSTREAM.md) |
 | [`core/keycloak`](core/keycloak/) | `26.8.2` | not checked at this pin | — | [2026-11-08](core/keycloak/UPSTREAM.md) |
