@@ -17,6 +17,10 @@
 # else Git does not track — because Git deletes them with the directory. Move
 # or back up that data, delete it, then apply again.
 #
+# Own stacks live in custom/<name>, each a checkout of its own repository. This
+# tool never checks them out or removes them; status and update list them with
+# the Blueprint release their README names (`**Blueprint:** vX.Y.Z`).
+#
 # The procedure around it is docs/standards/deployment-lifecycle.md.
 # =============================================
 set -euo pipefail
@@ -25,7 +29,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 STACKS_FILE="${STACKS_FILE:-${ROOT_DIR}/stacks}"
 REQUIRED="docs/standards scripts"
 
-usage() { sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 2; }
+usage() { sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 2; }
 die() { printf 'stacks: %s\n' "$*" >&2; exit 1; }
 g() { git -C "${ROOT_DIR}" "$@"; }
 
@@ -46,6 +50,10 @@ wanted() {
       path="$(printf '%s' "${line}" | tr -d '[:space:]')"
       path="${path%/}"
       [ -n "${path}" ] || continue
+      case "${path}" in custom|custom/*)
+        printf 'stacks: %s is an own stack — it lives in custom/ and is managed by its own repository, not by this file (docs/standards/deployment-lifecycle.md, section 11)\n' "${path}" >&2
+        bad=1; continue ;;
+      esac
       if ! printf '%s' "${path}" | grep -Eq '^[A-Za-z0-9_][A-Za-z0-9._-]*(/[A-Za-z0-9_][A-Za-z0-9._-]*)*$' \
          || printf '%s' "${path}" | grep -Eq '(^|/)\.\.?(/|$)'; then
         printf 'stacks: not a repository path: %s\n' "${path}" >&2; bad=1; continue
@@ -86,6 +94,23 @@ local_files() {
   while IFS= read -r f; do
     [ -n "${f}" ] || continue
     covered "${f}" "${want}" || printf '%s\n' "${f}"
+  done
+}
+
+# Own stacks: one line per directory under custom/ — name, the application's
+# release (its tag, else its commit), and the Blueprint release its README names.
+own_stacks() {
+  local d name ref bp
+  for d in "${ROOT_DIR}"/custom/*/; do
+    [ -d "${d}" ] || continue
+    name="custom/$(basename "${d}")"
+    if git -C "${d}" rev-parse --git-dir >/dev/null 2>&1; then
+      ref="$(git -C "${d}" describe --tags --exact-match 2>/dev/null || git -C "${d}" describe --tags --always 2>/dev/null || echo '-')"
+    else
+      ref="not a Git checkout"
+    fi
+    bp="$(grep -hoE '^\*\*Blueprint:\*\*[[:space:]]*v[0-9][0-9A-Za-z.+-]*' "${d}README.md" 2>/dev/null | head -1 | sed -E 's/^\*\*Blueprint:\*\*[[:space:]]*//' || true)"
+    printf '%s|%s|%s\n' "${name}" "${ref}" "${bp}"
   done
 }
 
@@ -130,7 +155,7 @@ cmd_apply() {
 
 cmd_update() {
   require_partial
-  local tag="${1:-}" yes="${2:-}" want have miss touched answer
+  local tag="${1:-}" yes="${2:-}" want have miss touched answer own name ref bp
   [ -n "${tag}" ] || usage
   [ -z "${yes}" ] || [ "${yes}" = "--yes" ] || usage
   want="$(wanted)"
@@ -157,6 +182,19 @@ cmd_update() {
     g diff --stat HEAD "${tag}" -- ${want} | sed 's/^/   /'
   fi
   echo "Read the CHANGELOG.md entries between the two releases for operator actions."
+  own="$(own_stacks)"
+  if [ -n "${own}" ]; then
+    echo "Own stacks (custom/) — this update does not change them:"
+    while IFS='|' read -r name ref bp; do
+      if [ -z "${bp}" ]; then
+        printf '   %s names no Blueprint release in its README — check it against the Migration notes up to %s\n' "${name}" "${tag}"
+      elif [ "${bp}" = "${tag}" ]; then
+        printf '   %s follows %s\n' "${name}" "${bp}"
+      else
+        printf '   %s follows %s — read the Migration notes in CHANGELOG.md between %s and %s\n' "${name}" "${bp}" "${bp}" "${tag}"
+      fi
+    done <<< "${own}"
+  fi
 
   if [ "${yes}" != "--yes" ]; then
     [ -t 0 ] || die "not a terminal — pass --yes to take ${tag} without asking"
@@ -172,12 +210,23 @@ cmd_update() {
   fi
 }
 
+print_own() {
+  local own name ref bp
+  own="$(own_stacks)"
+  [ -n "${own}" ] || return 0
+  echo "Own stacks (custom/):"
+  while IFS='|' read -r name ref bp; do
+    if [ -n "${bp}" ]; then bp="follows Blueprint ${bp}"; else bp="no Blueprint line in README.md"; fi
+    printf '   %-24s %-20s %s\n' "${name}" "${ref}" "${bp}"
+  done <<< "${own}"
+}
+
 cmd_status() {
   g rev-parse --git-dir >/dev/null 2>&1 || die "${ROOT_DIR} is not a Git checkout"
   local release want have only_file only_checkout
   release="$(g describe --tags --exact-match 2>/dev/null || true)"
   [ -n "${release}" ] && echo "Release: ${release}" || echo "Release: not on a release — $(g describe --tags --always 2>/dev/null)"
-  if ! is_partial; then echo "Checkout: full clone"; return 0; fi
+  if ! is_partial; then echo "Checkout: full clone"; print_own; return 0; fi
   want="$(wanted)"
   case "${want}" in *__INVALID__*) die "fix the stacks file" ;; esac
   have="$(current)"
@@ -187,6 +236,7 @@ cmd_status() {
   [ -z "${only_file}" ]     || { echo "In the file, not checked out (apply adds them):"; printf '%s\n' "${only_file}" | sed 's/^/   /'; }
   [ -z "${only_checkout}" ] || { echo "Checked out, not in the file (apply removes them, refused while they hold local files):"; printf '%s\n' "${only_checkout}" | sed 's/^/   /'; }
   [ -n "${only_file}${only_checkout}" ] || echo "File and checkout match."
+  print_own
 }
 
 cmd="${1:-}"; shift || true

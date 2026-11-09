@@ -32,7 +32,7 @@ kind of stack — it is the same stack with four extra phases in front of it.
 
 ## The shapes
 
-Three exist here. They are not instances of one procedure; each answers the same
+Four exist. They are not instances of one procedure; each answers the same
 question — where does the deployable image come from — differently.
 
 **In-repo build layer** — [`business/vikunja`](../../business/vikunja/). The source
@@ -61,6 +61,14 @@ a working build that produces a healthy container — which establishes that the
 pattern's Dockerfile and Compose shape are correct. It does not establish that
 any real, adopted project has gone through it yet; that evidence starts
 accumulating the first time a project is actually copied out.
+
+**Private repository on the host** — `custom/<name>`. An application developed
+in a private repository that is not part of this one: the host clones it with a
+read-only deploy key into `custom/`, checks out a release of it and builds the
+image there. Everything after the image follows the rules below and the standards
+they name; the stack names the Blueprint release it follows in its README.
+[`deployment-lifecycle.md`](deployment-lifecycle.md#11--own-stacks-custom) covers
+bringing one onto a host, updating and removing it.
 
 The shapes differ in where the build lives, which follows from what is being
 built: a thin delta over a published image, a codebase with its own release

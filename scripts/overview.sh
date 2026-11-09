@@ -86,7 +86,7 @@ scan_component() {
 }
 
 # Scan all component directories
-for category in "core:core" "apps:app" "monitoring:mon"; do
+for category in "core:core" "apps:app" "business:biz" "monitoring:mon" "backup:bak" "custom:own"; do
   dir_name="${category%%:*}"
   type_label="${category##*:}"
   target="${ROOT_DIR}/${dir_name}"
@@ -162,7 +162,7 @@ printf "\n"
 # the model replaces), what Traefik would disable (an empty position), and
 # which routers name a TLS option other than the deployment standard.
 
-ROUTER_ROOTS="core apps business monitoring backup development"
+ROUTER_ROOTS="core apps business monitoring backup development custom"
 
 # The value of a variable in an env file, unquoted; empty when unset.
 envval() {

@@ -138,7 +138,10 @@ traffic over IPv4 and leaves the IPv6 path untested.
    needs. Add a line per application later and run `scripts/stacks.sh apply`
    again; the
    [deployment lifecycle](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks)
-   covers removing stacks and previewing updates.
+   covers removing stacks and previewing updates. An application of your own,
+   from a private repository, goes into `custom/<name>` next to them and runs
+   behind the same Traefik and CrowdSec
+   ([own stacks](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/deployment-lifecycle.md#11--own-stacks-custom)).
 
    :::note
    Use a fresh directory. Cloning over an older copy mixes old and new

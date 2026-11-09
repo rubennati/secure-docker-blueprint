@@ -19,7 +19,10 @@ an app someone would run for its own sake.
 | [`web-api/`](web-api/) | A generic backend service: source → build → production image → health endpoint → Traefik. No database, queue or cache — those are added the same way [`apps/_reference`](../apps/_reference/) shows, once a real application needs one. |
 
 Each pattern's own `README.md` covers adoption: copy the directory into `apps/`
-or `business/` under the real project's name once the software exists, then
+or `business/` under the real project's name once the software exists — or, for
+software developed in a private repository of its own, into that repository,
+which a host then checks out under `custom/`
+([`deployment-lifecycle.md`](../docs/standards/deployment-lifecycle.md#11--own-stacks-custom)) — then
 follow [`docs/standards/custom-application.md`](../docs/standards/custom-application.md)
 for image identity and [`docs/standards/new-app-checklist.md`](../docs/standards/new-app-checklist.md)
 for everything after the image.

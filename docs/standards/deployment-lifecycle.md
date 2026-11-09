@@ -132,7 +132,8 @@ scripts/stacks.sh status
 `scripts` and `docs/standards` are always checked out: the first holds `stacks.sh`,
 `overview.sh` and `host-files.sh`, the second the rules the stack documentation links
 to. Every other line is a choice, the template's included. A path that does not exist in
-the checked-out release is refused, and nothing changes.
+the checked-out release is refused, and nothing changes. So is a line under `custom/`:
+an own stack is not part of a release ([section 11](#11--own-stacks-custom)).
 
 **Removing a line removes the stack's directory.** Git deletes a directory that leaves
 the partial checkout together with the files it ignores — `.env`, `.secrets/` and
@@ -299,6 +300,83 @@ git status --porcelain                # local modifications
 A partial checkout answers it the same way as a full clone. A deployment that is not a
 Git checkout cannot answer this question, and neither can one whose working tree has
 been edited in place. Both are reported rather than guessed at.
+
+## 11 — Own stacks (`custom/`)
+
+An application the Blueprint does not ship — a website or a service developed in a
+private repository — runs on the same host behind the same Traefik, CrowdSec and, where
+it needs it, Authentik. It lives in `custom/<name>` inside the checkout: under the same
+root as every other stack, so a backup of `/srv/docker` covers it, and in a directory
+Git ignores, so `stacks.sh` neither checks it out nor removes it. Each one is a Git
+checkout of its own repository and takes that repository's releases.
+
+### What an own stack brings
+
+The same files and rules as a stack of the Blueprint, none of them relaxed:
+
+| What | Standard |
+|---|---|
+| `docker-compose.yml`, optionally `docker-compose.local.yml` | [`compose-structure.md`](compose-structure.md) |
+| `.env.example`, required secrets left empty | [`env-structure.md`](env-structure.md), [`secrets.md`](secrets.md) |
+| Hardening per service | [`security-baseline.md`](security-baseline.md) |
+| Traefik labels: the four positions, a TLS option only with its reason | [`traefik-labels.md`](traefik-labels.md) |
+| Its own edge network | [`networking.md`](networking.md) |
+| Where its image comes from, and how it is pinned | [`custom-application.md`](custom-application.md) |
+| `README.md` with a line `**Blueprint:** vX.Y.Z` | the Blueprint release whose standards the stack follows |
+
+[`development/static-site`](../../development/static-site/) and
+[`development/web-api`](../../development/web-api/) are starting points that already
+have this shape.
+
+### Bring one onto the host
+
+A deploy key gives the host read access to one private repository and nothing else:
+
+```bash
+# A key for this one repository
+ssh-keygen -t ed25519 -N '' -C "deploy <name>" -f ~/.ssh/deploy-<name>
+cat ~/.ssh/deploy-<name>.pub    # the repository's Settings → Deploy keys, read-only
+
+# ~/.ssh/config — a host alias that uses that key
+Host github-<name>
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/deploy-<name>
+  IdentitiesOnly yes
+
+# Clone into custom/, then take a release of the application
+git clone git@github-<name>:<owner>/<repository>.git /srv/docker/custom/<name>
+cd /srv/docker/custom/<name>
+git checkout <tag>
+```
+
+Then the same steps as for every stack: `.env` and `.secrets/` (section 3), its network
+in `EDGE_NETWORKS` in `core/traefik/.env`, render, `up -d` in `core/traefik`
+([`edge-networks.md`](../../core/traefik/docs/edge-networks.md)), then the stack itself:
+
+```bash
+docker compose build     # where the stack builds its image
+docker compose up -d
+```
+
+### Update it
+
+An own stack has releases of its own: `git fetch --tags`, `git checkout <tag>`, then
+`docker compose build` and `up -d`. A Blueprint release leaves `custom/` untouched.
+Where a release changes something an own stack relies on — a middleware name, a
+network, a label — its `CHANGELOG.md` entry is marked **Migration**; the own stack
+follows it in its own repository and raises its `**Blueprint:**` line.
+`scripts/stacks.sh update` names every own stack and the release it follows before it
+asks; `scripts/stacks.sh status` and `./scripts/overview.sh` list them.
+
+### Remove it
+
+`stacks.sh` removes nothing under `custom/`. Stop the stack, back up its data, delete
+its directory and take its network out of `EDGE_NETWORKS`.
+
+What the Blueprint does not do for an own stack: its checkers (`check-structure.py` and
+the others) read the repository's own files only, and Trivy does not scan an image built
+on the host ([`custom-application.md`](custom-application.md#what-verifies-this-and-what-does-not)).
 
 ## What this document does not decide
 
