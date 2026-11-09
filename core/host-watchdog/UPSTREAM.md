@@ -30,8 +30,9 @@ copying a newer version of the script and its `.example` files.
 "Verified" means run on a real, disposable host: the confirmed-failure
 threshold actually triggers the one recovery attempt, the attempt succeeds
 where it should, the escalation path holds where it should not, and the
-Healthchecks ping sequence matches what the README describes. Neither script
-has had that rehearsal yet — configured and reviewed, not exercised.
+Healthchecks ping sequence matches what the README describes. Both scripts had
+that rehearsal on the lab host on 2026-11-09 (README, "What this is not"); it
+found three faults, fixed in the same change.
 
 ## Upgrade checklist
 

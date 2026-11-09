@@ -23,6 +23,7 @@ ENV_FILE="${DOCKER_WATCHDOG_ENV:-/etc/docker-daemon-watchdog.env}"
 : "${HEALTHCHECKS_PING_URL:?set in $ENV_FILE}"
 CONFIRM_AFTER="${CONFIRM_AFTER:-3}"
 SETTLE_SECONDS="${SETTLE_SECONDS:-10}"
+RESTART_TIMEOUT="${RESTART_TIMEOUT:-180}"
 STATE_FILE="${STATE_FILE:-/var/lib/docker-daemon-watchdog/state}"
 SOCK="${DOCKER_SOCKET:-/var/run/docker.sock}"
 
@@ -66,7 +67,11 @@ fi
 
 # Confirmed: unresponsive for CONFIRM_AFTER consecutive checks. One attempt.
 echo "$STREAK restarting" > "$STATE_FILE"
-systemctl restart docker || true
+# docker.service starts without a time limit (Type=notify, TimeoutStartSec=0):
+# a daemon that hangs on its way up held this script in `systemctl restart`
+# for good, with no ping sent (lab host). Bound the wait; the job itself goes
+# on in systemd, and the check below reports what it finds.
+timeout "$RESTART_TIMEOUT" systemctl restart docker || true
 sleep "$SETTLE_SECONDS"
 
 if api_ok; then
