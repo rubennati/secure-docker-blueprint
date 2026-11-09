@@ -54,6 +54,29 @@ Every file here is meant to hold up under all four. The same lenses drive
 | [`.gitignore`](.gitignore) | Keeps `.env`, `.secrets/`, `volumes/` out of git | ✅ |
 | [`UPSTREAM.md`](UPSTREAM.md) | Per-app upstream reference + upgrade checklist | ✅ |
 
+## Setup
+
+Before production setup, [prepare Traefik](../../core/traefik/README.md#setup) and
+include this stack's `TRAEFIK_NETWORK` in its `EDGE_NETWORKS`.
+
+```bash
+cp .env.example .env                  # host name, access policy
+mkdir -p .secrets volumes/postgres
+(umask 077
+ openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
+ openssl rand -base64 32 | tr -d '\n' > .secrets/app_key.txt
+ : > .secrets/smtp_password.txt)      # empty without SMTP; the wrapper skips it
+# The app runs as uid/gid 101 and reads the secrets itself through the wrapper;
+# PostgreSQL starts as root and reads its file with DAC_OVERRIDE
+sudo chown "$USER":101 .secrets/*.txt
+chmod 640 .secrets/*.txt
+docker compose up -d
+```
+
+Without the group step the app stops at `FATAL: required Docker Secret 'DB_PWD' is
+missing, unreadable, or empty` and restarts (lab host). A stack copied from here
+keeps this section and adjusts the files, the owners and the group to its images.
+
 ## Backup
 
 Every app README carries this section. It exists so the backup configuration can
@@ -102,12 +125,11 @@ curl http://localhost:8080/          # nginx welcome page = the structure works
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-> Both compose files pass `docker compose config` and the security baseline, but
-> the stack has **not been booted yet** — the run above is the outstanding proof.
+## Verified
 
-## Open
-
-- Boot the stack once (above) to confirm it truly runs — the one outstanding proof
+Booted on the stack-refresh lab host behind Traefik (2026-11-09): both services
+healthy, the welcome page through the route, a refused client answered `403`, the
+same after `down`/`up`; the local file ran in the lab container.
 
 ## Stand-in images (deliberate)
 
