@@ -2,7 +2,7 @@
   "stacks": {
     "apps/adminer": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -29,7 +29,7 @@
     },
     "apps/agentgateway": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -56,7 +56,7 @@
     },
     "apps/bookstack": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 31,
@@ -86,20 +86,20 @@
         "lscr.io/linuxserver/bookstack:version-v26.09.2@sha256:33f61a72d9aaa021f7e687987b9fcb992673d9ca3fc08f63f5ddaddf59e94efc"
       ],
       "last_release": "2026-10-20",
-      "newest": null,
-      "newest_date": null,
-      "newest_date_source": null,
+      "newest": "version-v26.09.2",
+      "newest_date": "2026-10-20",
+      "newest_date_source": "release",
       "pinned": "version-v26.09.2",
       "pinned_date": "2026-10-20",
       "pinned_date_source": "release",
       "quiet": false,
-      "reason": "lscr.io did not answer (TimeoutError)",
+      "reason": null,
       "repo": "BookStackApp/BookStack",
-      "status": "undetermined"
+      "status": "current"
     },
     "apps/caldiy": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 24,
         "high": 711,
@@ -152,12 +152,12 @@
     },
     "apps/calnode": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
         "high": 54,
         "images": {
-          "ghcr.io/calnode/calnode:0.13.0": {
+          "ghcr.io/calnode/calnode:0.14.0": {
             "programs": [
               3,
               54
@@ -166,68 +166,68 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/calnode/calnode:0.13.0",
+      "image": "ghcr.io/calnode/calnode:0.14.0",
       "images": [
-        "ghcr.io/calnode/calnode:0.13.0"
+        "ghcr.io/calnode/calnode:0.14.0"
       ],
       "last_release": "2026-11-07",
       "newest": "0.14.0",
       "newest_date": "2026-11-07",
       "newest_date_source": "release",
-      "pinned": "0.13.0",
-      "pinned_date": "2026-11-03",
+      "pinned": "0.14.0",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "Calnode/calnode",
-      "status": "behind"
+      "status": "current"
     },
     "apps/calrs": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
-        "high": 3,
+        "high": 2,
         "images": {
-          "ghcr.io/olivierlambert/calrs:1.22.0": {
+          "ghcr.io/olivierlambert/calrs:1.23.3": {
             "system": [
               0,
-              3
+              2
             ]
           }
         },
         "unscanned": []
       },
-      "image": "ghcr.io/olivierlambert/calrs:1.22.0",
+      "image": "ghcr.io/olivierlambert/calrs:1.23.3",
       "images": [
-        "ghcr.io/olivierlambert/calrs:1.22.0"
+        "ghcr.io/olivierlambert/calrs:1.23.3"
       ],
-      "last_release": "2026-11-07",
-      "newest": "1.23.0",
-      "newest_date": "2026-11-07",
+      "last_release": "2026-11-09",
+      "newest": "1.23.3",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
-      "pinned": "1.22.0",
-      "pinned_date": "2026-10-31",
+      "pinned": "1.23.3",
+      "pinned_date": "2026-11-09",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "olivierlambert/calrs",
-      "status": "behind"
+      "status": "current"
     },
     "apps/ciso-assistant": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
-        "critical": 2,
-        "high": 79,
+        "critical": 1,
+        "high": 27,
         "images": {
-          "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1": {
+          "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2": {
             "system": [
-              1,
-              54
+              0,
+              2
             ]
           },
-          "ghcr.io/intuitem/ciso-assistant-community/frontend:v4.2.1": {
+          "ghcr.io/intuitem/ciso-assistant-community/frontend:v4.2.2": {
             "system": [
               0,
               2
@@ -246,32 +246,32 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1",
+      "image": "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2",
       "images": [
-        "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1",
-        "ghcr.io/intuitem/ciso-assistant-community/frontend:v4.2.1",
+        "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2",
+        "ghcr.io/intuitem/ciso-assistant-community/frontend:v4.2.2",
         "postgres:16.15"
       ],
       "last_release": "2026-11-08",
       "newest": "v4.2.2",
       "newest_date": "2026-11-08",
       "newest_date_source": "release",
-      "pinned": "v4.2.1",
-      "pinned_date": "2026-11-01",
+      "pinned": "v4.2.2",
+      "pinned_date": "2026-11-08",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "intuitem/ciso-assistant-community",
-      "status": "behind"
+      "status": "current"
     },
     "apps/collabora": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 1,
         "images": {
-          "collabora/code:26.04.5.2.1": {
+          "collabora/code:26.04.6.1.1": {
             "libraries": [
               1,
               1
@@ -280,55 +280,55 @@
         },
         "unscanned": []
       },
-      "image": "collabora/code:26.04.5.2.1",
+      "image": "collabora/code:26.04.6.1.1",
       "images": [
-        "collabora/code:26.04.5.2.1"
+        "collabora/code:26.04.6.1.1"
       ],
       "last_release": "2026-11-07",
       "newest": "26.04.6.1.1",
       "newest_date": "2026-11-07",
       "newest_date_source": "image",
-      "pinned": "26.04.5.2.1",
-      "pinned_date": "2026-10-23",
+      "pinned": "26.04.6.1.1",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "CollaboraOnline/online",
-      "status": "behind"
+      "status": "current"
     },
     "apps/dashy": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
         "images": {
-          "lissy93/dashy:4.9.15": {}
+          "lissy93/dashy:4.9.17": {}
         },
         "unscanned": []
       },
-      "image": "lissy93/dashy:4.9.15",
+      "image": "lissy93/dashy:4.9.17",
       "images": [
-        "lissy93/dashy:4.9.15"
+        "lissy93/dashy:4.9.17"
       ],
       "last_release": "2026-10-23",
       "newest": "4.9.17",
       "newest_date": "2026-11-07",
       "newest_date_source": "image",
-      "pinned": "4.9.15",
-      "pinned_date": "2026-11-02",
+      "pinned": "4.9.17",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "Lissy93/dashy",
-      "status": "behind"
+      "status": "current"
     },
     "apps/defectdojo": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
-        "high": 95,
+        "high": 96,
         "images": {
           "defectdojo/defectdojo-django:3.5.0": {
             "libraries": [
@@ -337,7 +337,7 @@
             ],
             "system": [
               1,
-              55
+              56
             ]
           },
           "defectdojo/defectdojo-nginx:3.5.0": {
@@ -381,7 +381,7 @@
     },
     "apps/dependency-track": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
         "high": 36,
@@ -427,10 +427,10 @@
     },
     "apps/dfir-iris": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 28,
-        "high": 920,
+        "high": 921,
         "images": {
           "ghcr.io/dfir-iris/iriswebapp_app:v2.4.29": {
             "libraries": [
@@ -439,7 +439,7 @@
             ],
             "system": [
               15,
-              762
+              763
             ]
           },
           "ghcr.io/dfir-iris/iriswebapp_db:v2.4.29": {
@@ -481,7 +481,7 @@
     },
     "apps/dify": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 6,
         "high": 84,
@@ -577,43 +577,39 @@
     },
     "apps/docker-mailserver": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
-        "high": 24,
+        "high": 22,
         "images": {
-          "ghcr.io/docker-mailserver/docker-mailserver:16.0.1": {
+          "ghcr.io/docker-mailserver/docker-mailserver:17.0.0": {
             "programs": [
               0,
               22
-            ],
-            "system": [
-              0,
-              2
             ]
           }
         },
         "unscanned": []
       },
-      "image": "ghcr.io/docker-mailserver/docker-mailserver:16.0.1",
+      "image": "ghcr.io/docker-mailserver/docker-mailserver:17.0.0",
       "images": [
-        "ghcr.io/docker-mailserver/docker-mailserver:16.0.1"
+        "ghcr.io/docker-mailserver/docker-mailserver:17.0.0"
       ],
       "last_release": "2026-11-05",
       "newest": "17.0.0",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "16.0.1",
-      "pinned_date": "2026-09-04",
+      "pinned": "17.0.0",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "docker-mailserver/docker-mailserver",
-      "status": "behind"
+      "status": "current"
     },
     "apps/docling-serve": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 15,
@@ -645,15 +641,15 @@
     },
     "apps/easyappointments": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
-        "high": 79,
+        "high": 80,
         "images": {
           "alextselegidis/easyappointments:1.6.1": {
             "system": [
               2,
-              54
+              55
             ]
           },
           "mariadb:11.4.13": {
@@ -688,39 +684,39 @@
     },
     "apps/euro-office": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
-        "high": 3,
+        "high": 1,
         "images": {
-          "ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1": {
+          "ghcr.io/euro-office/documentserver:v9.3.7-1": {
             "system": [
               0,
-              3
+              1
             ]
           }
         },
         "unscanned": []
       },
-      "image": "ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1",
+      "image": "ghcr.io/euro-office/documentserver:v9.3.7-1",
       "images": [
-        "ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1"
+        "ghcr.io/euro-office/documentserver:v9.3.7-1"
       ],
       "last_release": "2026-10-29",
-      "newest": null,
-      "newest_date": null,
-      "newest_date_source": null,
-      "pinned": "v9.3.4-hotfix.1",
-      "pinned_date": "2026-08-28",
+      "newest": "v9.3.7-1",
+      "newest_date": "2026-10-29",
+      "newest_date_source": "release",
+      "pinned": "v9.3.7-1",
+      "pinned_date": "2026-10-29",
       "pinned_date_source": "release",
       "quiet": false,
-      "reason": "`v9.3.4-hotfix.1` carries no comparable version",
+      "reason": null,
       "repo": "euro-office/DocumentServer",
-      "status": "undetermined"
+      "status": "current"
     },
     "apps/ghost": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 45,
@@ -772,7 +768,7 @@
     },
     "apps/greenmail": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 3,
@@ -804,7 +800,7 @@
     },
     "apps/heimdall": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -818,20 +814,20 @@
         "lscr.io/linuxserver/heimdall:2.8.4"
       ],
       "last_release": "2026-11-06",
-      "newest": null,
-      "newest_date": null,
-      "newest_date_source": null,
+      "newest": "2.8.4",
+      "newest_date": "2026-11-06",
+      "newest_date_source": "release",
       "pinned": "2.8.4",
       "pinned_date": "2026-11-06",
       "pinned_date_source": "release",
       "quiet": false,
-      "reason": "lscr.io did not answer (TimeoutError)",
+      "reason": null,
       "repo": "linuxserver/docker-heimdall",
-      "status": "undetermined"
+      "status": "current"
     },
     "apps/hemmelig": {
       "archived": true,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 7,
         "high": 30,
@@ -867,7 +863,7 @@
     },
     "apps/heyform": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 13,
         "high": 142,
@@ -920,12 +916,12 @@
     },
     "apps/homarr": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 2,
         "images": {
-          "ghcr.io/homarr-labs/homarr:v2.11.1": {
+          "ghcr.io/homarr-labs/homarr:v2.12.0": {
             "system": [
               0,
               2
@@ -934,25 +930,25 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/homarr-labs/homarr:v2.11.1",
+      "image": "ghcr.io/homarr-labs/homarr:v2.12.0",
       "images": [
-        "ghcr.io/homarr-labs/homarr:v2.11.1"
+        "ghcr.io/homarr-labs/homarr:v2.12.0"
       ],
       "last_release": "2026-11-06",
       "newest": "v2.12.0",
       "newest_date": "2026-11-06",
       "newest_date_source": "release",
-      "pinned": "v2.11.1",
-      "pinned_date": "2026-11-05",
+      "pinned": "v2.12.0",
+      "pinned_date": "2026-11-06",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "homarr-labs/homarr",
-      "status": "behind"
+      "status": "current"
     },
     "apps/homepage": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 9,
@@ -984,7 +980,7 @@
     },
     "apps/httpbin": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 27,
@@ -1020,7 +1016,7 @@
     },
     "apps/immich": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 16,
         "high": 102,
@@ -1085,7 +1081,7 @@
     },
     "apps/it-tools": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 27,
@@ -1117,7 +1113,7 @@
     },
     "apps/librephotos": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -1182,17 +1178,12 @@
     },
     "apps/litellm": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 29,
+        "high": 27,
         "images": {
-          "ghcr.io/berriai/litellm-non_root:v1.108.0@sha256:08d313a00c46509c875d84f60c1448a260c478f399ade3c2abb940d358d5b724": {
-            "libraries": [
-              0,
-              2
-            ]
-          },
+          "ghcr.io/berriai/litellm-non_root:v1.108.3@sha256:36e4ec234cf279efa525f229417d8443499464f796d25f19ac5847cd7f16d316": {},
           "postgres:18.6": {
             "programs": [
               1,
@@ -1206,38 +1197,34 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/berriai/litellm-non_root:v1.108.0@sha256:08d313a00c46509c875d84f60c1448a260c478f399ade3c2abb940d358d5b724",
+      "image": "ghcr.io/berriai/litellm-non_root:v1.108.3@sha256:36e4ec234cf279efa525f229417d8443499464f796d25f19ac5847cd7f16d316",
       "images": [
         "postgres:18.6",
-        "ghcr.io/berriai/litellm-non_root:v1.108.0@sha256:08d313a00c46509c875d84f60c1448a260c478f399ade3c2abb940d358d5b724"
+        "ghcr.io/berriai/litellm-non_root:v1.108.3@sha256:36e4ec234cf279efa525f229417d8443499464f796d25f19ac5847cd7f16d316"
       ],
       "last_release": "2026-11-07",
       "newest": "v1.108.3",
       "newest_date": "2026-11-07",
       "newest_date_source": "release",
-      "pinned": "v1.108.0",
-      "pinned_date": "2026-11-04",
+      "pinned": "v1.108.3",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "BerriAI/litellm",
-      "status": "behind"
+      "status": "current"
     },
     "apps/lycheeorg": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 29,
+        "high": 28,
         "images": {
-          "lycheeorg/lychee:v7.12.1": {
-            "programs": [
-              0,
-              1
-            ],
+          "lycheeorg/lychee:v7.13.0": {
             "system": [
               0,
-              3
+              2
             ]
           },
           "mariadb:12.3.3": {
@@ -1254,78 +1241,73 @@
         },
         "unscanned": []
       },
-      "image": "lycheeorg/lychee:v7.12.1",
+      "image": "lycheeorg/lychee:v7.13.0",
       "images": [
         "mariadb:12.3.3",
         "redis:8.10.3-alpine",
-        "lycheeorg/lychee:v7.12.1"
+        "lycheeorg/lychee:v7.13.0"
       ],
-      "last_release": "2026-11-07",
-      "newest": "v7.12.2",
-      "newest_date": "2026-11-07",
+      "last_release": "2026-11-09",
+      "newest": "v7.13.0",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
-      "pinned": "v7.12.1",
-      "pinned_date": "2026-11-03",
+      "pinned": "v7.13.0",
+      "pinned_date": "2026-11-09",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "LycheeOrg/Lychee",
-      "status": "behind"
+      "status": "current"
     },
     "apps/mailpit": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
         "images": {
-          "axllent/mailpit:v1.33.0": {}
+          "axllent/mailpit:v1.33.1": {}
         },
         "unscanned": []
       },
-      "image": "axllent/mailpit:v1.33.0",
+      "image": "axllent/mailpit:v1.33.1",
       "images": [
-        "axllent/mailpit:v1.33.0"
+        "axllent/mailpit:v1.33.1"
       ],
       "last_release": "2026-11-07",
       "newest": "v1.33.1",
       "newest_date": "2026-11-07",
       "newest_date_source": "release",
-      "pinned": "v1.33.0",
-      "pinned_date": "2026-10-31",
+      "pinned": "v1.33.1",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "axllent/mailpit",
-      "status": "behind"
+      "status": "current"
     },
     "apps/mailserver-jeboehm": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
-        "high": 41,
+        "high": 39,
         "images": {
-          "ghcr.io/jeboehm/mailserver-filter:8.1.0": {
+          "ghcr.io/jeboehm/mailserver-filter:8.1.2": {
             "system": [
               0,
-              3
+              2
             ]
           },
-          "ghcr.io/jeboehm/mailserver-mda:8.1.0": {},
-          "ghcr.io/jeboehm/mailserver-mta:8.1.0": {},
-          "ghcr.io/jeboehm/mailserver-unbound:8.1.0": {
+          "ghcr.io/jeboehm/mailserver-mda:8.1.2": {},
+          "ghcr.io/jeboehm/mailserver-mta:8.1.2": {},
+          "ghcr.io/jeboehm/mailserver-unbound:8.1.2": {
             "system": [
               0,
               4
             ]
           },
-          "ghcr.io/jeboehm/mailserver-web:8.1.0": {
-            "programs": [
-              0,
-              1
-            ]
-          },
+          "ghcr.io/jeboehm/mailserver-web:8.1.2": {},
           "mysql:9.7.4": {
             "libraries": [
               1,
@@ -1340,13 +1322,13 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/jeboehm/mailserver-mta:8.1.0",
+      "image": "ghcr.io/jeboehm/mailserver-mta:8.1.2",
       "images": [
-        "ghcr.io/jeboehm/mailserver-mta:8.1.0",
-        "ghcr.io/jeboehm/mailserver-mda:8.1.0",
-        "ghcr.io/jeboehm/mailserver-filter:8.1.0",
-        "ghcr.io/jeboehm/mailserver-web:8.1.0",
-        "ghcr.io/jeboehm/mailserver-unbound:8.1.0",
+        "ghcr.io/jeboehm/mailserver-mta:8.1.2",
+        "ghcr.io/jeboehm/mailserver-mda:8.1.2",
+        "ghcr.io/jeboehm/mailserver-filter:8.1.2",
+        "ghcr.io/jeboehm/mailserver-web:8.1.2",
+        "ghcr.io/jeboehm/mailserver-unbound:8.1.2",
         "mysql:9.7.4",
         "redis:8.10.3-alpine"
       ],
@@ -1354,17 +1336,17 @@
       "newest": "8.1.2",
       "newest_date": "2026-11-07",
       "newest_date_source": "release",
-      "pinned": "8.1.0",
-      "pinned_date": "2026-11-04",
+      "pinned": "8.1.2",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "jeboehm/docker-mailserver",
-      "status": "behind"
+      "status": "current"
     },
     "apps/monicahq": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 50,
@@ -1411,12 +1393,12 @@
     },
     "apps/n8n": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 23,
         "images": {
-          "n8nio/n8n:2.46.6@sha256:8602f5dfacbe2c931eeafd010de0e68182310e9f309921e780ab69182e92b3ae": {
+          "n8nio/n8n:2.46.7@sha256:e97b4f576cd21de5c7676858f7006126581faeca8046d9d23fda0e06468008d4": {
             "libraries": [
               0,
               17
@@ -1429,25 +1411,25 @@
         },
         "unscanned": []
       },
-      "image": "n8nio/n8n:2.46.6@sha256:8602f5dfacbe2c931eeafd010de0e68182310e9f309921e780ab69182e92b3ae",
+      "image": "n8nio/n8n:2.46.7@sha256:e97b4f576cd21de5c7676858f7006126581faeca8046d9d23fda0e06468008d4",
       "images": [
-        "n8nio/n8n:2.46.6@sha256:8602f5dfacbe2c931eeafd010de0e68182310e9f309921e780ab69182e92b3ae"
+        "n8nio/n8n:2.46.7@sha256:e97b4f576cd21de5c7676858f7006126581faeca8046d9d23fda0e06468008d4"
       ],
-      "last_release": "2026-11-04",
-      "newest": "3.1.0",
-      "newest_date": "2026-11-03",
-      "newest_date_source": "image",
-      "pinned": "2.46.6",
-      "pinned_date": "2026-11-04",
-      "pinned_date_source": "image",
+      "last_release": "2026-11-09",
+      "newest": "2.46.7",
+      "newest_date": "2026-11-09",
+      "newest_date_source": "release",
+      "pinned": "2.46.7",
+      "pinned_date": "2026-11-09",
+      "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "n8n-io/n8n",
-      "status": "behind"
+      "status": "current"
     },
     "apps/nextcloud": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 28,
@@ -1498,7 +1480,7 @@
     },
     "apps/nocodb": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -1525,19 +1507,15 @@
     },
     "apps/obot": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
-        "critical": 3,
-        "high": 56,
+        "critical": 1,
+        "high": 33,
         "images": {
-          "ghcr.io/obot-platform/obot:v0.27.0": {
+          "ghcr.io/obot-platform/obot:v0.28.0": {
             "programs": [
               0,
-              7
-            ],
-            "system": [
-              2,
-              20
+              1
             ]
           },
           "postgres:18.6-alpine": {
@@ -1555,32 +1533,32 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/obot-platform/obot:v0.27.0",
+      "image": "ghcr.io/obot-platform/obot:v0.28.0",
       "images": [
         "tecnativa/docker-socket-proxy:v0.5.0",
         "postgres:18.6-alpine",
-        "ghcr.io/obot-platform/obot:v0.27.0"
+        "ghcr.io/obot-platform/obot:v0.28.0"
       ],
       "last_release": "2026-11-07",
       "newest": "v0.28.0",
       "newest_date": "2026-11-07",
       "newest_date_source": "release",
-      "pinned": "v0.27.0",
-      "pinned_date": "2026-10-20",
+      "pinned": "v0.28.0",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "obot-platform/obot",
-      "status": "behind"
+      "status": "current"
     },
     "apps/ollama": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 2,
         "images": {
-          "ollama/ollama:0.40.14": {
+          "ollama/ollama:0.40.15": {
             "programs": [
               0,
               1
@@ -1593,25 +1571,25 @@
         },
         "unscanned": []
       },
-      "image": "ollama/ollama:0.40.14",
+      "image": "ollama/ollama:0.40.15",
       "images": [
-        "ollama/ollama:0.40.14"
+        "ollama/ollama:0.40.15"
       ],
       "last_release": "2026-11-03",
       "newest": "0.40.15",
       "newest_date": "2026-11-03",
       "newest_date_source": "release",
-      "pinned": "0.40.14",
+      "pinned": "0.40.15",
       "pinned_date": "2026-11-03",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "ollama/ollama",
-      "status": "behind"
+      "status": "current"
     },
     "apps/onlyoffice": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -1643,7 +1621,7 @@
     },
     "apps/open-webui": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 31,
@@ -1665,7 +1643,7 @@
       "images": [
         "ghcr.io/open-webui/open-webui:v0.13.0"
       ],
-      "last_release": "2026-11-03",
+      "last_release": "2026-11-08",
       "newest": "v0.13.0",
       "newest_date": "2026-11-03",
       "newest_date_source": "release",
@@ -1679,7 +1657,7 @@
     },
     "apps/opencanary": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 8,
         "high": 111,
@@ -1719,7 +1697,7 @@
     },
     "apps/opnform": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 34,
@@ -1774,7 +1752,7 @@
     },
     "apps/paperless-gpt": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -1810,7 +1788,7 @@
     },
     "apps/paperless-ngx": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 39,
@@ -1881,7 +1859,7 @@
     },
     "apps/photoprism": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -1924,7 +1902,7 @@
     },
     "apps/photoview": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 5,
         "high": 55,
@@ -1971,7 +1949,7 @@
     },
     "apps/privatebin": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -1998,7 +1976,7 @@
     },
     "apps/qdrant": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 9,
@@ -2034,7 +2012,7 @@
     },
     "apps/seafile": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
         "high": 103,
@@ -2129,7 +2107,7 @@
     },
     "apps/seafile-pro": {
       "archived": null,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 23,
         "high": 783,
@@ -2257,7 +2235,7 @@
     },
     "apps/shlink": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 33,
@@ -2307,7 +2285,7 @@
     },
     "apps/stalwart": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 3,
@@ -2339,7 +2317,7 @@
     },
     "apps/threat-dragon": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 30,
@@ -2375,15 +2353,15 @@
     },
     "apps/tymeslot": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 28,
+        "high": 27,
         "images": {
-          "luka1thb/tymeslot:1.39.0-slim@sha256:ad7cfda6fe84a5693fb2da0820fb47c54d9f9e52700223430efaa70bf6cac352": {
+          "luka1thb/tymeslot:1.41.0-slim@sha256:a78d0ec93a01cb1ab5149b39f5be1c9dd367fc1e03e485cb1dea87ff2ca47dcb": {
             "system": [
               0,
-              3
+              2
             ]
           },
           "postgres:18.6-alpine": {
@@ -2395,26 +2373,26 @@
         },
         "unscanned": []
       },
-      "image": "luka1thb/tymeslot:1.39.0-slim@sha256:ad7cfda6fe84a5693fb2da0820fb47c54d9f9e52700223430efaa70bf6cac352",
+      "image": "luka1thb/tymeslot:1.41.0-slim@sha256:a78d0ec93a01cb1ab5149b39f5be1c9dd367fc1e03e485cb1dea87ff2ca47dcb",
       "images": [
         "postgres:18.6-alpine",
-        "luka1thb/tymeslot:1.39.0-slim@sha256:ad7cfda6fe84a5693fb2da0820fb47c54d9f9e52700223430efaa70bf6cac352"
+        "luka1thb/tymeslot:1.41.0-slim@sha256:a78d0ec93a01cb1ab5149b39f5be1c9dd367fc1e03e485cb1dea87ff2ca47dcb"
       ],
       "last_release": "2026-11-05",
       "newest": "1.41.0-slim",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "1.39.0-slim",
-      "pinned_date": "2026-11-04",
+      "pinned": "1.41.0-slim",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "tymeslot/tymeslot",
-      "status": "behind"
+      "status": "current"
     },
     "apps/unifi": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 12,
         "high": 57,
@@ -2452,20 +2430,20 @@
         "lscr.io/linuxserver/unifi-network-application:10.6.109"
       ],
       "last_release": "2026-11-03",
-      "newest": null,
-      "newest_date": null,
-      "newest_date_source": null,
+      "newest": "10.6.109",
+      "newest_date": "2026-11-03",
+      "newest_date_source": "release",
       "pinned": "10.6.109",
       "pinned_date": "2026-11-03",
       "pinned_date_source": "release",
       "quiet": false,
-      "reason": "lscr.io did not answer (TimeoutError)",
+      "reason": null,
       "repo": "linuxserver/docker-unifi-network-application",
-      "status": "undetermined"
+      "status": "current"
     },
     "apps/vaultwarden": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 28,
@@ -2508,7 +2486,7 @@
     },
     "apps/velociraptor": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 10,
@@ -2544,7 +2522,7 @@
     },
     "apps/vllm": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 9,
@@ -2580,7 +2558,7 @@
     },
     "apps/whoami": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 16,
@@ -2612,19 +2590,19 @@
     },
     "apps/wikijs": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
-        "critical": 2,
-        "high": 120,
+        "critical": 1,
+        "high": 49,
         "images": {
-          "ghcr.io/requarks/wiki:3.1.0": {
+          "ghcr.io/requarks/wiki:3.2.0": {
             "libraries": [
               0,
               22
             ],
             "system": [
-              1,
-              73
+              0,
+              2
             ]
           },
           "postgres:18.6-alpine": {
@@ -2636,31 +2614,31 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/requarks/wiki:3.1.0",
+      "image": "ghcr.io/requarks/wiki:3.2.0",
       "images": [
         "postgres:18.6-alpine",
-        "ghcr.io/requarks/wiki:3.1.0"
+        "ghcr.io/requarks/wiki:3.2.0"
       ],
-      "last_release": "2026-11-06",
-      "newest": "3.1.1",
-      "newest_date": "2026-11-06",
+      "last_release": "2026-11-08",
+      "newest": "3.2.0",
+      "newest_date": "2026-11-08",
       "newest_date_source": "release",
-      "pinned": "3.1.0",
-      "pinned_date": "2026-11-05",
+      "pinned": "3.2.0",
+      "pinned_date": "2026-11-08",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "requarks/wiki",
-      "status": "behind"
+      "status": "current"
     },
     "apps/windmill": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
-        "critical": 2,
-        "high": 86,
+        "critical": 1,
+        "high": 34,
         "images": {
-          "ghcr.io/windmill-labs/windmill:1.862.0": {
+          "ghcr.io/windmill-labs/windmill:1.864.1": {
             "libraries": [
               0,
               5
@@ -2670,8 +2648,8 @@
               4
             ],
             "system": [
-              1,
-              54
+              0,
+              2
             ]
           },
           "postgres:18.6": {
@@ -2687,26 +2665,26 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/windmill-labs/windmill:1.862.0",
+      "image": "ghcr.io/windmill-labs/windmill:1.864.1",
       "images": [
         "postgres:18.6",
-        "ghcr.io/windmill-labs/windmill:1.862.0"
+        "ghcr.io/windmill-labs/windmill:1.864.1"
       ],
       "last_release": "2026-11-06",
       "newest": "1.864.1",
       "newest_date": "2026-11-06",
       "newest_date_source": "release",
-      "pinned": "1.862.0",
-      "pinned_date": "2026-11-04",
+      "pinned": "1.864.1",
+      "pinned_date": "2026-11-06",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "windmill-labs/windmill",
-      "status": "behind"
+      "status": "current"
     },
     "apps/wordpress": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 28,
@@ -2740,7 +2718,7 @@
       "newest_date": null,
       "newest_date_source": null,
       "pinned": "7.1.4-php8.3-apache",
-      "pinned_date": "2026-11-05",
+      "pinned_date": "2026-11-08",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": "`7.1.4-php8.3-apache` carries no comparable version",
@@ -2749,12 +2727,12 @@
     },
     "apps/yopass": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 2,
         "images": {
-          "jhaals/yopass:16.0.1": {
+          "jhaals/yopass:16.1.0": {
             "system": [
               0,
               2
@@ -2764,26 +2742,26 @@
         },
         "unscanned": []
       },
-      "image": "jhaals/yopass:16.0.1",
+      "image": "jhaals/yopass:16.1.0",
       "images": [
         "memcached:1.6.45-alpine",
-        "jhaals/yopass:16.0.1"
+        "jhaals/yopass:16.1.0"
       ],
       "last_release": "2026-11-07",
       "newest": "16.1.0",
       "newest_date": "2026-11-07",
       "newest_date_source": "release",
-      "pinned": "16.0.1",
-      "pinned_date": "2026-10-23",
+      "pinned": "16.1.0",
+      "pinned_date": "2026-11-07",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "jhaals/yopass",
-      "status": "behind"
+      "status": "current"
     },
     "backup/borgmatic": {
       "archived": null,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -2806,7 +2784,7 @@
     },
     "backup/kopia": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 58,
@@ -2842,43 +2820,34 @@
     },
     "backup/rclone-web": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
-        "high": 4,
+        "high": 0,
         "images": {
-          "rclone/rclone:1.75.2": {
-            "programs": [
-              0,
-              2
-            ],
-            "system": [
-              0,
-              2
-            ]
-          }
+          "rclone/rclone:1.76.0": {}
         },
         "unscanned": []
       },
-      "image": "rclone/rclone:1.75.2",
+      "image": "rclone/rclone:1.76.0",
       "images": [
-        "rclone/rclone:1.75.2"
+        "rclone/rclone:1.76.0"
       ],
       "last_release": "2026-11-04",
       "newest": "1.76.0",
       "newest_date": "2026-11-06",
       "newest_date_source": "image",
-      "pinned": "1.75.2",
-      "pinned_date": "2026-10-09",
+      "pinned": "1.76.0",
+      "pinned_date": "2026-11-06",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "rclone/rclone-web",
-      "status": "behind"
+      "status": "current"
     },
     "backup/urbackup": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 19,
@@ -2910,15 +2879,15 @@
     },
     "business/akaunting": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
-        "high": 85,
+        "high": 86,
         "images": {
           "akaunting/akaunting:3.3.0-v@sha256:6c5e9864dfe7f2e0b7c2f0b616d6d9933f69f6ae090c546629149f96885d2dcf": {
             "system": [
               1,
-              60
+              61
             ]
           },
           "mariadb:11.4.13": {
@@ -2953,7 +2922,7 @@
     },
     "business/chatwoot": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 53,
@@ -3002,7 +2971,7 @@
     },
     "business/documenso": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 45,
@@ -3045,7 +3014,7 @@
     },
     "business/dolibarr": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -3088,12 +3057,12 @@
     },
     "business/erpnext": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 6,
         "high": 119,
         "images": {
-          "frappe/erpnext:v16.53.0": {
+          "frappe/erpnext:v16.54.0": {
             "libraries": [
               2,
               69
@@ -3104,7 +3073,7 @@
             ],
             "system": [
               0,
-              3
+              2
             ]
           },
           "mariadb:11.8.9": {
@@ -3121,9 +3090,9 @@
         },
         "unscanned": []
       },
-      "image": "frappe/erpnext:v16.53.0",
+      "image": "frappe/erpnext:v16.54.0",
       "images": [
-        "frappe/erpnext:v16.53.0",
+        "frappe/erpnext:v16.54.0",
         "mariadb:11.8.9",
         "redis:8.10.3-alpine"
       ],
@@ -3131,25 +3100,25 @@
       "newest": "v16.54.0",
       "newest_date": "2026-11-06",
       "newest_date_source": "image",
-      "pinned": "v16.53.0",
-      "pinned_date": "2026-11-04",
+      "pinned": "v16.54.0",
+      "pinned_date": "2026-11-06",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "frappe/frappe_docker",
-      "status": "behind"
+      "status": "current"
     },
     "business/facturascripts": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
-        "critical": 3,
-        "high": 79,
+        "critical": 2,
+        "high": 80,
         "images": {
-          "facturascripts/facturascripts:2026.7": {
+          "facturascripts/facturascripts:2026.72": {
             "system": [
-              2,
-              54
+              1,
+              55
             ]
           },
           "mariadb:11.4.13": {
@@ -3165,29 +3134,29 @@
         },
         "unscanned": []
       },
-      "image": "facturascripts/facturascripts:2026.7",
+      "image": "facturascripts/facturascripts:2026.72",
       "images": [
         "mariadb:11.4.13",
-        "facturascripts/facturascripts:2026.7"
+        "facturascripts/facturascripts:2026.72"
       ],
       "last_release": "2021-05-18",
       "newest": "2026.72",
       "newest_date": "2026-10-30",
       "newest_date_source": "image",
-      "pinned": "2026.7",
-      "pinned_date": "2026-10-21",
+      "pinned": "2026.72",
+      "pinned_date": "2026-10-30",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "FacturaScripts/docker-facturascripts",
-      "status": "behind"
+      "status": "current"
     },
     "business/invoiceninja": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
-        "high": 94,
+        "high": 95,
         "images": {
           "invoiceninja/invoiceninja-debian:5.13.53": {
             "libraries": [
@@ -3196,7 +3165,7 @@
             ],
             "system": [
               1,
-              60
+              61
             ]
           },
           "mysql:8.4.13": {
@@ -3235,7 +3204,7 @@
     },
     "business/kimai": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 29,
@@ -3278,7 +3247,7 @@
     },
     "business/leantime": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 39,
@@ -3325,7 +3294,7 @@
     },
     "business/listmonk": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 53,
@@ -3368,7 +3337,7 @@
     },
     "business/matomo": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 28,
@@ -3411,7 +3380,7 @@
     },
     "business/openproject": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
         "high": 53,
@@ -3442,9 +3411,9 @@
         "memcached:1.6.45-alpine",
         "postgres:18.6-alpine"
       ],
-      "last_release": "2026-10-30",
-      "newest": "17.9.6-slim",
-      "newest_date": "2026-10-30",
+      "last_release": "2026-11-09",
+      "newest": "17.9.7-slim",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
       "pinned": "17.9.6-slim",
       "pinned_date": "2026-10-30",
@@ -3452,11 +3421,11 @@
       "quiet": false,
       "reason": null,
       "repo": "opf/openproject",
-      "status": "current"
+      "status": "behind"
     },
     "business/opensign": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 30,
         "high": 996,
@@ -3518,7 +3487,7 @@
     },
     "business/plane": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 8,
         "high": 112,
@@ -3567,6 +3536,12 @@
               1
             ]
           },
+          "pgsty/silo:RELEASE.2026-10-26T00-00-00Z": {
+            "programs": [
+              0,
+              1
+            ]
+          },
           "postgres:15.19-alpine": {
             "programs": [
               1,
@@ -3586,16 +3561,14 @@
             ]
           }
         },
-        "unscanned": [
-          "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
-        ]
+        "unscanned": []
       },
       "image": "makeplane/plane-backend:v1.4.3",
       "images": [
         "postgres:15.19-alpine",
         "valkey/valkey:7.2.14-alpine",
         "rabbitmq:3.13.7-management-alpine",
-        "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z",
+        "pgsty/silo:RELEASE.2026-10-26T00-00-00Z",
         "makeplane/plane-backend:v1.4.3",
         "makeplane/plane-live:v1.4.3",
         "makeplane/plane-frontend:v1.4.3",
@@ -3617,7 +3590,7 @@
     },
     "business/plausible": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 50,
@@ -3658,7 +3631,7 @@
     },
     "business/solidinvoice": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -3690,10 +3663,10 @@
     },
     "business/twenty": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 32,
+        "high": 35,
         "images": {
           "postgres:16.15": {
             "programs": [
@@ -3706,10 +3679,10 @@
             ]
           },
           "redis:8.10.3-alpine": {},
-          "twentycrm/twenty:v2.55.0": {
+          "twentycrm/twenty:v2.56.1": {
             "libraries": [
               0,
-              1
+              4
             ],
             "system": [
               0,
@@ -3719,9 +3692,9 @@
         },
         "unscanned": []
       },
-      "image": "twentycrm/twenty:v2.55.0",
+      "image": "twentycrm/twenty:v2.56.1",
       "images": [
-        "twentycrm/twenty:v2.55.0",
+        "twentycrm/twenty:v2.56.1",
         "postgres:16.15",
         "redis:8.10.3-alpine"
       ],
@@ -3729,17 +3702,17 @@
       "newest": "v2.56.1",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "v2.55.0",
-      "pinned_date": "2026-11-03",
+      "pinned": "v2.56.1",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "twentyhq/twenty",
-      "status": "behind"
+      "status": "current"
     },
     "business/vikunja": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 25,
@@ -3761,17 +3734,17 @@
       "newest": "2.8.0",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "2.6.0",
-      "pinned_date": "2026-08-31",
+      "pinned": "2.8.0",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "go-vikunja/vikunja",
-      "status": "behind"
+      "status": "current"
     },
     "business/zammad": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -3782,7 +3755,7 @@
               5
             ]
           },
-          "ghcr.io/zammad/zammad:7.2.2-0038": {
+          "ghcr.io/zammad/zammad:7.2.2-0045": {
             "libraries": [
               0,
               1
@@ -3808,9 +3781,9 @@
         },
         "unscanned": []
       },
-      "image": "ghcr.io/zammad/zammad:7.2.2-0038",
+      "image": "ghcr.io/zammad/zammad:7.2.2-0045",
       "images": [
-        "ghcr.io/zammad/zammad:7.2.2-0038",
+        "ghcr.io/zammad/zammad:7.2.2-0045",
         "postgres:18.6-alpine",
         "redis:8.10.3-alpine",
         "memcached:1.6.45",
@@ -3820,17 +3793,17 @@
       "newest": "7.2.2-0045",
       "newest_date": "2026-11-06",
       "newest_date_source": "image",
-      "pinned": "7.2.2-0038",
-      "pinned_date": "2026-11-05",
+      "pinned": "7.2.2-0045",
+      "pinned_date": "2026-11-06",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "zammad/zammad",
-      "status": "behind"
+      "status": "current"
     },
     "core/acme-certs": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 3,
         "high": 46,
@@ -3862,7 +3835,7 @@
     },
     "core/authelia": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -3903,7 +3876,7 @@
     },
     "core/authentik": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 47,
@@ -3950,7 +3923,7 @@
     },
     "core/crowdsec": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 10,
@@ -3986,7 +3959,7 @@
     },
     "core/dnsmasq": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -4013,7 +3986,7 @@
     },
     "core/dockhand": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -4059,7 +4032,7 @@
     },
     "core/hawser": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 3,
@@ -4091,7 +4064,7 @@
     },
     "core/headscale": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 4,
@@ -4127,7 +4100,7 @@
     },
     "core/host-watchdog": {
       "archived": null,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -4150,19 +4123,15 @@
     },
     "core/infisical": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 33,
+        "high": 27,
         "images": {
-          "infisical/infisical:v0.167.6": {
-            "libraries": [
-              0,
-              5
-            ],
+          "infisical/infisical:v0.167.7": {
             "system": [
               0,
-              3
+              2
             ]
           },
           "postgres:18.6-alpine": {
@@ -4175,18 +4144,18 @@
         },
         "unscanned": []
       },
-      "image": "infisical/infisical:v0.167.6",
+      "image": "infisical/infisical:v0.167.7",
       "images": [
         "postgres:18.6-alpine",
         "redis:7.4.12-alpine",
-        "infisical/infisical:v0.167.6"
+        "infisical/infisical:v0.167.7"
       ],
-      "last_release": "2026-11-03",
-      "newest": "v0.167.6",
-      "newest_date": "2026-11-03",
+      "last_release": "2026-11-08",
+      "newest": "v0.167.7",
+      "newest_date": "2026-11-08",
       "newest_date_source": "release",
-      "pinned": "v0.167.6",
-      "pinned_date": "2026-11-03",
+      "pinned": "v0.167.7",
+      "pinned_date": "2026-11-08",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
@@ -4195,10 +4164,10 @@
     },
     "core/jumpserver": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 19,
-        "high": 234,
+        "high": 235,
         "images": {
           "jumpserver/jms_all:v5.1.1": {
             "libraries": [
@@ -4211,7 +4180,7 @@
             ],
             "system": [
               4,
-              115
+              116
             ]
           }
         },
@@ -4235,7 +4204,7 @@
     },
     "core/keycloak": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -4246,7 +4215,7 @@
               25
             ]
           },
-          "quay.io/keycloak/keycloak:26.8.1": {
+          "quay.io/keycloak/keycloak:26.8.2": {
             "libraries": [
               0,
               1
@@ -4255,26 +4224,26 @@
         },
         "unscanned": []
       },
-      "image": "quay.io/keycloak/keycloak:26.8.1",
+      "image": "quay.io/keycloak/keycloak:26.8.2",
       "images": [
         "postgres:18.6-alpine",
-        "quay.io/keycloak/keycloak:26.8.1"
+        "quay.io/keycloak/keycloak:26.8.2"
       ],
       "last_release": "2026-11-05",
       "newest": "26.8.2",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "26.8.1",
-      "pinned_date": "2026-10-13",
+      "pinned": "26.8.2",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "keycloak/keycloak",
-      "status": "behind"
+      "status": "current"
     },
     "core/orion-belt": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 27,
@@ -4317,7 +4286,7 @@
     },
     "core/portainer": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -4351,7 +4320,7 @@
     },
     "core/portainer-agent": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -4370,20 +4339,20 @@
         "portainer/agent:2.45.3"
       ],
       "last_release": "2026-10-21",
-      "newest": "3.0.1",
-      "newest_date": "2026-11-03",
-      "newest_date_source": "image",
+      "newest": "2.45.3",
+      "newest_date": "2026-10-21",
+      "newest_date_source": "release",
       "pinned": "2.45.3",
       "pinned_date": "2026-10-21",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "portainer/portainer",
-      "status": "behind"
+      "status": "current"
     },
     "core/shellhub": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
         "high": 28,
@@ -4437,7 +4406,7 @@
     },
     "core/step-ca": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 4,
         "high": 70,
@@ -4473,16 +4442,12 @@
     },
     "core/teleport": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
-        "high": 4,
+        "high": 2,
         "images": {
-          "public.ecr.aws/gravitational/teleport-distroless:18.11.8": {
-            "programs": [
-              0,
-              2
-            ],
+          "public.ecr.aws/gravitational/teleport-distroless:18.11.9": {
             "system": [
               0,
               2
@@ -4491,25 +4456,25 @@
         },
         "unscanned": []
       },
-      "image": "public.ecr.aws/gravitational/teleport-distroless:18.11.8",
+      "image": "public.ecr.aws/gravitational/teleport-distroless:18.11.9",
       "images": [
-        "public.ecr.aws/gravitational/teleport-distroless:18.11.8"
+        "public.ecr.aws/gravitational/teleport-distroless:18.11.9"
       ],
       "last_release": "2026-07-09",
       "newest": "18.11.9",
-      "newest_date": "2026-11-07",
+      "newest_date": "2026-11-08",
       "newest_date_source": "image",
-      "pinned": "18.11.8",
-      "pinned_date": "2026-11-06",
+      "pinned": "18.11.9",
+      "pinned_date": "2026-11-08",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "gravitational/teleport",
-      "status": "behind"
+      "status": "current"
     },
     "core/traefik": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4543,7 +4508,7 @@
     },
     "core/warpgate": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -4575,7 +4540,7 @@
     },
     "core/zot": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -4607,7 +4572,7 @@
     },
     "monitoring/beszel": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 8,
@@ -4653,7 +4618,7 @@
     },
     "monitoring/beszel-agent": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 8,
@@ -4692,43 +4657,39 @@
     },
     "monitoring/changedetection": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 7,
+        "high": 6,
         "images": {
-          "ghcr.io/dgtlmoon/changedetection.io:0.70.1": {
+          "ghcr.io/dgtlmoon/changedetection.io:0.70.2": {
             "libraries": [
               1,
               6
-            ],
-            "system": [
-              0,
-              1
             ]
           }
         },
         "unscanned": []
       },
-      "image": "ghcr.io/dgtlmoon/changedetection.io:0.70.1",
+      "image": "ghcr.io/dgtlmoon/changedetection.io:0.70.2",
       "images": [
-        "ghcr.io/dgtlmoon/changedetection.io:0.70.1"
+        "ghcr.io/dgtlmoon/changedetection.io:0.70.2"
       ],
       "last_release": "2026-11-05",
       "newest": "0.70.2",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "0.70.1",
+      "pinned": "0.70.2",
       "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "dgtlmoon/changedetection.io",
-      "status": "behind"
+      "status": "current"
     },
     "monitoring/checkmate": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 5,
         "high": 52,
@@ -4783,7 +4744,7 @@
     },
     "monitoring/ciao": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 5,
         "high": 22,
@@ -4819,7 +4780,7 @@
     },
     "monitoring/gatus": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 5,
@@ -4851,7 +4812,7 @@
     },
     "monitoring/gotify": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 2,
         "high": 31,
@@ -4883,7 +4844,7 @@
     },
     "monitoring/grafana-prometheus": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4927,7 +4888,7 @@
     },
     "monitoring/healthchecks": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 9,
@@ -4963,10 +4924,10 @@
     },
     "monitoring/langfuse": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 29,
+        "high": 30,
         "images": {
           "clickhouse/clickhouse-server:26.10.3.7": {
             "system": [
@@ -4974,9 +4935,15 @@
               1
             ]
           },
-          "docker.langfuse.com/langfuse/langfuse-worker:4.75.0": {},
-          "docker.langfuse.com/langfuse/langfuse:4.75.0": {
+          "docker.langfuse.com/langfuse/langfuse-worker:4.76.0": {},
+          "docker.langfuse.com/langfuse/langfuse:4.76.0": {
             "libraries": [
+              0,
+              1
+            ]
+          },
+          "pgsty/silo:RELEASE.2026-10-26T00-00-00Z": {
+            "programs": [
               0,
               1
             ]
@@ -4993,34 +4960,32 @@
           },
           "redis:8.10.3-alpine": {}
         },
-        "unscanned": [
-          "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
-        ]
+        "unscanned": []
       },
-      "image": "docker.langfuse.com/langfuse/langfuse:4.75.0",
+      "image": "docker.langfuse.com/langfuse/langfuse:4.76.0",
       "images": [
-        "docker.langfuse.com/langfuse/langfuse:4.75.0",
-        "docker.langfuse.com/langfuse/langfuse-worker:4.75.0",
+        "docker.langfuse.com/langfuse/langfuse:4.76.0",
+        "docker.langfuse.com/langfuse/langfuse-worker:4.76.0",
         "postgres:18.6",
         "clickhouse/clickhouse-server:26.10.3.7",
         "redis:8.10.3-alpine",
-        "quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z"
+        "pgsty/silo:RELEASE.2026-10-26T00-00-00Z"
       ],
       "last_release": "2026-11-05",
       "newest": "4.76.0",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "4.75.0",
-      "pinned_date": "2026-11-04",
+      "pinned": "4.76.0",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "langfuse/langfuse",
-      "status": "behind"
+      "status": "current"
     },
     "monitoring/ntfy": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -5052,7 +5017,7 @@
     },
     "monitoring/scrutiny": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 0,
         "high": 51,
@@ -5098,7 +5063,7 @@
     },
     "monitoring/uptime-kuma": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 7,
         "high": 455,
@@ -5138,10 +5103,10 @@
     },
     "monitoring/zabbix": {
       "archived": false,
-      "checked": "2026-11-08",
+      "checked": "2026-11-09",
       "findings": {
         "critical": 1,
-        "high": 33,
+        "high": 29,
         "images": {
           "postgres:17.11-alpine": {
             "programs": [
@@ -5149,18 +5114,9 @@
               25
             ]
           },
-          "zabbix/zabbix-server-pgsql:alpine-7.0.32": {
-            "system": [
-              0,
-              1
-            ]
-          },
-          "zabbix/zabbix-web-nginx-pgsql:alpine-7.0.32": {
+          "zabbix/zabbix-server-pgsql:alpine-8.0.0": {},
+          "zabbix/zabbix-web-nginx-pgsql:alpine-8.0.0": {
             "libraries": [
-              0,
-              4
-            ],
-            "system": [
               0,
               4
             ]
@@ -5168,23 +5124,23 @@
         },
         "unscanned": []
       },
-      "image": "zabbix/zabbix-server-pgsql:alpine-7.0.32",
+      "image": "zabbix/zabbix-server-pgsql:alpine-8.0.0",
       "images": [
         "postgres:17.11-alpine",
-        "zabbix/zabbix-server-pgsql:alpine-7.0.32",
-        "zabbix/zabbix-web-nginx-pgsql:alpine-7.0.32"
+        "zabbix/zabbix-server-pgsql:alpine-8.0.0",
+        "zabbix/zabbix-web-nginx-pgsql:alpine-8.0.0"
       ],
       "last_release": "2026-11-05",
       "newest": "alpine-8.0.0",
       "newest_date": "2026-11-05",
       "newest_date_source": "release",
-      "pinned": "alpine-7.0.32",
-      "pinned_date": "2026-10-22",
+      "pinned": "alpine-8.0.0",
+      "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "zabbix/zabbix-docker",
-      "status": "behind"
+      "status": "current"
     }
   }
 }

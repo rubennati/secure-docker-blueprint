@@ -1,7 +1,7 @@
 {
   "apps/adminer": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -32,7 +32,7 @@
   },
   "apps/agentgateway": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -63,7 +63,7 @@
   },
   "apps/bookstack": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -91,12 +91,12 @@
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://www.bookstackapp.com/",
-    "upstream_status": "undetermined",
+    "upstream_status": "current",
     "version": "version-v26.09.2"
   },
   "apps/caldiy": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 24,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -130,8 +130,8 @@
   },
   "apps/calnode": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
@@ -143,26 +143,26 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 54,
+    "last_release": "2026-11-07",
     "name": "Calnode",
     "newest": null,
     "newest_date": null,
     "path": "apps/calnode",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/Calnode/calnode/pkgs/container/calnode",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "0.14.0"
   },
   "apps/calrs": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
@@ -174,26 +174,26 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 2,
+    "last_release": "2026-11-09",
     "name": "calrs",
     "newest": null,
     "newest_date": null,
     "path": "apps/calrs",
-    "pinned_date": null,
+    "pinned_date": "2026-11-09",
     "quiet": false,
     "restored": false,
     "role": "Scheduling with booking pages and availability read from a CalDAV calendar you already run",
     "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/olivierlambert/calrs/pkgs/container/calrs",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "1.23.3"
   },
   "apps/ciso-assistant": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -224,26 +224,26 @@
       "summary": "4 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 27,
+    "last_release": "2026-11-08",
     "name": "CISO Assistant",
     "newest": null,
     "newest_date": null,
     "path": "apps/ciso-assistant",
-    "pinned_date": null,
+    "pinned_date": "2026-11-08",
     "quiet": false,
     "restored": false,
     "role": "Governance, risk and compliance: frameworks such as ISO 27001 and NIS2 mapped to controls, risks and evidence",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/intuitem/ciso-assistant-community/pkgs/container/ciso-assistant-community%2Fbackend",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "4.2.2"
   },
   "apps/collabora": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Documents and e-signature",
@@ -255,26 +255,26 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 1,
+    "last_release": "2026-11-07",
     "name": "Collabora Online",
     "newest": null,
     "newest_date": null,
     "path": "apps/collabora",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "Office document editing server based on LibreOffice",
     "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/CollaboraOnline/online",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "26.04.6.1.1"
   },
   "apps/dashy": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Dashboards",
@@ -286,25 +286,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 0,
+    "last_release": "2026-10-23",
     "name": "Dashy",
     "newest": null,
     "newest_date": null,
     "path": "apps/dashy",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "One page linking everything you run, configured in a single YAML file",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/lissy93/dashy",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "4.9.17"
   },
   "apps/defectdojo": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -320,7 +320,7 @@
       "summary": "6 services · 1 one-shot · PostgreSQL + Valkey"
     },
     "gap": null,
-    "high": 95,
+    "high": 96,
     "last_release": "2026-11-02",
     "name": "DefectDojo",
     "newest": null,
@@ -338,7 +338,7 @@
   },
   "apps/dependency-track": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -371,7 +371,7 @@
   },
   "apps/dfir-iris": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 28,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -386,7 +386,7 @@
       "summary": "4 services · RabbitMQ"
     },
     "gap": null,
-    "high": 920,
+    "high": 921,
     "last_release": "2026-08-10",
     "name": "DFIR-IRIS",
     "newest": null,
@@ -404,7 +404,7 @@
   },
   "apps/dify": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 6,
     "decision_facts": {
       "commercial_model": {
@@ -450,8 +450,8 @@
   },
   "apps/docker-mailserver": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-10-03",
@@ -480,25 +480,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 22,
+    "last_release": "2026-11-05",
     "name": "docker-mailserver",
     "newest": null,
     "newest_date": null,
     "path": "apps/docker-mailserver",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/docker-mailserver/docker-mailserver/pkgs/container/docker-mailserver",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "17.0.0"
   },
   "apps/docling-serve": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -529,7 +529,7 @@
   },
   "apps/easyappointments": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -544,7 +544,7 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 79,
+    "high": 80,
     "last_release": "2026-10-19",
     "name": "Easy!Appointments",
     "newest": null,
@@ -562,8 +562,8 @@
   },
   "apps/euro-office": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Documents and e-signature",
@@ -575,25 +575,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 1,
+    "last_release": "2026-10-29",
     "name": "Euro-Office",
     "newest": null,
     "newest_date": null,
     "path": "apps/euro-office",
-    "pinned_date": null,
+    "pinned_date": "2026-10-29",
     "quiet": false,
     "restored": false,
     "role": "EU-governed fork of OnlyOffice, a drop-in document editing server",
     "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/euro-office/DocumentServer",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "9.3.7-1"
   },
   "apps/ghost": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -626,7 +626,7 @@
   },
   "apps/greenmail": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -657,7 +657,7 @@
   },
   "apps/heimdall": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -683,12 +683,12 @@
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://docs.linuxserver.io/images/docker-heimdall/",
-    "upstream_status": "undetermined",
+    "upstream_status": "current",
     "version": "2.8.4"
   },
   "apps/hemmelig": {
     "archived": true,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 7,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -719,7 +719,7 @@
   },
   "apps/heyform": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 13,
     "decision_facts": {
       "commercial_model": {
@@ -770,8 +770,8 @@
   },
   "apps/homarr": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Dashboards",
@@ -783,25 +783,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 2,
+    "last_release": "2026-11-06",
     "name": "Homarr",
     "newest": null,
     "newest_date": null,
     "path": "apps/homarr",
-    "pinned_date": null,
+    "pinned_date": "2026-11-06",
     "quiet": false,
     "restored": false,
     "role": "Dashboard with integrations into the services you run",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/homarr-labs/homarr/pkgs/container/homarr",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "2.12.0"
   },
   "apps/homepage": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -832,7 +832,7 @@
   },
   "apps/httpbin": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",
@@ -863,7 +863,7 @@
   },
   "apps/immich": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 16,
     "decision_facts": {
       "commercial_model": {
@@ -910,7 +910,7 @@
   },
   "apps/it-tools": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -941,7 +941,7 @@
   },
   "apps/librephotos": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -974,8 +974,8 @@
   },
   "apps/litellm": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "use_restrictions": {
         "checked": "2026-09-21",
@@ -995,26 +995,26 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 27,
+    "last_release": "2026-11-07",
     "name": "LiteLLM",
     "newest": null,
     "newest_date": null,
     "path": "apps/litellm",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "OpenAI-compatible gateway in front of any model backend, with virtual keys, budgets and a spend log",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/BerriAI/litellm/pkgs/container/litellm-non_root",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "1.108.3"
   },
   "apps/lycheeorg": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Photos",
@@ -1029,26 +1029,26 @@
       "summary": "3 services · MariaDB + Redis"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 28,
+    "last_release": "2026-11-09",
     "name": "Lychee",
     "newest": null,
     "newest_date": null,
     "path": "apps/lycheeorg",
-    "pinned_date": null,
+    "pinned_date": "2026-11-09",
     "quiet": false,
     "restored": true,
     "role": "Photo gallery",
     "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://lycheeorg.dev/",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "7.13.0"
   },
   "apps/mailpit": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Developer tools",
@@ -1060,26 +1060,26 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 0,
+    "last_release": "2026-11-07",
     "name": "Mailpit",
     "newest": null,
     "newest_date": null,
     "path": "apps/mailpit",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "SMTP sink that catches every outgoing message and shows it, delivering nothing",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/axllent/mailpit",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "1.33.1"
   },
   "apps/mailserver-jeboehm": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 2,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-10-03",
@@ -1111,25 +1111,25 @@
       "summary": "7 services · MySQL + Redis"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 39,
+    "last_release": "2026-11-07",
     "name": "mailserver",
     "newest": null,
     "newest_date": null,
     "path": "apps/mailserver-jeboehm",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/jeboehm?tab=packages&repo_name=docker-mailserver",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "8.1.2"
   },
   "apps/monicahq": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1162,8 +1162,8 @@
   },
   "apps/n8n": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -1192,25 +1192,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 23,
+    "last_release": "2026-11-09",
     "name": "n8n",
     "newest": null,
     "newest_date": null,
     "path": "apps/n8n",
-    "pinned_date": null,
+    "pinned_date": "2026-11-09",
     "quiet": false,
     "restored": true,
     "role": "Visual workflow automation",
     "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://n8n.io/",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "2.46.7"
   },
   "apps/nextcloud": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",
@@ -1244,7 +1244,7 @@
   },
   "apps/nocodb": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -1281,8 +1281,8 @@
   },
   "apps/obot": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-23",
@@ -1313,26 +1313,26 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 33,
+    "last_release": "2026-11-07",
     "name": "obot",
     "newest": null,
     "newest_date": null,
     "path": "apps/obot",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "MCP gateway and agent platform — catalogues MCP servers, runs the hosted ones as containers, with an LLM gateway in front",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/obot-platform/obot/pkgs/container/obot",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "0.28.0"
   },
   "apps/ollama": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "AI and local AI",
@@ -1344,25 +1344,25 @@
       "summary": "1 service · GPU optional"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 2,
+    "last_release": "2026-11-03",
     "name": "Ollama",
     "newest": null,
     "newest_date": null,
     "path": "apps/ollama",
-    "pinned_date": null,
+    "pinned_date": "2026-11-03",
     "quiet": false,
     "restored": false,
     "role": "Local model runtime that pulls models by name and serves them on CPU or an NVIDIA GPU",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/ollama/ollama",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "0.40.15"
   },
   "apps/onlyoffice": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1393,7 +1393,7 @@
   },
   "apps/open-webui": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {
       "commercial_model": {
@@ -1419,7 +1419,7 @@
     },
     "gap": null,
     "high": 31,
-    "last_release": "2026-11-03",
+    "last_release": "2026-11-08",
     "name": "Open WebUI",
     "newest": null,
     "newest_date": null,
@@ -1436,7 +1436,7 @@
   },
   "apps/opencanary": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 8,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1467,7 +1467,7 @@
   },
   "apps/opnform": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1501,7 +1501,7 @@
   },
   "apps/paperless-gpt": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -1538,7 +1538,7 @@
   },
   "apps/paperless-ngx": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1572,7 +1572,7 @@
   },
   "apps/photoprism": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -1617,7 +1617,7 @@
   },
   "apps/photoview": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 5,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1650,7 +1650,7 @@
   },
   "apps/privatebin": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1681,7 +1681,7 @@
   },
   "apps/qdrant": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1714,7 +1714,7 @@
   },
   "apps/seafile": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1748,7 +1748,7 @@
   },
   "apps/seafile-pro": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 23,
     "decision_facts": {
       "commercial_model": {
@@ -1795,7 +1795,7 @@
   },
   "apps/shlink": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {
       "use_restrictions": {
@@ -1834,7 +1834,7 @@
   },
   "apps/stalwart": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -1882,7 +1882,7 @@
   },
   "apps/threat-dragon": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1913,8 +1913,8 @@
   },
   "apps/tymeslot": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
@@ -1928,25 +1928,25 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 27,
+    "last_release": "2026-11-05",
     "name": "Tymeslot",
     "newest": null,
     "newest_date": null,
     "path": "apps/tymeslot",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": true,
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/luka1thb/tymeslot",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "1.41.0-slim"
   },
   "apps/unifi": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 12,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1974,12 +1974,12 @@
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://ui.com/download/unifi",
-    "upstream_status": "undetermined",
+    "upstream_status": "current",
     "version": "10.6.109"
   },
   "apps/vaultwarden": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2012,7 +2012,7 @@
   },
   "apps/velociraptor": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2043,7 +2043,7 @@
   },
   "apps/vllm": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2074,7 +2074,7 @@
   },
   "apps/whoami": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2105,8 +2105,8 @@
   },
   "apps/wikijs": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "use_restrictions": {
         "checked": "2026-09-23",
@@ -2126,26 +2126,26 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 49,
+    "last_release": "2026-11-08",
     "name": "Wiki.js",
     "newest": null,
     "newest_date": null,
     "path": "apps/wikijs",
-    "pinned_date": null,
+    "pinned_date": "2026-11-08",
     "quiet": false,
     "restored": false,
     "role": "Wiki with Markdown and visual editors, per-page permissions and about twenty authentication modules",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/requarks/wiki/pkgs/container/wiki",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "3.2.0"
   },
   "apps/windmill": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "edition_gating": {
         "checked": "2026-09-21",
@@ -2165,25 +2165,25 @@
       "summary": "4 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 34,
+    "last_release": "2026-11-06",
     "name": "Windmill",
     "newest": null,
     "newest_date": null,
     "path": "apps/windmill",
-    "pinned_date": null,
+    "pinned_date": "2026-11-06",
     "quiet": false,
     "restored": false,
     "role": "Code-first scripts, flows, APIs and scheduled jobs on a queue",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/windmill-labs/windmill/pkgs/container/windmill",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "1.864.1"
   },
   "apps/wordpress": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2204,7 +2204,7 @@
     "newest": null,
     "newest_date": null,
     "path": "apps/wordpress",
-    "pinned_date": "2026-11-05",
+    "pinned_date": "2026-11-08",
     "quiet": false,
     "restored": false,
     "role": "Content management system for sites and blogs",
@@ -2216,8 +2216,8 @@
   },
   "apps/yopass": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
@@ -2231,20 +2231,20 @@
       "summary": "2 services · Memcached"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 2,
+    "last_release": "2026-11-07",
     "name": "Yopass",
     "newest": null,
     "newest_date": null,
     "path": "apps/yopass",
-    "pinned_date": null,
+    "pinned_date": "2026-11-07",
     "quiet": false,
     "restored": false,
     "role": "Self-destructing links for handing someone a credential once",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/jhaals/yopass",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "16.1.0"
   },
   "backup/borgmatic": {
@@ -2274,7 +2274,7 @@
   },
   "backup/kopia": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {
       "use_restrictions": {
@@ -2311,8 +2311,8 @@
   },
   "backup/rclone-web": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",
     "domain": "Backup",
@@ -2324,25 +2324,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 0,
+    "last_release": "2026-11-04",
     "name": "Rclone Web",
     "newest": null,
     "newest_date": null,
     "path": "backup/rclone-web",
-    "pinned_date": null,
+    "pinned_date": "2026-11-06",
     "quiet": false,
     "restored": false,
     "role": "Browser interface for rclone: storage remotes, copy and sync jobs, serves and transfer statistics",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/rclone/rclone",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "1.76.0"
   },
   "backup/urbackup": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2373,7 +2373,7 @@
   },
   "business/akaunting": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -2405,7 +2405,7 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 85,
+    "high": 86,
     "last_release": "2026-10-27",
     "name": "Akaunting",
     "newest": null,
@@ -2423,7 +2423,7 @@
   },
   "business/chatwoot": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {
       "edition_gating": {
@@ -2468,7 +2468,7 @@
   },
   "business/documenso": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -2513,7 +2513,7 @@
   },
   "business/dolibarr": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2546,8 +2546,8 @@
   },
   "business/erpnext": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 6,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -2574,26 +2574,26 @@
       "summary": "10 services · MariaDB + Redis"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 119,
+    "last_release": "2026-10-30",
     "name": "ERPNext",
     "newest": null,
     "newest_date": null,
     "path": "business/erpnext",
-    "pinned_date": null,
+    "pinned_date": "2026-11-06",
     "quiet": false,
     "restored": false,
     "role": "ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/frappe/erpnext",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "16.54.0"
   },
   "business/facturascripts": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 2,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -2614,25 +2614,25 @@
       "summary": "3 services · MariaDB"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 80,
+    "last_release": "2021-05-18",
     "name": "FacturaScripts",
     "newest": null,
     "newest_date": null,
     "path": "business/facturascripts",
-    "pinned_date": null,
+    "pinned_date": "2026-10-30",
     "quiet": false,
     "restored": false,
     "role": "Invoicing, accounting and inventory for small businesses, extended through plugins",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/facturascripts/facturascripts",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "2026.72"
   },
   "business/invoiceninja": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {
       "use_restrictions": {
@@ -2654,7 +2654,7 @@
       "summary": "4 services · MySQL + Redis"
     },
     "gap": null,
-    "high": 94,
+    "high": 95,
     "last_release": "2026-11-02",
     "name": "Invoice Ninja",
     "newest": null,
@@ -2672,7 +2672,7 @@
   },
   "business/kimai": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -2717,7 +2717,7 @@
   },
   "business/leantime": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {
       "commercial_model": {
@@ -2767,7 +2767,7 @@
   },
   "business/listmonk": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2800,7 +2800,7 @@
   },
   "business/matomo": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -2845,7 +2845,7 @@
   },
   "business/openproject": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {
       "commercial_model": {
@@ -2874,10 +2874,10 @@
     },
     "gap": null,
     "high": 53,
-    "last_release": "2026-10-30",
+    "last_release": "2026-11-09",
     "name": "OpenProject CE",
-    "newest": null,
-    "newest_date": null,
+    "newest": "17.9.7-slim",
+    "newest_date": "2026-11-09",
     "path": "business/openproject",
     "pinned_date": "2026-10-30",
     "quiet": false,
@@ -2886,12 +2886,12 @@
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/opf/openproject",
-    "upstream_status": "current",
+    "upstream_status": "behind",
     "version": "17.9.6-slim"
   },
   "business/opensign": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 30,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2924,7 +2924,7 @@
   },
   "business/plane": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 8,
     "decision_facts": {
       "commercial_model": {
@@ -2978,7 +2978,7 @@
   },
   "business/plausible": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -3029,7 +3029,7 @@
   },
   "business/solidinvoice": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3060,8 +3060,8 @@
   },
   "business/twenty": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "edition_gating": {
         "checked": "2026-09-21",
@@ -3087,26 +3087,26 @@
       "summary": "4 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 35,
+    "last_release": "2026-11-05",
     "name": "Twenty",
     "newest": null,
     "newest_date": null,
     "path": "business/twenty",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "CRM: companies, people, opportunities and tasks, with an extensible data model and an API",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/twentycrm/twenty",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "2.56.1"
   },
   "business/vikunja": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -3132,26 +3132,26 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 25,
+    "last_release": "2026-11-05",
     "name": "Vikunja",
     "newest": null,
     "newest_date": null,
     "path": "business/vikunja",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "Task and project management with lists, boards and calendars",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/go-vikunja/vikunja",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "2.8.0"
   },
   "business/zammad": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Business operations",
@@ -3168,25 +3168,25 @@
       "summary": "9 services · Elasticsearch + Memcached + PostgreSQL + Redis"
     },
     "gap": null,
-    "high": null,
+    "high": 33,
     "last_release": null,
     "name": "Zammad",
     "newest": null,
     "newest_date": null,
     "path": "business/zammad",
-    "pinned_date": null,
+    "pinned_date": "2026-11-06",
     "quiet": false,
     "restored": false,
     "role": "Helpdesk and ticket system across mail, chat and phone",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://zammad.org",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "7.2.2-0045"
   },
   "core/acme-certs": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3217,7 +3217,7 @@
   },
   "core/authelia": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-26",
@@ -3251,7 +3251,7 @@
   },
   "core/authentik": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -3297,7 +3297,7 @@
   },
   "core/crowdsec": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3328,7 +3328,7 @@
   },
   "core/dnsmasq": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3359,7 +3359,7 @@
   },
   "core/dockhand": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -3409,7 +3409,7 @@
   },
   "core/hawser": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3440,7 +3440,7 @@
   },
   "core/headscale": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -3513,8 +3513,8 @@
   },
   "core/infisical": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "use_restrictions": {
         "checked": "2026-09-21",
@@ -3535,25 +3535,25 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 27,
+    "last_release": "2026-11-08",
     "name": "Infisical",
     "newest": null,
     "newest_date": null,
     "path": "core/infisical",
-    "pinned_date": null,
+    "pinned_date": "2026-11-08",
     "quiet": false,
     "restored": true,
     "role": "Central secret manager, an alternative to per-stack Docker Secrets",
     "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://github.com/Infisical/infisical",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "0.167.7"
   },
   "core/jumpserver": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 19,
     "decision_facts": {
       "commercial_model": {
@@ -3578,7 +3578,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 234,
+    "high": 235,
     "last_release": "2026-10-27",
     "name": "JumpServer",
     "newest": null,
@@ -3596,8 +3596,8 @@
   },
   "core/keycloak": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Identity, access and secrets",
@@ -3611,25 +3611,25 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 26,
+    "last_release": "2026-11-05",
     "name": "Keycloak",
     "newest": null,
     "newest_date": null,
     "path": "core/keycloak",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "Identity provider for applications that speak OpenID Connect or SAML, with LDAP and AD federation",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://quay.io/repository/keycloak/keycloak",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "26.8.2"
   },
   "core/orion-belt": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {
       "use_restrictions": {
@@ -3668,7 +3668,7 @@
   },
   "core/portainer": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -3711,7 +3711,7 @@
   },
   "core/portainer-agent": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3727,8 +3727,8 @@
     "high": 6,
     "last_release": "2026-10-21",
     "name": "Portainer Agent",
-    "newest": "3.0.1",
-    "newest_date": "2026-11-03",
+    "newest": null,
+    "newest_date": null,
     "path": "core/portainer-agent",
     "pinned_date": "2026-10-21",
     "quiet": false,
@@ -3737,12 +3737,12 @@
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/portainer/agent",
-    "upstream_status": "behind",
+    "upstream_status": "current",
     "version": "2.45.3"
   },
   "core/shellhub": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3776,7 +3776,7 @@
   },
   "core/step-ca": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 4,
     "decision_facts": {
       "commercial_model": {
@@ -3819,8 +3819,8 @@
   },
   "core/teleport": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 0,
     "decision_facts": {
       "use_restrictions": {
         "checked": "2026-09-21",
@@ -3838,25 +3838,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 2,
+    "last_release": "2026-07-09",
     "name": "Teleport",
     "newest": null,
     "newest_date": null,
     "path": "core/teleport",
-    "pinned_date": null,
+    "pinned_date": "2026-11-08",
     "quiet": false,
     "restored": false,
     "role": "Access through short-lived certificates instead of standing credentials",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/gravitational/teleport",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "18.11.9"
   },
   "core/traefik": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -3899,7 +3899,7 @@
   },
   "core/warpgate": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3930,7 +3930,7 @@
   },
   "core/zot": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3961,7 +3961,7 @@
   },
   "monitoring/beszel": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3992,7 +3992,7 @@
   },
   "monitoring/beszel-agent": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4023,8 +4023,8 @@
   },
   "monitoring/changedetection": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Monitoring",
@@ -4036,25 +4036,25 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 6,
+    "last_release": "2026-11-05",
     "name": "changedetection.io",
     "newest": null,
     "newest_date": null,
     "path": "monitoring/changedetection",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "Watches web pages for changes: restocks, prices, terms",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://changedetection.io",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "0.70.2"
   },
   "monitoring/checkmate": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 5,
     "decision_facts": {
       "commercial_model": {
@@ -4104,7 +4104,7 @@
   },
   "monitoring/ciao": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 5,
     "decision_facts": {
       "use_restrictions": {
@@ -4141,7 +4141,7 @@
   },
   "monitoring/gatus": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4172,7 +4172,7 @@
   },
   "monitoring/gotify": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 2,
     "decision_facts": {
       "use_restrictions": {
@@ -4209,7 +4209,7 @@
   },
   "monitoring/grafana-prometheus": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -4257,7 +4257,7 @@
   },
   "monitoring/healthchecks": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4288,8 +4288,8 @@
   },
   "monitoring/langfuse": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -4323,25 +4323,25 @@
       "summary": "6 services · ClickHouse + PostgreSQL + Redis + object storage"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 30,
+    "last_release": "2026-11-05",
     "name": "Langfuse",
     "newest": null,
     "newest_date": null,
     "path": "monitoring/langfuse",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "LLM observability: traces, scores and prompts from any instrumented application",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "4.76.0"
   },
   "monitoring/ntfy": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -4378,7 +4378,7 @@
   },
   "monitoring/scrutiny": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -4426,7 +4426,7 @@
   },
   "monitoring/uptime-kuma": {
     "archived": false,
-    "checked": "2026-11-08",
+    "checked": "2026-11-09",
     "critical": 7,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4457,8 +4457,8 @@
   },
   "monitoring/zabbix": {
     "archived": false,
-    "checked": null,
-    "critical": null,
+    "checked": "2026-11-09",
+    "critical": 1,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-24",
@@ -4489,20 +4489,20 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": null,
-    "last_release": null,
+    "high": 29,
+    "last_release": "2026-11-05",
     "name": "Zabbix",
     "newest": null,
     "newest_date": null,
     "path": "monitoring/zabbix",
-    "pinned_date": null,
+    "pinned_date": "2026-11-05",
     "quiet": false,
     "restored": false,
     "role": "Enterprise monitoring — agents, SNMP, IPMI and HTTP checks with triggers, escalation and history",
     "tested": "2026-11-08",
     "tested_version": null,
     "upstream": "https://hub.docker.com/r/zabbix/zabbix-server-pgsql",
-    "upstream_status": "not checked",
+    "upstream_status": "current",
     "version": "alpine-8.0.0"
   }
 }

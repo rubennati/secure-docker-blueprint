@@ -1,16 +1,6 @@
 {
   "_comment": "CRITICAL findings that stay in a pinned image because no upstream release removes them yet. One entry per image repository, written by hand: the stacks that use it, why the pin cannot move, the risk, and the findings. Every other CRITICAL is reported by the scan (scripts/ci/trivy-gate.py). The goal is an empty list.",
   "exceptions": {
-    "adminer": {
-      "stacks": [
-        "apps/adminer"
-      ],
-      "reason": "The newest image was built before Alpine published brotli-libs 1.2.1-r0, and upstream has not rebuilt it. 6.3.0 is the newest Adminer image.",
-      "risk": "The library is there for libcurl; Adminer's database connections do not use it (not checked in detail).",
-      "cves": [
-        "CVE-2026-111497"
-      ]
-    },
     "akaunting/akaunting": {
       "stacks": [
         "business/akaunting"
@@ -116,7 +106,6 @@
       "reason": "2026.7 is upstream's stable image (latest); 2026.72, which drops the brotli finding, is published as beta.",
       "risk": "linux-libc-dev holds kernel headers that nothing in the container executes; the running kernel is the host's. brotli's decoder flaw is reached only if a process decompresses brotli data from a hostile source (in Debian mainly through libcurl); not checked per application.",
       "cves": [
-        "CVE-2026-111497",
         "CVE-2026-99083"
       ]
     },
@@ -228,23 +217,6 @@
         "CVE-2026-115905"
       ]
     },
-    "ghcr.io/docker-mailserver/docker-mailserver": {
-      "stacks": [
-        "apps/docker-mailserver"
-      ],
-      "reason": "16.0.1 (2026-09-04) is the newest release; upstream tracks its Debian CVE load in docker-mailserver/docker-mailserver#4822.",
-      "risk": "Only OpenDKIM uses libunbound, and this stack runs Rspamd with OpenDKIM, Amavis and SpamAssassin off, so libunbound and the perl mail tools are not reached. The glib flaw is in D-Bus introspection, not plausibly reached by Rspamd (not verified). brotli's decoder flaw is reached only if a process decompresses brotli data from a hostile source (in Debian mainly through libcurl); not checked per application.",
-      "cves": [
-        "CVE-2026-111497",
-        "CVE-2026-13221",
-        "CVE-2026-42496",
-        "CVE-2026-50252",
-        "CVE-2026-58016",
-        "CVE-2026-81642",
-        "CVE-2026-82717",
-        "CVE-2026-8376"
-      ]
-    },
     "ghcr.io/goauthentik/server": {
       "stacks": [
         "core/authentik"
@@ -309,27 +281,6 @@
         "CVE-2026-8376"
       ]
     },
-    "ghcr.io/intuitem/ciso-assistant-community/backend": {
-      "stacks": [
-        "apps/ciso-assistant"
-      ],
-      "reason": "v4.2.1 (2026-11-01) is the newest release, built before Debian's kernel-header fix.",
-      "risk": "linux-libc-dev holds kernel headers that nothing in the container executes; the running kernel is the host's.",
-      "cves": [
-        "CVE-2026-99083"
-      ]
-    },
-    "ghcr.io/obot-platform/obot": {
-      "stacks": [
-        "apps/obot"
-      ],
-      "reason": "v0.27.0 (2026-10-20) is the newest release.",
-      "risk": "Obot makes outbound TLS calls and its trust store still includes revoked eMudhra intermediates, which matters only to an on-path attacker holding those keys. Whether brotli decoding is used was not checked.",
-      "cves": [
-        "CVE-2026-111497",
-        "CVE-2026-91403"
-      ]
-    },
     "ghcr.io/open-webui/open-webui": {
       "stacks": [
         "apps/open-webui"
@@ -354,16 +305,6 @@
         "CVE-2026-13221",
         "CVE-2026-42496",
         "CVE-2026-8376"
-      ]
-    },
-    "ghcr.io/requarks/wiki": {
-      "stacks": [
-        "apps/wikijs"
-      ],
-      "reason": "3.1.0 (2026-11-05) is the newest release, built before Debian's kernel-header fix.",
-      "risk": "linux-libc-dev holds kernel headers that nothing in the container executes; the running kernel is the host's.",
-      "cves": [
-        "CVE-2026-99083"
       ]
     },
     "ghcr.io/rubennati/cal.diy": {
@@ -429,16 +370,6 @@
       "risk": "brotli is a dependency of curl and freetype, which the nginx serving the static client does not use.",
       "cves": [
         "CVE-2026-111497"
-      ]
-    },
-    "ghcr.io/windmill-labs/windmill": {
-      "stacks": [
-        "apps/windmill"
-      ],
-      "reason": "1.862.0 (2026-11-04) is the newest release, built before Debian's kernel-header fix.",
-      "risk": "linux-libc-dev holds kernel headers that nothing in the container executes; the running kernel is the host's.",
-      "cves": [
-        "CVE-2026-99083"
       ]
     },
     "ghost": {
