@@ -91,8 +91,9 @@ The settings are unchanged.
 | **Quiescing** | Not applicable. |
 
 Nothing to back up. Restoring means starting the container again with the same
-`.env`, including the JWT secret shared with the embedding application — if that
-value changes, the integration stops working until both sides agree again.
+`.env`, including `COLLABORA_ALIASGROUP` — Collabora serves only the hosts that
+pattern names, so a changed value cuts off the embedding application until it
+matches that host again.
 
 ## Open findings
 

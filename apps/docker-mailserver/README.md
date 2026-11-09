@@ -198,9 +198,9 @@ through Spectrum on the Enterprise plan. The host's address is public for mail.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/docker-mailserver/volumes/mail-data
-  - /srv/secure-docker-blueprint/apps/docker-mailserver/volumes/config
-  - /srv/secure-docker-blueprint/apps/docker-mailserver/volumes/mail-state
+  - /srv/docker/apps/docker-mailserver/volumes/mail-data
+  - /srv/docker/apps/docker-mailserver/volumes/config
+  - /srv/docker/apps/docker-mailserver/volumes/mail-state
 ```
 
 Restore: put the directories back and start the container. Stop it before

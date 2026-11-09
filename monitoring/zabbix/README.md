@@ -150,8 +150,8 @@ it:
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/zabbix/volumes/alertscripts
-  - /srv/secure-docker-blueprint/monitoring/zabbix/volumes/externalscripts
+  - /srv/docker/monitoring/zabbix/volumes/alertscripts
+  - /srv/docker/monitoring/zabbix/volumes/externalscripts
 ```
 
 Restore: put the volumes back with the script directories owned by

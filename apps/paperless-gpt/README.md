@@ -121,11 +121,11 @@ the pages to that vendor.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/paperless-gpt/volumes
+  - /srv/docker/apps/paperless-gpt/volumes
 
 sqlite_databases:
   - name: paperless_gpt
-    path: /srv/secure-docker-blueprint/apps/paperless-gpt/volumes/db/modification_history.db
+    path: /srv/docker/apps/paperless-gpt/volumes/db/modification_history.db
 ```
 
 Restore: put the three directories back, keep them owned by uid 1000, start the

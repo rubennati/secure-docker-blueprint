@@ -161,7 +161,7 @@ you own, and a decision rather than a default.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/grafana-prometheus/volumes/grafana
+  - /srv/docker/monitoring/grafana-prometheus/volumes/grafana
 ```
 
 `volumes/prometheus` is not in that list. It is large, it expires anyway, and

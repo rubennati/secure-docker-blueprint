@@ -154,8 +154,8 @@ The overlay exists because the host is not always yours to install on.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/scrutiny/volumes/influxdb
-  - /srv/secure-docker-blueprint/monitoring/scrutiny/volumes/scrutiny-config
+  - /srv/docker/monitoring/scrutiny/volumes/influxdb
+  - /srv/docker/monitoring/scrutiny/volumes/scrutiny-config
 ```
 
 Restore: put the volumes back owned by `1000:1000`, restore the secrets and

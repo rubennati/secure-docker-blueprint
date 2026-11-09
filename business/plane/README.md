@@ -132,7 +132,7 @@ used. It mounts the same `volumes/`, so run one at a time.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/business/plane/volumes/uploads
+  - /srv/docker/business/plane/volumes/uploads
 ```
 
 Restore: put the volumes back with `redis`, `uploads` and `logs` owned by

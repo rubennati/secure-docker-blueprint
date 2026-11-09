@@ -117,8 +117,10 @@ standard label resolves to:
 - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,authelia@file"
 ```
 
-The protected stack must share a network with `authelia-app` — `proxy-public`
-does. `trustForwardHeader` is left unset on purpose: Traefik then sends Authelia
+Traefik makes the forward-auth call itself, so the protected stack needs no
+network in common with Authelia: Traefik reaches `authelia-app` over
+`authelia-edge`, which it joins through `EDGE_NETWORKS` in `core/traefik/.env`.
+`trustForwardHeader` is left unset on purpose: Traefik then sends Authelia
 the headers it built itself, not ones a client supplied. The entrypoint already
 trusts forwarded headers from Cloudflare alone
 ([`core/traefik`](../traefik/)).

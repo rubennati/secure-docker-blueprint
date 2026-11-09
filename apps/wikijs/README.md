@@ -101,7 +101,7 @@ authentication is available for local accounts.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/wikijs/volumes/data
+  - /srv/docker/apps/wikijs/volumes/data
 
 postgresql_databases:
   - name: wikijs

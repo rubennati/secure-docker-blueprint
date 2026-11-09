@@ -160,7 +160,7 @@ servers you configured — that is the work, not a side effect.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/obot/volumes/data
+  - /srv/docker/apps/obot/volumes/data
 ```
 
 Restore: put the volumes back with `volumes/data` owned by `1000:1000`, restore

@@ -40,10 +40,11 @@
 Healthchecks uses semver. Django migrations run on container start.
 
 1. Check [GitHub releases](https://github.com/healthchecks/healthchecks/releases) for breaking changes — especially "Database schema" or "Config changes" sections
-2. Back up the SQLite DB:
+2. Back up the SQLite DB. The image has no `sqlite3` binary; its Python carries
+   SQLite's online backup, which copies a consistent file while the app runs:
 
    ```bash
-   docker compose exec app sqlite3 /data/hc.sqlite ".backup '/data/hc.sqlite.backup'"
+   docker compose exec app python3 -c "import sqlite3; s = sqlite3.connect('/data/hc.sqlite'); d = sqlite3.connect('/data/hc.sqlite.backup'); s.backup(d); d.close()"
    cp volumes/data/hc.sqlite.backup /safe/offsite/location/
    ```
 
@@ -101,7 +102,7 @@ docker compose exec healthchecks-app /opt/healthchecks/manage.py createsuperuser
 docker compose exec app /opt/healthchecks/manage.py <command>
 
 # Backup SQLite DB to a file inside the volume (then copy offsite)
-docker compose exec app sqlite3 /data/hc.sqlite ".backup '/data/hc.sqlite.backup'"
+docker compose exec app python3 -c "import sqlite3; s = sqlite3.connect('/data/hc.sqlite'); d = sqlite3.connect('/data/hc.sqlite.backup'); s.backup(d); d.close()"
 
 # Send a test email (verify SMTP config)
 docker compose exec app /opt/healthchecks/manage.py sendtestemail your@email.example

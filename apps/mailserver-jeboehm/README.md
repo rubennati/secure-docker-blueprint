@@ -189,13 +189,13 @@ Spectrum on the Enterprise plan. The host's address is public for mail.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/mailserver-jeboehm/volumes/mail
-  - /srv/secure-docker-blueprint/apps/mailserver-jeboehm/.secrets
+  - /srv/docker/apps/mailserver-jeboehm/volumes/mail
+  - /srv/docker/apps/mailserver-jeboehm/.secrets
 mysql_databases:
   - name: mailserver
     container: mailserver-jeboehm-db
     username: mailserver
-    password: "{credential file /srv/secure-docker-blueprint/apps/mailserver-jeboehm/.secrets/db_pwd.txt}"
+    password: "{credential file /srv/docker/apps/mailserver-jeboehm/.secrets/db_pwd.txt}"
 ```
 
 Restore: the database first, then `volumes/mail` owned by `1000:1000`, then

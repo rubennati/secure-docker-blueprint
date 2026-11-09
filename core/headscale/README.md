@@ -161,7 +161,7 @@ can see it at all — has not been worked through here.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/core/headscale/volumes/lib
+  - /srv/docker/core/headscale/volumes/lib
 ```
 
 Restore: put `volumes/lib` back owned by `1000:1000` and start the container.

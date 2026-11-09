@@ -71,7 +71,7 @@ Agents connect to the hub over an SSH key pair — no inbound ports needed on ag
 2. Back up hub data:
 
    ```bash
-   cp -r volumes/data/ beszel-backup-$(date +%Y%m%d)/
+   sudo cp -a volumes/hub-data/ beszel-backup-$(date +%Y%m%d)/
    ```
 
 3. Bump `APP_TAG` in `.env` for both hub and all agent deployments

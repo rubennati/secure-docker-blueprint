@@ -154,7 +154,7 @@ anywhere.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/checkmate/volumes/mongodb
+  - /srv/docker/monitoring/checkmate/volumes/mongodb
 ```
 
 Restore: put the volume back, restore the secrets, start the database, load the

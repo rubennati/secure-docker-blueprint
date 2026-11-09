@@ -142,7 +142,9 @@ sqlite_databases:
       path: /srv/docker/monitoring/healthchecks/volumes/data/hc.sqlite
 ```
 
-`UPSTREAM.md` documents the SQLite `.backup` command as the manual alternative.
+The hook reads the file from the host with borgmatic's own `sqlite3`; the image
+has none. `UPSTREAM.md` documents a manual online backup through the image's
+Python as the alternative.
 
 **Restore order:** stop, restore, start, then confirm an existing job's ping still
 registers — the URL must be unchanged.

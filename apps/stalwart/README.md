@@ -201,8 +201,8 @@ in front of this server.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/stalwart/volumes/data
-  - /srv/secure-docker-blueprint/apps/stalwart/volumes/etc
+  - /srv/docker/apps/stalwart/volumes/data
+  - /srv/docker/apps/stalwart/volumes/etc
 ```
 
 Restore: put both directories back owned by `2000:2000` and start the
