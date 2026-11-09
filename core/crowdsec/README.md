@@ -183,6 +183,32 @@ takes to the LAPI on `crowdsec:8080` and to AppSec on `crowdsec:7422`. The engin
 not join `proxy-public`: no application has a reason to reach it. Keep
 `CROWDSEC_SECURITY_NETWORK` identical in both `.env` files.
 
+### LAPI port on the host
+
+`docker-compose.yml` also publishes the LAPI as `127.0.0.1:${CROWDSEC_LAPI_PORT}`,
+**8081** by default. What that port is, and what it is not:
+
+- **Loopback only.** It is bound to `127.0.0.1`, so only the host itself reaches it —
+  never the LAN, never the internet.
+- **Only for the optional host-firewall bouncer.** The [nftables
+  bouncer](#host-firewall-remediation--nftables-bouncer) runs as a package on the host,
+  outside Docker: it cannot resolve the Docker name `crowdsec`, and the container has no
+  fixed address it could use instead. The loopback port is how it reaches the LAPI.
+- **Traefik does not use it.** The reverse-proxy remediation talks to `crowdsec:8080`
+  over `crowdsec-security`, as above.
+- **Without the firewall bouncer it can go.** Remove the `ports:` entry from the
+  service; nothing else depends on it.
+- **8081, not 8080.** `apps/unifi` publishes 8080 for its devices' inform requests, and
+  both stacks have to start on one host. Inside the container the LAPI stays on 8080.
+  Verified on the lab host (VM) on 2026-11-09: CrowdSec on `127.0.0.1:8081` and UniFi on
+  `0.0.0.0:8080` side by side, a bouncer key answered `200` on `/v1/decisions/stream`
+  through the loopback port, and the Traefik bouncer kept pulling over the Docker network.
+
+**An existing install** keeps the `CROWDSEC_LAPI_PORT` of its `.env`. To move to 8081:
+set it in `.env`, `docker compose up -d`, change `api_url` in the bouncer's
+`crowdsec-firewall-bouncer.yaml.local` to `http://127.0.0.1:8081/` and
+`sudo systemctl restart crowdsec-firewall-bouncer`.
+
 A deployment where the engine already runs on `proxy-public` follows
 [Migrating an existing installation](#migrating-an-existing-installation) instead of
 the setup below.
@@ -698,7 +724,7 @@ Do not ban the IP you administer the server from (Tailscale, LAN admin subnet) u
 Host-level enforcement via nftables. Installed as a system package (`apt`) on the host
 — not inside any container — because it manipulates host kernel firewall rules directly.
 
-The bouncer polls the CrowdSec LAPI on `127.0.0.1:8080` and translates active decisions
+The bouncer polls the CrowdSec LAPI on `127.0.0.1:8081` (`CROWDSEC_LAPI_PORT`) and translates active decisions
 into nftables drop rules. Traffic from banned IPs is dropped before any service sees it
 — the reverse proxy, a host-terminating service, or otherwise. This is the only enforcement point that covers ports
 Traefik does not terminate.

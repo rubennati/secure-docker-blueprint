@@ -21,6 +21,15 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   `# public by design: <reason>` line stands above it (`public-default`).
   **Migration:** an existing `.env` keeps its value; check the routes you opened.
 
+### Changed
+
+- **CrowdSec's LAPI moves to `127.0.0.1:8081` on the host.** `apps/unifi` publishes
+  8080 for its devices' inform requests and `core/crowdsec` published `127.0.0.1:8080`
+  for the host firewall bouncer, so the two could not start on one host. The port is
+  loopback-only and exists for that bouncer alone; Traefik keeps `crowdsec:8080` on the
+  Docker network. **Migration:** an existing `.env` keeps its value — to move, set
+  `CROWDSEC_LAPI_PORT=8081` and change the bouncer's `api_url` (core/crowdsec README,
+  "LAPI port on the host").
 ### Fixed
 
 - **Upstream data no longer offers a pre-release or another release line as the
