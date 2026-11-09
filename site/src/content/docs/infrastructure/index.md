@@ -75,10 +75,17 @@ repository and reaches the Docker daemon through a filtered proxy rather than th
 socket. Anything that manages Docker is equivalent to root on the host, which is
 why it ships VPN-only.
 
+**[Portainer](/infrastructure/portainer/)** is a web interface onto the same
+daemon — containers, logs, volumes, images — through a filtering socket proxy of
+its own, VPN-only as well.
+
 **[dnsmasq](/infrastructure/dnsmasq/)** answers names on your own network —
 wildcard zones, static records for machines with no DNS entry, and a cache in
 front of an upstream resolver. It runs on host networking and is not behind the
 proxy, because it is the name layer the proxy relies on.
+
+**[Headscale](/infrastructure/headscale/)** is a control server of your own for
+Tailscale clients — the tailnet that `access-vpn` admits, run by you.
 
 **[Certificates for devices behind no proxy](/infrastructure/acme-certs/)** issues
 and renews TLS certificates for the things Traefik never sees — a NAS, a router,
@@ -86,13 +93,15 @@ a mail server.
 
 ## Also server-wide, without a guide
 
-**Single sign-on.** Two providers, and they are alternatives.
+**Single sign-on.** Three providers, and they are alternatives.
 [Authentik](/infrastructure/authentik/) is set up once and then attached per
 route as a proxy middleware, so several applications can share one login even
 when they have none of their own; five containers, and it needs SMTP, a
 database and Redis. [Keycloak](/infrastructure/keycloak/) is the provider most
 applications that speak OpenID Connect or SAML were tested against, in two
-containers, with no proxy of its own. Either is a service to operate, not a
+containers, with no proxy of its own. [Authelia](/infrastructure/authelia/) is a
+login portal with two factors that Traefik asks through forward-auth, with users
+and rules in files. Each is a service to operate, not a
 setting to switch on; [Choosing between services](/applications/choosing/#single-sign-on)
 sets them side by side.
 
@@ -106,8 +115,9 @@ them — [OnlyOffice](/applications/onlyoffice/).
 **Backups.** Server-wide, but a different job with its own failure modes, and it
 has its own section — [backup and restore](/operations/backup/).
 
-**Monitoring and alerting.** The repository ships stacks for it. There is no
-guide here yet.
+**Monitoring and alerting.** Uptime checks, a dead-man's switch, host metrics and
+the receiver the alerts go to have their own section —
+[what each monitoring stack catches](/monitoring/).
 
 ## Where to go from here
 

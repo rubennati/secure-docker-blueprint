@@ -31,6 +31,7 @@ const SECTIONS: { heading: string; prefix: string }[] = [
   { heading: 'Start', prefix: 'getting-started' },
   { heading: 'Infrastructure', prefix: 'infrastructure' },
   { heading: 'Applications', prefix: 'applications' },
+  { heading: 'Monitoring and alerting', prefix: 'monitoring' },
   { heading: 'Catalogue', prefix: 'catalogue' },
   { heading: 'Operations and recovery', prefix: 'operations' },
   { heading: 'Security', prefix: 'security' },
@@ -48,7 +49,7 @@ const SECTIONS: { heading: string; prefix: string }[] = [
 
 const NOTES = [
   'Code examples in guide pages are written against the repository structure as of each guide\'s last edit — prefer the linked repository file over re-deriving paths or variable names.',
-  'Where a guide has been verified, it says so at the top: the version it was verified against, the date, and a line naming what was not exercised. A guide without that line has no verification behind it — do not infer one.',
+  'Each guide opens with an evidence line: "Last run on a host" with the date and the version that ran, "data restored from a backup" where that happened, the pinned version and what upstream has released since. A guide without a run date has no host run behind it — do not infer one.',
   'Installation steps in the guides assume a Linux host with a domain and Traefik in front. Most stacks also ship a docker-compose.local.yml that runs on one machine with no proxy, DNS or certificate, and a guide whose stack ships one starts with it under Try it locally; the Infrastructure overview describes it. Do not invent a single-machine path for a stack that does not ship that file.',
 ];
 

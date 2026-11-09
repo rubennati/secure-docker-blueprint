@@ -27,6 +27,98 @@ Starting a container is one command. Keeping the service reachable only to the
 people who should reach it, patched, and recoverable when the disk goes — that
 is what these guides are about.
 
+## Start with one of these
+
+Each of these runs on your own machine with Docker and nothing else — no proxy,
+domain or certificate, and none of the protection a server gets. The secrets ship
+empty; each block fills the ones its stack requires. Clone once, then run a block
+from the repository root:
+
+```bash
+git clone https://github.com/rubennati/secure-docker-blueprint.git
+cd secure-docker-blueprint
+```
+
+Nextcloud and Vaultwarden both answer on port 8080: stop one with `down` before
+starting the other.
+
+<Card title="Nextcloud" icon="laptop">
+  Files, calendars and contacts on your own server, synced to desktops and phones.
+
+  ```bash wrap
+  cd apps/nextcloud
+  cp .env.local.example .env.local
+  for v in DB_PASSWORD DB_ROOT_PASSWORD REDIS_PASSWORD ADMIN_PASSWORD; do
+    echo "$v=$(openssl rand -hex 16)"; done >> .env.local
+  mkdir -p volumes/local/mysql volumes/local/redis volumes/local/html
+  sudo chown 999:999 volumes/local/mysql
+  docker compose -f docker-compose.local.yml --env-file .env.local up -d
+  ```
+
+  Open `http://localhost:8080` and log in as `admin`; `grep '^ADMIN_PASSWORD=.' .env.local`
+  prints the password. [Nextcloud guide →](/applications/nextcloud/)
+</Card>
+
+<Card title="Vaultwarden" icon="seti:lock">
+  Credentials in one vault, synced to browser, phone and desktop.
+
+  ```bash wrap
+  cd apps/vaultwarden
+  cp .env.local.example .env.local
+  for v in DB_PASSWORD DB_ROOT_PASSWORD; do
+    echo "$v=$(openssl rand -hex 16)"; done >> .env.local
+  docker compose -f docker-compose.local.yml --env-file .env.local up -d
+  ```
+
+  Open `http://localhost:8080` and create an account. [Vaultwarden guide →](/applications/vaultwarden/)
+</Card>
+
+<Card title="Immich" icon="seti:image">
+  Photo and video backup from phones, searchable by what is in the picture.
+
+  ```bash wrap
+  cd apps/immich
+  cp .env.local.example .env.local
+  echo "DB_PASSWORD=$(openssl rand -hex 16)" >> .env.local
+  mkdir -p volumes/local/redis
+  sudo chown 999:999 volumes/local/redis
+  docker compose -f docker-compose.local.yml --env-file .env.local up -d
+  ```
+
+  Open `http://localhost:2283`; the first account becomes the administrator.
+  [Immich guide →](/applications/immich/)
+</Card>
+
+<Card title="Paperless-ngx" icon="document">
+  Scanned paper becoming a searchable archive, via OCR and a consume folder.
+
+  ```bash wrap
+  cd apps/paperless-ngx
+  cp .env.local.example .env.local
+  for v in DB_PASSWORD SECRET_KEY ADMIN_PASSWORD; do
+    echo "$v=$(openssl rand -hex 16)"; done >> .env.local
+  mkdir -p volumes/local/redis
+  sudo chown 999:1000 volumes/local/redis
+  docker compose -f docker-compose.local.yml --env-file .env.local up -d
+  ```
+
+  Open `http://localhost:8000` and log in as `admin`; `grep '^ADMIN_PASSWORD=.' .env.local`
+  prints the password. [Paperless-ngx guide →](/applications/paperless-ngx/)
+</Card>
+
+<Card title="Uptime Kuma" icon="heart">
+  Uptime monitoring with a status page and many notification channels.
+
+  ```bash wrap
+  cd monitoring/uptime-kuma
+  cp .env.local.example .env.local
+  docker compose -f docker-compose.local.yml --env-file .env.local up -d
+  ```
+
+  Open `http://localhost:3001`, choose SQLite and create the owner account on the
+  first visit. [Uptime Kuma guide →](/monitoring/uptime-kuma/)
+</Card>
+
 ## What the guides cover
 
 <CardGrid>
@@ -61,9 +153,9 @@ piece of software, and what still leaves the server anyway.
 
 ## What is claimed about testing
 
-Each guide opens with the version it is written against and, where one exists,
-the date it was verified on a real host — followed by one line naming what was
-*not* exercised. Where an application's data has been restored from a backup,
-its guide says so; where not, it says that instead of implying otherwise.
+Each guide opens with its evidence line: *Last run on a host* with the date and
+the version that ran, *data restored from a backup* where that happened, the
+pinned version with what upstream has released since, and the findings the
+upstream images carry. The line states facts; it grades nothing.
 
 [How to read that line →](/faq/)
