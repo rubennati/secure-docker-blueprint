@@ -40,11 +40,11 @@
 
 ## Known limitations
 
-- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; with OnlyOffice's paths the container exits 127 in a restart loop (lab host, 2026-11-02)
+- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; with OnlyOffice's paths the container exits 127 in a restart loop (2026-11-02)
 - **Young project** — smaller release history than OnlyOffice; watch releases closely
 
 ## Version notes
 
-- Moved to `v9.3.7-1` on 2026-11-09, run on the lab host. Upstream now builds
+- Moved to `v9.3.7-1` on 2026-11-09, run on a host. Upstream now builds
   `vX.Y.Z-N` tags as stable patch builds that refresh the OS packages daily;
   brotli 1.2.1. No configuration change.

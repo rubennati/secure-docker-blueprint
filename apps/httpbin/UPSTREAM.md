@@ -50,7 +50,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
 - The same answers after `docker compose down` and `up`
 - Peak 41 MiB (limit 256 MiB)
 
-**Not yet exercised:** the streaming endpoints; load.
+**Outside this verification:** the streaming endpoints; load.
 
 ## Verification performed (2026-09-21)
 
@@ -68,7 +68,7 @@ without Traefik:
   `cap_drop: ALL`, no capability added, no published port
 - `docker-compose.local.yml` started read-only and answered `/get`
 
-**Not yet exercised:** Traefik routing and TLS; the streaming endpoints; load.
+**Outside this verification:** Traefik routing and TLS; the streaming endpoints; load.
 
 ## Upgrade checklist
 

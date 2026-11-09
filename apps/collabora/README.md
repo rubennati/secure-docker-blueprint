@@ -3,7 +3,7 @@
 LibreOffice-based online office server — the **lightweight** document-editing option: a single
 stateless container, measured at about 400 MiB idle and 650 MiB with three editors open, against
 about 1.5–2 GB for OnlyOffice and Euro-Office, which bundle Postgres, RabbitMQ, Redis and nginx
-(lab host, `docs/labs/ingress/2026-11-01-results.md`, "Office servers"). Embedded via WOPI
+(`docs/labs/ingress/2026-11-01-results.md`, "Office servers"). Embedded via WOPI
 by Nextcloud's `richdocuments`; Seafile supports it too, with settings this blueprint does not ship.
 
 Pick per need: **OnlyOffice / [Euro-Office](../euro-office/)** for MS-Office-native fidelity, or
@@ -21,7 +21,7 @@ No database, no persistent volume. Embedded in iframes → `headers-application-
 (`frame-ancestors`) instead of `headers-standard`, which sets `X-Frame-Options: DENY`. TLS is terminated at Traefik
 (`ssl.termination=true`); the admin console is off by default. The image has no shell and no
 `curl`: the healthcheck is coolwsd's own probe — a shell-based test never ran, the container stayed
-`unhealthy`, and Traefik leaves an unhealthy container out of its routing (lab host).
+`unhealthy`, and Traefik leaves an unhealthy container out of its routing.
 
 **`/cool/convert-to` is closed on the public route.** It converts any uploaded file and asks for
 no WOPI token, and Collabora admits it from private addresses — which includes Traefik, so on an
@@ -52,23 +52,23 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Verify on first deploy
 
-- [x] Container starts and reports healthy through coolwsd's own probe (lab host)
+- [x] Container starts and reports healthy through coolwsd's own probe
 - [x] **LibreOffice sandbox starts** with `MKNOD` and `no-new-privileges:true` — not the chroot jail: coolwsd
-      falls back to a Landlock jail and editing works (lab host; "Sandbox" below)
+      falls back to a Landlock jail and editing works ("Sandbox" below)
 - [x] `aliasgroup1` matches the Nextcloud host exactly (regex, escaped dots, `:443`); a host outside the groups is refused
 - [x] Behind Nextcloud's closed access policy, a `.docx` opens, is edited, saves and reopens through
       Collabora: `office.yml` and `office-collabora.yml`, the callback and the internal address set with
       `occ richdocuments:activate-config`, `NC_OVERWRITECONDADDR` so the template presets are fetched over
       nginx, and `aliasgroup1` admitting the callback host (the Nextcloud README, "Office servers behind a
-      closed route"; lab host)
+      closed route")
 - [x] `/cool/convert-to` answers `403` on the public route, also to a trusted client; Nextcloud's `.docx`
-      previews are rendered through the internal address (lab host)
+      previews are rendered through the internal address
 - [x] Admin console answers 401 (off by default)
 
 ## Sandbox
 
 What coolwsd 26.04.5.2.1 logged under this stack's settings (`cap_drop: ALL`, `MKNOD`,
-`no-new-privileges:true`, Docker's default seccomp profile) on the lab host:
+`no-new-privileges:true`, Docker's default seccomp profile):
 
 - It could not create a user namespace (`unshare` refused, EPERM; it names seccomp as the
   likely cause), and `coolmount` needs `CAP_SYS_ADMIN`, so no mount namespace.

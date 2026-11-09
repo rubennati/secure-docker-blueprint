@@ -79,7 +79,7 @@ sleep "$SETTLE_SECONDS"
 # A restarted container reports `starting` until its first healthcheck passes.
 # Only `healthy` counts as recovered: taking `starting` for success reset the
 # episode, and a restart that did not help was repeated on every confirmation
-# (lab host). Wait out `starting` for up to START_TIMEOUT seconds.
+#. Wait out `starting` for up to START_TIMEOUT seconds.
 inspect_health() {
   docker inspect --format '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "unknown"
 }

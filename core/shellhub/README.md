@@ -146,8 +146,8 @@ For the general PostgreSQL restore procedure and verification checklist, see
   to `telemetry.shellhub.io` by default since v0.28.0; this stack sets
   `SHELLHUB_TELEMETRY=false` on the server. See
   [UPSTREAM.md](UPSTREAM.md#version-notes).
-- **Not yet exercised beyond a clean start** — no agent registered, no SSH
-  session proxied, no restart or upgrade tested.
+- **The checked scope is a clean start** — agent registration, a proxied SSH
+  session, a restart and an upgrade lie outside it.
 - **OIDC-in-Community-Edition status unconfirmed** — see Security Model.
 
 ## Open findings

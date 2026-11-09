@@ -83,7 +83,7 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
   the archive unpacked — the prompt came back through the API, ClickHouse held
   606 events and 303 scores, and the SDK sent again with the restored keys
 
-**Not yet exercised:** evaluations, which the `trace-upsert` queue feeds; media
+**Outside this verification:** evaluations, which the `trace-upsert` queue feeds; media
 uploads (not supported, see README); the in-app agent; upgrade from a v3
 database.
 
@@ -131,7 +131,7 @@ stack since the withdrawal started empty.
 ## Version notes
 
 - Moved to `4.76.0` on 2026-11-08 (released 2026-11-05), web and worker
-  together, run on the lab host. No breaking change, variable or migration is
+  together, run on a host. No breaking change, variable or migration is
   labelled; the release is small fixes and refactoring, and web and worker move
   to the current Langfuse SDK internally.
 - Moved to `4.75.0` on 2026-11-05 (released 2026-11-04), web and worker

@@ -74,7 +74,7 @@ docker compose up -d
 ```
 
 Without the group step the app stops at `FATAL: required Docker Secret 'DB_PWD' is
-missing, unreadable, or empty` and restarts (lab host). A stack copied from here
+missing, unreadable, or empty` and restarts. A stack copied from here
 keeps this section and adjusts the files, the owners and the group to its images.
 
 ## Backup
@@ -131,9 +131,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Verified
 
-Booted on the stack-refresh lab host behind Traefik (2026-11-09): both services
+Booted behind Traefik on 2026-11-09: both services
 healthy, the welcome page through the route, a refused client answered `403`, the
-same after `down`/`up`; the local file ran in the lab container.
+same after `down`/`up`; the local file started as well.
 
 ## Stand-in images (deliberate)
 

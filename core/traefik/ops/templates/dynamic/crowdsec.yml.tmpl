@@ -74,7 +74,7 @@ http:
           updateIntervalSeconds: 60
           # The plugin's default, 0, blocks every request from the first failed
           # decision pull until the next good one: 403 on every router for two
-          # minutes after the engine stopped (step 8 lab host). -1 keeps serving
+          # minutes after the engine stopped. -1 keeps serving
           # with the decisions it holds.
           updateMaxFailure: -1
           crowdsecLapiScheme: http
@@ -116,7 +116,7 @@ ${CROWDSEC_BOUNCER_FORWARDED_YAML}
           updateIntervalSeconds: 60
           # The plugin's default, 0, blocks every request from the first failed
           # decision pull until the next good one: 403 on every router for two
-          # minutes after the engine stopped (step 8 lab host). -1 keeps serving
+          # minutes after the engine stopped. -1 keeps serving
           # with the decisions it holds.
           updateMaxFailure: -1
           crowdsecLapiScheme: http

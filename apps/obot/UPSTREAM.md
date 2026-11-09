@@ -105,7 +105,7 @@ cannot reach this host's own services unless that is changed.
 
 ## Version notes
 
-- Moved to `v0.28.0` on 2026-11-08 and run on the lab host (VM) as a new
+- Moved to `v0.28.0` on 2026-11-08 and run on a host as a new
   installation. 0.28.0 routes every model through one LLM gateway (`/api/llm-
   proxy/v1`) and adds Keycloak and OneLogin as authentication providers.
   Upstream warns that existing installations with model providers should wait:

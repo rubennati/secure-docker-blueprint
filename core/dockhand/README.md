@@ -59,7 +59,7 @@ As shipped: `access-vpn`, `limit-standard`, `headers-standard`, and `tls-strict`
 ## Adding the local environment
 
 A new instance starts **without authentication** — `/api/auth/session` answers
-`{"authenticated":false,"authEnabled":false}` (measured on the lab host at v1.0.57),
+`{"authenticated":false,"authEnabled":false}` (v1.0.57),
 and whoever reaches the route manages every connected Docker host. Until
 authentication is turned on in Dockhand's settings, the access policy is the only gate:
 keep `access-vpn`.

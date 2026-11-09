@@ -6,7 +6,7 @@
 Traefik's file provider rejects the whole directory when one file does not
 parse, keeps serving the configuration it had, and starts without every
 @file middleware and TLS option the next time it is created: every router
-answers 404 (step 8 lab host, a duplicated key in config/dynamic/crowdsec.yml).
+answers 404 (a duplicated key in config/dynamic/crowdsec.yml).
 PyYAML keeps the last of two equal keys without a word, so the loader below
 treats a repeated key in one mapping as the error Traefik makes of it.
 

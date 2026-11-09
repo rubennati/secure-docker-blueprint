@@ -37,7 +37,7 @@
 
 ## Version notes
 
-- Moved to `v0.167.7` on 2026-11-09, run on the lab host. Fixes in secrets, PKI
+- Moved to `v0.167.7` on 2026-11-09, run on a host. Fixes in secrets, PKI
   and PAM, and agent-vault additions; no breaking change, variable or migration
   labelled.
 - Moved to `v0.167.6` on 2026-11-05, not run on a host at this tag. Upstream's

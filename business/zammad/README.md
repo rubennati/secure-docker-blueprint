@@ -78,7 +78,7 @@ docker compose logs railsserver --follow
 
 ## Security Model
 
-- **First-visit wizard creates the owner account** — until it has run (`/api/v1/getting_started` answers `setup_done: false` without authentication, measured on the lab host at 7.2.2), whoever opens the UI first becomes the owner. The route therefore ships at `access-vpn`: run the wizard over the VPN, then open it.
+- **First-visit wizard creates the owner account** — until it has run (`/api/v1/getting_started` answers `setup_done: false` without authentication at 7.2.2), whoever opens the UI first becomes the owner. The route therefore ships at `access-vpn`: run the wizard over the VPN, then open it.
 - **`DB_PWD_INLINE` duplicates the DB password** — Zammad reads `POSTGRESQL_PASS` from env only.
 - **Elasticsearch has no auth here** — it's on `app-internal` only, not reachable from outside. If you move it off-host, add xpack.security.
 - **`no-new-privileges:true`** on all services.

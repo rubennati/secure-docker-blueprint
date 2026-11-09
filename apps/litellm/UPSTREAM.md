@@ -72,7 +72,7 @@ Ollama stack as the backend:
   unchanged salt key
 - Peak 593 MiB for the proxy, 61 MiB for the database
 
-**Not yet exercised:** a hosted provider's own check of the credential — none
+**Outside this verification:** a hosted provider's own check of the credential — none
 was available; a placeholder key reached the Ollama route.
 
 ## Verification performed (2026-09-19)
@@ -95,7 +95,7 @@ throwaway Ollama container serving `smollm2:135m`:
 
 ## Version notes
 
-- Moved to `v1.108.3` on 2026-11-08 and run on the lab host (VM), the digest re-
+- Moved to `v1.108.3` on 2026-11-08 and run on a host, the digest re-
   resolved. 1.108.1 to 1.108.3 are fixes; upstream: "No action needed to
   upgrade".
 - Moved to `v1.108.0` on 2026-11-05 (released 2026-11-04), not run on a host at

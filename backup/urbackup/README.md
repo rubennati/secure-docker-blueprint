@@ -44,7 +44,7 @@ Then create the administrator account **before the host name is reachable by any
 docker compose exec -u 101 urbackup-app urbackupsrv reset-admin-pw -a admin -p '<password>'
 ```
 
-After that an anonymous login is refused (lab host).
+After that an anonymous login is refused.
 
 ### Storage
 
@@ -87,10 +87,10 @@ Two baseline deviations are inherent to a backup server and documented in [`UPST
 
 Check on the first deploy:
 
-- [x] Container starts and stays healthy — the image has neither `curl` nor `wget`; the healthcheck uses bash's `/dev/tcp` (lab host)
-- [x] Web interface reachable through Traefik, TLS valid, access policy enforced (lab host)
-- [x] Administrator account created with `urbackupsrv reset-admin-pw`; an anonymous login is refused (lab host)
-- [x] One client added by address and a first full file backup completes — a Linux client 2.5.31 in an unprivileged LXC (lab host)
+- [x] Container starts and stays healthy — the image has neither `curl` nor `wget`; the healthcheck uses bash's `/dev/tcp`
+- [x] Web interface reachable through Traefik, TLS valid, access policy enforced
+- [x] Administrator account created with `urbackupsrv reset-admin-pw`; an anonymous login is refused
+- [x] One client added by address and a first full file backup completes — a Linux client 2.5.31 in an unprivileged LXC
 - [ ] A file restored from that backup and its content verified — the four backed-up files downloaded from the server matched their checksums, but the restore to the client stopped at the client's own check ("No permissions to create files") on the LXC client; not repeated on a VM or bare-metal client
 - [ ] Resource limits survive a full backup without an OOM kill
 - [ ] Storage path confirmed excluded from Borgmatic's sources
@@ -130,8 +130,9 @@ and neither is a substitute.
 
 ## Restore
 
-Documented from upstream's administration manual, not yet runtime-verified
-against this stack.
+Follows upstream's administration manual. A restore is the part to rehearse
+before relying on this stack, because a backup that has never been restored may
+not be one.
 
 ### The storage tree
 

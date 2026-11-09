@@ -43,7 +43,7 @@ Then set **"Request via browser steps"** in the watch settings for affected URLs
 
 ## Version notes
 
-- Moved to `0.70.2` on 2026-11-08 and run on the lab host (VM). A patch release;
+- Moved to `0.70.2` on 2026-11-08 and run on a host. A patch release;
   no configuration change.
 - Moved to `0.60.10` on 2026-10-31. Between `0.60.4` and `0.60.10` upstream labels no breaking change,
   migration or variable change. `0.60.9` moves Apprise from 1.13.1 to 2.0.1, a

@@ -46,15 +46,15 @@ Client → Traefik (TLS, 443) → keycloak-app :8080  (admin console, realms, OI
 
 ## Version notes
 
-- Moved to `26.8.2` on 2026-11-08 and run on the lab host (VM). A patch release
+- Moved to `26.8.2` on 2026-11-08 and run on a host. A patch release
   with security fixes, among them CVE-2026-107889 (stored XSS on the login page)
   and CVE-2026-105305 (device grant bypassing a client's minimum ACR); upstream
   points to its migration guide, which names no change for 26.8.2.
 - Moved to `26.8.1` on 2026-11-05 (released 2026-10-13), not run on a host at
   this tag; 26.7.4, 26.7.5 and 26.8.0 lie between. Every statement above marked
   "verified against 26.7.3" — no working `_FILE` variant, the rebuild into
-  `lib/quarkus` at every start — is a record of 26.7.3 and is not yet verified on
-  26.8.1. No option this stack sets is renamed or removed. 26.8.0 changes
+  `lib/quarkus` at every start — holds for 26.7.3; check it again at 26.8.1 before
+  relying on it, since the rebuild depends on the release. No option this stack sets is renamed or removed. 26.8.0 changes
   behaviour: a client's secret is hidden from callers with only `view-clients`;
   disabled clients are left out of the `aud` claim; identity provider mappers
   cannot grant admin roles unless `allowAdminRoleMapping` is set; refresh tokens

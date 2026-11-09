@@ -152,8 +152,7 @@ If it is missing: create it (Type: `Proxy`, leave all defaults, save).
 
 Then edit it and set `authentik_host` in its configuration to `https://<APP_TRAEFIK_HOST>`.
 Left empty, the outpost builds its login redirect on `http://localhost/…`: an
-unauthenticated request is sent to a page no browser reaches (measured on a host,
-2026-11-02).
+unauthenticated request is sent to a page no browser reaches.
 
 ---
 
@@ -308,14 +307,13 @@ Similar pattern — create a `SAML Provider`, download the metadata XML from Aut
 
 The worker sends every e-mail — recovery, invitations, notifications — and runs the
 version check. On `app-internal` alone, which is `internal: true`, the SMTP host does not
-resolve and each `send_mail` task fails (`ak test_email` times out; measured on a host,
-2026-11-02). It therefore also joins `app-egress`, the pattern `apps/nextcloud` uses; the
+resolve and each `send_mail` task fails (`ak test_email` times out). It therefore also joins `app-egress`, the pattern `apps/nextcloud` uses; the
 database and Redis stay on `app-internal`, and the worker does not join `proxy-public`.
 
 What the worker needs outbound: the SMTP relay (`SMTP_HOST:SMTP_PORT`) and, for the version
-check, `version.goauthentik.io` over HTTPS. Measured on a host (2026-11-02): with this file
-applied the worker reached a public submission port and a relay addressed over the internet,
-and `ak test_email` was delivered. A mail sink on `proxy-public`, such as `apps/mailpit`, is
+check, `version.goauthentik.io` over HTTPS. With this file applied the worker reaches a
+public submission port and a relay addressed over the internet, and `ak test_email` is
+delivered. A mail sink on `proxy-public`, such as `apps/mailpit`, is
 not reachable from `app-egress`; Authentik does not send to it.
 
 What it costs: `app-egress` is a plain bridge, so the worker can open any outbound
@@ -368,7 +366,7 @@ Two files outside the database are required for a working restore:
 
 ## Known Issues
 
-- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`; on the lab host at 2026.8.5 `/` redirected every visitor to it until it had run, and to the login afterwards. The route therefore ships at `access-vpn`: complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
+- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`; at 2026.8.5 `/` redirects every visitor to it until it has run, and to the login afterwards. The route therefore ships at `access-vpn`: complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
 - **`AUTHENTIK_SECRET_KEY` rotation invalidates all existing sessions and API tokens.** Plan a maintenance window.
 - **Email flows depend on SMTP.** Password reset, invitation, and event notifications silently fail if SMTP is misconfigured. Test with a real account after setup.
 - **Worker volumes are shared with server.** Both mount `./volumes/data` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.

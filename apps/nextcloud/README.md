@@ -726,10 +726,10 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
 > with the consequence `core/traefik/docs/edge-networks.md` names. An office server
 > on another host reaches a closed instance only by its address in
-> `TRUSTED_RANGES`. **Measured on the lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> `TRUSTED_RANGES`. **Verified** (`docs/labs/ingress/2026-11-01-results.md`,
 > "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
 > XLSX and PPTX opened, saved and reopened behind the closed route, without
-> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora** (stack-refresh lab, 2026-11-08): with
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora** (2026-11-08): with
 > `office.yml`, `office-collabora.yml`, `NC_OVERWRITECONDADDR` and these settings, a
 > `.docx` opened, was edited, saved and reopened behind the closed route, its preview
 > was rendered through the internal address, and `/cool/convert-to` answered `403` on

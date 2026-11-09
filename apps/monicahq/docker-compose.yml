@@ -97,7 +97,7 @@ services:
       APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       APP_TRUSTED_PROXIES: "*"
       # Unset, Laravel sets its session and remember cookies without Secure
-      # behind Traefik's HTTPS (step 8 lab host, 4.1.2).
+      # behind Traefik's HTTPS (4.1.2).
       SESSION_SECURE_COOKIE: "true"
       # Database — Monica's Laravel config reads DB_PASSWORD from env only.
       # Value must match contents of .secrets/db_pwd.txt.

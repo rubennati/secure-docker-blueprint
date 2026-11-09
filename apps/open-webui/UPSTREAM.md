@@ -79,7 +79,7 @@ the first backend:
   says so
 - Peak 1.3 GiB of memory, 87 PIDs
 
-**Not yet exercised:** web search.
+**Outside this verification:** web search.
 
 ## Verification performed (2026-09-19)
 

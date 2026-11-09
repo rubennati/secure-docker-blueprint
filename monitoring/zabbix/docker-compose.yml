@@ -36,7 +36,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1536m   # 2x the peak on the stack-refresh lab host (592 MiB)
+          memory: 1536m   # 2x the measured peak (592 MiB)
           # cpus: derived starting value, not measured — v0.10.0
           cpus: "1.00"
           pids: 200

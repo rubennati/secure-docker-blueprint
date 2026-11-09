@@ -46,7 +46,7 @@ docker compose logs changedetection-app --follow
 - **An MCP server at `/mcp` since 0.70.** It lets AI assistants read watches, snapshots and change history, with an OAuth 2.1 sign-in and consent form, next to the new `GET /api/v1/changes`. Both share the application's route and access policy. Whether they refuse a request without the application password has not been checked on a host at 0.70.1.
 - **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — watched URLs + selectors + scraping credentials live in the UI. VPN-only default.
 - **Data volume** (`volumes/data/`) holds every snapshot of every watched page. Can grow large — set retention per-watch in Settings.
-- **`no-new-privileges:true`** on the container. The image runs as root (measured on 0.60.3) and owns everything under `volumes/data/`.
+- **`no-new-privileges:true`** on the container. The image runs as root (as of 0.60.3) and owns everything under `volumes/data/`.
 - **Private addresses are refused by default.** Since 0.60 a watch on an address in a private or reserved range fails with `Fetch blocked: … resolves to a private/reserved IP address` — the fetcher's guard against being used to probe the inside from the outside. `CD_ALLOW_PRIVATE_ADDRESSES=true` in `.env` lifts it, for watching pages on the Docker network or the LAN; the compose file says what that opens. Notifications are not affected — the Apprise path to `ntfy-app` works with the guard in place.
 
 ## What it sends outward

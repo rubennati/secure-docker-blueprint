@@ -61,7 +61,7 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
 ## Version notes
 
 - Moved to `7.2.2-0045` on 2026-11-08, a rebuild of the same 7.2.2 release
-  (the suffix is the package build), and run on the lab host (VM): started over
+  (the suffix is the package build), and run on a host: started over
   an installation created on `7.2.2-0038` with a ticket in it, which was present
   and found by the Elasticsearch search afterwards.
 - memcached moved to `1.6.45` on 2026-10-31, not run at this tag. 1.6.42

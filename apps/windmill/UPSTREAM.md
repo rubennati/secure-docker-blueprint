@@ -167,7 +167,7 @@ Behind Traefik with TLS, with the shipped `acc-private` on this run and
 - The operator signed in; the workspace list and the run history rendered (262
   and 811 requests, all answered)
 
-**Not yet exercised:** job isolation (NSJAIL needs bare metal); the UI's release
+**Outside this verification:** job isolation (NSJAIL needs bare metal); the UI's release
 check, which the stack does not switch off.
 
 ## Verification performed (2026-09-22)
@@ -211,7 +211,7 @@ Behind Traefik with TLS:
   `pg_dumpall` when `name: all` has no `format`, and with `pg_dump` for a named
   database; the README now uses `name: all`
 
-**Not yet exercised:** NSJAIL on bare metal; job isolation of any kind.
+**Outside this verification:** NSJAIL on bare metal; job isolation of any kind.
 
 ## Verification performed (2026-09-18)
 
@@ -241,7 +241,7 @@ Traefik:
 
 ## Version notes
 
-- Moved to `1.864.1` on 2026-11-08 and run on the lab host (VM). 1.863.0 adds
+- Moved to `1.864.1` on 2026-11-08 and run on a host. 1.863.0 adds
   configurable SSO email and username claims; 1.864.x are fixes; no
   configuration change.
 - Moved to `1.862.0` on 2026-11-05, not run on a host at this tag; the

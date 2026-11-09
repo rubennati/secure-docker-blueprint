@@ -40,7 +40,7 @@ any stack on proxy-public ────────→ mailpit :1025  (SMTP)
 
 ## Version notes
 
-- Moved to `v1.33.1` on 2026-11-08 and run on the lab host (VM). A patch
+- Moved to `v1.33.1` on 2026-11-08 and run on a host. A patch
   release; its notes name no configuration change.
 - Moved to `v1.33.0` on 2026-11-05 (released 2026-10-31), not run on a host at
   this tag; `Last verified` stays at v1.31.1. No breaking change, removed option

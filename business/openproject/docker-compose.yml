@@ -71,7 +71,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1536m   # 2x the peak on the stack-refresh lab host (642 MiB)
+          memory: 1536m   # 2x the measured peak (642 MiB)
           pids: 100
         reservations:
           memory: 64M
@@ -121,7 +121,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2g   # 2x the peak on the stack-refresh lab host (1022 MiB)
+          memory: 2g   # 2x the measured peak (1022 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
@@ -151,7 +151,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1536m   # 2x the peak on the stack-refresh lab host (713 MiB)
+          memory: 1536m   # 2x the measured peak (713 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.50"
           pids: 100
@@ -197,7 +197,7 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
-    # Measured on the stack-refresh lab host: the image runs as its own user and needs none.
+    # The image runs as its own user and needs none.
     # --- Health & Observability ---
     # Not an HTTP service — this confirms the port accepts a connection.
     healthcheck:

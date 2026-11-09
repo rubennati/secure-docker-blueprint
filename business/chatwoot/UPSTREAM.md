@@ -59,7 +59,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   the archive unpacked — login and the contact back
 - Peaks: Sidekiq 559 MiB, Rails 484 MiB, PostgreSQL 78 MiB, Redis 14 MiB
 
-**Not yet exercised:** email in and out; channels other than the website widget;
+**Outside this verification:** email in and out; channels other than the website widget;
 the captain and AI features.
 
 ## Verification performed (2026-09-21)
@@ -85,7 +85,7 @@ from a peer container:
   values absent from the configured environment; PostgreSQL and Redis without a
   route out
 
-**Not yet exercised:** Traefik routing and TLS; the browser dashboard; the website
+**Outside this verification:** Traefik routing and TLS; the browser dashboard; the website
 widget and its websocket; email in and out; messaging channel integrations; the
 enterprise features; backup and restore; an upgrade across versions.
 

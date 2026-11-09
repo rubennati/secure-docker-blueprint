@@ -51,7 +51,7 @@ Restore appdata tarball, revert `APP_TAG`.
 
 ## Version notes
 
-- Moved to `v2.12.0` on 2026-11-08 and run on the lab host (VM). A minor
+- Moved to `v2.12.0` on 2026-11-08 and run on a host. A minor
   release; its notes name no breaking change. A new instance answers `/` with a
   redirect to the setup wizard at `/init`.
 - Moved to `v2.11.1` on 2026-11-05 (released 2026-11-05), across the v2.0.0

@@ -191,7 +191,7 @@ VIKUNJA_PRIVACYURL=https://your-domain.com/privacy
 | Auto-redirect | ✅ | Login page redirects directly to Authentik |
 | Real client IP | ✅ | Read from `X-Forwarded-For` (Traefik) for accurate rate limiting |
 | Rate limiting | ✅ | Enabled |
-| Read-only filesystem | ⬜ | Not yet verified — enable after testing |
+| Read-only filesystem | ⬜ | Off — map the app's writable paths before enabling it |
 
 ## Backup
 

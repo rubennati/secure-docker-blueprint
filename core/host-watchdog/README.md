@@ -34,7 +34,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
   trying and reports failure on every subsequent run until the service
   recovers on its own or a person intervenes. It will not restart the same
   thing every two minutes forever.
-- **Rehearsed once, on the lab host (2026-11-09).** `dockerd` frozen with
+- **Rehearsed once (2026-11-09).** `dockerd` frozen with
   `SIGSTOP` (process alive, API hanging): the watchdog pinged "streak 1/3" and
   "2/3", restarted Docker on the third run and reported "daemon now
   responding"; all ten containers were running again 58 s after the first run.
@@ -88,7 +88,7 @@ as the gateway address of the edge network, not as the host's own address; behin
 a closed access policy it is refused, and `core/traefik/ops/scripts/validate.sh`
 rejects that gateway in `TRUSTED_RANGES`, because every container on the network
 would pass with it. The loopback port needs neither Traefik nor a public route —
-verified on the lab host (VM) on 2026-11-09 with both watchdogs started from their
+verified on 2026-11-09 with both watchdogs started from their
 shipped units. It also keeps the Traefik watchdog's failure pings arriving while
 Traefik itself is down. A Healthchecks on another host, or hosted, is pinged by its
 public URL as before.

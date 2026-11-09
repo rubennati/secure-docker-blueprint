@@ -65,7 +65,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   all of it back
 - Peak 149 MiB (limit 512 MiB)
 
-**Not yet exercised:** calendar providers; SMTP; Litestream; the MCP endpoint and
+**Outside this verification:** calendar providers; SMTP; Litestream; the MCP endpoint and
 its OAuth flow.
 
 ## Verification performed (2026-09-21)
@@ -86,14 +86,14 @@ a throwaway `proxy-public` network without Traefik:
   `no-new-privileges`, no published port; the secret values are absent from the
   container's configured environment
 
-**Not yet exercised:** Traefik routing and TLS; the admin interface in a browser;
+**Outside this verification:** Traefik routing and TLS; the admin interface in a browser;
 a real calendar provider, and therefore availability, booking and rescheduling;
 SMTP; the built-in video, recording and notetaking features, which need a LiveKit
 server; the MCP server; Litestream replication and restore; backup and restore.
 
 ## Version notes
 
-- Moved to `0.14.0` on 2026-11-08 and run on the lab host (VM). A responsive
+- Moved to `0.14.0` on 2026-11-08 and run on a host. A responsive
   admin and SvelteKit 2.70.4, its security release; upstream: "There are no
   database migrations in this release."
 - Moved to `0.13.0` on 2026-11-05, not run on a host at this tag; `Last verified`

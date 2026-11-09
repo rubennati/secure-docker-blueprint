@@ -78,7 +78,7 @@ enforce or verify.
 
 ## Version notes
 
-- Moved to `18.11.9` on 2026-11-08 and run on the lab host (VM) as a new
+- Moved to `18.11.9` on 2026-11-08 and run on a host as a new
   installation. A patch release of the 18.11 line.
 - Moved `public.ecr.aws/gravitational/teleport-distroless` to `18.11.8` on
   2026-11-05 (released 2026-10-29), patch releases on the 18.11 line, not run on

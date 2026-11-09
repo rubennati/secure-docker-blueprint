@@ -78,7 +78,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   ownership restored — the remote back
 - Peak 22 MiB (limit 1 GiB)
 
-**Not yet exercised:** a remote at a real storage provider; transfers of size;
+**Outside this verification:** a remote at a real storage provider; transfers of size;
 serves.
 
 ## Verification performed (2026-09-21)
@@ -102,12 +102,12 @@ a throwaway `proxy-public` network without Traefik, with `volumes/config` and
   preflight from `http://localhost:5522` was answered with that origin and the
   `Authorization` header allowed
 
-**Not yet exercised:** Traefik routing and TLS; the interface in a browser; a
+**Outside this verification:** Traefik routing and TLS; the interface in a browser; a
 remote at a real storage provider; transfers of size; serves; backup and restore.
 
 ## Version notes
 
-- Moved to `1.76.0` on 2026-11-08 and run on the lab host (VM). A minor release;
+- Moved to `1.76.0` on 2026-11-08 and run on a host. A minor release;
   its notes name no change to the remote-control API used here.
 - Moved to `1.75.2` on 2026-10-31 (released 2026-10-09), not run at this tag. The
   GitHub release page carries no entries and points to the changelog at

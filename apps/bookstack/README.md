@@ -80,7 +80,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/login    # 200 OK
 
 ## Security Model
 
-- **Default admin credentials must be changed on first login** — BookStack ships with `admin@admin.com` / `password`, and on the lab host (VM) at v26.09.2 that login reached the settings of a new instance. The route therefore ships at `access-vpn`: log in over the VPN, change the account, then open the route for readers.
+- **Default admin credentials must be changed on first login** — BookStack ships with `admin@admin.com` / `password`, and at v26.09.2 that login reaches the settings of a new instance. The route therefore ships at `access-vpn`: log in over the VPN, change the account, then open the route for readers.
 - **`APP_KEY`** encrypts sessions and password-reset tokens. Rotating invalidates all existing sessions (acceptable).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **MariaDB is on `app-internal` (`internal: true`)** — not reachable from outside the app.

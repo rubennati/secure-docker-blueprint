@@ -82,7 +82,7 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`, and
   counts `4` and `100000`, search results unchanged
 - Both collections intact after `docker compose down` and `up -d`
 
-**Not yet exercised:** the read-only key as shipped configuration — the stack
+**Outside this verification:** the read-only key as shipped configuration — the stack
 does not set it.
 
 ## Verification performed (2026-09-18)

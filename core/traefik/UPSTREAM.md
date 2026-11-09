@@ -51,7 +51,7 @@
 
 ## Version / tag notes
 
-- **Pinned to the exact release `v3.7.17` since 2026-11-02**, the release the lab host verified. Until then the pin was the 3.7 minor line, `traefik:v3.7`, which
+- **Pinned to the exact release `v3.7.17` since 2026-11-02**, the release verified on a host. Until then the pin was the 3.7 minor line, `traefik:v3.7`, which
   can resolve to a newer patch with no change in this repository — the drift
   `docs/standards/status-model.md` does not count as verified. A patch release is now
   a bump like any other, with the checklist below.

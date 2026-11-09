@@ -48,10 +48,10 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Verify on first deploy
 
-Run on the lab host on 2026-11-02 (`docs/labs/ingress/2026-11-01-results.md`, "Office servers"):
+Run on 2026-11-02 (`docs/labs/ingress/2026-11-01-results.md`, "Office servers"):
 
 - [x] `docker compose up -d` — container healthy; `GET /healthcheck` returns `true` after about 45 s, the first document opens about 20 s later
-- [x] Entrypoint and paths — the image starts with `/entrypoint.sh` and keeps its data and logs under `euro-office` paths, not OnlyOffice's (with OnlyOffice's path the container exits 127; lab host)
+- [x] Entrypoint and paths — the image starts with `/entrypoint.sh` and keeps its data and logs under `euro-office` paths, not OnlyOffice's (with OnlyOffice's path the container exits 127)
 - [x] Recreate keeps the state — `down` and `up -d` with the existing volumes: healthy again, the WOPI keys and secure-link secret unchanged, documents open and save
 - [x] `JWT_SECRET` injected from the Docker secret; requests without a valid token are rejected (command service error 6, conversion error -8)
 - [x] End-to-end — DOCX, XLSX and PPTX open, save and reopen from Nextcloud and Seafile CE and Pro, with the OnlyOffice connector and settings

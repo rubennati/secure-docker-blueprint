@@ -44,7 +44,7 @@
 
 ## Version notes
 
-- Moved to `v7.13.0` on 2026-11-09, run on the lab host. Features for the v8
+- Moved to `v7.13.0` on 2026-11-09, run on a host. Features for the v8
   layout (struct-of-arrays, configurable tile size), inline feedback for
   throttled logins, and an SSRF hardening for unusual IP forms. No migration or
   variable labelled.

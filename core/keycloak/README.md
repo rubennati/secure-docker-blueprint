@@ -113,7 +113,7 @@ embedded outpost and the `auth-authentik@file` Traefik middleware do.
   `Permissions-Policy`, is the `header-permissions@file` block the compose
   file places *before* the profile: Traefik applies the response changes of
   the first middleware last, so a block placed after the profile would be
-  overwritten by it (measured on v3.6). The console stays protected by its
+  overwritten by it (as of v3.6). The console stays protected by its
   own CSP `frame-ancestors 'self'`, and the realm's *Security Defenses* tab
   owns the values. `frame-self@file` is not the answer: it sets `SAMEORIGIN`
   on every response, including `login-status-iframe.html`, which an

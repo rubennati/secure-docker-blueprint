@@ -286,7 +286,7 @@ What it costs: the database container has to be running for a backup — as with
 `container:` before — and `pg_dump` runs inside the container's `memory` and `pids`
 limits, so a large database needs headroom there during the dump.
 
-**What was measured** (lab host (VM), 2026-11-08, borgmatic 2.2.0, borg 1.4.0, the
+**What was measured** (2026-11-08, borgmatic 2.2.0, borg 1.4.0, the
 [rehearsal log](RESTORE.md#rehearsal-log)) with the host's client — Debian 13's
 `postgresql-client` 17.11 — against the same entries through `docker exec`:
 

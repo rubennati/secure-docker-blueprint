@@ -97,7 +97,7 @@ needed for these jobs. The UI shows ping URLs under `SITE_ROOT`; replace
 `https://<APP_TRAEFIK_HOST>` with `http://127.0.0.1:8001` in the job's configuration, the
 UUID stays the same.
 
-Verified on the lab host (VM) on 2026-11-09 (v5.0.3), with the route on
+Verified on 2026-11-09 (v5.0.3), with the route on
 `access-trusted`: the Traefik watchdog and the Docker daemon watchdog, each started from
 its shipped systemd unit, and borgmatic 2.2.0 (`start` and `finish`) all reached their
 checks through `127.0.0.1:8001`; the same ping through the route from the host answered

@@ -68,7 +68,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
 - Peaks: uWSGI 552 MiB, initializer 324 MiB, Celery worker 182 MiB, Celery beat
   178 MiB, PostgreSQL 93 MiB, nginx 14 MiB, Valkey 13 MiB
 
-**Not yet exercised:** notifications and ticketing integrations; deduplication
+**Outside this verification:** notifications and ticketing integrations; deduplication
 switched on; scanners pushing results; large imports.
 
 ## Verification performed (2026-09-21)
@@ -94,7 +94,7 @@ peer container:
   absent from the configured environment and from every log; the administrator
   password not printed; uWSGI and PostgreSQL without a route out
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface; other scanner
+**Outside this verification:** Traefik routing and TLS; the browser interface; other scanner
 formats; notifications and ticketing integrations; Celery beat's scheduled jobs
 firing; backup and restore; an upgrade across versions.
 

@@ -98,7 +98,7 @@ The update check is off.
 
 ## Version notes
 
-- Moved to `17.0.0` on 2026-11-08, a major release, and run on the lab host (VM)
+- Moved to `17.0.0` on 2026-11-08, a major release, and run on a host
   as a new installation. Breaking per upstream: the Xapian FTS plugin is removed
   (migrate to Flatcurve), the Postfix LDAP configuration is generated from
   layered sources with renamed `POSTFIX_*_QUERY_FILTER` variables and no default

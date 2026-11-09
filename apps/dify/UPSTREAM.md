@@ -117,7 +117,7 @@ Behind Traefik with TLS, with the Ollama stack's route as the model endpoint:
   512 MiB, `plugin-daemon` 245 MiB, `dify-web` 180 MiB, `sandbox` 147 MiB,
   PostgreSQL 93 MiB, pgvector 69 MiB
 
-**Not yet exercised:** webhooks and `/e/`; workflow collaboration over `/socket.io/`, which is not
+**Outside this verification:** webhooks and `/e/`; workflow collaboration over `/socket.io/`, which is not
 routed; an Agent app; upgrade from an earlier Dify.
 
 ## Verification performed (2026-09-19)

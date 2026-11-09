@@ -55,7 +55,7 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
 
 ## Version notes
 
-- Moved to `1.41.0-slim` on 2026-11-08 and run on the lab host (VM), the digest
+- Moved to `1.41.0-slim` on 2026-11-08 and run on a host, the digest
   re-resolved. 1.40.0 fixes sign-out with a stale security token; no
   configuration change.
 - Moved to `1.39.0` on 2026-11-05, not run on a host at this tag; 24 minor releases

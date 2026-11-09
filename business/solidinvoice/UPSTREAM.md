@@ -81,7 +81,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   login, client and invoice back
 - Peak 2.2 GiB (limit 3 GiB), as the README states
 
-**Not yet exercised:** payments and payment gateways; recurring invoices; email;
+**Outside this verification:** payments and payment gateways; recurring invoices; email;
 the MySQL and PostgreSQL alternatives.
 
 ## Verification performed (2026-09-21)
@@ -98,7 +98,7 @@ without Traefik:
 - Hardening from `docker inspect`: uid 1000, `read_only`, `cap_drop: ALL`,
   `no-new-privileges`, no published port
 
-**Not yet exercised:** completing the web installer, and therefore everything after
+**Outside this verification:** completing the web installer, and therefore everything after
 it — login, clients, invoices, payments, the background worker; Traefik routing and
 TLS; email; backup and restore. This is the least-verified stack in its batch.
 

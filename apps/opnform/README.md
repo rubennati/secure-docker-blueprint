@@ -90,7 +90,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform
 
 ## Security Model
 
-- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.`, measured on the lab host at 2.8.4) by `SELF_HOSTED=true`.
+- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.` at 2.8.4) by `SELF_HOSTED=true`.
 - **`APP_KEY`** encrypts Laravel sessions and tokens. Rotating invalidates all active sessions.
 - **`JWT_SECRET`** signs API tokens. Rotating logs out all users.
 - **`FRONT_API_SECRET` / `NUXT_API_SECRET`** is a shared secret between the Laravel API and the Nuxt SSR layer. Both must have the same value.

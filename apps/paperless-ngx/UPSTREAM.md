@@ -46,7 +46,7 @@
   reachable — so breaking changes and advisories in the range are not checked;
   read https://tika.apache.org/ before a host run. The Java requirement of the
   3.x line is unchanged.
-- Run at these tags on the lab host on 2026-11-02; that run does not
+- Run at these tags on 2026-11-02; that run does not
   replace the change-note check above.
 - Moved to `3.4.2` on 2026-11-05, not run on a host at this tag. No breaking
   change, renamed `PAPERLESS_*` variable or manual step is listed from 3.2.0 to
@@ -163,7 +163,7 @@ Paperless's Django migrations are forward-only. Rollback = restore the SQL dump 
 The service is `paperless-app`. `python manage.py` under `exec` does not see the
 secrets the container read at start and stops on `PAPERLESS_SECRET_KEY`; the
 image's wrappers (`createsuperuser`, `document_*`) and `/command/with-contenv`
-carry them (lab host).
+carry them.
 
 ```bash
 # Shell

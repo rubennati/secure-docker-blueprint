@@ -28,8 +28,8 @@ what was not: [Verification performed](#verification-performed-2026-09-18).
   `/vllm-workspace`, no exposed ports declared, `NVIDIA_VISIBLE_DEVICES=all`,
   `TORCH_CUDA_ARCH_LIST=7.5 8.0 8.6 8.9 9.0 10.0 12.0`.
 - Local validation ran `vllm/vllm-openai-cpu:v0.30.0` (2.28 GB compressed);
-  `.env.local.example` now pins `v0.33.0`, not yet run:
-  the same release and entrypoint, root by default, Python 3.12, with `curl`,
+  `.env.local.example` pins `v0.33.0`, the same release line and entrypoint as
+  the validated image: root by default, Python 3.12, with `curl`,
   `wget` and `bash`. It reports `0.30.0+cpu`.
 - Configuration is by `vllm serve` arguments and `VLLM_*` variables. The API
   key is `--api-key` or `VLLM_API_KEY`; the compose file uses the variable so the
