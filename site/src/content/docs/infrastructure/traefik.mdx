@@ -197,8 +197,8 @@ IPv4 and IPv6, and so is a client off the host over public IPv4 and IPv6.
   <TabItem label="IPv6 only">
     Leave `TRAEFIK_BIND_V4` empty and keep the overlay: no public IPv4 ingress. What
     the host needs for IPv6-only outbound connections — registries and sources without
-    `AAAA` records — is a prerequisite list, not a mode; see the ingress audit, §3.4.
-    Not verified on a host yet.
+    `AAAA` records — is a prerequisite list, not a mode; see [the ingress audit, §3.4](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/audits/ingress-architecture-2026-10-31.md).
+    This shape is experimental.
   </TabItem>
 </Tabs>
 

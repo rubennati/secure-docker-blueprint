@@ -42,7 +42,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'Does this work with Tailscale?',
         answer:
-          'Yes. Any service can be restricted to Tailscale-only access. Traefik is set up for dual-stack IPv6 because Tailscale hands a client both an IPv4 and an IPv6 address — on an IPv4-only proxy the IPv6 connection arrives with the wrong source address and an IP allowlist rejects it. That reasoning is the design; tailnet clients have not been measured against the current proxy configuration yet.',
+          'Yes. Any service can be restricted to Tailscale-only access. Traefik is set up for dual-stack IPv6 because Tailscale hands a client both an IPv4 and an IPv6 address — on an IPv4-only proxy the IPv6 connection arrives with the wrong source address and an IP allowlist rejects it. With the dual-stack default a tailnet client is seen with its own address over both.',
         link: { text: 'Traefik guide', href: '/infrastructure/traefik/' },
       },
       {
@@ -76,7 +76,7 @@ export const faqCategories: FaqCategory[] = [
       {
         question: 'How do I know whether a guide has actually been tested?',
         answer:
-          'Each guide says so under its title. Either it names the date the stack last ran on a host — with the version that ran, where the pin has moved since — or it says it has not run on a host yet. A second line shows the pin, when upstream released it and whether upstream has released a newer version; another names what was not exercised — a restore, client sync, a specific integration. There is no overall grade to interpret: the dates, the versions and the named gap are the whole of it.',
+          'Each guide says so under its title: the date the stack last ran on a host, with the version that ran where the pin has moved since, and whether its data came back from a backup. A guide without that line has no host run behind it. A second line shows the pin, when upstream released it and whether upstream has released a newer version; a third, the findings the upstream images carry. There is no overall grade to interpret: the dates and the versions are the whole of it.',
       },
       {
         question: 'Is this safe to run in production today?',

@@ -144,8 +144,8 @@ modified and does not need to support any of this.
 
 If Traefik cannot reach the outpost, the request is refused — forward-auth
 fails closed, so an Authentik outage locks people out of the protected services
-rather than letting them through (measured on a host: `500`, never `200`, with
-and without a valid session).
+rather than letting them through: `500`, never `200`, with and without a valid
+session.
 
 The middleware address does not have to be on this host. One Authentik instance
 can protect services on several machines, as long as Traefik can reach it.

@@ -82,14 +82,13 @@ the one that enforces it does nothing at all.
    with a 403. Covers HTTP, sees the URL, can say why it refused. Optionally the
    same plugin also sends each request to CrowdSec's AppSec component, whose
    rule engine is Coraza — shipped with virtual-patching rules, not the Core
-   Rule Set. Shipped fail-open: if the engine is down, requests pass (measured
-   on a test host).
+   Rule Set. Shipped fail-open: if the engine is down, requests pass.
 
 3  Host-level blocking
    An agent on the host applies the same list as firewall rules. Covers every
    port, not just HTTP — anything that never reaches the proxy. The packet is
-   dropped before a connection exists. In this blueprint: designed, optional,
-   and its blocking rules not yet run on a host.
+   dropped before a connection exists. In this blueprint: optional and
+   experimental, applied by hand from the documented design.
 ```
 
 **A decision with no enforcer attached does nothing.** This is the most common

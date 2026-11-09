@@ -107,7 +107,7 @@ OnlyOffice fetches each document from the consuming application and saves it bac
 - **Nextcloud** — its opt-in `office.yml` joins Nextcloud's nginx to this stack's edge network; the connector hands out nginx as the storage address and needs this server's secret as its setting `jwt_secret` (`apps/nextcloud/README.md`, "Office servers behind a closed route").
 - **Seafile CE and Pro** — their opt-in `onlyoffice-callback.yml` opens the two paths OnlyOffice uses.
 
-An OnlyOffice server on another host reaches a closed consuming application only by its address in `TRUSTED_RANGES`. Measured on a host: DOCX, XLSX and PPTX opened, saved and reopened through Nextcloud and through Seafile CE and Pro this way; the private-address filter let the JWT-signed storage URL through without `ALLOW_PRIVATE_IP_ADDRESS`.
+An OnlyOffice server on another host reaches a closed consuming application only by its address in `TRUSTED_RANGES`. DOCX, XLSX and PPTX open, save and reopen through Nextcloud and through Seafile CE and Pro this way; the private-address filter lets the JWT-signed storage URL through without `ALLOW_PRIVATE_IP_ADDRESS`.
 
 ## Going further
 

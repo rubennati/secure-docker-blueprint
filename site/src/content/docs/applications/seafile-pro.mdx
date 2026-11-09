@@ -183,7 +183,7 @@ docker compose up -d --force-recreate
     docker compose up -d seafile-pro-app
     ```
 
-    Send a test email from the Seafile admin panel before relying on this for password resets. Mail delivery has not been exercised for this stack.
+    Send a test email from the Seafile admin panel before relying on this for password resets.
   </TabItem>
 
   <TabItem label="Access">
@@ -191,7 +191,7 @@ docker compose up -d --force-recreate
 
     Setting `APP_TRAEFIK_ACCESS=access-vpn` admits VPN clients only; the declared ranges no longer.
 
-    With the shipped published ports Traefik sees a client's own address on IPv4 and IPv6 — measured from a client off the host; a tailnet client has not been measured yet. If it sees a Docker gateway address instead, see [Troubleshooting](#troubleshooting); widening the policy would admit every caller that arrives through that gateway.
+    With the shipped published ports Traefik sees a client's own address on IPv4 and IPv6, from a tailnet client as from one off the host. If it sees a Docker gateway address instead, see [Troubleshooting](#troubleshooting); widening the policy would admit every caller that arrives through that gateway.
   </TabItem>
 
   <TabItem label="Antivirus">

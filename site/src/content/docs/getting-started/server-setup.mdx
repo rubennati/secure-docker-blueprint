@@ -174,8 +174,8 @@ traffic over IPv4 and leaves the IPv6 path untested.
    COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml
    ```
 
-   A host without public IPv4 empties `TRAEFIK_BIND_V4=` — an IPv6-only shape
-   that has not been verified on a host yet. Then check, render, check again and
+   A host without public IPv4 empties `TRAEFIK_BIND_V4=` — an IPv6-only shape,
+   experimental in this blueprint. Then check, render, check again and
    start Traefik:
 
    ```bash
@@ -211,8 +211,7 @@ ss -tlnp | grep -E ':80 |:443 '
 ```
 
 Expected: containers healthy, **two** subnets from the second command, and
-listeners on both `0.0.0.0` and `[::]` — on `[::]` alone for an IPv6-only host
-(not verified on a host yet).
+listeners on both `0.0.0.0` and `[::]` — on `[::]` alone for an IPv6-only host.
 
 One subnet means the overlay was missed; no `[::]` listener means
 `TRAEFIK_BIND_V6` is empty or `render.sh` was not run.

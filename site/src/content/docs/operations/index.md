@@ -48,5 +48,5 @@ otherwise left alone.
 
 - Setting up a service and wondering when to arrange the backup: before the first
   real record goes in, not after — [backup and restore](/operations/backup/)
-- Reading what a guide claims has been tested:
+- Reading the evidence line at the top of each guide:
   [the FAQ explains the evidence line](/faq/)
