@@ -445,6 +445,14 @@ the check across stacks with the live `.env` files. `core.strictTLSOptions`,
 which would fail such a conflict closed instead, stays off until the check has
 run on every host.
 
+An option of its own also separates a stack from its neighbours in the
+browser. Under the wildcard certificate, host names that share an address
+share one HTTP/2 connection; a request for a host whose router takes another
+option than the connection was negotiated under is refused with
+`421 Misdirected Request`. So an exception costs more than its handshake, and
+it stays only where its reason holds
+([`core/traefik/README.md`](../../core/traefik/README.md#troubleshooting)).
+
 ---
 
 ## Reaching a backend over TLS (`servers-transports.yml`)
