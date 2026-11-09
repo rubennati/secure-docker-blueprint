@@ -1465,10 +1465,10 @@
     "quiet": false,
     "restore_docs": "documented",
     "restored": false,
-    "tested": "2026-07-29",
+    "tested": "2026-11-09",
     "tested_anchored": true,
     "tested_differs": false,
-    "tested_version": "2.1.6",
+    "tested_version": "2.2.0",
     "upstream": "not checked"
   },
   "backup/kopia": {

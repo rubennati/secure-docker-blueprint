@@ -2266,7 +2266,7 @@
     "quiet": false,
     "restored": false,
     "role": "Deduplicated, encrypted server backup, installed on the host",
-    "tested": "2026-07-29",
+    "tested": "2026-11-09",
     "tested_version": null,
     "upstream": "https://torsion.org/borgmatic",
     "upstream_status": "not checked",

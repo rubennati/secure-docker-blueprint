@@ -158,7 +158,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 
 | Stack | Pin | Newest | CRITICAL · HIGH | Last tested |
 |---|---|---|---|---|
-| [`backup/borgmatic`](backup/borgmatic/) | *host-installed* | — | — | [2026-07-29](backup/borgmatic/UPSTREAM.md) |
+| [`backup/borgmatic`](backup/borgmatic/) | *host-installed* | — | — | [2026-11-09](backup/borgmatic/UPSTREAM.md) |
 | [`backup/kopia`](backup/kopia/) | `0.23.1` · 2026-06-16 | = Pin | [2 · 58](backup/kopia/README.md#open-findings) | [2026-11-08](backup/kopia/UPSTREAM.md) |
 | [`backup/rclone-web`](backup/rclone-web/) | `1.76.0` | not checked at this pin | — | [2026-11-08](backup/rclone-web/UPSTREAM.md) |
 | [`backup/urbackup`](backup/urbackup/) | `2.5.x` · 2026-08-30 | = Pin | [4 · 19](backup/urbackup/README.md#open-findings) | [2026-11-09](backup/urbackup/UPSTREAM.md) |
