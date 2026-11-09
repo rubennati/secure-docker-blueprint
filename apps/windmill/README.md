@@ -110,6 +110,7 @@ Nothing has run with job isolation. Full log in
 ```bash
 cp .env.local.example .env.local      # set DB_PASSWORD: openssl rand -hex 32
 mkdir -p volumes/local/postgres volumes/local/worker_cache
+sudo chown 1000:1000 volumes/local/worker_cache   # the workers run as uid 1000
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 curl http://localhost:8000/api/health/status
 DC="docker compose -f docker-compose.local.yml --env-file .env.local" \
