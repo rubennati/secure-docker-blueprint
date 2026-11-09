@@ -141,6 +141,52 @@ Rotating the JWT secret requires updating both sides simultaneously — there is
 
 Active editing sessions will break when the secret changes.
 
+## Backup
+
+| | |
+|---|---|
+| **Database** | None in this stack. |
+| **State** | `.secrets/jwt_secret.txt` — shared with the embedding application |
+| **Rebuildable** | `volumes/data` (document cache) · `volumes/logs` |
+| **Quiescing** | Not applicable. |
+
+Documents live in the application that embeds this document server and are
+backed up there; what is cached here is a working copy. The JWT secret is the one
+thing whose loss is felt: both sides hold the same value, so regenerating it means
+updating every embedding application too.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/ONLYOFFICE/DocumentServer/releases).
+
+2. If people are editing, let their sessions close first — up to five minutes:
+
+   ```bash
+   docker exec onlyoffice-app documentserver-prepare4shutdown
+   ```
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs onlyoffice-app --follow
+   ```
+
+   The first start takes one to five minutes; wait for
+   `Document Server … is up and running`.
+
+4. Check health, then open a `.docx` from each embedding application, save it
+   and reopen it:
+
+   ```bash
+   curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck                            # 200
+   curl -fsSI https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js     # 200
+   ```
+
+</Steps>
+
 ## Troubleshooting
 
 **Editor fails to load or shows a blank area:** open the browser console and look for a CSP or `X-Frame-Options` error. The most likely cause is the consuming application's origin missing from `ONLYOFFICE_ALLOWED_ORIGINS`. Confirm the value matches exactly, including the `https://` prefix, then recreate the OnlyOffice container.
@@ -162,3 +208,9 @@ Active editing sessions will break when the secret changes.
 - [`apps/onlyoffice/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/onlyoffice/README.md) — setup, JWT secret handling, iframe and CSP architecture
 - [`apps/onlyoffice/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/onlyoffice/UPSTREAM.md) — upgrade checklist, version notes, operational notes
 - [`apps/onlyoffice/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/onlyoffice/.env.example) — all configurable variables with inline comments
+
+## Official sources
+
+- [OnlyOffice Docs documentation](https://helpcenter.onlyoffice.com/docs/installation/docs-community-install-docker.aspx)
+- [Document Server releases](https://github.com/ONLYOFFICE/DocumentServer/releases)
+- [Docker image](https://github.com/ONLYOFFICE/Docker-DocumentServer)

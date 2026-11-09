@@ -79,6 +79,7 @@ From `apps/opnform/`:
 
    ```bash
    mkdir -p volumes/storage volumes/postgres volumes/redis
+   sudo chown 999:1000 volumes/redis   # Redis cannot fix this ownership itself
    ```
 
 5. Start it and watch all seven come up:
@@ -91,7 +92,11 @@ From `apps/opnform/`:
    Wait for `ready to handle connections` on the API, then `Listening on` from
    the frontend.
 
-6. Open `https://<APP_TRAEFIK_HOST>` and create the first account.
+6. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and create the first account —
+   it becomes the workspace admin, with no setup secret, which is why the route
+   ships closed (`access-vpn`). Later signups are refused (`SELF_HOSTED=true`).
+   Then set `APP_TRAEFIK_ACCESS=access-public` in `.env` and run
+   `docker compose up -d`, so the forms reach their respondents.
 
 </Steps>
 
@@ -119,6 +124,16 @@ Notifications and webhooks run through the queue worker; scheduled tasks through
 the scheduler. Both are separate containers using the same image as the API. A
 form that saves answers but sends no notifications is usually the worker rather
 than the mail configuration.
+
+### Maintenance commands
+
+Laravel's own commands run in the `api` service; the queue is worked by
+`api-worker`, not by hand:
+
+```bash
+docker compose exec api php artisan cache:clear    # application cache
+docker compose exec api php artisan config:clear   # configuration cache
+```
 
 ## Backup
 

@@ -74,9 +74,11 @@ pointing at the host.
    docker compose up -d
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>` and register. **The first account becomes
-   the admin.** Then close registration — `REGISTRATION_ENABLED=false` in
-   `.env` and `docker compose up -d`, or the switch at `/admin`.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and register. **The first
+   account becomes the admin.** Then close registration with
+   `REGISTRATION_ENABLED=false` in `.env` and `docker compose up -d`. The switch
+   at `/admin` has no effect while the variable is set: the environment outranks
+   the saved setting.
 
 </Steps>
 

@@ -110,9 +110,11 @@ the server answers long before indexing works.
 ### Memory during indexing
 
 The indexer can reach several gigabytes while processing large RAW files or
-video. The stack sets no memory limit for that reason: a ceiling the indexer
-touches ends as an out-of-memory kill mid-run. Provide at least 4 GB of swap
-instead.
+video. `photoprism-app` runs with a 2 GB memory limit and no swap
+(`memswap_limit` equals the limit). A ceiling the indexer touches ends as an
+out-of-memory kill mid-run, so a library of large RAW files or video needs a
+higher limit: raise `memory` and `memswap_limit` together in
+`docker-compose.yml` and run `docker compose up -d`.
 
 ### Date-based versions
 
@@ -187,8 +189,10 @@ Restore order: database, then originals and sidecars, then the application.
 
 ## Troubleshooting
 
-**The indexer stops partway through a large file.** Out of memory. Add swap
-rather than a memory limit.
+**The indexer stops partway through a large file.** Out of memory against the
+2 GB limit — `docker inspect photoprism-app --format '{{.State.OOMKilled}}'`
+answers `true`. Raise the limit as under
+[Memory during indexing](#memory-during-indexing).
 
 **Login fails with the password from `.env`.** `ADMIN_PASSWORD` is read only at
 first start. If the stack has run before, the password is whatever is stored in

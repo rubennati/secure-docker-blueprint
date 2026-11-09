@@ -52,6 +52,7 @@ Then open `http://127.0.0.1:8000`. Stop it again with the same command and `down
 | `notification-server.yml` | push notifications for file changes | optional |
 | `md-server.yml` | file metadata and extended properties | optional |
 | `thumbnail-server.yml` | image and video thumbnails | optional |
+| `onlyoffice-callback.yml` | no service: the two routes OnlyOffice calls back on | with OnlyOffice |
 
 All of them are served under one hostname; Traefik routes by path.
 
@@ -163,9 +164,24 @@ once.
 
 ### Document editing
 
-`seadoc.yml` adds the collaborative editor for `.sdoc` files. OnlyOffice is a
-separate stack with its own hostname and is not routed through here — see
-[OnlyOffice](/applications/onlyoffice/).
+`seadoc.yml` adds the collaborative editor for `.sdoc` files; it calls Seafile
+over the internal network, so the closed route does not stand in its way.
+
+OnlyOffice is a separate stack with its own hostname — see
+[OnlyOffice](/applications/onlyoffice/). It calls Seafile back at its public
+name on two paths: the document fetch under `/seafhttp/files/` and the save
+callback `/onlyoffice/editor-callback/`. The stack ships closed
+(`access-trusted-vpn`), which refuses a request from a container, so
+`onlyoffice-callback.yml` opens exactly those two paths with `access-public` —
+add it to `COMPOSE_FILE` when you run OnlyOffice; the rest of the instance stays
+closed:
+
+```env
+COMPOSE_FILE=seafile-server.yml,seadoc.yml,thumbnail-server.yml,onlyoffice-callback.yml
+```
+
+A Document Server on another host reaches a closed instance by its address in
+`TRUSTED_RANGES` or over the VPN instead, with the file left out.
 
 ## Backup
 

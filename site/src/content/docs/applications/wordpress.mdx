@@ -60,7 +60,9 @@ From `apps/wordpress/`:
    docker compose up -d
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>` and run the WordPress installer.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and run the WordPress
+   installer. It makes the first visitor the administrator, which is why the
+   route ships closed (`access-vpn`).
 
 5. Apply the Apache hardening — **after** the installer has finished, because it
    writes `.htaccess` itself and would overwrite the additions:
@@ -69,6 +71,12 @@ From `apps/wordpress/`:
    docker compose exec wordpress-app bash -c \
      'cat /config/.htaccess-security >> /var/www/html/.htaccess'
    ```
+
+6. Open the route for the site's audience: `APP_TRAEFIK_ACCESS=access-public` in
+   `.env` and `docker compose up -d` for a public site, or a second router that
+   keeps `/wp-admin` on `access-vpn` — the scenarios are in
+   [`apps/wordpress/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/wordpress/README.md).
+   A fully internal site stays as shipped.
 
 </Steps>
 
@@ -100,8 +108,7 @@ are in
 ### Why `tls-compatible`
 
 The stack names `tls-compatible` on the router's `tls.options` label
-(`APP_TRAEFIK_TLS_OPTION=tls-compatible` in `.env`) — a documented exception
-kept from before the model, with no reason recorded. The profile exists for
+(`APP_TRAEFIK_TLS_OPTION=tls-compatible` in `.env`). The profile exists for
 older clients that must still connect, and a public site is visited by whatever
 the visitor happens to run. Verify on a host whether `tls-standard`, the
 deployment default, serves the visitors a blog still wants, then remove the

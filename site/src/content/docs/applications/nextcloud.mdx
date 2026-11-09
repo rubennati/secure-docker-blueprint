@@ -38,10 +38,9 @@ sudo chown 999:999 volumes/local/mysql
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
-Then open `http://localhost:8080`. Stop it again with the same command and `down`.
-
-Configure mail during setup rather than afterwards: Nextcloud cannot reset a
-password without it.
+Then open `http://localhost:8080` and log in as `admin` with the
+`ADMIN_PASSWORD` from `.env.local`. Stop it again with the same command and
+`down`.
 
 ## Installation
 
@@ -78,7 +77,8 @@ From `apps/nextcloud/`:
    TZ=Europe/Vienna
    ```
 
-3. Set mail. Use port 465 — it is encrypted from the first byte, where port 587
+3. Set mail now rather than afterwards — Nextcloud cannot reset a password
+   without it. Use port 465 — it is encrypted from the first byte, where port 587
    starts unencrypted and switches over partway:
 
    ```ini
@@ -234,9 +234,13 @@ the closed route: the opt-in `office.yml` joins Nextcloud's nginx, and only ngin
 to the office stack's edge network (`OFFICE_NETWORK`), and the connector hands out
 nginx as its internal address. The settings — `StorageUrl` and `jwt_secret` for
 OnlyOffice and Euro-Office, `richdocuments:activate-config` for Collabora — are in
-the stack README, "Office servers behind a closed route". Measured on a host:
-OnlyOffice and Euro-Office work that way; Collabora behind the closed route does
-not open a document, which is open.
+the stack README, "Office servers behind a closed route". Collabora additionally
+needs `office-collabora.yml` in `COMPOSE_FILE`, which lets Nextcloud reach
+Collabora's discovery and `/cool/convert-to` through nginx for previews, and
+`NC_OVERWRITECONDADDR` in `.env`, which limits Nextcloud's URL overwrites to
+requests from Traefik so Collabora's template fetch gets internal URLs. With
+those, documents in all three open, save and reopen behind the closed route, and
+Collabora's public route still refuses `/cool/convert-to`.
 
 ### Rotating a key
 
@@ -249,6 +253,33 @@ docker compose up -d --force-recreate app cron
 ```
 
 Writing in place — `printf '%s' "$KEY" > .secrets/smtp_pwd.txt` — avoids this.
+
+### Sizing the host
+
+Nextcloud states its requirements per PHP process — 128 MB minimum, 512 MB
+recommended, 256 MB for the built-in updater
+([system requirements](https://docs.nextcloud.com/server/latest/admin_manual/installation/system_requirements.html)).
+For a small team with this stack alone on the host:
+
+| | Minimum | Comfortable |
+|---|---|---|
+| CPU | 2 cores | 4 cores |
+| RAM | 4 GB | 8 GB |
+| Disk | 20 GB plus your data | SSD, 20 GB plus data |
+
+The 4 GB floor is arithmetic: MariaDB with the buffer pool this stack configures
+takes about 1.5 GB, Redis 0.5 GB, the OS and nginx 0.5 GB, and the rest holds the
+PHP workers. Below it, cron and interactive requests compete for the pool and
+answer 502. An office server on the same host adds about 1.5 GB of its own.
+
+### A lean application set
+
+For document collaboration, keep Files, Group Folders, Guests, Activity and the
+office connector. Photos and Recommendations run background machine-learning
+jobs; Survey Client and Support phone home; Weather Status calls an external API
+from the server; First Run Wizard is done after setup; Contacts is only needed
+when Nextcloud is also the address book. Disabling what you do not use shortens
+cron runs and keeps the PHP worker pool predictable.
 
 ## Backup
 
@@ -334,19 +365,50 @@ content unreadable.
 ### Restoring this stack
 
 Database first, then the file tree, then the application — and leave maintenance
-mode on until both halves are in place.
+mode on until both halves are in place. The two come from the same archive; a
+database restored against an older file tree produces exactly the divergence
+maintenance mode exists to prevent.
 
 The flag itself is inside the backup. Any archive taken while the quiescing hook
 was active holds `'maintenance' => true` in `config.php`, so a restored instance
-refuses to serve until you clear it:
+refuses to serve until you clear it — nothing is served before somebody has
+looked at it:
 
 ```bash
 docker compose exec -u www-data app php occ maintenance:mode --off
 ```
 
-Rehearse the restore into a scratch location and open a file from the result. The
-procedure is on
-[Backup and restore](/operations/backup/#prove-it-with-a-restore).
+Rehearse into a scratch database first and read the result, not the exit code —
+the procedure is on [Backup and restore](/operations/backup/#prove-it-with-a-restore).
+A table count in the low hundreds, the accounts you expect in `oc_users` and a
+non-empty `oc_filecache` are the signs of a good dump.
+
+For a real restore into live service, take a dump of the current state first,
+even a broken one. Then:
+
+<Steps>
+
+1. Switch on maintenance mode and stop the application, leaving the database
+   running:
+
+   ```bash
+   docker compose exec -u www-data app php occ maintenance:mode --on
+   docker compose stop app cron nextcloud-nginx
+   ```
+
+2. Restore the database, then the file tree from the same archive.
+
+3. Start the stack, clear maintenance mode, reconcile the file index with what
+   is on disk, and check `/settings/admin/overview` before letting anyone back
+   in:
+
+   ```bash
+   docker compose up -d
+   docker compose exec -u www-data app php occ maintenance:mode --off
+   docker compose exec -u www-data app php occ files:scan --all
+   ```
+
+</Steps>
 
 ## Updates
 
