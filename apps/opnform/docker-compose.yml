@@ -123,11 +123,11 @@ services:
     # --- Resources ---
     # Generous ceiling: a limit the normal workload reaches is a limit that
     # kills imports and background jobs. Retune from docker stats, not down to it.
-    memswap_limit: 2G          # == memory: no swap
+    memswap_limit: 3g          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 3g   # 2x the peak on the stack-refresh lab host (1265 MiB)
           pids: 200
         reservations:
           memory: 128M

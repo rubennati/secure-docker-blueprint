@@ -70,11 +70,11 @@ services:
     # Node's default heap (about 512 MB) is exhausted during startup of this
     # release: it ran out of memory at a 1 GB container limit until the heap was
     # raised. Upstream also asks for 2 GiB for the web service.
-    memswap_limit: 2g
+    memswap_limit: 3g
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 3g   # 2x the peak on the stack-refresh lab host (1056 MiB)
           cpus: "2.00"
           pids: 200
         reservations:

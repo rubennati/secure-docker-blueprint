@@ -238,11 +238,11 @@ services:
 
     # --- Resources ---
     # Starting values, not measured.
-    memswap_limit: 512m
+    memswap_limit: 1g
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 1g   # 2x the peak on the stack-refresh lab host (503 MiB)
           cpus: "0.50"
           pids: 100
         reservations:

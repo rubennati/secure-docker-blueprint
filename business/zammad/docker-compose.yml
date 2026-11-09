@@ -168,7 +168,7 @@ services:
       resources:
         limits:
           memory: 4G
-          pids: 300
+          pids: 400
         reservations:
           memory: 512M
 
