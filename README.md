@@ -92,9 +92,15 @@ Most stacks ship a local variant: localhost, no Traefik, no domain, none of the
 protection around it. It shows the application, not how it runs on a host.
 
 ```bash
+# Get the repository and pick a stack
 git clone https://github.com/rubennati/secure-docker-blueprint.git
 cd secure-docker-blueprint/apps/vaultwarden
+
+# Local settings; the secrets ship empty, so fill the ones this stack needs
 cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\nDB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 16)" >> .env.local
+
+# Start it
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
