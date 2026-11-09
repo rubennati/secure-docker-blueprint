@@ -20,7 +20,7 @@ services:
       MYSQL_RANDOM_ROOT_PASSWORD: "true"
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       MARIADB_AUTO_UPGRADE: "1"
       TZ: ${TZ}
     command:
@@ -47,7 +47,7 @@ services:
       TZ: ${TZ}
       APP_ENV: production
       APP_URL: http://localhost:8080
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env.local}
       DB_HOST: db
       DB_PORT: "3306"
       DB_DATABASE: ${DB_NAME}

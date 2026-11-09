@@ -111,7 +111,7 @@ services:
       # Database — Photoview reads PHOTOVIEW_MYSQL_URL as a single DSN.
       # No _FILE support — DB_PWD_INLINE must match .secrets/db_pwd.txt.
       PHOTOVIEW_DATABASE_DRIVER: "mysql"
-      PHOTOVIEW_MYSQL_URL: "${DB_USER}:${DB_PWD_INLINE}@tcp(db)/${DB_NAME}"
+      PHOTOVIEW_MYSQL_URL: "${DB_USER}:${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}@tcp(db)/${DB_NAME}"
       PHOTOVIEW_LISTEN_IP: "0.0.0.0"
       MAPBOX_TOKEN: ${MAPBOX_TOKEN}
       PHOTOVIEW_VIDEO_HARDWARE_ACCELERATION: ${PHOTOVIEW_VIDEO_HARDWARE_ACCELERATION}

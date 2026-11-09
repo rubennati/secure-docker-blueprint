@@ -23,7 +23,7 @@ services:
       VELOCIRAPTOR_GUI_PORT: "8889"
       VELOCIRAPTOR_DATASTORE_PATH: /datastore
       VELOCIRAPTOR_CONFIG_PATH: /etc/velociraptor/server.config.yaml
-      VELOCIRAPTOR_INITIAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      VELOCIRAPTOR_INITIAL_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env.local}
     volumes:
       - ./volumes/local/etc:/etc/velociraptor
       - ./volumes/local/datastore:/datastore

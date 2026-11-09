@@ -18,7 +18,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       POSTGRES_INITDB_ARGS: "--data-checksums"
       TZ: ${TZ}
     volumes:

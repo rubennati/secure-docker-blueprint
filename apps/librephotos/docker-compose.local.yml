@@ -17,7 +17,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/db:/var/lib/postgresql
@@ -40,11 +40,11 @@ services:
       FEATURE_REVERSE_GEOCODING: "false"
       UPDATE_CHECK: "false"
       TZ: ${TZ}
-      SECRET_KEY: ${SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.local}
       BACKEND_HOST: backend
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env.local}
       DB_BACKEND: postgresql
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}

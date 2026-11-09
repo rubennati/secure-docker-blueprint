@@ -21,7 +21,7 @@ services:
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql/data
@@ -92,9 +92,9 @@ services:
       PAPERLESS_DBNAME: ${DB_NAME}
       PAPERLESS_DBUSER: ${DB_USER}
       PAPERLESS_DBPASS: ${DB_PASSWORD}
-      PAPERLESS_SECRET_KEY: ${SECRET_KEY}
+      PAPERLESS_SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.local}
       PAPERLESS_ADMIN_USER: ${ADMIN_USER}
-      PAPERLESS_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      PAPERLESS_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env.local}
       PAPERLESS_REDIS: redis://redis:6379
       PAPERLESS_TIKA_ENABLED: "1"
       PAPERLESS_TIKA_GOTENBERG_ENDPOINT: http://gotenberg:3000

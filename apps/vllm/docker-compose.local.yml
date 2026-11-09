@@ -45,7 +45,7 @@ services:
       VLLM_NO_USAGE_STATS: "1"
       DO_NOT_TRACK: "1"
       VLLM_CPU_KVCACHE_SPACE: "2"
-      VLLM_API_KEY: ${VLLM_API_KEY}
+      VLLM_API_KEY: ${VLLM_API_KEY:?Set VLLM_API_KEY in .env.local}
     volumes:
       - ./volumes/local/cache:/cache
     ports:

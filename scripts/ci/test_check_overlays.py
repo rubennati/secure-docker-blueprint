@@ -218,6 +218,26 @@ class EffectiveMerge(unittest.TestCase):
                 co._structure.repository_files.cache_clear()
         self.assertEqual({f["rule"] for f in found}, set())
 
+    def test_a_secret_the_example_ships_empty_is_filled_for_the_variant(self):
+        """A required secret ships empty; the operator fills it before the start."""
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            app, _ = _stack(root, "services:\n  widget-app:\n    environment:\n"
+                                  "      TOKEN: ${APP_TOKEN:?Set APP_TOKEN in .env}\n",
+                            "token.yml")
+            (app / ".env.example").write_text(
+                "COMPOSE_PROJECT_NAME=widget\nAPP_TOKEN=\n")
+            cwd = os.getcwd()
+            os.chdir(root)
+            try:
+                co._structure.repository_files.cache_clear()
+                found, _ = co.check_variant(Path("apps/widget"),
+                                            Path("apps/widget/token.yml"))
+            finally:
+                os.chdir(cwd)
+                co._structure.repository_files.cache_clear()
+        self.assertNotIn("overlay-invalid", {f["rule"] for f in found})
+
     def test_a_variable_with_no_example_anywhere_still_fails(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

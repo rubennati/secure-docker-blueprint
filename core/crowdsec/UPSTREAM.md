@@ -26,7 +26,7 @@
 | Change | Reason |
 |--------|--------|
 | Relative Traefik log path | `../traefik/volumes/logs` — works when both are in `core/` |
-| LAPI on localhost only | `127.0.0.1:8081` — not exposed to network; 8081 on the host because `apps/unifi` publishes 8080 (device inform). Inside the container the LAPI stays on 8080 |
+| LAPI on localhost only, and only for the firewall bouncer | `127.0.0.1:8081` through the `firewall-bouncer.yml` overlay, no host port without it — not exposed to network; 8081 on the host because `apps/unifi` publishes 8080 (device inform). Inside the container the LAPI stays on 8080 |
 | `no-new-privileges` | Security hardening |
 | Custom acquis.yaml + appsec.yaml | Mounted read-only for reproducibility |
 | AppSec on `0.0.0.0:7422` | Upstream defaults to `127.0.0.1:7422`, which assumes the web server shares the host. Traefik is a separate container here, so a loopback bind is unreachable. Membership of `crowdsec-security` takes over the boundary the loopback bind provides upstream. |

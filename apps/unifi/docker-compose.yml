@@ -108,7 +108,7 @@ services:
       MONGO_PORT: "27017"
       MONGO_DBNAME: ${DB_NAME}
       MONGO_USER: ${DB_APP_USER}
-      MONGO_PASS: ${DB_APP_PWD_INLINE}
+      MONGO_PASS: ${DB_APP_PWD_INLINE:?Set DB_APP_PWD_INLINE in .env}
 
     # --- Storage ---
     volumes:

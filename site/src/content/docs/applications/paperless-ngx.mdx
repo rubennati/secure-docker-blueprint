@@ -23,7 +23,7 @@ cache, and two converters it hands other formats to.
 On your own machine, with no proxy, domain or certificate. From `apps/paperless-ngx/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local # fill the empty secrets
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

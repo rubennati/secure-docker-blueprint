@@ -35,7 +35,7 @@ services:
           memory: 256M
 
     environment:
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       MYSQL_LOG_CONSOLE: "true"
       MARIADB_AUTO_UPGRADE: "1"
       TZ: ${TZ}
@@ -101,7 +101,7 @@ services:
 
     command: ["/bin/sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\""]
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.local}
 
     volumes:
       - ./volumes/local/redis:/data
@@ -144,7 +144,7 @@ services:
       DB_HOST: db
       DB_PORT: "3306"
       DB_USER: ${SEAFILE_DB_USER}
-      DB_PASSWORD: ${SEAFILE_DB_PASSWORD}
+      DB_PASSWORD: ${SEAFILE_DB_PASSWORD:?Set SEAFILE_DB_PASSWORD in .env.local}
       INIT_SEAFILE_MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
       SEAFILE_MYSQL_DB_HOST: db
       SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
@@ -162,9 +162,9 @@ services:
       ENABLE_GO_FILESERVER: "true"
       NON_ROOT: "false"
       SEAFILE_LOG_TO_STDOUT: "false"
-      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY}
+      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in .env.local}
       INIT_SEAFILE_ADMIN_EMAIL: ${SEAFILE_ADMIN_EMAIL}
-      INIT_SEAFILE_ADMIN_PASSWORD: ${SEAFILE_ADMIN_PASSWORD}
+      INIT_SEAFILE_ADMIN_PASSWORD: ${SEAFILE_ADMIN_PASSWORD:?Set SEAFILE_ADMIN_PASSWORD in .env.local}
       ENABLE_SEADOC: "false"
       ENABLE_NOTIFICATION_SERVER: "false"
       TIME_ZONE: ${TZ}

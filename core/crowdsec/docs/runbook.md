@@ -739,7 +739,8 @@ docker exec crowdsec cscli lapi status
 grep CROWDSEC_LAPI_PORT .env
 # Default: CROWDSEC_LAPI_PORT=8081
 
-# Is the LAPI port exposed on the host?
+# Is the LAPI port exposed on the host? Only with the firewall-bouncer.yml
+# overlay (COMPOSE_FILE in .env); without the host-firewall bouncer, no port.
 # Replace 8081 with the value from CROWDSEC_LAPI_PORT if changed
 ss -tlnp | grep "$(grep CROWDSEC_LAPI_PORT .env | cut -d= -f2)"
 # Expected: 127.0.0.1:<port> listening

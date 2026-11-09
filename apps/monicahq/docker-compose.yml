@@ -94,7 +94,7 @@ services:
       TZ: ${TZ}
       APP_ENV: production
       APP_URL: https://${APP_TRAEFIK_HOST}
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       APP_TRUSTED_PROXIES: "*"
       # Unset, Laravel sets its session and remember cookies without Secure
       # behind Traefik's HTTPS (step 8 lab host, 4.1.2).
@@ -105,7 +105,7 @@ services:
       DB_PORT: "3306"
       DB_DATABASE: ${DB_NAME}
       DB_USERNAME: ${DB_USER}
-      DB_PASSWORD: ${DB_PWD_INLINE}
+      DB_PASSWORD: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
     secrets:
       - DB_PWD
 

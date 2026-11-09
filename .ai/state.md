@@ -2,7 +2,7 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-11-08
+**Last updated:** 2026-11-09
 
 - **Phase:** pre-1.0. Latest tag `v0.9.8` (2026-11-07), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.8..dev`, and
@@ -94,6 +94,13 @@
 - **Released: v0.9.8** — hosts carry only their stacks: a partial checkout
   with `stacks` and `scripts/stacks.sh`, the VPN described as a recommendation,
   the README headline and reader corrections. No stack or pin changed; no host run.
+- **Unreleased (2026-11-09): stacks current, starting and closed.** 32 pins
+  at the newest upstream release, 62 faults fixed, 120 of 121 stacks verified on a
+  host (`apps/vllm` needs a GPU), each with its date in [`../LIFECYCLE.md`](../LIFECYCLE.md).
+  Secrets ship empty and compose refuses to start without them; CrowdSec's LAPI
+  port comes only with the firewall-bouncer overlay; `DAC_READ_SEARCH` is in the
+  capability baseline (DEC-047 addendum). The release, v0.9.9 or v0.10.0 (DEC-074),
+  is next; its content is `CHANGELOG.md` → *Unreleased*.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.

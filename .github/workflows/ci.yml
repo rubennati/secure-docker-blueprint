@@ -92,6 +92,13 @@ jobs:
           failed=0
           while IFS= read -r dir; do
             [ -f "$dir/.env.example" ] && cp "$dir/.env.example" "$dir/.env"
+            # A secret ships empty and the compose file requires it with
+            # ${VAR:?...}; fill it as the operator does before the first start.
+            if [ -f "$dir/.env" ]; then
+              for var in $(grep -ohE '\$\{[A-Za-z0-9_]+:\?' "$dir"/*.yml | sed -E 's/^\$\{//; s/:\?$//' | sort -u); do
+                sed -i -E "s/^${var}=[[:space:]]*$/${var}=ci-required-value/" "$dir/.env"
+              done
+            fi
             # core/traefik applies a rendered file through COMPOSE_FILE
             # (config/edge-networks.yml, DEC-075): render it as the operator does.
             if [ -x "$dir/ops/scripts/render.sh" ]; then

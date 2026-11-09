@@ -8,47 +8,112 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+Every stack is at the newest upstream release or names why not, starts with the files it
+ships, and ships closed. 120 of the 121 stacks are verified on a host: each starts
+healthy, answers through Traefik with a certificate, refuses an unauthorised request,
+passes its README's smoke test and comes back after `down`/`up`. `apps/vllm` needs a
+GPU and is not verified. 109 of the 114 local files run. A forgotten secret stops
+`docker compose` instead of becoming the password. Each stack shows its last verified
+date in `LIFECYCLE.md` and in its README.
+
 ### Security
 
+- **A forgotten secret no longer becomes the password.** Every secret a container
+  reads from the environment shipped as `__REPLACE_ME__` in `.env.example` or
+  `.env.local.example`; left in place, the application took the placeholder itself as
+  the password or key; Vaultwarden's opened its admin panel. Those
+  secrets now ship empty in 52 stacks, and the compose file requires each with
+  `${VAR:?Set VAR in .env}`: `docker compose` stops before the start and names the
+  variable. Optional ones stay empty without the guard (`CF_DNS_API_TOKEN` for hosts
+  without DNS-01, `HC_SMTP_PASSWORD`, `VW_ADMIN_TOKEN`, which keeps the admin panel
+  off). `check-structure.py` fails a credential left as `__REPLACE_ME__`
+  (`placeholder-secret`); `apps/mailserver-jeboehm`'s `ops/init.sh --local` fills the empty
+  values, and Traefik's `validate.sh` warns on an empty Cloudflare token.
 - **Every stack ships closed.** Fifteen stacks shipped `access-public` although
   their first visitor became the admin or a default login was active: Photoview,
   WordPress, Documenso, Matomo and OpenSign (setup wizard or first sign-up),
-  OpnForm, Immich, Lychee, Zammad and authentik (found on the lab host), BookStack
+  OpnForm, Immich, Lychee, Zammad and authentik, BookStack
   (`admin@admin.com` / `password`), and LibrePhotos, PhotoPrism, authelia and the
   reference stack by the same rule. They ship `access-vpn` now; each README says
   to finish the setup over the VPN and then open the route. `check-structure.py`
   fails `access-public` unless the auth posture is `public` or a
   `# public by design: <reason>` line stands above it (`public-default`).
   **Migration:** an existing `.env` keeps its value; check the routes you opened.
+- **Collabora's `/cool/convert-to` is closed.** It converts any uploaded file without a
+  WOPI token and admits private addresses, Traefik among them, so behind an
+  `access-public` route it was a conversion service for anyone. A second router answers
+  the path with `access-blocked`. Nextcloud's previews reach Collabora by its internal
+  address (`office-collabora.yml`), and editing works behind Nextcloud's closed route.
+- **calrs 1.23.3** is a security release: `CALRS_TRUSTED_PROXIES` decides whose address
+  its login rate limit counts. Behind Traefik the default counts the real client
+  (measured); the local file sets `none`.
+
+### Added
+
+- **Per-stack facts instead of states (DEC-080).** `LIFECYCLE.md`, the site and each
+  stack README show one row per stack: the pin and its upstream release date, the newest
+  stable release (or "= Pin") with the date it was checked and a warning for an archived
+  or quiet upstream, the CRITICAL and HIGH findings at the pin, and the last test date,
+  "with restore" where a restore was rehearsed. `upstream-status.json` holds the upstream
+  data and is committed at a pin move and before a release. The four states
+  (`scaffolded` to `ops-proven`) are gone. `Last verified` comes only from a run that
+  passed on a host.
+- **Stack status.** A weekly job writes the same upstream data to the pinned issue
+  labelled `stack-status` and to a workflow artifact, and decides nothing.
+- **Evidence per stack** in `docs/labs/stack-refresh/`: what was checked, the
+  resource peak per service, 13 restores with identical row counts per table, all
+  containers back within 58 s after a reboot, and the setup of a host from an empty
+  Debian 13 machine.
 
 ### Changed
 
-- **CrowdSec's LAPI moves to `127.0.0.1:8081` on the host.** `apps/unifi` publishes
-  8080 for its devices' inform requests and `core/crowdsec` published `127.0.0.1:8080`
-  for the host firewall bouncer, so the two could not start on one host. The port is
-  loopback-only and exists for that bouncer alone; Traefik keeps `crowdsec:8080` on the
-  Docker network. **Migration:** an existing `.env` keeps its value — to move, set
-  `CROWDSEC_LAPI_PORT=8081` and change the bouncer's `api_url` (core/crowdsec README,
-  "LAPI port on the host").
+- **32 pins move to the newest release.** Among them are two majors:
+  `apps/docker-mailserver` 17 (the DKIM record file it writes has a new name) and
+  `monitoring/zabbix` 8.0, the newest LTS line. Each moved stack passed the five checks at
+  its new pin. Where a pin stays behind the newest upstream tag, the stack's row names
+  the reason: n8n 3.x is a pre-release, Seafile 14 is still in testing, and the Portainer
+  agent follows the server's LTS line.
+- **Silo replaces MinIO in Plane and Langfuse.** MinIO withdrew its images, so the old
+  pin no longer pulled. Silo is a MinIO fork (`pgsty/silo`) with the same API and `mc`
+  on board; it runs as uid 1000, read-only and without capabilities. Both stacks passed
+  the five checks with uploads stored and read back. An existing MinIO data directory
+  was not tried.
+- **Capabilities follow measurements.** The database and cache containers hardened by
+  image family start cleanly. Measured sets for MariaDB,
+  MySQL, MongoDB and nginx now drop everything else in nine services
+  (`security-baseline.md`).
+- **`DAC_READ_SEARCH` needs no exception any more** (`scripts/ci/check-baseline.py`,
+  DEC-047 addendum). The official mongo entrypoint searches its own mode-700 data
+  directory with it on every start after the first; it reads and lists and writes
+  nothing, so it is narrower than `DAC_OVERRIDE`, which was already in the baseline.
+  `CAP_BASELINE` holds seven capabilities, and the exception entries of `apps/unifi` and
+  `business/opensign` are gone.
+- **Memory limits that a measured peak reached are raised** to twice the measured peak in
+  21 services, each with a comment naming the peak. `core/traefik` defaults to `512m`.
+  No limit was lowered: a cold-start peak is not a measurement under load.
+- **PostgreSQL dumps and restores run with the server's own client** through
+  `docker exec` (FA-03), in 25 READMEs and `backup/borgmatic`. Measured on PostgreSQL 14,
+  16 and 18; the host's client failed against an older server.
+- **CrowdSec publishes no host port unless the host-firewall bouncer needs one.**
+  `core/crowdsec` published `127.0.0.1:8080` on every host, for the optional firewall
+  bouncer alone, and `apps/unifi` needs 8080 for its devices' inform requests, so the two
+  could not start on one host. Traefik reaches the engine at `crowdsec:8080` on the
+  Docker network and never used the port. It now comes from the `firewall-bouncer.yml`
+  overlay, on `127.0.0.1:8081` by default (`CROWDSEC_LAPI_PORT`). **Migration:** with
+  the firewall bouncer, set `COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in
+  `.env` and point the bouncer's `api_url` at the port (core/crowdsec README, "LAPI port
+  on the host"); without it, `docker compose up -d` drops the old port.
 - **Healthchecks also listens on `127.0.0.1:8001`** (`HC_LOCAL_PORT`), for jobs on the
   same host: the watchdogs and borgmatic ping there instead of through Traefik, where a
   closed access policy refused them. No public `/ping/` route is needed.
   **Migration:** add `HC_LOCAL_PORT=8001` to an existing `.env`.
-
-### Fixed
-
-- **Upstream data no longer offers a pre-release or another release line as the
-  newest version.** `scripts/ci/upstream-status.py` reported n8n 3.1.0, a GitHub
-  pre-release, and the Portainer agent's 3.0.1 image tag, which has no release, as
-  newer than their stable and LTS pins. A version upstream published only as a
-  pre-release is skipped, and so is an image tag of a minor line upstream has
-  released only as pre-releases so far (n8n pushes the next 2.47.x image before
-  its pre-release appears); a pin upstream names LTS is compared with LTS
-  releases only. Release tags with a digit in the project name (`n8n@2.46.6`) are
-  now read by their version, which also corrects n8n's release dates.
-
-### Changed
-
+- **Image findings are reported, not blocking.** A CRITICAL finding in an upstream
+  image that `.trivy-baseline.json` does not record, and an image that stopped
+  being scannable, are named in the scan summary and no longer fail the job. The
+  image CVE scan leaves the required checks on `main`, which keeps the ten jobs of
+  `ci.yml` and the IaC config scan. The job still fails on the repository's own
+  errors: an exception without its reason, an unreadable report, an image that
+  left no trace.
 - **The README shows four ways in.** Getting started separates trying a stack on
   your machine — the local variant most stacks ship, which the README did not
   mention — from setting up a new host, adding a stack to a host and updating a
@@ -58,38 +123,34 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   and origin. `## Open findings` moved from the top to after the operating
   sections, before a closing `## Details`. Only the order changed, and one line was
   added.
-- **The status reads as what the maintainer has done.** `status-model.md`,
-  `LIFECYCLE.md` and the root README describe each state as a hint of how far a
-  stack has been taken; `scaffolded` is a stack built to the standards and not yet
-  run at its current pin, not a defect. The states and how they are measured are
-  unchanged.
-- **Database and cache containers drop capabilities by image family.**
-  `security-baseline.md` records, per image family, which capabilities a container
-  needs when it starts as root and drops to its own user, and that it needs none
-  when it starts as that user. Eight PostgreSQL services now drop all capabilities
-  and add back the five their entrypoint needs; six Redis and Valkey services run
-  as the image's own user with no capability, and two that read a secret as root
-  keep the five and become read-only. Those six need their data directory owned by
-  that user before the first start: the READMEs carry the `chown`, and
-  `core/authentik`'s init container does it itself. Not yet run on a host.
 
-### Added
+### Fixed
 
-- **Stack status.** A weekly job lists, per stack, the pinned tag of the primary
-  image and when it was published, the newest upstream tag in the same shape and
-  when it was published, and the CRITICAL and HIGH findings in every image of the
-  stack (`scripts/ci/upstream-status.py`). It writes the table to the pinned issue
-  labelled `stack-status` and the data to a workflow artifact, and decides nothing.
+- **62 faults that stopped a stack or a step are fixed.** Among them:
+  - UrBackup starts and reports health without `curl`.
+  - The host watchdogs no longer restart without end on `starting`, no longer hang on
+    a hung Docker daemon, and no longer wait on `docker.service`'s start job.
+  - ShellHub publishes its SSH port. Docker binds no port for a service on internal
+    networks only.
+  - The Vikunja image is built at the version the pin names.
+  - UniFi and Warpgate name a servers transport Traefik defines.
+  - NocoDB, Velociraptor, ShellHub, Orion-Belt and Teleport get write access to what
+    their README creates.
+  - Lychee keeps its uploads, and HeyForm starts again.
+  - 24 local headers gain the README's `chown` steps.
+  - The reference stack gets its host setup.
+  - The `web-api` fixture builds with TypeScript 7.
 
-### Changed
-
-- **Image findings are reported, not blocking.** A CRITICAL finding in an upstream
-  image that `.trivy-baseline.json` does not record, and an image that stopped
-  being scannable, are named in the scan summary and no longer fail the job. The
-  image CVE scan leaves the required checks on `main`, which keeps the ten jobs of
-  `ci.yml` and the IaC config scan. The job still fails on the repository's own
-  errors: an exception without its reason, an unreadable report, an image that
-  left no trace.
+  The full list is in `docs/labs/stack-refresh/2026-11-08-results.md`.
+- **Upstream data no longer offers a pre-release or another release line as the
+  newest version.** `scripts/ci/upstream-status.py` reported n8n 3.1.0, a GitHub
+  pre-release, and the Portainer agent's 3.0.1 image tag, which has no release, as
+  newer than their stable and LTS pins. A version upstream published only as a
+  pre-release is skipped, and so is an image tag of a minor line upstream has
+  released only as pre-releases so far (n8n pushes the next 2.47.x image before
+  its pre-release appears); a pin upstream names LTS is compared with LTS
+  releases only. Release tags with a digit in the project name (`n8n@2.46.6`) are
+  now read by their version, which also corrects n8n's release dates.
 
 ## [0.9.8] — 2026-11-07 — Hosts carry only their stacks
 

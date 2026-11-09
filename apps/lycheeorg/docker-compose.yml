@@ -153,7 +153,7 @@ services:
       PHP_TZ: ${TZ}
       TIMEZONE: ${TZ}
       APP_URL: https://${APP_TRAEFIK_HOST}
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       # Database
       DB_CONNECTION: mysql
       DB_HOST: db

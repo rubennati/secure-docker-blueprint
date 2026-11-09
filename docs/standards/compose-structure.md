@@ -482,8 +482,8 @@ same way. This is a scope boundary, not a gap to close — it does not need its 
 resource policy, only the explicit statement that the production one stops here.
 
 Its companion `.env.local.example` carries only the variables the local file
-uses, with `__REPLACE_ME__` for anything secret and the generating command above
-it.
+uses, with every secret empty, the generating command above it, and
+`${VAR:?Set VAR in .env.local}` on its first use in the local file.
 
 **Where the local stack runs production's image, it pins production's version.**
 Unlike the resource baseline above, this one does not stop at the local file: a

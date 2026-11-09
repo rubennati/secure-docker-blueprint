@@ -1,0 +1,15 @@
+# Firewall-bouncer overlay: publishes the LAPI on the host's loopback for the
+# optional host-firewall bouncer (docs/firewall-bouncer.md). Enable in .env:
+#   COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml
+#
+# Bound to 127.0.0.1, so only the host itself reaches it, never the LAN or the
+# internet. The bouncer is a package on the host: it cannot resolve the Docker
+# name `crowdsec`, and the container has no fixed address. Traefik does not use
+# this port; it reaches the LAPI over crowdsec-security at crowdsec:8080, so
+# without the firewall bouncer nothing needs it. Host port 8081 by default
+# (CROWDSEC_LAPI_PORT), so it does not collide with apps/unifi's inform port 8080.
+
+services:
+  crowdsec:
+    ports:
+      - "127.0.0.1:${CROWDSEC_LAPI_PORT:-8081}:8080"

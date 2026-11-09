@@ -91,6 +91,7 @@ def overlay_env(app: Path, overlay: Path) -> Path | None:
 
 COMMENTED = re.compile(r"^\s*#\s*([A-Z_][A-Z0-9_]*)=(.*)$")
 MISSING = re.compile(r"required variable ([A-Z_][A-Z0-9_]*) is missing a value")
+REQUIRED_TEST_VALUE = "ci-required-value"
 
 
 def env_sources(app: Path, extra: list[Path]) -> str:
@@ -118,6 +119,19 @@ def enable_commented(text: str, var: str) -> str | None:
         m = COMMENTED.match(line)
         if m and m.group(1) == var:
             return f"{text}\n{m.group(1)}={m.group(2)}"
+    return None
+
+
+def fill_required(text: str, var: str) -> str | None:
+    """Give a secret the example ships empty the value an operator would.
+
+    A secret ships as `VAR=` and the compose file requires it with
+    `${VAR:?…}`, so `docker compose` refuses to start without it. Validating the
+    variant means validating it as an operator runs it, with the value filled
+    in. A variable the example does not list at all still fails.
+    """
+    if re.search(rf"^{re.escape(var)}=\s*$", text, re.M):
+        return f"{text}\n{var}={REQUIRED_TEST_VALUE}"
     return None
 
 
@@ -174,7 +188,8 @@ def effective_config(app: Path, extra: list[Path],
         var = MISSING.search(error)
         if not var:
             return None, error, text
-        enabled = enable_commented(text, var.group(1))
+        enabled = (enable_commented(text, var.group(1))
+                   or fill_required(text, var.group(1)))
         if enabled is None:
             return None, error, text
         text = enabled

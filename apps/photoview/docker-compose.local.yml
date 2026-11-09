@@ -26,8 +26,8 @@ services:
       MARIADB_AUTO_UPGRADE: "1"
       MARIADB_DATABASE: ${DB_NAME}
       MARIADB_USER: ${DB_USER}
-      MARIADB_PASSWORD: ${DB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       TZ: ${TZ}
     command:
       - mariadbd

@@ -209,12 +209,18 @@ NO_NEW_PRIVILEGES_EXCEPTIONS: dict[str, dict[str, Exception]] = {
 # directory and then drops to its own user. They grant nothing that reaches past
 # the container's own filesystem and namespaces.
 #
+# DAC_READ_SEARCH belongs to the same pattern and is narrower than DAC_OVERRIDE:
+# it lets root read and list files it does not own, never write them. The
+# official mongo entrypoint needs it to search its own mode-700 data directory
+# on every start after the first (stack-refresh lab host, 2026-11-08).
+#
 # NET_BIND_SERVICE is here for a different reason — it permits binding a port
 # below 1024 and nothing else, which is narrower than running the process as
 # root to achieve the same thing.
 CAP_BASELINE: frozenset[str] = frozenset({
     "CHOWN",
     "DAC_OVERRIDE",
+    "DAC_READ_SEARCH",
     "FOWNER",
     "SETGID",
     "SETUID",
@@ -266,38 +272,6 @@ CAP_ADD_EXCEPTIONS: dict[str, dict[str, Exception]] = {
             "risk":         "Accepted. SYS_CHROOT is the capability the sandbox uses to build the "
                             "isolation it exists for; without it the code would run less isolated, "
                             "not more.",
-        },
-    },
-    "apps/unifi": {
-        "db": {
-            "reason":       "The official mongo entrypoint starts as root and, on every start, runs "
-                            "find over /data/db to chown what the mongodb user does not own. Once "
-                            "MongoDB has run, its directories are mode 700 and owned by uid 999, "
-                            "so root without DAC_READ_SEARCH cannot enter them and the container "
-                            "restarts ('find: /data/db/journal: Permission denied'). Measured on "
-                            "the stack-refresh lab host; the first start needs only CHOWN.",
-            "alternatives": "DAC_OVERRIDE, which is in the baseline set but also permits writing "
-                            "any file; or user: \"999:999\" with the data directory chowned "
-                            "before the first start, which this stack has not been measured with.",
-            "risk":         "Accepted and narrow. DAC_READ_SEARCH lets root read and list files it "
-                            "does not own inside the container's own filesystem and mounts — the "
-                            "MongoDB data directory here — and nothing on the host beyond them.",
-        },
-    },
-    "business/opensign": {
-        "db": {
-            "reason":       "The official mongo entrypoint starts as root and, on every start, runs "
-                            "find over /data/db to chown what the mongodb user does not own. Once "
-                            "MongoDB has run, its directories are mode 700 and owned by uid 999, "
-                            "so root without DAC_READ_SEARCH cannot enter them and the container "
-                            "restarts ('find: /data/db/journal: Permission denied'). Measured on "
-                            "the stack-refresh lab host; the first start needs only CHOWN.",
-            "alternatives": "DAC_OVERRIDE, which is in the baseline set but also permits writing "
-                            "any file; or user: \"999:999\" with the data directory chowned "
-                            "before the first start, which this stack has not been measured with.",
-            "risk":         "Accepted and narrow. DAC_READ_SEARCH lets root read and list files it "
-                            "does not own inside the container's own filesystem and mounts — the "
-                            "MongoDB data directory here — and nothing on the host beyond them.",
         },
     },
     "monitoring/scrutiny": {

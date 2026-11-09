@@ -25,7 +25,7 @@ On your own machine, with no proxy, domain or certificate. From
 `core/keycloak/`:
 
 ```bash
-cp .env.local.example .env.local            # two __REPLACE_ME__ values, openssl one-liners above each
+cp .env.local.example .env.local            # two secrets ship empty, openssl one-liners above each
 mkdir -p volumes/local/postgres volumes/local/data && sudo chown 1000:0 volumes/local/data
 docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local up -d
 ```

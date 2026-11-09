@@ -17,8 +17,8 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       MARIADB_AUTO_UPGRADE: "1"
       TZ: ${TZ}
     command:
@@ -44,11 +44,11 @@ services:
     environment:
       TZ: ${TZ}
       APP_ENV: prod
-      APP_SECRET: ${APP_SECRET}
+      APP_SECRET: ${APP_SECRET:?Set APP_SECRET in .env.local}
       TRUSTED_HOSTS: "localhost"
       DATABASE_URL: "mysql://${DB_USER}:${DB_PASSWORD}@db:3306/${DB_NAME}?charset=utf8mb4&serverVersion=11.4.0-MariaDB"
       ADMINMAIL: ${ADMIN_EMAIL}
-      ADMINPASS: ${ADMIN_PASSWORD}
+      ADMINPASS: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env.local}
     volumes:
       - ./volumes/local/data:/opt/kimai/var/data
       - ./volumes/local/plugins:/opt/kimai/var/plugins
