@@ -185,8 +185,11 @@ not join `proxy-public`: no application has a reason to reach it. Keep
 
 ### LAPI port on the host
 
-`docker-compose.yml` also publishes the LAPI as `127.0.0.1:${CROWDSEC_LAPI_PORT}`,
-**8081** by default. What that port is, and what it is not:
+`docker-compose.yml` publishes no host port. The `firewall-bouncer.yml` overlay adds the
+LAPI as `127.0.0.1:${CROWDSEC_LAPI_PORT}`, **8081** by default — enable it with
+`COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in `.env` when you set up the
+[nftables bouncer](#host-firewall-remediation--nftables-bouncer). What that port is, and
+what it is not:
 
 - **Loopback only.** It is bound to `127.0.0.1`, so only the host itself reaches it —
   never the LAN, never the internet.
@@ -196,18 +199,20 @@ not join `proxy-public`: no application has a reason to reach it. Keep
   fixed address it could use instead. The loopback port is how it reaches the LAPI.
 - **Traefik does not use it.** The reverse-proxy remediation talks to `crowdsec:8080`
   over `crowdsec-security`, as above.
-- **Without the firewall bouncer it can go.** Remove the `ports:` entry from the
-  service; nothing else depends on it.
+- **Without the firewall bouncer nothing needs it**, so the base file leaves it out and a
+  host without the bouncer holds no CrowdSec port at all.
 - **8081, not 8080.** `apps/unifi` publishes 8080 for its devices' inform requests, and
   both stacks have to start on one host. Inside the container the LAPI stays on 8080.
   Verified on the lab host (VM) on 2026-11-09: CrowdSec on `127.0.0.1:8081` and UniFi on
   `0.0.0.0:8080` side by side, a bouncer key answered `200` on `/v1/decisions/stream`
   through the loopback port, and the Traefik bouncer kept pulling over the Docker network.
 
-**An existing install** keeps the `CROWDSEC_LAPI_PORT` of its `.env`. To move to 8081:
-set it in `.env`, `docker compose up -d`, change `api_url` in the bouncer's
-`crowdsec-firewall-bouncer.yaml.local` to `http://127.0.0.1:8081/` and
-`sudo systemctl restart crowdsec-firewall-bouncer`.
+**An existing install** with the firewall bouncer sets
+`COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in `.env`, keeps or sets
+`CROWDSEC_LAPI_PORT` (8081 to make room for UniFi), runs `docker compose up -d`, points
+`api_url` in the bouncer's `crowdsec-firewall-bouncer.yaml.local` at that port and runs
+`sudo systemctl restart crowdsec-firewall-bouncer`. Without the bouncer, `docker compose up
+-d` alone drops the old loopback port.
 
 A deployment where the engine already runs on `proxy-public` follows
 [Migrating an existing installation](#migrating-an-existing-installation) instead of
