@@ -92,15 +92,17 @@ An image outside this table is not covered by it, even when it is built on one o
 these: `ghcr.io/immich-app/postgres` is a PostgreSQL image with its own build and
 needs its own measurement.
 
-**Six capabilities need no exception.** `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`
+**Seven capabilities need no exception.** `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`
 and `SETUID` are the set above — an entrypoint taking ownership of its data
-directory and then dropping to its own user. They reach no further than the
-container's own filesystem and namespaces. `NET_BIND_SERVICE` is there for a
+directory and then dropping to its own user. `DAC_READ_SEARCH` belongs to it too and
+is narrower than `DAC_OVERRIDE`: it reads and lists files root does not own, and
+writes nothing (the official mongo entrypoint searches its mode-700 data directory
+with it). They reach no further than the container's own filesystem and namespaces. `NET_BIND_SERVICE` is there for a
 different reason: it permits binding a port below 1024 and nothing else, which is
 narrower than running the process as root to achieve the same thing.
 
 **Anything else is a decision, and `check-baseline.py` asks for it in writing.** A
-capability outside those six warns until the service has an entry in
+capability outside those seven warns until the service has an entry in
 `CAP_ADD_EXCEPTIONS` carrying reason, alternatives and risk — the same three fields
 every other exception table uses. `SYS_ADMIN`, `NET_ADMIN`, `SYS_PTRACE` and
 `SYS_RAWIO` each hand out a class of access that the drop was there to remove, and

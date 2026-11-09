@@ -1240,6 +1240,14 @@ cAdvisor's read-only `/dev/kmsg`.
 exception path does not extend to `cap_add: ALL` and that a baseline capability
 does not mask an unlisted one beside it. The checker had no tests before.
 
+**Addendum 2026-11-09 — `DAC_READ_SEARCH` joins the baseline.** The stack-refresh lab
+host measured the official mongo entrypoint with a bind-mounted data directory: after
+the first start it runs `find` over its own mode-700 directories as root and restarts
+without `DAC_READ_SEARCH`. That made two exception entries (`apps/unifi`,
+`business/opensign`) for a capability narrower than `DAC_OVERRIDE`, which needed none —
+it reads and lists, and writes nothing. It belongs to the same entrypoint pattern, so
+`CAP_BASELINE` holds seven capabilities and the two entries are gone.
+
 ---
 
 ## 2026-09-24 · Neither Suricata nor Coraza becomes a stack

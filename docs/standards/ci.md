@@ -174,7 +174,7 @@ validates every compose file against the rules in
 | **FAIL** | Direct Docker socket mount | `/var/run/docker.sock` mounted outside an exception |
 | **WARN** | `network_mode: host` | Container shares the host network namespace |
 | **WARN** | `pid: host` | Container shares the host PID namespace |
-| **WARN** | Capability outside `CAP_BASELINE` | Anything but the six routine ones — see `security-baseline.md` |
+| **WARN** | Capability outside `CAP_BASELINE` | Anything but the seven routine ones — see `security-baseline.md` |
 | **WARN** | `devices:` | A host device handed to a container |
 
 The same job runs `scripts/ci/check-crowdsec-config.py --templates`. It renders
