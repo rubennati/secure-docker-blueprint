@@ -44,7 +44,7 @@ https://github.com/go-vikunja/vikunja/releases
 
 ## Version notes
 
-- Moved to `2.8.0` on 2026-11-08 and run on the lab host (VM). The pin named
+- Moved to `2.8.0` on 2026-11-08 and run on a host. The pin named
   `2.6.0` but `APP_DIGEST` held the digest of `2.3.0`; the build pulls by digest,
   so every install since that bump ran 2.3.0 (`/api/v1/info` answered `v2.3.0`).
   `APP_DIGEST` and the `Dockerfile` defaults now name the digest of `2.8.0`

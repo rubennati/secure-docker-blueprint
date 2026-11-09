@@ -19,8 +19,8 @@ The origin comes from intuitem's legal notice (RCS Versailles, France).
 
 ## What we use
 
-- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1` for backend and Huey,
-  and `…/frontend:v4.2.1`. Upstream's compose pins `:latest` with `pull_policy:
+- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2` for backend and Huey,
+  and `…/frontend:v4.2.2`. Upstream's compose pins `:latest` with `pull_policy:
   always`; not used here. Per upstream's licence file, the community binaries are
   AGPLv3; the commercially licensed code ships only in separate enterprise images.
 - `postgres:16.15` — upstream's template runs `postgres:16`.
@@ -78,7 +78,7 @@ local ext4 filesystem:
   2 GiB), PostgreSQL 136 MiB (1 GiB), frontend 431 MiB (512 MiB — about 410 MiB
   right after a start), Huey 276 MiB (1 GiB)
 
-**Not yet exercised:** email; SSO; the MCP server and the AI features, which this
+**Outside this verification:** email; SSO; the MCP server and the AI features, which this
 stack leaves out.
 
 ## Verification performed (2026-09-21)
@@ -102,14 +102,14 @@ Against the production `docker-compose.yml` (Docker Secrets, wrapper,
   values absent from the configured environment; no `django_secret_key` file in the
   data directory; Huey and PostgreSQL without a route out
 
-**Not yet exercised:** Traefik routing and TLS, including the `/api` split in
+**Outside this verification:** Traefik routing and TLS, including the `/api` split in
 practice; the browser interface; Huey actually running a task (it started and
 loaded its configuration against PostgreSQL); email; SSO; importing a framework
 into an assessment; backup and restore.
 
 ## Version notes
 
-- Moved to `v4.2.2` on 2026-11-08 and run on the lab host (VM). A patch release
+- Moved to `v4.2.2` on 2026-11-08 and run on a host. A patch release
   with a security hardening change (upstream #5229) and a new framework library;
   the frontend needed 768m instead of 512m on this host (`docker-compose.yml`).
 - Moved to `v4.2.1` on 2026-11-05, backend and frontend together, not run on a

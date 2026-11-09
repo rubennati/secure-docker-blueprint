@@ -35,8 +35,8 @@
 | `read_only: true` + `tmpfs: /run, /tmp` on socket-proxy | Same reasoning — HAProxy doesn't need a writable root. |
 | `socket_proxy_net` is `internal: true` | Only Traefik can reach the proxy; nothing from `proxy-public` can pivot onto the Docker API. |
 | Envsubst template pipeline (`ops/scripts/render.sh`) | Traefik's dynamic provider does not substitute `${VARS}` inside YAML. Rendering templates externally keeps `.env` as the single source of truth and avoids hand-maintained config drift. |
-| `ops/scripts/validate.sh` | Pre-flight: required vars present, `__REPLACE_ME__` sentinels still in place, rendered files free of unresolved `${…}` references. |
-| Access policies as five named middlewares (`access-public` / `access-lan` / `access-vpn` / `access-lan-vpn` / `access-blocked`), position 1 of the model | Lets every router pick its exposure separately from its security posture — two orthogonal axes instead of one entangled list. |
+| `ops/scripts/validate.sh` | Pre-flight: `.env` well-formed and its required values present and valid (bindings, `TRUSTED_RANGES`, `EDGE_NETWORKS`, durations), the rendered files in step with `.env`, a warning on an empty `CF_DNS_API_TOKEN`; `--strict` after `up -d` checks the published addresses. |
+| Access policies as five named middlewares (`access-public` / `access-trusted` / `access-vpn` / `access-trusted-vpn` / `access-blocked`), position 1 of the model | Lets every router pick its exposure separately from its security posture — two orthogonal axes instead of one entangled list. |
 | Rate limit and headers as two separate positions (`limit-*`, `headers-*`) with per-app blocks, in one `model.yml` | One value per function instead of a chain that bundled three; what an application needs is named, not inferred from a level. Documented in `README.md` and `docs/standards/traefik-security.md`. |
 | No Traefik labels on the Traefik container itself | The dashboard router lives in `config/dynamic/routers-system.yml` (file provider) so the Traefik container stays configuration-free beyond static flags. |
 | CrowdSec bouncer plugin in static config, middleware in dynamic config | Static plugin registration requires a restart; the routing middleware is hot-reloaded. Splitting them keeps day-to-day changes zero-downtime. |
@@ -51,7 +51,7 @@
 
 ## Version / tag notes
 
-- **Pinned to the exact release `v3.7.17` since 2026-11-02**, the release the lab host verified. Until then the pin was the 3.7 minor line, `traefik:v3.7`, which
+- **Pinned to the exact release `v3.7.17` since 2026-11-02**, the release verified on a host. Until then the pin was the 3.7 minor line, `traefik:v3.7`, which
   can resolve to a newer patch with no change in this repository — the drift
   `docs/standards/status-model.md` does not count as verified. A patch release is now
   a bump like any other, with the checklist below.

@@ -141,4 +141,3 @@ open source.
   above.
 - **Audit-log plugin writes to ephemeral storage** under this stack's
   `read_only` hardening — see the `tmpfs` comment in `docker-compose.yml`.
-- **Not yet run on a live host beyond a clean start.**

@@ -36,7 +36,7 @@
 | **Container names standardized** — `immich-app/db/redis/ml` instead of `immich_server/immich_postgres/…` | Blueprint naming convention |
 | **`DB_TAG` / `APP_TAG` / `REDIS_TAG` as variables** | Blueprint pinning convention |
 | **Postgres image on a newer VectorChord than upstream's compose** | `14-vectorchord1.1.1` instead of `14-vectorchord0.4.3-pgvectors0.2.0`, for the CVE fixes in its base image; digest-pinned like upstream. See Version notes |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for photo-sharing; consider `access-vpn` for family-only |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first visitor creates the admin account; open the route (`access-public`) after that for sharing outside the VPN |
 
 ## Version notes
 

@@ -13,13 +13,12 @@
 - **Domain:** Developer tools
 - **Role:** OCI registry for your own build output
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
-  authentication and access-control policy exercised against a live
-  container; not yet run behind a real Traefik host
+  authentication and access-control policy exercised against a live container
 
 ## What we use
 
-- `ghcr.io/project-zot/zot:v2.1.21` — the **full** build, not
-  `zot-minimal`. Confirmed via the image's own startup log
+- `ghcr.io/project-zot/zot:v2.1.23` — the **full** build, not
+  `zot-minimal`, as the image's own startup log shows
   (`binary-type` reports `events-imagetrust-lint-metrics-mgmt-profile-scrub-search-sync-ui-userprefs`).
   The minimal build only implements the bare OCI Distribution Specification
   and has none of the UI, embedded CVE scanning, or image-trust extensions
@@ -93,5 +92,4 @@
   `imagetrust` extension needs its own key material, added deliberately.
   See README.md.
 - **OIDC is not configured** — htpasswd only. See README.md.
-- **Not yet run behind a real Traefik host, and no actual image push/pull
-  has been exercised.**
+- **An image push and pull lie outside the verification snapshot above.**

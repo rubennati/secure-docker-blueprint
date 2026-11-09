@@ -22,7 +22,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 ## What we use
 
-- `frappe/erpnext:v16.53.0` — one image for every role, published for amd64 and
+- `frappe/erpnext:v16.54.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
 - `mariadb:11.8.9` (upstream's compose pin) and `redis:8.10.3-alpine` (upstream pins `8.6-alpine`).
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
@@ -77,7 +77,7 @@ Checked in a browser afterwards, through the route: the desk's realtime socket
 connects over the websocket transport, stays connected, and reconnects when asked
 to. The desk loaded in 66 requests, with the company and the customer in place.
 
-**Not yet exercised:** a scheduled job's first run after the time-zone delay;
+**Outside this verification:** a scheduled job's first run after the time-zone delay;
 email; reports and printing; the queues under load.
 
 ## Verification performed (2026-09-22)
@@ -107,7 +107,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
 - Backup as the README describes (737 tables); restore into an empty database in
   12 s, the archive unpacked, ownership restored — site, company and customer back
 
-**Not yet exercised:** a scheduled job's first run after the delay; email;
+**Outside this verification:** a scheduled job's first run after the delay; email;
 reports and printing; the queues under load.
 
 ## Verification performed (2026-09-21)
@@ -149,13 +149,13 @@ throwaway `proxy-public` network without Traefik. `volumes/sites`, `volumes/logs
   the same moment — the second failed on the read-only root and started cleanly on
   its automatic restart
 
-**Not yet exercised:** Traefik routing and TLS; the desk in a browser; accounting
+**Outside this verification:** Traefik routing and TLS; the desk in a browser; accounting
 documents, stock and reports; email; PDF printing; an image upgrade with
 `bench migrate`; backup and restore; more than one site.
 
 ## Version notes
 
-- Moved to `v16.54.0` on 2026-11-08 and run on the lab host (VM). Fixes, among
+- Moved to `v16.54.0` on 2026-11-08 and run on a host. Fixes, among
   them a migration error with Asset Depreciation Schedules on older sites; no
   configuration change. The nginx configuration forwards `Upgrade` on the
   `/socket.io` locations only (checked for FA-12).

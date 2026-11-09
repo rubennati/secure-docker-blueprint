@@ -17,8 +17,7 @@
 - **Domain:** Identity, access and secrets
 - **Role:** Zero-knowledge paste service for text and secrets
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
-  exercised (see README.md's Preview → Ready gate); not yet run behind a
-  real Traefik host
+  exercised
 
 ## What we use
 
@@ -106,10 +105,7 @@ cause.
 
 ## Known limitations
 
-- **Not yet run behind a real Traefik host or TLS.**
-- **The data-directory ownership requirement (`65534:82`) has only been
-  confirmed on a local Docker Desktop volume**, not on a production host's
-  filesystem — permissions handling can differ (e.g. on a filesystem
-  without POSIX ownership semantics, or across a bind mount from a
-  different host).
+- **The data directory needs POSIX ownership (`65534:82`)** — a filesystem
+  without POSIX ownership semantics, or a bind mount from another host that
+  maps owners differently, leaves it unwritable.
 - **Filesystem backend only** — no database or S3/GCS backend configured.

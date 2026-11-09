@@ -101,7 +101,7 @@ authentication is available for local accounts.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/wikijs/volumes/data
+  - /srv/docker/apps/wikijs/volumes/data
 
 postgresql_databases:
   - name: wikijs
@@ -128,10 +128,6 @@ of `volumes/data` at uid 1000.
 | `postgres:18.6-alpine` | — | — | 1 · 25 |
 
 <!-- findings:end -->
-
-The image, `ghcr.io/requarks/wiki:3.1.0`, carries one CRITICAL finding in `linux-libc-dev` (CVE-2026-99083). It is the newest release, built before Debian's fix.
-
-**Risk:** the package only holds kernel header files; nothing in the container runs them, and the kernel that matters is the host's. It clears with the next image rebuild.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

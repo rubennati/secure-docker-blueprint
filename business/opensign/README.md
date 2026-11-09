@@ -21,7 +21,13 @@ Traefik routes `PathPrefix(/app)` to the API (priority 100), everything else to 
 Runs on `http://localhost:3000` without Traefik, DNS or a certificate; port 8080 is the Parse API.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_ROOT_PWD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'MASTER_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'PFX_BASE64=%s\n' "$(openssl rand -hex 24)" >> .env.local
+printf 'PASS_PHRASE=%s\n' "$(openssl rand -hex 24)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000
 docker compose -f docker-compose.local.yml --env-file .env.local down

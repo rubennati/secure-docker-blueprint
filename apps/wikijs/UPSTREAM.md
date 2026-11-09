@@ -31,7 +31,7 @@ findings at that pin have no fix on 2.x. This stack moved to 3.x; see
 
 ## What we use
 
-- `ghcr.io/requarks/wiki:3.1.0` — upstream's own registry. Debian-based
+- `ghcr.io/requarks/wiki:3.2.0` — upstream's own registry. Debian-based
   `node:26` with tini as init, uid 1000 (`node`), about 850 MB because it
   carries a headless Chrome for optional server-side rendering.
 - `postgres:18.6-alpine` for the database.
@@ -100,7 +100,7 @@ curl -s https://raw.githubusercontent.com/requarks/wiki/3.1.0/dev/build/Dockerfi
 
 ## Version notes
 
-- Moved to `3.2.0` on 2026-11-08 and run on the lab host (VM). 3.1.1 and 3.2.0
+- Moved to `3.2.0` on 2026-11-08 and run on a host. 3.1.1 and 3.2.0
   fix GHSA-p5rv-hmh3-wrv8, GHSA-7mf7-wprw-7fjm and GHSA-fxw3-8676-67fm; no
   configuration change.
 - Moved to `2.5.317` on 2026-10-31, not run at this tag: `2.5.316` (2026-10-02)

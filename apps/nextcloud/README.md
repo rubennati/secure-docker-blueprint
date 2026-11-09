@@ -43,7 +43,15 @@ The Alpine FPM image is lighter and gives nginx full control over static asset s
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/html
+sudo chown 999:999 volumes/local/mysql   # the mariadb image's mysql user — the db service has no CHOWN
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -718,10 +726,10 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
 > with the consequence `core/traefik/docs/edge-networks.md` names. An office server
 > on another host reaches a closed instance only by its address in
-> `TRUSTED_RANGES`. **Measured on the lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> `TRUSTED_RANGES`. **Verified** (`docs/labs/ingress/2026-11-01-results.md`,
 > "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
 > XLSX and PPTX opened, saved and reopened behind the closed route, without
-> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora** (stack-refresh lab, 2026-11-08): with
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora** (2026-11-08): with
 > `office.yml`, `office-collabora.yml`, `NC_OVERWRITECONDADDR` and these settings, a
 > `.docx` opened, was edited, saved and reopened behind the closed route, its preview
 > was rendered through the internal address, and `/cool/convert-to` answered `403` on

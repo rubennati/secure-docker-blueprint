@@ -38,7 +38,7 @@
 
 ## Version notes
 
-- Moved to `4.9.17` on 2026-11-08 and run on the lab host (VM). 4.9.16 and
+- Moved to `4.9.17` on 2026-11-08 and run on a host. 4.9.16 and
   4.9.17 fix a race in sub-page loading and bump dependencies; no configuration
   change.
 - Moved `lissy93/dashy` to `4.9.15` on 2026-11-05 (pushed 2026-11-02), not run on

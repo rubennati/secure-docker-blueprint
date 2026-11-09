@@ -12,11 +12,12 @@
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Self-destructing links for handing someone a credential once
-- **Verification snapshot:** 2026-09-19 — local Compose stack booted and exercised (see README.md's Preview → Ready gate); not yet run behind a real Traefik host
+- **Verification snapshot:** 2026-09-19 — local Compose stack booted and
+  exercised
 
 ## What we use
 
-- `jhaals/yopass:16.0.1`, distroless build, runs as a fixed non-root UID
+- `jhaals/yopass:16.1.0`, distroless build, runs as a fixed non-root UID
 - `memcached:1.6.45-alpine` as the ephemeral store — the upstream-documented
   default backend, matching every value Yopass stores: TTL-based, no
   durability required or wanted
@@ -59,7 +60,7 @@ Secret Requests on; it requires a different, licensed product from upstream.
 
 ## Version notes
 
-- Moved to `16.1.0` on 2026-11-08 and run on the lab host (VM). Upstream calls
+- Moved to `16.1.0` on 2026-11-08 and run on a host. Upstream calls
   16.1.0 a drop-in replacement with the same frontend, flags and environment
   variables; the API path is `/create/secret`.
 - Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors, not
@@ -111,4 +112,3 @@ Secret Requests on; it requires a different, licensed product from upstream.
 - **Memcached backend only** — Yopass also supports Redis and file/S3
   storage; this stack does not use them, since Memcached already matches
   every value stored here (TTL-based, no durability needed).
-- **Not yet run behind a real Traefik host or TLS.**

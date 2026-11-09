@@ -86,13 +86,19 @@ repository already is (GitHub/GitLab/Bitbucket) — not by this stack.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill the three encryption/signing values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf "ENCRYPTION_KEYS='[{\"isPrimary\": true, \"id\": \"%s\", \"value\": \"%s\"}]'\n" \
+  "$(openssl rand -hex 4)" "$(openssl rand -hex 32)" >> .env.local
+printf 'ENCRYPTION_JWT_SIGNING_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+printf 'ENCRYPTION_JWT_REFRESH_SIGNING_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — healthy — **verified locally, 2026-09-19**
 - [x] `_FILE` secrets picked up correctly (no missing-required-property errors) and the app answers with a real HTTP response — **verified locally, 2026-09-19**

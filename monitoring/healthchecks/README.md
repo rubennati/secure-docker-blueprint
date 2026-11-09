@@ -19,8 +19,15 @@ Data stored in SQLite (`./volumes/data/hc.sqlite`). Suitable for personal use an
 Runs on `http://localhost:8000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'HC_SECRET_KEY=%s\n' "$(openssl rand -base64 60 | tr -d '\n=')" >> .env.local
+
+mkdir -p volumes/local/data
+sudo chown -R 999:999 volumes/local/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local \
+  exec app python /opt/healthchecks/manage.py createsuperuser
 # http://localhost:8000
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
@@ -90,7 +97,7 @@ needed for these jobs. The UI shows ping URLs under `SITE_ROOT`; replace
 `https://<APP_TRAEFIK_HOST>` with `http://127.0.0.1:8001` in the job's configuration, the
 UUID stays the same.
 
-Verified on the lab host (VM) on 2026-11-09 (v5.0.3), with the route on
+Verified on 2026-11-09 (v5.0.3), with the route on
 `access-trusted`: the Traefik watchdog and the Docker daemon watchdog, each started from
 its shipped systemd unit, and borgmatic 2.2.0 (`start` and `finish`) all reached their
 checks through `127.0.0.1:8001`; the same ping through the route from the host answered
@@ -135,7 +142,9 @@ sqlite_databases:
       path: /srv/docker/monitoring/healthchecks/volumes/data/hc.sqlite
 ```
 
-`UPSTREAM.md` documents the SQLite `.backup` command as the manual alternative.
+The hook reads the file from the host with borgmatic's own `sqlite3`; the image
+has none. `UPSTREAM.md` documents a manual online backup through the image's
+Python as the alternative.
 
 **Restore order:** stop, restore, start, then confirm an existing job's ping still
 registers — the URL must be unchanged.

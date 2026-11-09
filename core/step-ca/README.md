@@ -157,7 +157,7 @@ curl -sk https://localhost:9000/health
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — running, one capability re-added, `read_only: true` intact — **verified locally, 2026-09-19**
 - [x] ACME directory answers and `/health` returns `{"status":"ok"}` (local stack, real hostname) — **verified locally, 2026-09-19**

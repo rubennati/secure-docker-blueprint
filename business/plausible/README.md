@@ -164,7 +164,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/business/plausible/volumes/clickhouse
+  - /srv/docker/business/plausible/volumes/clickhouse
 ```
 
 Restore: put the volumes back with `volumes/plausible` owned by `999:999`,

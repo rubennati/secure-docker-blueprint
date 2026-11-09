@@ -19,7 +19,7 @@ public benefit corporation incorporated in Delaware.
 
 ## What we use
 
-- `twentycrm/twenty:v2.55.0` for both server and worker, as upstream's compose does.
+- `twentycrm/twenty:v2.56.1` for both server and worker, as upstream's compose does.
   Upstream pins `:latest`; not used here.
 - `postgres:16.15` — upstream's compose runs the PostgreSQL 16 line.
 - `redis:8.10.3-alpine` — upstream's compose uses an untagged `redis`.
@@ -73,7 +73,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2-spa-xl`:
 - The interface requests `twentyhq.github.io` in the visitor's browser; those
   requests were blocked in the browser and never left it
 
-**Not yet exercised:** API keys (creating one through the session's GraphQL call
+**Outside this verification:** API keys (creating one through the session's GraphQL call
 got `403`); mail and calendar sync.
 
 ## Verification performed (2026-09-22)
@@ -96,7 +96,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale`; the interface under
   back
 - Peaks: server 1,033 MiB, worker 751 MiB, PostgreSQL 106 MiB, Redis 20 MiB
 
-**Not yet exercised:** API keys (creating one through the session's GraphQL call
+**Outside this verification:** API keys (creating one through the session's GraphQL call
 got `403`); mail and calendar sync; the interface under the shipped `sec-2`.
 
 ## Verification performed (2026-09-21)
@@ -123,13 +123,13 @@ container:
   values absent from the configured environment; worker and database without a
   route out
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface; invitations;
+**Outside this verification:** Traefik routing and TLS; the browser interface; invitations;
 mail and calendar sync (which need outbound access, see README); SSO; S3 storage;
 backup and restore; an upgrade across versions.
 
 ## Version notes
 
-- Moved to `v2.56.1` on 2026-11-08 and run on the lab host (VM) as an upgrade
+- Moved to `v2.56.1` on 2026-11-08 and run on a host as an upgrade
   from v2.55.0. 2.56.0 carries one breaking change — AI workflow steps run from
   their own configuration and permission scope (upstream #29368) — and removes
   several feature flags that are now always on; 2.56.1 fixes an upgrade that

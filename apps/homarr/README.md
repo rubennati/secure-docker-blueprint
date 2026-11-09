@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `homarr-app` | `ghcr.io/homarr-labs/homarr:v2.11.1` | Next.js dashboard with built-in SQLite + internal Redis |
+| `homarr-app` | `ghcr.io/homarr-labs/homarr:v2.12.0` | Next.js dashboard with built-in SQLite + internal Redis |
 
 Data lives in `./volumes/appdata/`. Integrations encrypt their credentials using `SECRET_ENCRYPTION_KEY`.
 
@@ -19,7 +19,10 @@ Data lives in `./volumes/appdata/`. Integrations encrypt their credentials using
 Runs on `http://localhost:7575` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'HOMARR_SECRET_ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:7575
 docker compose -f docker-compose.local.yml --env-file .env.local down

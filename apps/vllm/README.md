@@ -134,7 +134,11 @@ GPU. It is slow: on six AVX2 cores a 0.5B model took about five minutes to
 start and about half a minute to answer a short prompt.
 
 ```bash
-cp .env.local.example .env.local      # set VLLM_API_KEY: openssl rand -hex 24
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+VLLM_API_KEY=$(openssl rand -hex 24)
+printf 'VLLM_API_KEY=%s\n' "$VLLM_API_KEY" >> .env.local
+
 mkdir -p volumes/local/cache
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 curl http://localhost:8000/v1/models -H "Authorization: Bearer $VLLM_API_KEY"

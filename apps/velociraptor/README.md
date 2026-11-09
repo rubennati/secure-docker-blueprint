@@ -140,14 +140,18 @@ endpoints actually trust.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill ADMIN_PASSWORD
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24)" >> .env.local
+
 mkdir -p volumes/local/etc volumes/local/datastore
+sudo chown 0:0 volumes/local/etc volumes/local/datastore
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # https://localhost:8889
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — healthy, zero `cap_add`, running under `read_only: true` — **verified locally, 2026-09-19**
 - [x] Real Docker Secret picked up for the initial admin password; GUI and frontend both confirmed serving TLS on their respective ports — **verified locally, 2026-09-19**

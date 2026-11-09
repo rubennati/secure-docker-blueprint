@@ -51,7 +51,7 @@ Adding a stack later is the same three lines: list its network, render,
 then `up -d` the stack. **A Traefik recreate interrupts every stack it routes, for
 about seven seconds**: from the stop signal Traefik accepts no new connection, the
 old container takes three to five seconds to exit and the new one about two to
-start (measured on a host, 2026-11-01). The new stack is routed once its
+start (measured 2026-11-01). The new stack is routed once its
 healthcheck passes; Traefik skips a container that is still starting.
 
 **A stack whose network is not listed is unreachable, and Traefik's log says
@@ -129,13 +129,13 @@ Measured, not a general limit:
 - A throwaway daemon in the ingress audit (2026-10-31) created 32 networks before
   `docker network create` failed with "all predefined address pools have been fully
   subnetted".
-- On the lab host (2026-11-02) the provider's gateway route lies in
+- On one host (2026-11-02) the provider's gateway route lies in
   `172.31.0.0/16`. The default bridge and thirteen networks took `172.17` to
   `172.30`, and the next one — a stack's edge network — was given `192.168.0.0/20`.
 
 A subnet there matters when the networks around the host use the same addresses: a
 LAN, or a range in `TRUSTED_RANGES`, then shares them with a container network, and
-`validate.sh` refuses such a range ([DEC-076.3](../../../.ai/decisions.md#dec-076)) — on the lab host it refused a test's
+`validate.sh` refuses such a range ([DEC-076.3](../../../.ai/decisions.md#dec-076)) — it refused a test's
 `192.168.10.0/24`. A host that expects many stacks, or sits in a LAN within one of the
 built-in pools, sets a pool once, before the stacks are created, on a base that
 overlaps neither the LAN, the VPN range, `TRUSTED_RANGES` nor the host's routes;

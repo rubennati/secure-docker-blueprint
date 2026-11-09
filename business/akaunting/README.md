@@ -121,6 +121,8 @@ The current pin, 3.3.0, has not been run on a host; see
 ```bash
 cp .env.local.example .env.local
 ops/init.sh
+mkdir -p volumes/storage
+sudo chown -R 33:33 volumes/storage volumes/app.env
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down

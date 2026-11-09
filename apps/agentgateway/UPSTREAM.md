@@ -61,7 +61,7 @@ Behind Traefik with TLS, both routes on the shipped `acc-private` and `sec-2`:
   answered, and the request log continued from four to five rows
 - Peak 8.8 MiB of memory, 16 PIDs
 
-**Not yet exercised:** a hosted provider's own check of the credential — none
+**Outside this verification:** a hosted provider's own check of the credential — none
 was available; the injection was proven against the echo provider.
 
 ## Verification performed (2026-09-19)

@@ -110,14 +110,17 @@ database may reference uploaded file paths), start the container.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local   # fill BETTER_AUTH_SECRET
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'BETTER_AUTH_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 mkdir -p volumes/local/database volumes/local/uploads
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — healthy — **verified locally, 2026-09-19**
 - [x] Migrations apply cleanly and `GET /api/health/ready` reports `"status":"healthy"` across database, storage and memory checks — **verified locally, 2026-09-19**

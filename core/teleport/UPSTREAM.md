@@ -42,7 +42,7 @@ enforce or verify.
 
 ## What we use
 
-- `public.ecr.aws/gravitational/teleport-distroless:18.11.8`, single
+- `public.ecr.aws/gravitational/teleport-distroless:18.11.9`, single
   container, `auth` and `proxy` roles combined — the realistic single-node
   shape for what this repository targets, not a production Teleport
   cluster's separated-role, HA topology
@@ -78,7 +78,7 @@ enforce or verify.
 
 ## Version notes
 
-- Moved to `18.11.9` on 2026-11-08 and run on the lab host (VM) as a new
+- Moved to `18.11.9` on 2026-11-08 and run on a host as a new
   installation. A patch release of the 18.11 line.
 - Moved `public.ecr.aws/gravitational/teleport-distroless` to `18.11.8` on
   2026-11-05 (released 2026-10-29), patch releases on the 18.11 line, not run on
@@ -125,4 +125,3 @@ enforce or verify.
 - **License requires the operator's own judgment** — see "Community
   Edition license" above. Nothing in this repository can verify a
   deployment stays within the free-use thresholds.
-- **Not yet run on a live host beyond a clean start.**

@@ -146,7 +146,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local logs -f
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; local stack `up -d` — running, privileges dropped to `nobody`/`nogroup` — **verified locally, 2026-09-19**
 - [x] FTP, HTTP, MySQL, RDP and Telnet fake services all confirmed responding, with real access logged — **verified locally, 2026-09-19**

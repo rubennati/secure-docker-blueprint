@@ -10,7 +10,7 @@ Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `dashy-app` | `lissy93/dashy:4.9.15` | Vue-based SPA + embedded build server |
+| `dashy-app` | `lissy93/dashy:4.9.17` | Vue-based SPA + embedded build server |
 
 No database. Config lives in `config/conf.yml`.
 
@@ -45,7 +45,8 @@ docker compose up -d
 
 ```bash
 docker compose ps                              # healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
+curl -sSI https://<APP_TRAEFIK_HOST>/          # 401 — the basicAuth gate
+curl -fsSI -u ops:<password> https://<APP_TRAEFIK_HOST>/   # 200 OK
 ```
 
 ## Security Model

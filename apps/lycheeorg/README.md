@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `lychee-app` | `lycheeorg/lychee:v7.12.1` | PHP/Laravel app on FrankenPHP |
+| `lychee-app` | `lycheeorg/lychee:v7.13.0` | PHP/Laravel app on FrankenPHP |
 | `db` | `mariadb:12.3.3` | Primary store (albums, photo metadata, users) |
 | `redis` | `redis:8.10.3-alpine` | Cache + session driver |
 
@@ -17,7 +17,14 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://localhost:8000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8000
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -70,7 +77,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Security Model
 
-- **First-visit admin creation** — until an admin exists, `/` redirects to `/install/admin`, whose form creates the admin for whoever submits it — no setup secret, no CSRF token; afterwards it answers `403` (measured on the lab host at v7.12.1). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
+- **First-visit admin creation** — until an admin exists, `/` redirects to `/install/admin`, whose form creates the admin for whoever submits it — no setup secret, no CSRF token; afterwards it answers `403` (v7.12.1). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`APP_KEY`** encrypts Laravel sessions and signed URLs. Rotating invalidates all sessions (acceptable).
 - **`DB_PASSWORD_FILE` is supported natively** — Lychee reads the password from `/run/secrets/DB_PWD`. No inline duplication needed.
 - **`MYSQL_PASSWORD_FILE` + `MYSQL_ROOT_PASSWORD_FILE`** — MariaDB also reads secrets from files.

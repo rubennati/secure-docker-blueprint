@@ -74,7 +74,7 @@ docker compose up -d
 ```
 
 Without the group step the app stops at `FATAL: required Docker Secret 'DB_PWD' is
-missing, unreadable, or empty` and restarts (lab host). A stack copied from here
+missing, unreadable, or empty` and restarts. A stack copied from here
 keeps this section and adjusts the files, the owners and the group to its images.
 
 ## Backup
@@ -119,7 +119,11 @@ during an incident. Full architecture: [`backup/README.md`](../../backup/README.
 ## Try it locally
 
 ```bash
-cp .env.local.example .env.local     # fill in the openssl one-liners
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'APP_KEY=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 curl http://localhost:8080/          # nginx welcome page = the structure works
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -127,9 +131,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ## Verified
 
-Booted on the stack-refresh lab host behind Traefik (2026-11-09): both services
+Booted behind Traefik on 2026-11-09: both services
 healthy, the welcome page through the route, a refused client answered `403`, the
-same after `down`/`up`; the local file ran in the lab container.
+same after `down`/`up`; the local file started as well.
 
 ## Stand-in images (deliberate)
 

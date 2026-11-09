@@ -14,7 +14,7 @@
 
 ## What we use
 
-- Official image, pinned tag: `ollama/ollama:0.40.14` (3.4 GB, `amd64` and
+- Official image, pinned tag: `ollama/ollama:0.40.15` (`amd64` and
   `arm64`). It bundles the CUDA libraries, so the same image serves CPU and
   GPU hosts.
 - Entrypoint `/bin/ollama`, command `serve`, port `11434`. The image sets
@@ -80,7 +80,7 @@ without a GPU:
   removed, the archive extracted into an empty `volumes/data`, the container
   started — all three models listed, and the custom model answered
 
-**Not yet exercised:** any GPU — the overlay only merges cleanly.
+**Outside this verification:** any GPU — the overlay only merges cleanly.
 
 ## Verification performed (2026-09-18)
 
@@ -102,7 +102,7 @@ Docker VM with six CPUs and 12 GB of memory and no GPU:
 
 ## Version notes
 
-- Moved to `0.40.15` on 2026-11-08 and run on the lab host (VM). A patch release
+- Moved to `0.40.15` on 2026-11-08 and run on a host. A patch release
   (a `launch` integration added); no change to the server's configuration.
 - Moved `ollama/ollama` to `0.40.14` on 2026-11-05 (released 2026-11-03), across
   0.34.3 to 0.40.14, not run on a host at this tag; the `-rc` tags of 0.40.15 are

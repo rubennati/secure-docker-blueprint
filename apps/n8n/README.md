@@ -19,7 +19,12 @@ Data lives in `./volumes/data/` (SQLite DB, credentials, workflow exports).
 Runs on `http://localhost:5678` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'N8N_ENCRYPTION_KEY=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/data volumes/local/files
+sudo chown -R 1000:1000 volumes/local/data volumes/local/files
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:5678
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -111,7 +116,7 @@ excluding the directory.
 
 <!-- findings:end -->
 
-The image, `n8nio/n8n:2.46.6`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). It is the newest stable release, and upstream has not rebuilt it.
+The image, `n8nio/n8n:2.46.7`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). It is the newest stable release, and upstream has not rebuilt it.
 
 **Risk:** n8n's own HTTP requests run through Node.js, which carries its own brotli; the Alpine library serves curl and freetype, so a workflow that runs curl against an untrusted server could reach it. Avoid such workflows and move to the next stable release.
 

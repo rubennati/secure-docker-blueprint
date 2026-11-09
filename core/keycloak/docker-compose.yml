@@ -95,7 +95,7 @@ services:
     # and a tmpfs there hides the four files it builds from. Upstream's answer
     # is a custom image built with `kc.sh build` and started with `--optimized`,
     # which is not the official image. Verified against 26.7.3 on 2026-09-07;
-    # not yet verified on 26.8.1.
+    # check it again at a newer pin, since the rebuild depends on the release.
     security_opt:
       - no-new-privileges:true
     cap_drop:

@@ -117,11 +117,11 @@ the VPN.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/gotify/volumes/data
+  - /srv/docker/monitoring/gotify/volumes/data
 
 sqlite_databases:
   - name: gotify
-    path: /srv/secure-docker-blueprint/monitoring/gotify/volumes/data/gotify.db
+    path: /srv/docker/monitoring/gotify/volumes/data/gotify.db
 ```
 
 Restore: stop the container, put the data directory back, make sure it still

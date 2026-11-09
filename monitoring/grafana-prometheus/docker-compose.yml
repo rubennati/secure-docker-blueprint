@@ -102,7 +102,7 @@ services:
       - /tmp
       # Grafana 13 registers its core data source plugins through this
       # directory. Without it the container starts, logs nothing unusual, and
-      # every query fails with "Plugin not registered" — measured on 13.2.2,
+      # every query fails with "Plugin not registered" — as of 13.2.2,
       # isolated to this one path.
       - /usr/share/grafana/data
     # The image already runs as uid 472.
@@ -116,7 +116,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2g   # 2x the peak on the stack-refresh lab host (822 MiB)
+          memory: 2g   # 2x the measured peak (822 MiB)
           # cpus: derived starting value, not measured — v0.10.0
           cpus: "1.00"
           pids: 256

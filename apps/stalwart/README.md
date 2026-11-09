@@ -149,7 +149,7 @@ Measured on the image on 2026-10-03, at v0.16.24:
   interface is reachable for them.
 
 Port 8080 inside the container trusts `X-Forwarded-For` from whoever connects.
-It is not published; only containers on `proxy-public` reach it.
+It is not published; only containers on the stack's Traefik network (`TRAEFIK_NETWORK`) reach it.
 
 ## Monitoring (optional)
 
@@ -201,8 +201,8 @@ in front of this server.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/stalwart/volumes/data
-  - /srv/secure-docker-blueprint/apps/stalwart/volumes/etc
+  - /srv/docker/apps/stalwart/volumes/data
+  - /srv/docker/apps/stalwart/volumes/etc
 ```
 
 Restore: put both directories back owned by `2000:2000` and start the

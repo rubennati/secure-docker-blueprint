@@ -25,7 +25,7 @@ a refresh.
 
 ## What we use
 
-- `ghcr.io/obot-platform/obot:v0.27.0`, one container.
+- `ghcr.io/obot-platform/obot:v0.28.0`, one container.
 - `postgres:18.6-alpine`, which **replaces the PostgreSQL the image bundles**.
 - `tecnativa/docker-socket-proxy:v0.5.0` between obot and the Docker daemon.
 
@@ -105,7 +105,7 @@ cannot reach this host's own services unless that is changed.
 
 ## Version notes
 
-- Moved to `v0.28.0` on 2026-11-08 and run on the lab host (VM) as a new
+- Moved to `v0.28.0` on 2026-11-08 and run on a host as a new
   installation. 0.28.0 routes every model through one LLM gateway (`/api/llm-
   proxy/v1`) and adds Keycloak and OneLogin as authentication providers.
   Upstream warns that existing installations with model providers should wait:
@@ -141,6 +141,6 @@ cannot reach this host's own services unless that is changed.
 curl -s https://raw.githubusercontent.com/obot-platform/obot/main/README.md | grep -A12 'docker run'
 
 # What the entrypoint does with OBOT_SERVER_DSN, and every server flag
-docker run --rm --entrypoint sh ghcr.io/obot-platform/obot:v0.26.0 -c 'cat "$(command -v run.sh)"'
-docker run --rm --entrypoint obot ghcr.io/obot-platform/obot:v0.26.0 server --help
+docker run --rm --entrypoint sh ghcr.io/obot-platform/obot:v0.28.0 -c 'cat "$(command -v run.sh)"'
+docker run --rm --entrypoint obot ghcr.io/obot-platform/obot:v0.28.0 server --help
 ```

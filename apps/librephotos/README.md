@@ -8,17 +8,23 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `proxy` | `reallibrephotos/librephotos-proxy:latest` | nginx — routes `/api` → backend, `/` → frontend, serves media files |
-| `backend` | `reallibrephotos/librephotos:latest` | Django + gunicorn + ML workers (face detection, CLIP, scene classification) |
-| `frontend` | `reallibrephotos/librephotos-frontend:latest` | Static React build |
-| `db` | `pgautoupgrade/pgautoupgrade:16-bookworm` | Postgres with automatic major-version upgrade on startup |
+| `proxy` | `reallibrephotos/librephotos-proxy:1.5.1` | nginx — routes `/api` → backend, `/` → frontend, serves media files |
+| `backend` | `reallibrephotos/librephotos:1.5.1` | Django + gunicorn + ML workers (face detection, CLIP, scene classification) |
+| `frontend` | `reallibrephotos/librephotos-frontend:1.5.1` | Static React build |
+| `db` | `pgautoupgrade/pgautoupgrade:18.6-trixie` | Postgres with automatic major-version upgrade on startup |
 
 ## Try it locally
 
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'ADMIN_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'SECRET_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/pictures
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down

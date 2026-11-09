@@ -16,7 +16,7 @@
 
 ## What we use
 
-- `ghcr.io/shlinkio/shlink:5.1.7` — the server, RoadRunner with PHP workers.
+- `ghcr.io/shlinkio/shlink:5.1.8` — the server, RoadRunner with PHP workers.
 - `ghcr.io/shlinkio/shlink-web-client:4.9.0` — the browser interface, static
   files behind nginx. Optional; the API works without it.
 - `postgres:18.6-alpine`. Shlink's own default is SQLite, which upstream states
@@ -94,6 +94,6 @@ README.
 curl -s https://raw.githubusercontent.com/shlinkio/shlink/main/docker-compose.yml
 
 # The environment variables this version reads, with their defaults
-docker run --rm --entrypoint sh ghcr.io/shlinkio/shlink:5.1.7 -c \
+docker run --rm --entrypoint sh ghcr.io/shlinkio/shlink:5.1.8 -c \
   'grep -rhoE "^ *case [A-Z_]+" $(grep -rl "enum EnvVars" module | head -1)'
 ```

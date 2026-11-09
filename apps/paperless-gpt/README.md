@@ -50,7 +50,7 @@ therefore without the password gate. It needs a reachable Paperless-ngx and a
 model server to do any work.
 
 ```bash
-cp .env.local.example .env.local          # point it at your Paperless-ngx and model
+cp .env.local.example .env.local
 mkdir -p .secrets volumes/db volumes/config volumes/prompts
 printf '%s' 'your-paperless-api-token' > .secrets/paperless_api_token.txt
 touch .secrets/llm_api_key.txt
@@ -72,7 +72,7 @@ docker compose logs paperless-gpt-app --follow   # watch for: Server started on 
 ```
 
 On the first start it creates `paperless-gpt-failed` and
-`paperless-gpt-auto-complete` in Paperless-ngx (lab host); `paperless-gpt`
+`paperless-gpt-auto-complete` in Paperless-ngx; `paperless-gpt`
 and `paperless-gpt-auto` are created by whoever tags with them first. Tag
 a document with the first one and it appears in the interface for review; the
 second one processes without asking. The third marks what failed, so a document
@@ -121,11 +121,11 @@ the pages to that vendor.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/paperless-gpt/volumes
+  - /srv/docker/apps/paperless-gpt/volumes
 
 sqlite_databases:
   - name: paperless_gpt
-    path: /srv/secure-docker-blueprint/apps/paperless-gpt/volumes/db/modification_history.db
+    path: /srv/docker/apps/paperless-gpt/volumes/db/modification_history.db
 ```
 
 Restore: put the three directories back, keep them owned by uid 1000, start the

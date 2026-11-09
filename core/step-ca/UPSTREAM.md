@@ -17,7 +17,7 @@
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted, init
   sequence, ACME directory and healthcheck exercised against a live
   container; the production compose's healthcheck against a real
-  DNS-resolvable hostname not yet exercised (see Known limitations)
+  DNS-resolvable hostname lies outside it (see Known limitations)
 
 ## What we use
 

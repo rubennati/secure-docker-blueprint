@@ -84,7 +84,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   unchanged, login and customer back
 - Peaks: application 136 MiB, MariaDB 133 MiB
 
-**Not yet exercised:** invoices, bills and payments — the pages that create them
+**Outside this verification:** invoices, bills and payments — the pages that create them
 need an akaunting.com API key; email; the in-app module store (read-only by design
 here); an upgrade to a newer image.
 
@@ -116,7 +116,7 @@ application code left in the image:
 - With `/tmp` and `/var/run/apache2` as the only tmpfs mounts, the read-only
   container started and its access log reached `docker logs`
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface beyond the
+**Outside this verification:** Traefik routing and TLS; the browser interface beyond the
 login and wizard endpoints; invoices, payments and reports; email; the in-app module
 store (read-only by design here); an upgrade to a newer image; backup and restore.
 

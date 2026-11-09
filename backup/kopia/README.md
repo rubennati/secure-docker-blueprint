@@ -156,7 +156,7 @@ is this stack's job.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/backup/kopia/volumes/config
+  - /srv/docker/backup/kopia/volumes/config
   # volumes/repository only if it is not synced elsewhere — it is large, and
   # already encrypted and deduplicated
 ```

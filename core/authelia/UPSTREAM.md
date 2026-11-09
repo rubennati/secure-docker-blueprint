@@ -38,7 +38,7 @@ Authelia → Redis (app-internal) · PostgreSQL (app-internal)
 | Change | Reason |
 |--------|--------|
 | `user: "1000:1000"` | The image defaults to root, chowns `/config` and drops to `PUID:PGID`, which also default to `0` |
-| `read_only: true` plus a writable `/app/.healthcheck.env` | Authelia rewrites that file at every start and exits without naming the cause when it cannot (measured on 4.39.28) |
+| `read_only: true` plus a writable `/app/.healthcheck.env` | Authelia rewrites that file at every start and exits without naming the cause when it cannot (as of 4.39.28) |
 | Healthcheck against `/api/health` directly | The image's `healthcheck.sh` exits 0 whenever the file above lacks its `X_AUTHELIA_HEALTHCHECK` line |
 | `X_AUTHELIA_CONFIG_FILTERS: template` | Domain, database and mail values come from `.env`; `mustEnv` stops the start when one is missing |
 | No template expression in comments | The template filter renders comments too; `{{ … }}` in one stops the start |
@@ -51,8 +51,6 @@ Authelia → Redis (app-internal) · PostgreSQL (app-internal)
 | Local file: TLS served by Authelia, `*.example.localhost`, SQLite, in-memory sessions | Authelia refuses a portal that is not https and a cookie on bare `localhost`; browsers resolve `*.localhost` themselves |
 
 ## Verification performed (2026-09-26)
-
-Local, not behind Traefik on a real host — so no `Last verified` line.
 
 - `authelia validate-config` passes for both notifier branches (file and SMTP).
 - Production file with PostgreSQL and Redis: all three services healthy with

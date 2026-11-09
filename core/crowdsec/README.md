@@ -203,7 +203,7 @@ what it is not:
   host without the bouncer holds no CrowdSec port at all.
 - **8081, not 8080.** `apps/unifi` publishes 8080 for its devices' inform requests, and
   both stacks have to start on one host. Inside the container the LAPI stays on 8080.
-  Verified on the lab host (VM) on 2026-11-09: CrowdSec on `127.0.0.1:8081` and UniFi on
+  Verified on 2026-11-09: CrowdSec on `127.0.0.1:8081` and UniFi on
   `0.0.0.0:8080` side by side, a bouncer key answered `200` on `/v1/decisions/stream`
   through the loopback port, and the Traefik bouncer kept pulling over the Docker network.
 
@@ -282,7 +282,7 @@ docker exec crowdsec cscli metrics show acquisition   # the device's requests ar
                                                         # the engine sees it; it only serves no decision against it
 ```
 
-Measured on the lab host (VM) on 2026-11-08 with the Traefik bouncer: a manual
+Measured on 2026-11-08 with the Traefik bouncer: a manual
 decision against an exempted address (`cscli decisions add --ip …`) is refused by
 `cscli` and never served; one added with `--bypass-allowlist` is served, and the
 device received `403` until the decision was deleted. Whether the host-firewall
@@ -433,7 +433,7 @@ force and open-proxy abuse; `crowdsecurity/http-cve` adds probing for known CVEs
 The engine registers with CrowdSec's Central API on first start and both pulls and
 pushes. It is on by default, and it is a trade rather than a subscription.
 
-**What arrives.** Measured on a host running this blueprint: **15,880 active
+**What arrives.** On a host running this blueprint: **15,880 active
 decisions**, essentially all of them `Source: CAPI`. Addresses other installations
 detected attacking them.
 
@@ -640,7 +640,7 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 The command prints the key once — save it immediately.
 
 When Traefik's container comes back with another address on `crowdsec-security` —
-after a restart of the Docker daemon, measured on the lab host — the local API
+after a restart of the Docker daemon, for one — the local API
 lists the same key a second time as `traefik-bouncer@<address>`, and the first entry
 stops pulling. Both are the one bouncer; the stale line can be removed with
 `cscli bouncers delete`, and nothing has to change in `core/traefik`.
@@ -744,8 +744,9 @@ Host enforcement covers **individual source-IP decisions**, IPv4 and IPv6. Crowd
 `range` decisions are not enforced correctly at this layer in the packaged bouncer
 version — a documented capability limit, not a fault to work around.
 
-**Its lifecycle and readiness gate are runtime-verified; scoped enforcement is not
-yet accepted.** Read [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md) before
+**Host-firewall blocking is experimental.** The bouncer's lifecycle and its readiness
+gate are checked at runtime; scoped enforcement is yours to prove on your own host
+before you rely on it. Read [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md) before
 enabling anything: it owns the architecture, the setup, the safe change procedure, the
 bounded rollback, the known limitations and the verification status.
 
@@ -810,7 +811,7 @@ configuration, and neither is what you intended.
 Losing the decision list itself is survivable: bans rebuild from live traffic.
 Losing the credentials means re-enrolling every bouncer by hand.
 
-Rehearsed on the lab host (2026-11-03, v1.7.8): the container stopped, the stack
+Rehearsed on 2026-11-03 (v1.7.8): the container stopped, the stack
 directory archived, the container started; restored into a throwaway instance on its own
 network with `DISABLE_ONLINE_API=true`, so the copy did not speak to the central API as the
 same machine. The decisions, all 100 alerts, the eight collections, the machine and the

@@ -23,7 +23,16 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://127.0.0.1:8001` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'INIT_SEAFILE_MYSQL_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'SEAFILE_MYSQL_DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'INIT_SEAFILE_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'JWT_PRIVATE_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+sudo chown 999:999 volumes/local/mysql   # the mariadb image's mysql user — the db service has no CHOWN
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://127.0.0.1:8001
 docker compose -f docker-compose.local.yml --env-file .env.local down

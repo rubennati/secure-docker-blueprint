@@ -69,7 +69,7 @@ fi
 echo "$STREAK restarting" > "$STATE_FILE"
 # docker.service starts without a time limit (Type=notify, TimeoutStartSec=0):
 # a daemon that hangs on its way up held this script in `systemctl restart`
-# for good, with no ping sent (lab host). Bound the wait; the job itself goes
+# for good, with no ping sent. Bound the wait; the job itself goes
 # on in systemd, and the check below reports what it finds.
 timeout "$RESTART_TIMEOUT" systemctl restart docker || true
 sleep "$SETTLE_SECONDS"

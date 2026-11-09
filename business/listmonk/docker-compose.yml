@@ -105,7 +105,7 @@ services:
   # The install seeds the SMTP server `smtp.yoursite.com` — a registered domain
   # that resolves to a third party. Until an operator sets a real server, an
   # opt-in mail (the subscriber's address) or a notification went there on
-  # port 25 (measured on the step 8 lab host; final audit FA-02). This step
+  # port 25 (final audit FA-02). This step
   # replaces exactly that placeholder with `smtp.invalid` (RFC 2606: never
   # resolves) before the application loads its settings; a server the operator
   # configured is never touched, so it is a no-op on every later start.
@@ -176,8 +176,8 @@ services:
     command: ["./listmonk", "--config", ""]
 
     # A single Go binary: no root, no capability. The upload directory must
-    # belong to APP_UID (README, Setup). Measured on the step 8 lab host
-    # (final audit FA-06): setup, login, API, subscription and an upload.
+    # belong to APP_UID (README, Setup). Setup, login, API,
+    # subscription and an upload work so (final audit FA-06).
     user: "${APP_UID:-1000}:${APP_GID:-1000}"
     cap_drop:
       - ALL

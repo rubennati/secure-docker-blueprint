@@ -134,9 +134,9 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/business/leantime/volumes/userfiles
-  - /srv/secure-docker-blueprint/business/leantime/volumes/public-userfiles
-  - /srv/secure-docker-blueprint/business/leantime/volumes/plugins
+  - /srv/docker/business/leantime/volumes/userfiles
+  - /srv/docker/business/leantime/volumes/public-userfiles
+  - /srv/docker/business/leantime/volumes/plugins
 ```
 
 Restore: put the volumes back with their ownership at `1000:1000`, restore the

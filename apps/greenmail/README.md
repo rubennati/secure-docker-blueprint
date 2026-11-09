@@ -49,7 +49,7 @@ Two things follow from the test-double design:
 
 ## Status
 
-Run behind Traefik on the lab host on 2026-11-03 (2.1.15): all six
+Run behind Traefik on 2026-11-03 (2.1.15): all six
 mail protocols from a container on `proxy-public`, the REST API through the
 route, no published port, nothing reachable from an edge network, and a
 restart. Full log in [`UPSTREAM.md`](UPSTREAM.md#verification-performed-2026-11-03).

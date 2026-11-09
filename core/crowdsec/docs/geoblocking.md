@@ -16,7 +16,7 @@ with `crowdsecurity/linux`, which the image installs at build time
 (`build/docker/Dockerfile` at v1.7.8); the `crowdsecurity/traefik` collection does not
 carry it. Every event the engine derives is tagged with country metadata — confirm on a
 host with `docker exec crowdsec cscli parsers list | grep geoip-enrich`. The enrichment
-has not been measured on a host from this repository.
+itself is upstream's; this repository adds no check of it.
 
 **Country-based blocking is not enabled by default.** GeoIP enrichment and geoblocking are
 separate things. The enrichment adds country tags to events; no decision is created unless you

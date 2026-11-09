@@ -36,7 +36,7 @@ older planned list in `apps/README.md` predates that sharpened rule.
 
 ## What we use
 
-- `ghcr.io/juanfont/headscale:v0.29.4`, one container, SQLite.
+- `ghcr.io/juanfont/headscale:v0.29.7`, one container, SQLite.
 - `config/config.yaml`, trimmed from upstream's 478-line example to what this
   stack sets or deliberately keeps.
 - `derp.yml`, an opt-in overlay for the embedded relay.
@@ -140,5 +140,5 @@ the map the fetch is no longer what clients depend on.
 curl -s https://raw.githubusercontent.com/juanfont/headscale/main/config-example.yaml
 
 # Every command, and what this version accepts
-docker run --rm ghcr.io/juanfont/headscale:v0.29.4 --help
+docker run --rm ghcr.io/juanfont/headscale:v0.29.7 --help
 ```

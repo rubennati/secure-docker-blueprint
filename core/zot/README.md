@@ -134,7 +134,7 @@ curl -u "admin:$ZOT_LOCAL_PASSWORD" http://localhost:8080/v2/
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
 - [x] `docker compose config` clean; `docker compose up -d` — running, zero `cap_add` — **verified locally, 2026-09-19**
 - [x] Unauthenticated request to `/v2/` returns 401, admin credentials return 200 — **verified locally, 2026-09-19**

@@ -89,8 +89,8 @@ services:
 # --------------------------------------------------------
 networks:
   # Not internal: Docker publishes no port of a container that is attached
-  # only to an internal network — measured on Docker 29 on the lab host (VM),
-  # where every canary port answered "connection refused". The canary needs
+  # only to an internal network — on Docker 29 every canary port then answers
+  # "connection refused". The canary needs
   # its published ports; that this network also has egress is the cost.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal

@@ -20,12 +20,18 @@ stacks in this repository, by design: it is the "lightweight" role.
 
 ## Try it locally
 
-Runs on `http://localhost:8888` without Traefik, DNS or a certificate; port 2222 is published too.
+Runs on `https://localhost:8888` with a self-signed certificate, without Traefik or DNS; port 2222 (SSH) is published too.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/data
+sudo chown -R 1000:1000 volumes/local/data
+docker compose -f docker-compose.local.yml --env-file .env.local run --rm \
+  -e WARPGATE_ADMIN_PASSWORD=changeme \
+  warpgate-local unattended-setup --data-path /data --http-port 8888 \
+  --ssh-port 2222 --external-host localhost --host-key-verification auto-accept
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
-# http://localhost:8888
+# https://localhost:8888 — admin / changeme
 docker compose -f docker-compose.local.yml --env-file .env.local down
 ```
 
@@ -172,9 +178,6 @@ deployment does not need `unattended-setup` run again after a restore.
 
 ## Known Issues
 
-- **Not yet run on a live host.** Setup and a bare `run` were verified
-  against the hardening flags this compose file uses; an actual proxied
-  session, the reverse-proxy/OIDC path, and a restart or upgrade were not.
 - **`WARPGATE_MYSQL_PORT` is published even with no MySQL target
   configured.** Comment the line out in `docker-compose.yml` if you have no
   MySQL target and would rather not publish an unused port.

@@ -18,7 +18,7 @@
 ## What we use
 
 - Upstream `photoprism/photoprism`
-- Official `mariadb:11` as backend
+- Official `mariadb:12.3.3` as backend
 - Docker Secrets for MariaDB password + root password
 - Bind-mount `./volumes/database`, `./volumes/storage`
 - Configurable `ORIGINALS_PATH` for photo source

@@ -193,7 +193,7 @@ services:
       NEXT_PUBLIC_EMBED_LIB_URL: https://${APP_TRAEFIK_HOST}/embed/embed.js
       NEXTAUTH_URL: https://${APP_TRAEFIK_HOST}/api/auth
       # Allowed hostnames — prevents host header injection; matches APP_TRAEFIK_HOST automatically
-      # Multiple hostnames: set ALLOWED_HOSTNAMES='"host1","host2"' in .env to override
+      # Multiple hostnames: list them here, e.g. '"host1","host2"'
       ALLOWED_HOSTNAMES: '"${APP_TRAEFIK_HOST}"'
       # Telemetry disabled
       # Licence — MIT community edition

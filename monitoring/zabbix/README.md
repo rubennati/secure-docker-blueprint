@@ -5,8 +5,8 @@ triggers, escalation chains and history. Three services — the server that
 collects, the web interface, and PostgreSQL. Upstream:
 [zabbix/zabbix-docker](https://github.com/zabbix/zabbix-docker).
 
-`alpine-7.0.x` is the long-term-support line: full support to 2027-06-30,
-limited support to 2029-06-30. 8.0 is where the new features are.
+`alpine-8.0.x` is the current long-term-support line; its support dates are in
+Zabbix's [life cycle policy](https://www.zabbix.com/life_cycle_and_release_policy).
 
 Next to the rest of [`monitoring/`](../README.md): Uptime Kuma answers "is it
 up", Grafana and Prometheus draw whatever exposes a metrics endpoint, and this
@@ -26,6 +26,22 @@ Traefik ──http──→ zabbix-web :8080       nginx + PHP, the only routed 
                       │
                       └──→ zabbix-db :5432        (PostgreSQL, app-internal)
 ```
+
+## Try it locally
+
+Runs on `http://localhost:8080` without Traefik, DNS or a certificate. The first start creates the schema and takes a few minutes.
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+sudo chown -R 1997:1997 volumes/alertscripts volumes/externalscripts
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+# http://localhost:8080 — Admin / zabbix, then change it
+docker compose -f docker-compose.local.yml --env-file .env.local down
+```
+
+The port binds to `127.0.0.1`. `trapper.yml` works here too and publishes 10051
+just the same. It mounts the same `volumes/`, so run one at a time.
 
 ## Setup
 
@@ -115,7 +131,7 @@ it:
 - **SNMP traps are not carried.** They need 162/udp and a separate
   `zabbix-snmptraps` container sharing a volume with the server. The same
   reasoning as 10051 applies, and nobody has run it here.
-- **No high availability.** Zabbix 7.0 supports an HA cluster of servers; this
+- **No high availability.** Zabbix supports an HA cluster of servers; this
   is one of each.
 - **History growth is yours to manage.** Housekeeping settings live in the
   interface, not in this compose file, and a busy installation can fill a disk.
@@ -134,8 +150,8 @@ it:
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/monitoring/zabbix/volumes/alertscripts
-  - /srv/secure-docker-blueprint/monitoring/zabbix/volumes/externalscripts
+  - /srv/docker/monitoring/zabbix/volumes/alertscripts
+  - /srv/docker/monitoring/zabbix/volumes/externalscripts
 ```
 
 Restore: put the volumes back with the script directories owned by

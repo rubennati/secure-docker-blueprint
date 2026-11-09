@@ -85,6 +85,8 @@ widget, a restart, and the restore below. Full log in
 ```bash
 cp .env.local.example .env.local
 ops/init.sh
+mkdir -p volumes/redis
+sudo chown 999:999 volumes/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:3000 — the first visit creates the administrator
 docker compose -f docker-compose.local.yml --env-file .env.local down

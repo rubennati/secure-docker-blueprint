@@ -160,7 +160,7 @@ servers you configured — that is the work, not a side effect.
 ```yaml
 # /etc/borgmatic/config.yaml
 source_directories:
-  - /srv/secure-docker-blueprint/apps/obot/volumes/data
+  - /srv/docker/apps/obot/volumes/data
 ```
 
 Restore: put the volumes back with `volumes/data` owned by `1000:1000`, restore
@@ -181,10 +181,6 @@ configured — `None` by default, which means they are readable in the database.
 | `tecnativa/docker-socket-proxy:v0.5.0` | 0 · 7 | — | — |
 
 <!-- findings:end -->
-
-The pinned image, `ghcr.io/obot-platform/obot:v0.27.0`, ships with 2 CRITICAL vulnerabilities that have published fixes: the CA bundle still trusts revoked eMudhra intermediates, and brotli. v0.27.0 is the newest release.
-
-**Risk:** the CA issue lets someone holding those keys intercept Obot's outbound TLS from an on-path position; whether brotli decoding is used was not checked. Watch for the next release.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

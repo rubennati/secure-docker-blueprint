@@ -27,7 +27,15 @@ Traefik routes to **`opnform-nginx` only** (port 80). It handles path-based rout
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" >> .env.local
+printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'FRONT_API_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -82,7 +90,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform
 
 ## Security Model
 
-- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.`, measured on the lab host at 2.8.4) by `SELF_HOSTED=true`.
+- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.` at 2.8.4) by `SELF_HOSTED=true`.
 - **`APP_KEY`** encrypts Laravel sessions and tokens. Rotating invalidates all active sessions.
 - **`JWT_SECRET`** signs API tokens. Rotating logs out all users.
 - **`FRONT_API_SECRET` / `NUXT_API_SECRET`** is a shared secret between the Laravel API and the Nuxt SSR layer. Both must have the same value.

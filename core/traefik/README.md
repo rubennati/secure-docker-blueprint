@@ -747,9 +747,9 @@ a measurement, not settled here (D2 in the core audit).
 - Origin records: `A` only, or `proxy-public` dual-stack — next paragraph.
 - Certificates: DNS-01 or HTTP-01. TLS-ALPN-01 cannot work behind the proxy
   (above, Path C). DNS-01 sets a TXT record and never contacts the host, so a
-  proxied record does not hinder it: on the lab host a router with
-  `tls.certresolver=cloudflare-dns` for a proxied name had its certificate 20 s
-  after it appeared. Every name Cloudflare forwards needs a
+  proxied record does not hinder it: a router with
+  `tls.certresolver=cloudflare-dns` for a proxied name has its certificate about
+  20 s after it appears. Every name Cloudflare forwards needs a
   certificate here — the TLS options set `sniStrict`, so a name the stored
   certificates do not cover fails the handshake and Cloudflare answers **525**
   (measured: a proxied name beside a wildcard for another name). A valid
@@ -768,8 +768,8 @@ Cloudflare documents a preference for IPv4 there, not a guarantee. On an
 IPv4-only `proxy-public` Traefik is published on IPv4 only ("IPv4-only vs.
 Dual-Stack Networking" above), and such a connection is refused. So in
 `cloudflare` mode one of two must hold: `proxy-public` is dual-stack (the
-overlay above), or the origin has `A` records only. Measured on the lab
-host in `none` mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
+overlay above), or the origin has `A` records only. Measured in `none`
+mode, origin with `A` and `AAAA`, `proxy-public` dual-stack: for
 clients over IPv4 and over IPv6 Cloudflare connected to the origin over IPv4
 (`X-Real-Ip` an edge IPv4 address, the client in `CF-Connecting-IP`). An origin
 with `AAAA` only is not verified.
@@ -787,7 +787,7 @@ scripts/host-files.sh install-commands core/traefik   # prints the install line 
 The rule that uses them goes on the **forward** hook. Traefik's ports are
 published by Docker, and a published port is DNAT'd and forwarded, never
 delivered to the host: a rule on `input` filters nothing of it and leaves the
-origin open while looking closed — measured on a host, in
+origin open while looking closed — see
 [`core/crowdsec/docs/firewall-bouncer.md`](../crowdsec/docs/firewall-bouncer.md),
 "Why Docker traffic needs FORWARD, not INPUT". One table of its own, loaded
 with `nft -f` and never through a ruleset flush (the same document, "Recovery":
@@ -889,7 +889,7 @@ render again.
 1. The address at every hop through Cloudflare, IPv4 and IPv6: `whoami` behind
    `access-public`, the access log's `ClientHost` (last element), the bouncer's
    compared address (a manual decision answered `403`), Vaultwarden's lockout
-   address. In `none` mode measured on the lab host: `whoami` behind
+   address. Measured in `none` mode: `whoami` behind
    `access-public` through Cloudflare over IPv4 and IPv6 answered 200 with
    `X-Real-Ip` the edge and `CF-Connecting-IP` the client; the `cloudflare` mode
    is not.
@@ -1039,8 +1039,7 @@ edit `/etc/traefik-watchdog.env` and `sudo systemctl enable --now
 traefik-watchdog.timer`. They are optional in the manifest, so a host without
 the watchdog reports them as `not installed` and nothing else.
 
-Without it a hung Traefik stays hung. Measured on the lab host: with the
-process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
+Without it a hung Traefik stays hung. With the process frozen for 75 s, Docker reported the container `unhealthy` after 42 s and
 did nothing further; every router was unanswered until the process resumed. A crash
 is different — the restart policy brought a killed process back within 8 s — and so
 is a `docker kill` or `docker stop`, which Docker counts as a manual stop and does

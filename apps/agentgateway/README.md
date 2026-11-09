@@ -123,6 +123,7 @@ and a restore of `volumes/data` with the config. Full log in
 ```bash
 ops/init.sh
 mkdir -p volumes/data
+sudo chown 65532:65532 volumes/data
 docker compose -f docker-compose.local.yml up -d
 curl -H "Authorization: Bearer $(cat .secrets/agw_api_key.txt)" http://localhost:4000/v1/models
 docker compose -f docker-compose.local.yml down

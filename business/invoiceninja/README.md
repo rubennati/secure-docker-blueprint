@@ -40,7 +40,14 @@ depart from it.
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" >> .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'IN_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -151,7 +158,7 @@ curl -sI https://your-domain/            # 200 or 302
 - [ ] SMTP configured and tested (send a test invoice)
 - [ ] Backup strategy in place (see UPSTREAM.md)
 - [ ] Upgrade check: verify `APP_TAG` against latest stable release (see UPSTREAM.md)
-- [ ] `TRUSTED_PROXIES` covers the network Traefik reaches nginx on — Docker's default address pools as shipped, the edge network's subnet once you pin it (`.env.example`, "TRUSTED_PROXIES"). The shipped ranges are the value measured on the lab host, an interim value and not a recommended standard: they trust more containers than Traefik ([`ROADMAP.md`](../../ROADMAP.md), "Trusted proxies narrowed to the Traefik hop")
+- [ ] `TRUSTED_PROXIES` covers the network Traefik reaches nginx on — Docker's default address pools as shipped, the edge network's subnet once you pin it (`.env.example`, "TRUSTED_PROXIES"). The shipped ranges are an interim value and not a recommended standard: they trust more containers than Traefik ([`ROADMAP.md`](../../ROADMAP.md), "Trusted proxies narrowed to the Traefik hop")
 
 ## Services
 
@@ -178,8 +185,9 @@ Supervisor inside the `app` container manages the Laravel scheduler and queue wo
 
 ## Backup
 
-A restore has not been rehearsed for this stack — the procedure below is written
-from the compose file, not from a run.
+The MySQL entry and the `app_storage` volume below restore with identical rows
+and files ([`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log),
+2026-11-03 and 2026-11-08).
 
 | | |
 |---|---|
@@ -256,14 +264,14 @@ failed migration against a database with no dump behind it is not recoverable.
 `/` redirects to the same URL again and again: the application does not
 believe Traefik's `X-Forwarded-Proto`, so `REQUIRE_HTTPS` sends every request
 back to `https://`. `TRUSTED_PROXIES` does not cover the subnet Traefik
-reaches nginx from — see the comment in `.env.example`. Measured on the lab host with the value naming `proxy-public` while the stack sat on its edge
-network.
+reaches nginx from — see the comment in `.env.example`. A value naming `proxy-public` does this
+once the stack sits on its edge network.
 
 ### 502 after the app container was recreated
 
 nginx resolves `app` once, when it starts. After `docker compose up -d`
 recreated only the app container, nginx kept the old address and answered
-`502` until `docker compose restart invoiceninja-nginx` (lab host).
+`502` until `docker compose restart invoiceninja-nginx`.
 
 ### PDF and preview rendering times out
 

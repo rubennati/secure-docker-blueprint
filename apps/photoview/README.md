@@ -16,7 +16,13 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p ./volumes/local/photos
+sudo chown -R 999:999 volumes/local/media-cache
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down

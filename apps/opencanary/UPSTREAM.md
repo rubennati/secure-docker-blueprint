@@ -21,8 +21,8 @@
 
 ## What we use
 
-- `thinkst/opencanary:0.9.9` — the official image, confirmed present as a
-  specific version tag on Docker Hub (not just `latest`)
+- `thinkst/opencanary:0.9.10` — the official image, under a specific version
+  tag on Docker Hub (not just `latest`)
 
 ## Why not `network_mode: host` (upstream's own default)
 
