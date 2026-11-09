@@ -14,7 +14,7 @@ What has been established about each stack — verified against which version an
 | Tool | Direction | Notes |
 |---|---|---|
 | [Borgmatic](borgmatic/) | This host → off-site | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). Append-only enforcement is the one documented mechanism not yet exercised. |
-| [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
+| [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Run on a lab host with a Linux client: backup and download verified; a restore to the client itself not yet. |
 | [Rclone Web](rclone-web/) | Files ⇄ storage providers | Browser interface for rclone: remotes, copy and sync jobs, serves. Interface and API on one host; the API holds every remote's credentials. Not yet verified. |
 | [Kopia](kopia/) | Your machines → this host | Repository server: each machine runs its own Kopia client with its own account and never holds the repository password. Deduplicated and encrypted; the repository lives on this host's disk or on a remote provider. Not yet verified behind Traefik. |
 
