@@ -3,10 +3,10 @@
 Current work items. Larger direction lives in [`../ROADMAP.md`](../ROADMAP.md);
 this file is the short list.
 
-## Open after v0.9.1
+## Open
 
-State at the v0.9.1 tag (2026-09-20): `dev` and `main` level, no open pull requests,
-no open Dependabot alerts, CI green. Everything below is what is not done.
+Everything below that carries an open box is not done; a closed item names its
+evidence.
 
 ### 1. Image findings as facts — closed 2026-11-08
 
@@ -16,16 +16,11 @@ by `check-structure.py` `public-default` (DEC-043 addendum). Issue #249 (the
 2026-10-19 baseline pairs) is answered by the same: findings are shown per stack
 and rewritten at every pin move.
 
-### 2. A host run for every stack (audit S1, DEC-080)
+### 2. A host run for every stack (audit S1, DEC-080) — closed 2026-11-09
 
-[`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md) is the ordered
-run: Traefik with TLS, a refused client, restart, restore, and each stack's own open
-items. Needs a host. A stack without a test date has not run on a host; where
-something particular stands in the way — a GPU, port 25, an archived upstream — its
-`UPSTREAM.md` says so (`Last verified: not yet — reason`).
-
-- [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` ran on a host at
-      an earlier pin; `LIFECYCLE.md` names the version that ran.
+120 of 121 stacks carry a test date at their pin (`../LIFECYCLE.md`); `apps/vllm`
+states what it needs, an NVIDIA GPU (`Last verified: not yet — reason`). Evidence:
+`../docs/labs/stack-refresh/2026-11-08-results.md`. A pin that moves past the tested version gets the App Chain again.
 
 ### 3. Personal data on the public site (audit W7 / D3)
 
@@ -178,17 +173,18 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
 - [x] Decided 2026-10-03 (`decisions.md`): the stack publishes its mail ports
       through an opt-in overlay, each stack states where its certificate comes
       from, Stalwart runs upstream's image, mail servers sit in `apps/`.
-- [x] Batch W, Stalwart — `../apps/stalwart`, `scaffolded`, verified on the
+- [x] Batch W, Stalwart — `../apps/stalwart`, checked on the
       image. What a host still has to establish is in its `UPSTREAM.md`.
-- [x] Batch X, docker-mailserver — `../apps/docker-mailserver`, `scaffolded`,
-      verified on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
+- [x] Batch X, docker-mailserver — `../apps/docker-mailserver`,
+      checked on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
       `CAP_ADD_EXCEPTIONS`.
 - [x] Batch Y, jeboehm/docker-mailserver — `../apps/mailserver-jeboehm`,
-      `scaffolded`, verified on the images. It has no automatic ban; its README
+      checked on the images. It has no automatic ban; its README
       says so.
-- [ ] `apps/mailserver-jeboehm` on a host: sign-in to the administration
-      interface behind Traefik, a DKIM signature against a published record,
-      and delivery to and from another mail system.
+- [ ] `apps/mailserver-jeboehm` on a host: a DKIM signature against a published
+      record, and delivery to and from another mail system. The administration
+      interface behind Traefik and local delivery are checked (2026-11-08,
+      `UPSTREAM.md`).
 - [ ] `apps/docker-mailserver` on a host: which client address the container
       sees on a published port — Fail2ban bans that address — and delivery to
       and from another mail system.
@@ -200,7 +196,7 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
 
 ### 9. Milestone v0.10.0 — measured resource limits
 
-Every `✅` stack's limits from a measurement on a real install
+The limits of every stack with a test date from a measurement under load on a real install
 ([`../docs/resource-measurement.md`](../docs/resource-measurement.md)). Needs a host.
 Whether it stays a release is D4 of the stabilization audit; `state.md` carries the
 milestone.
@@ -317,30 +313,28 @@ v0.8.0 closed on 2026-09-08 — the record is
 session left open is in
 [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 
-- Verify the Priority 1 stacks behind Traefik with TLS and restore each —
-      [`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md).
-      Not done; the same item is §2 above, which
-      carries it, so it has no box here.
+- The Priority 1 stacks behind Traefik with TLS — closed with §2 above.
 
 - [x] Borgmatic: install, initialise repository, first backup, export the key off-host
       — evidence: `../backup/borgmatic/RESTORE.md` records the rehearsal of 2026-07-29
-- [x] **Restore rehearsal — closed v0.7.0** and produced the first `ops-proven` stack
-      — evidence: `../LIFECYCLE.md` lists one `ops-proven` stack
+- [x] **Restore rehearsal — closed v0.7.0** — evidence: `../LIFECYCLE.md` marks the
+      stacks `with restore`
 - [ ] Exercise append-only over a remote repository — the one Borgmatic mechanism
       a local rehearsal cannot establish. Not about owning an off-site target;
       about whether the documented protection behaves as written
-- [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
-- [ ] Verify the nine pending major versions — the list is `../ROADMAP.md` →
-      *Verified before the standards moved*; `LIFECYCLE.md` carries each pin beside
-      the version last verified
-- [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
+- [x] UrBackup against the gate list in `backup/urbackup/README.md` — file backup and
+      download with a Linux client, 2026-11-09 (`../docs/labs/stack-refresh/2026-11-08-results.md`). Open: a restore to the client
+- [x] The nine pending major versions — each stack carries a test date at its pin
+      (`../LIFECYCLE.md`)
+- [x] The legacy verification stamps — no stack carries `Last checked:` any more
+      (`apps/_reference` is the template)
 - [x] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — done 2026-09-08,
       closed circuit and down/up both on a phone. Evidence: `Last verified` 2026-09-08
       (v4.4) in `../monitoring/healthchecks/UPSTREAM.md`; Uptime Kuma re-verified
       2026-09-13 (2.5.4)
-- [ ] Point borgmatic's run monitoring at a real Healthchecks check — the receiver
-      exists now; this is what turns the backup timer's silence into an alert.
-      `state.md` → *Immediate next steps* lists it first
+- [ ] Point borgmatic's run monitoring at a real Healthchecks check, pinged at
+      `127.0.0.1:8001` (`backup/borgmatic/config.yaml.example`) — this is what turns
+      the backup timer's silence into an alert. `state.md` → *Immediate next steps*
 - [x] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy —
       done 2026-09-16: `tecnativa/docker-socket-proxy` with `CONTAINERS=1` only
       (`POST=0`, everything else 0), matching what the agent's Docker client
@@ -511,8 +505,9 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       auth), `apps/librephotos` (tag scheme), and the other 36 pins. Evidence:
       `Last verified` 2026-09-13 in the six stacks' `UPSTREAM.md`; Cal.diY's database
       move is recorded in its `UPSTREAM.md`, the application pin is not re-verified
-- [ ] **Verify the 2026-09-13 sweep on a host.** 46 pins moved and nothing was
-      deployed, so every bumped stack's `Last verified` line still names the version
+- [x] **The 2026-09-13 sweep on a host** — superseded: every stack carries a test
+      date at its current pin (`../LIFECYCLE.md`). The original item:
+      46 pins moved, and every bumped stack's `Last verified` line named the version
       before the bump. Four need more than a restart: `core/dnsmasq` changed publisher
       (`dockurr/dnsmasq` — confirm it answers a wildcard lookup and caches),
       `core/traefik` moved to 3.7 (the migration table in its `UPSTREAM.md` lists what
@@ -524,16 +519,13 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       (`core/acme-certs` 3.1.2 vs 0.2.1, `apps/it-tools` a tag absent from the
       registry, `apps/monicahq` `5-apache` vs `4.1.2-apache`). Corrected on
       2026-09-13 (v0.8.1); all three match their pins
-- [ ] **`Last verified` missing from `UPSTREAM.md` files** — 27 when this was
-      written, 43 on 2026-10-15 after the stacks added since. The sweep reads the
-      field first, so a missing one costs a stack its check. The count is the `—`
-      entries in `LIFECYCLE.md`'s Last verified column; each closes through S1
-      (§2). Candidate for `check-coverage.py`
+- [x] **`Last verified` in every `UPSTREAM.md`** — 120 of 121 carry a date;
+      `apps/vllm` carries its reason (§2)
 - [ ] **`apps/vaultwarden` → Docker Secrets.** The blocker recorded in `UPSTREAM.md`
       was wrong: Vaultwarden does support `_FILE`. The real obstacle is that the
       password sits inside `DATABASE_URL`, so the secret must carry the whole URL
       (`DATABASE_URL_FILE`) or an entrypoint must assemble it. Needs a host test —
-      it changes how a ✅ stack starts
+      it changes how a stack with a test date starts
 - [x] `business/invoiceninja` → Docker Secrets via entrypoint wrapper (Phase 2).
       Genuinely upstream-limited: Laravel has no `_FILE` for `APP_KEY`/`DB_PASSWORD`.
       Done — `business/invoiceninja/ops/entrypoint.sh` reads the secrets and exports
@@ -631,10 +623,8 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       concurrent-connection and document limit, but the upstream page that would state it is
       behind bot protection and the product page does not mention one. Nothing was recorded
       rather than record it from memory.
-- [ ] Keep the Tailscale range out of `access-lan`. `fd7a:115c:a1e0::/48` lies inside
-      `fc00::/7`, so on a dual-stack install `access-lan` admits a tailnet client over
-      IPv6 — recorded as a known limitation in
-      [`../docs/standards/traefik-security.md`](../docs/standards/traefik-security.md),
-      "Access Policies". `ipAllowList` has no exclusion; the ULA range would have to be
-      listed in parts around the Tailscale range, which `TAILSCALE_CIDR_V6` can change.
-      Decide the shape, then a test that `access-lan` refuses a tailnet address
+- [x] Keep the Tailscale range out of `access-lan` — superseded by DEC-076:
+      `access-lan` is retired, and `access-trusted` admits only the declared
+      `TRUSTED_RANGES`, which `validate.sh` refuses to overlap the VPN range
+      ([`../docs/standards/traefik-security.md`](../docs/standards/traefik-security.md),
+      "Access Policies")

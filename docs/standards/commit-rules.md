@@ -171,8 +171,8 @@ available.
 **main:**
 
 - Only receives merged pull requests from `dev`; direct pushes are rejected
-- The twelve required checks passed against current
-  `main` — the ten CI jobs plus Trivy's IaC config scan and image CVE scan
+- The eleven required checks passed against current
+  `main` — the ten CI jobs plus Trivy's IaC config scan
 - Commit messages in English
 - Full CI runs again on the push that results from the merge — that run checks
   the integrated branch rather than the pull request's merge preview

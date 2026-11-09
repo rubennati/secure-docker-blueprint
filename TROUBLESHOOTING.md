@@ -118,6 +118,25 @@ Avoid `openssl rand -base64` for DSN passwords — base64 output contains `+`, `
 
 ---
 
+### 2.4 `docker compose` stops: `required variable DB_PASSWORD is missing a value: Set DB_PASSWORD in .env`
+
+**Symptom:** `docker compose up`, `config` or `pull` stops before any container starts
+and names one variable.
+
+**Cause:** the variable is a secret the container reads from the environment. It ships
+empty in `.env.example` (or `.env.local.example`), and the compose file requires it with
+`${VAR:?Set VAR in .env}`, so an unfilled secret never becomes the password.
+
+**Fix:** generate the value with the command written above the variable in the example
+file and set it in `.env` (or `.env.local`), then start again. Compose names one missing
+variable per run; repeat until it starts.
+
+```bash
+sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
+```
+
+---
+
 ## 3. Volume & Permissions Issues
 
 ### 3.1 Container can't write to volume directory

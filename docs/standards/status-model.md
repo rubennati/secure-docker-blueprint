@@ -104,8 +104,10 @@ not.
 `lifecycle-report.py --check` fails when:
 
 - `LIFECYCLE.md` or `lifecycle.json` is out of date with respect to its sources
-- a stack directory carries no `UPSTREAM.md`
-- the rehearsal log names a stack that does not exist
+- the rehearsal log, an exception in `.trivy-baseline.json` or
+  `upstream-status.json` names a stack that does not exist
+
+A stack without `UPSTREAM.md` is reported by `check-structure.py` (`missing-file`).
 
 It also fails when a findings block in a stack README differs from
 `upstream-status.json`, and when a stack has findings at its pin or a recorded

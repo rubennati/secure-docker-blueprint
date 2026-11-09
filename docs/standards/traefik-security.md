@@ -29,7 +29,7 @@ service
 The numbers name the positions (D2, 2026-10-18) and stay; the **order on the router** puts
 the headers position first since 2026-11-04. A middleware sets its response headers only on
 what passes through it: behind the access position, a refusal (403), a rate-limit answer
-(429) and a gate's redirect left without HSTS (final audit of the lab host, FA-13). The
+(429) and a gate's redirect left without HSTS (FA-13). The
 first middleware is the outermost; on a header two of them set, the outer one wins — so a
 block that must win over the profile still stands before it, and the profile cannot move to
 the entrypoint, where it would override `hsts-include-subdomains` (both measured

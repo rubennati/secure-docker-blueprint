@@ -47,7 +47,7 @@ Four models describe documentation in this repository, each answering one questi
 | AI entry point and rule precedence | `AGENTS.md` | `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/00-project.mdc` — pointers only, never a rule of their own |
 | Working context for AI sessions | `.ai/` | Mirrors the owners above in condensed form; `.ai/domains/*.md` restate `docs/standards/` and lose to them on any disagreement |
 
-**Category README structure rule**: tables list existing stacks and their status. Planned candidates are listed separately. Status definitions and evidence follow [`standards/status-model.md`](standards/status-model.md).
+**Category README structure rule**: tables list existing stacks; planned candidates are listed separately. A category README carries no per-stack status: the facts per stack are in `LIFECYCLE.md`, owned as [`standards/status-model.md`](standards/status-model.md) states.
 
 **The root README is an entry point, not an inventory.** All five categories carry their own README with the stacks in that category; the root links to them and to `LIFECYCLE.md`, and does not reproduce either. A status claim in the root README would be a third copy of a fact the stack already owns and the generator already presents. Everything derived from these owners is regenerated, not retyped:
 
@@ -89,7 +89,7 @@ shows.
 1. Image tag pinned — no `latest`, no major-only tags (e.g. `8`, `v2`)
 2. Healthcheck present and verified working
 3. Security baseline met — `no-new-privileges`, network isolation, secrets via Docker Secrets or `_FILE` pattern
-4. No hardcoded values — everything configurable via `.env`
+4. No hardcoded values — everything configurable via `.env`; every route ships closed (`access-vpn`) with a stated auth posture, and an environment secret ships empty and is required in compose (`public-default`, `auth-posture`, `placeholder-secret`)
 
 **Tested**
 5. Clean install on a fresh environment completed
@@ -173,10 +173,9 @@ not an evaluation of this repository.
 | Step | File | Action |
 |---|---|---|
 | 1 | `docs/standards/<changed-file>` | Update the standard itself |
-| 2 | All Ready apps (`✅`) | Check compliance with the updated standard |
-| 3 | All Preview apps (`🚧`) | Note any drift — fix before next verification pass |
-| 4 | `CHANGELOG.md` | Standard change documented |
-| 5 | `docs/maintenance-log.md` | which apps were checked, which have open drift |
+| 2 | Every stack | Check compliance with the updated standard; fix the drift, or note it in the stack's README or `UPSTREAM.md` until the next run on a host |
+| 3 | `CHANGELOG.md` | Standard change documented |
+| 4 | `docs/maintenance-log.md` | which apps were checked, which have open drift |
 
 ---
 
@@ -186,7 +185,7 @@ not an evaluation of this repository.
 
 | Step | File | Action |
 |---|---|---|
-| 1 | All category READMEs | Every directory has a row; every `🚧` entry has files on disk |
+| 1 | All category READMEs | Every stack directory has a row; every planned entry is listed apart from the stacks |
 | 2 | Root `README.md` | Overview and links agree with category listings; the root does not duplicate inventories |
 | 3 | All `.env.example` | No real hostnames or vendor values as defaults — `example.com` or empty |
 | 4 | All `docker-compose.yml` + scripts | Unresolved placeholders do not reach deployed configuration; documented template sentinels remain valid |
@@ -205,7 +204,7 @@ Run the full Consistency Chain first, then:
 | Step | File | Action |
 |---|---|---|
 | 1 | `CHANGELOG.md` | Move `[Unreleased]` to `[X.Y.Z]` heading; update comparison links |
-| 2 | `ROADMAP.md` | Move shipped milestone to Shipped section; update "Last updated" date |
+| 2 | `ROADMAP.md` | Remove shipped items from the open lists; shipped work is in `CHANGELOG.md` |
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
 | 4 | `upstream-status.json` | Run the image scan by `workflow_dispatch` on `dev`, copy `upstream-status.json` from its `stack-status` artifact to the repository root and run `python3 scripts/ci/lifecycle-report.py --write`. The release then carries the pins, upstream releases and findings as of its own date |
 | 5 | `LIFECYCLE.md` | Read the stacks whose pin moved since their last test: is any likely broken by a dependency update? |

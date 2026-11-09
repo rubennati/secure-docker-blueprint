@@ -49,6 +49,21 @@ class ResourceLimits(unittest.TestCase):
         self.assertFalse(sc._has_limits({}))
 
 
+class Sentinels(unittest.TestCase):
+    def test_a_value_counts(self):
+        self.assertEqual(sc._sentinels_in("EDGE_ID=__REPLACE_ME__\n"), 1)
+
+    def test_a_comment_naming_it_does_not(self):
+        text = "# this ships empty rather than as __REPLACE_ME__\nDB_PASSWORD=\n"
+        self.assertEqual(sc._sentinels_in(text), 0)
+
+    def test_an_inline_comment_does_not(self):
+        self.assertEqual(sc._sentinels_in("APP_PORT=8080  # not __REPLACE_ME__\n"), 0)
+
+    def test_indented_assignment_counts(self):
+        self.assertEqual(sc._sentinels_in("  OIDC_CLIENT_ID=__REPLACE_ME__\n"), 1)
+
+
 class Exceptions(unittest.TestCase):
     def test_counts_services_not_files(self):
         table = {"a/b": {"one": {}, "two": {}}, "c/d": {"three": {}}}

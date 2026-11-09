@@ -62,11 +62,11 @@ Surveyed from every production `docker-compose.yml`/`.env.example` in
 | Pattern | Stacks | Restore mechanic |
 |---|---|---|
 | File-based only (bind mount or named volume, no database) | ~23 stacks — e.g. `core/traefik`, `core/portainer`, most single-container apps | Plain file restore |
-| PostgreSQL | ~15 stacks — `core/authentik`, `core/keycloak`, `core/infisical`, `apps/immich`, `apps/paperless-ngx`, `business/openproject`, `business/vikunja`, and others | Logical dump restore |
-| MariaDB / MySQL | ~15 stacks — `apps/nextcloud`, `apps/seafile`, `apps/wordpress`, `business/dolibarr`, `business/invoiceninja`, and others | Logical dump restore |
+| PostgreSQL | about 35 stacks — `core/authentik`, `core/keycloak`, `core/infisical`, `apps/immich`, `apps/paperless-ngx`, `business/openproject`, `business/vikunja`, and others | Logical dump restore |
+| MariaDB / MySQL | about 20 stacks — `apps/nextcloud`, `apps/seafile`, `apps/wordpress`, `business/dolibarr`, `business/invoiceninja`, and others | Logical dump restore |
 | SQLite, dump-hook-backed | `apps/n8n`, `apps/nocodb`, `monitoring/gatus`, `monitoring/healthchecks`, `monitoring/uptime-kuma`, `monitoring/beszel` | Logical dump restore |
 | SQLite, file-only (no dump hook, by the stack's own documented choice) | `monitoring/ntfy`, `apps/heimdall`, `apps/homarr` | Plain file restore, stopped first |
-| MongoDB | `apps/unifi`, `business/opensign` | Logical dump restore |
+| MongoDB | `apps/heyform`, `apps/unifi`, `business/opensign`, `monitoring/checkmate` | Logical dump restore |
 
 **Redis is not a pattern here.** It appears in roughly a dozen `.env.example`
 files, but every stack that documents its role names it cache, session or
@@ -150,7 +150,7 @@ step 1/verification command:
 
 | Engine | Safety-copy / verify command |
 |---|---|
-| PostgreSQL | `pg_dump -U <user> <db>` (inside the container, so the server's own client; borgmatic's restore uses the host client of the same major — `backup/borgmatic/README.md`, "PostgreSQL: the client's major version is the server's"; interim while FA-03 is open) |
+| PostgreSQL | `pg_dump -U <user> <db>` (inside the container, so the server's own client; borgmatic dumps and restores the same way, through `docker exec` — `backup/borgmatic/README.md`, "PostgreSQL: the server's own client, through `docker exec`") |
 | MariaDB / MySQL | `mariadb-dump -u<user> -p<pass> <db>` (one client covers both engines, per `config.yaml.example`) |
 | SQLite | `sqlite3 <path> .dump` |
 | MongoDB | `mongodump --uri <uri>` |

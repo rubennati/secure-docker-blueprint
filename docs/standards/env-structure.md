@@ -159,7 +159,9 @@ DB_NAME=wordpress
 DB_USER=wp_user
 ```
 
-Passwords are never here — they go in `.secrets/`.
+Passwords go in `.secrets/` by default. A password the container can only read from
+the environment (Security Baseline, Pattern 3) ships empty in its section, with the
+command that generates it above it — see the rules below.
 
 **App Configuration** — app-specific settings:
 
@@ -180,7 +182,8 @@ VW_SMTP_SECURITY=starttls
 VW_SMTP_USERNAME=
 ```
 
-SMTP passwords go in `.secrets/`, not here.
+An SMTP password goes in `.secrets/` where the image reads it from a file; otherwise
+it ships empty here (`VW_SMTP_PASSWORD=`), as an optional value without a guard.
 
 **Timezone** — near the end, rarely changes:
 
@@ -200,7 +203,7 @@ TZ=UTC
 #   openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 ```
 
-This section has no actual variables — only comments that document which secrets to create.
+This section has no variables — only comments that document which secret files to create.
 For which generation command to use per secret type, how to store the result, and how to rotate it later, see [Secrets](secrets.md) — this file only defines where the comment block goes.
 
 ## Rules
@@ -209,7 +212,12 @@ For which generation command to use per secret type, how to store the result, an
 - **Use real defaults** where sensible (port numbers, log levels, timezones).
 - **Group related vars** within their section — database vars together, SMTP vars together.
 - **Comment non-obvious values** — explain what a setting does if the name isn't self-explanatory.
-- **No secrets in .env.example** — not even example values for passwords.
+- **No secret values in .env.example** — not even example values for passwords.
+- **A secret read from the environment ships empty**, with its generating command
+  above the line, and the compose file requires it with `${VAR:?Set VAR in .env}`:
+  `docker compose` stops and names the variable. An optional one (an SMTP password,
+  an admin token that keeps a panel off while empty) stays empty without the guard.
+  Never `__REPLACE_ME__` — `check-structure.py` fails it (`placeholder-secret`).
 - **Secrets section documents `openssl` generation commands** — so the user knows exactly what to create.
 - **Always strip newlines** in secret generation: `| tr -d '\n'`
 
