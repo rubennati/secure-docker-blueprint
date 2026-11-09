@@ -8,9 +8,17 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Added
+
+- **Own stacks in `custom/`** (`docs/standards/deployment-lifecycle.md` §11, `scripts/stacks.sh`, `scripts/overview.sh`, [DEC-082](.ai/decisions.md#dec-082)). An application from a private repository runs on the host in `custom/<name>`, a checkout of its own repository read through a deploy key, behind the same Traefik, CrowdSec and Authentik. It meets the same standards as a Blueprint stack and names the release it follows in its README (`**Blueprint:** vX.Y.Z`). `stacks.sh status` lists own stacks, `stacks.sh update` names the Migration notes each has to follow, and neither checks them out or removes them; a line under `custom/` in `stacks` is refused with the reason. `overview.sh` shows them in the service table and the router survey.
+
 ### Changed
 
 - **The image scan runs weekly and by hand** (`.github/workflows/trivy.yml`, [DEC-081](.ai/decisions.md#dec-081)). A pull request into `main` and the push after its merge run the IaC config scan, which takes seconds and is the required Trivy check on `main`; the image CVE scan and the stack status run on the weekly schedule and when started by hand, as a pin move and a release already are. A finding blocks nothing, so a scan on the pull request and again after the merge repeated that run on the same tree, about 25 minutes each.
+
+### Fixed
+
+- **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
