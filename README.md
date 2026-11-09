@@ -36,7 +36,7 @@ records deviations from the baseline in its own documentation.
 [AppSec component](core/crowdsec/docs/appsec.md) is opt-in and ships without the
 OWASP Core Rule Set.
 
-Quick Navigation: [Stacks](#stacks) · [Getting started](#getting-started) · [Overview](#how-the-pieces-fit) · [Repository layout](#repository-layout)
+Quick Navigation: [Stacks](#stacks) · [Try a stack](#try-a-stack-on-your-machine) · [New host](#set-up-a-new-host) · [Add or update](#add-a-stack-to-a-host) · [Documentation](#documentation)
 
 ## Stacks
 
@@ -84,6 +84,24 @@ itself is [the application contract](docs/architecture.md#the-application-contra
 
 ## Getting started
 
+Four ways in, depending on what you want to do.
+
+### Try a stack on your machine
+
+Most stacks ship a local variant: localhost, no Traefik, no domain, none of the
+protection around it. It shows the application, not how it runs on a host.
+
+```bash
+git clone https://github.com/rubennati/secure-docker-blueprint.git
+cd secure-docker-blueprint/apps/vaultwarden
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+The stack's README, section *Try it locally*, gives the URL and any first-login step.
+
+### Set up a new host
+
 Install Traefik before the application stacks that use its HTTPS routing.
 Each stack is then installed from its own README. Services with additional
 protocols, such as [mail](apps/docker-mailserver/README.md#architecture), may
@@ -121,11 +139,7 @@ cd core/traefik
 cp .env.example .env
 ```
 
-`stacks` starts with Traefik, CrowdSec and the `whoami` test target; add or remove lines
-and apply again. Apply refuses to remove a stack that still has `.env` or data, because
-Git would delete them with the directory. `scripts/stacks.sh update <tag>` previews a
-release for just these stacks before taking it — see
-[stacks on a host](docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks).
+`stacks` starts with Traefik, CrowdSec and the `whoami` test target.
 
 Deploy from a tag rather than the default branch: `main` is where work lands between
 releases, and the combination of stacks on it at any moment is not one anybody has
@@ -146,6 +160,23 @@ its own README — for example [Vaultwarden](apps/vaultwarden/README.md) or
 Run `./scripts/overview.sh` **from the repository root** to list what is configured
 and running.
 
+### Add a stack to a host
+
+Add its path to `stacks`, run `scripts/stacks.sh apply`, then follow the stack's
+README. Removing a line and applying again removes the stack; apply refuses while the
+stack still has `.env` or data, because Git would delete them with the directory.
+
+### Update a host
+
+```bash
+scripts/stacks.sh update <tag>
+```
+
+shows what a release changes for exactly the stacks on this host, and takes it only
+after you confirm. Moving one stack to a newer upstream image within a release is a
+separate step — both are in the
+[deployment lifecycle](docs/standards/deployment-lifecycle.md#7--update-the-blueprint).
+
 ## Repository layout
 
 ```text
@@ -161,8 +192,9 @@ site/         SecDockBlue source
 ```
 
 Compose-based stacks normally contain `docker-compose.yml`, `.env.example`, a
-`README.md` with setup instructions, and an `UPSTREAM.md` recording image pins,
-upgrade notes and verification. [`apps/_reference/`](apps/_reference/) provides
+`README.md` with setup instructions, an `UPSTREAM.md` recording image pins,
+upgrade notes and verification, and most a local variant
+(`docker-compose.local.yml`, `.env.local.example`). [`apps/_reference/`](apps/_reference/) provides
 the application template. Host-installed components such as
 [Borgmatic](backup/borgmatic/) and the optional [Host Watchdog](core/host-watchdog/)
 have their own installation layout.
@@ -192,21 +224,25 @@ shows what upstream has published since.
 
 ## Documentation
 
-| | |
+| Using the blueprint | |
 |---|---|
 | Every stack, by category | [core/](core/) · [apps/](apps/) · [business/](business/) · [monitoring/](monitoring/) · [backup/](backup/) |
 | Pin, upstream, findings and last test per stack | [LIFECYCLE.md](LIFECYCLE.md) |
+| Deploy, update, roll back a host | [deployment lifecycle](docs/standards/deployment-lifecycle.md) |
+| Symptom-to-cause troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Applications you build yourself | [development/](development/) (patterns) · [docs/standards/custom-application.md](docs/standards/custom-application.md) (rules) |
+| Guided operator documentation | [SecDockBlue](https://secdockblue.rubennati.at) |
+| Release history | [CHANGELOG.md](CHANGELOG.md) |
+
+| Developing the blueprint | |
+|---|---|
 | Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
 | What a stack may assume and must provide | [application contract](docs/architecture.md#the-application-contract) |
 | Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |
-| Applications you build yourself | [development/](development/) (patterns) · [docs/standards/custom-application.md](docs/standards/custom-application.md) (rules) |
-| Symptom-to-cause troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
 | Adding a stack, contributing | [CONTRIBUTING.md](CONTRIBUTING.md) · [new-app checklist](docs/standards/new-app-checklist.md) |
 | Reporting a vulnerability | [SECURITY.md](SECURITY.md) |
 | Repository maintenance process | [docs/maintenance.md](docs/maintenance.md) |
 | Planned work and what is out of scope | [ROADMAP.md](ROADMAP.md) |
-| Release history | [CHANGELOG.md](CHANGELOG.md) |
-| Guided operator documentation | [SecDockBlue](https://secdockblue.rubennati.at) |
 
 ## License
 
