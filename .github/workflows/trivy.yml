@@ -8,7 +8,7 @@ name: Trivy
 #      the job's own summary page carries the concise index. Trivy's own exit code
 #      stays 0, and so does the report step for a CRITICAL absent from
 #      .trivy-baseline.json: a finding in an upstream image is reported, never
-#      blocking (DEC-079) — see docs/security-verification.md.
+#      blocking (DEC-079) — see docs/standards/ci.md.
 #   3. Stack status — on the weekly, push and manual runs on main: per stack the
 #      pinned tag, the newest upstream tag in the same shape, both release dates,
 #      whether upstream is archived or quiet, and the findings of this scan

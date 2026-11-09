@@ -6,9 +6,12 @@ the values themselves and the rule that derives them are owned by
 
 Every service carries a `memory` and a `pids` ceiling, so nothing is unbounded —
 `python3 scripts/ci/check-structure.py` reports any service that loses one. What
-v0.10.0 closes is their basis: the ceilings in place come from the derivation rule,
-and the `cpus` values that remain are marked in the compose files as derived rather
-than measured.
+v0.10.0 closes is their basis: most ceilings come from the derivation rule; 21
+services carry twice a peak taken at a cold start, each with a comment naming it
+([peaks per service](labs/stack-refresh/2026-11-08-results.md#resource-peaks)); and
+the `cpus` values that remain are marked in the compose files as derived rather than
+measured. A cold-start peak is not a peak under load, so it raises a limit and never
+lowers one.
 
 ## Why this is not a desk task
 
@@ -203,7 +206,7 @@ Per service, in the same change set as the limit itself:
 - The peak that was measured, and under which load state
 - Anything that landed in a different profile than expected
 
-`docs/maintenance-log.md` carries the session-level summary. A limit
+`docs/maintenance-log.md` carries the summary of each measurement round. A limit
 committed without a note of what it was measured against is indistinguishable
 from a guessed one six months later — which is the failure this whole procedure
 exists to avoid.

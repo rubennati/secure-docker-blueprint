@@ -119,7 +119,7 @@ contract](documentation-workflow.md#section-contracts) decides.
 ## Audience per file
 
 The status model already assigns [one owner per
-fact](status-model.md#who-owns-what). This assigns one reader per file.
+fact](status-model.md#who-owns-which-fact). This assigns one reader per file.
 
 | File class | Reader | Never contains |
 |---|---|---|
@@ -136,15 +136,12 @@ asks for: answer the common case on the page, send the rest onward. The
 distinction is body versus appendix — a customer must be able to finish the task
 on the page, and follow a link only to go further.
 
-### The rule that was broken
+### Example
 
-`status-model.md` states that internal status *"lives in `LIFECYCLE.md`, never in
-the README tables"*. The root README nevertheless carried a dated note
-explaining that seventeen stacks were downgraded because their verification
-predated a record format.
-
-That note is correct, and it belongs in `CHANGELOG.md`. A reader on the GitHub
-landing page has no record format.
+A note that some stacks show an older test date because their record predates a
+format belongs in `CHANGELOG.md`, not in the root README: per-stack facts live in
+`LIFECYCLE.md` ([status model](status-model.md#who-owns-which-fact)), and a reader
+on the GitHub landing page has no record format.
 
 ---
 

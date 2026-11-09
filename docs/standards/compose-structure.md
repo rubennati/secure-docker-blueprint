@@ -106,7 +106,9 @@ Derive it, in this order:
    container: "512 MB per PHP process" and "1 GB RAM, 2 GB recommended" describe
    the whole deployment. They belong in a README's requirements section.
 
-Then leave roughly half again on top.
+Then add headroom; how much depends on the role, in the table below. A measured
+application peak gets twice its value: a peak taken at a cold start is not one
+under load.
 
 `pids` bounds a fork bomb and costs nothing to set. **CPU limits are not applied by
 default** — they make a stack slow under load rather than safe,
@@ -178,7 +180,7 @@ A value carrying neither justification is removed rather than kept.
 | Web server | `128M` | measured single-digit MB, generous ceiling |
 | Cache | configured `maxmemory` + ~50% | its own budget |
 | Database | configured buffer pool + ~100% | its own budget plus connections |
-| Application | measured peak + ~50% | workers × measured RSS, or the renderer's peak |
+| Application | measured peak × 2 | workers × measured RSS, or the renderer's peak |
 
 Put `pids` inside `deploy.resources.limits` — a top-level `pids_limit` alongside
 `deploy.resources` is rejected by Compose. Use `deploy:` rather than the top-level
@@ -203,7 +205,7 @@ Confirming the second is a separate procedure, in
 **Configuration** (required)
 
 - `entrypoint:` — only when the image doesn't support `_FILE` env vars. The custom entrypoint reads secrets and exports them as env vars. See [Security Baseline](security-baseline.md) for patterns.
-- `environment:` — explicit map format (key: value). Never use `env_file:`. Never put passwords or tokens here — use secrets.
+- `environment:` — explicit map format (key: value). Never use `env_file:`. Never put passwords or tokens here — use secrets; a documented environment exception follows [Security Baseline, Pattern 3](security-baseline.md#pattern-3-documented-environment-exception) and requires the value with `${VAR:?Set VAR in .env}`.
 - `secrets:` — list of secret names the service needs.
 
 **Storage** (required when app has persistent data)

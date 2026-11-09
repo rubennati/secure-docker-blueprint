@@ -77,10 +77,10 @@ start, because nothing inside the container can change it any more.
 | `redis`, `valkey` (official) | the same five | `user: "999:1000"` on Alpine, `"999:999"` on Debian; no capability | yes, tmpfs on `/tmp` | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40); IDs from the upstream Dockerfiles |
 | `nginx` (official) | `CHOWN`, `SETGID`, `SETUID` | — | with tmpfs on the cache, run and tmp paths | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
 | `nginxinc/nginx-unprivileged` | — | already; no capability | yes | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
-| `mariadb` | `SETGID`, `SETUID`; `DAC_OVERRIDE` as well where the entrypoint reads the operator's mode-600 password files (`apps/nextcloud`) | — | not established | measured on the stack-refresh lab host (2026-11-09): the image's own volume and `apps/nextcloud`'s named volume, first start and `down`/`up`; a bind-mounted data directory owned by another user was not measured |
-| `mysql` (official) | `DAC_OVERRIDE`, `SETGID`, `SETUID` | — | not established | measured on the stack-refresh lab host: the image's own volume and `business/invoiceninja`, first start and `down`/`up` |
-| `mongo` (official) | `CHOWN`, `DAC_READ_SEARCH`, `SETGID`, `SETUID` with a bind-mounted data directory — `CHOWN` takes it over on the first start, `DAC_READ_SEARCH` lets the entrypoint search it on every later one (an entry in `CAP_ADD_EXCEPTIONS`); `SETGID`, `SETUID` alone in the image's own volume | — | not established | measured on the stack-refresh lab host: `apps/unifi`, `business/opensign`, first start and two `down`/`up` |
-| `memcached` (official) | none — the image starts as its own user | already | not established | measured on the stack-refresh lab host: `business/openproject`, `business/zammad` |
+| `mariadb` | `SETGID`, `SETUID`; `DAC_OVERRIDE` as well where the entrypoint reads the operator's mode-600 password files (`apps/nextcloud`) | — | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): the image's own volume and `apps/nextcloud`'s named volume, first start and `down`/`up`; a bind-mounted data directory owned by another user is not covered |
+| `mysql` (official) | `DAC_OVERRIDE`, `SETGID`, `SETUID` | — | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): the image's own volume and `business/invoiceninja`, first start and `down`/`up` |
+| `mongo` (official) | `CHOWN`, `DAC_READ_SEARCH`, `SETGID`, `SETUID` with a bind-mounted data directory — `CHOWN` takes it over on the first start, `DAC_READ_SEARCH` lets the entrypoint search it on every later one; `SETGID`, `SETUID` alone in the image's own volume | — | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): `apps/unifi`, `business/opensign`, first start and two `down`/`up` |
+| `memcached` (official) | none — the image starts as its own user | already | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): `business/openproject`, `business/zammad` |
 | linuxserver.io and other s6-overlay images | not established | never `user:`, see below | — | — |
 
 A Redis that reads its password from a secret through `sh` before handing over to
@@ -241,7 +241,10 @@ Some stacks still pass a secret through Compose environment interpolation, for
 example credentials embedded in a JSON object or connection string where no
 file-based delivery or assembly wrapper is implemented. Keep the value in the
 stack's gitignored `.env`, never in `.env.example` or a committed Compose file,
-and record the reason in `UPSTREAM.md`. Gitignore prevents accidental commits;
+and record the reason in `UPSTREAM.md`. `.env.example` ships the variable empty,
+and the compose file requires it with `${VAR:?Set VAR in .env}`, so a forgotten
+value stops `docker compose` instead of starting the application with a
+placeholder; `__REPLACE_ME__` fails `check-structure.py` (`placeholder-secret`). Gitignore prevents accidental commits;
 it does not hide the resolved value from Docker container inspection. This is an
 accepted limitation, not the same isolation as Patterns 1 and 2.
 
@@ -260,7 +263,7 @@ volumes:
 ```yaml
 # CORRECT
 socket-proxy:
-  image: tecnativa/docker-socket-proxy:v0.4.2
+  image: tecnativa/docker-socket-proxy:v0.5.0
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
   environment:

@@ -7,10 +7,12 @@ This page is general host hardening: the Docker-specific prerequisites are in
 the ingress layers in [`docs/architecture.md`](architecture.md), "Ingress paths, profiles
 and trust boundaries".
 
-It is derived from one host — the lab host, a rented virtual machine with a public
-IPv4 and IPv6 address, Debian 13, Docker Engine 29, Tailscale on the host — and from what
-was measured there ([`docs/labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md),
-[`docs/host-verification-ingress.md`](host-verification-ingress.md)). A measurement on one
+It is derived from two tested hosts. The table below is the dual-stack one: a rented
+virtual machine with a public IPv4 and IPv6 address, Debian 13, Docker Engine 29,
+Tailscale on the host ([`docs/labs/ingress/2026-11-01-results.md`](labs/ingress/2026-11-01-results.md),
+[`docs/host-verification-ingress.md`](host-verification-ingress.md)). Every stack ran on
+the second, a Debian 13 virtual machine on an IPv4 LAN set up from an empty install
+([`docs/labs/stack-refresh/2026-11-08-results.md`](labs/stack-refresh/2026-11-08-results.md#setting-up-a-new-host)). A measurement on one
 host is evidence for that shape, not a guarantee for another. Names below are roles:
 `<public-if>` is the public interface, `<admin>` the administrative account,
 `<break-glass>` the console-only account, `<tailnet-v4>`/`<tailnet-v6>` the host's
@@ -21,12 +23,12 @@ tailnet addresses.
 State: **configured** (set up, not exercised on purpose), **tested** (exercised, result
 recorded), **not tested**, **open** (a known gap).
 
-| Area | What the lab host had | State |
+| Area | Tested configuration | State |
 |---|---|---|
 | System | Debian 13, cloud kernel, updated to the current point release; one reboot for a kernel update | tested (two reboots, a third with the `nftables.service` drop-in: T8) |
 | Updates | `unattended-upgrades` for security updates, automatic reboot off — a kernel update waits for a planned reboot | configured |
 | Time, journal, swap | `systemd-timesyncd` synchronised; journald persistent, capped at 200 MB; swap with a low `swappiness` | configured |
-| Docker | Docker Engine 29 with Compose 5 — the lab host's versions; the minimum is Engine 28.0 with Compose 2.33.1 ([`deployment-lifecycle.md`](standards/deployment-lifecycle.md) §1) — `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`) | tested |
+| Docker | Docker Engine 29 with Compose 5 — the tested versions; the minimum is Engine 28.0 with Compose 2.33.1 ([`deployment-lifecycle.md`](standards/deployment-lifecycle.md) §1) — `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`) | tested |
 | Accounts | `<admin>`: key only, `sudo`; `<break-glass>`: password, no key, denied by sshd, for the provider console only; `root` locked | tested (console login, M1/M2) |
 | SSH | keys only (`AuthenticationMethods publickey`), root login off, `MaxAuthTries 3`, `LoginGraceTime 30`, no X11 or agent forwarding; TCP forwarding left on | tested |
 | Network | static public IPv4 and IPv6 from the provider, `accept_ra 0` on `<public-if>`; IPv4/IPv6 forwarding on (Docker); reverse-path filter loose on `<public-if>` | configured |
@@ -130,7 +132,7 @@ Each point names what it is for, what it depends on, and how to check it.
     (`net.ipv4.ip_forward=1`, IPv6 forwarding) stays as Docker sets it. In one file under
     `/etc/sysctl.d/`, loaded with `sysctl --system`. Check: `sysctl` of each name; a
     container still reaches the outside and a published port still answers.
-    (FA-18; measured at the Debian 13 defaults on the lab host: `1`, `1`, `0`, `0`.)
+    (FA-18; the Debian 13 defaults are `1`, `1`, `0`, `0`.)
 13. **SSH with the current algorithm set only.** OpenSSH 10's defaults still offer
     SHA-1 and 64-bit-tag MACs, encrypt-and-MAC modes and NIST curves:
 
@@ -144,15 +146,14 @@ Each point names what it is for, what it depends on, and how to check it.
     exchange. Before the reload, check every client with `ssh -Q kex` and `ssh -Q mac`,
     and keep a session open: `sshd -t`, `systemctl reload ssh`, then a **new** connection.
     Check: `ssh-audit` shows no `fail`; `sshd -T | grep -E '^(kexalgorithms|macs) '`.
-    (FA-17; the set above parsed by `sshd -T` on OpenSSH 10.0p2, not applied on the lab
-    host.)
+    (FA-17; the set above parses with `sshd -T` on OpenSSH 10.0p2.)
 14. **No key for `root` that nobody uses.** A provider's provisioning key stays in
     `/root/.ssh/authorized_keys` after the image boots. With `PermitRootLogin no` it is
     inert, but one configuration mistake away from a way in. Remove it once the
     administrative account works. Check: `/root/.ssh/authorized_keys` is empty or absent.
     (FA-19.)
 15. **Watch the SSH daemon's own advisories.** A Critical in `openssh-server` without a
-    distribution fix (FA-10 on the lab host) is mitigated by MUST 1–3: SSH answers the
+    distribution fix (FA-10) is mitigated by MUST 1–3: SSH answers the
     VPN only. Check: `apt list --upgradable`; the ruleset still refuses 22/tcp from outside.
 
 ### OPTIONAL — by threat model and deployment
@@ -160,15 +161,15 @@ Each point names what it is for, what it depends on, and how to check it.
 - **CrowdSec's firewall bouncer** on the host, for ports the reverse proxy never handles
   (`core/crowdsec/docs/firewall-bouncer.md`); its set must never reach the management path.
 - **A proxy in front of the origin** (Cloudflare, `proxied` profile) with the origin
-  restricted to the proxy's ranges — tested on the lab host (X4, 2026-11-04,
+  restricted to the proxy's ranges — tested (X4, 2026-11-04,
   `docs/architecture.md`); the profile applies to the whole installation.
 - **UDP 41641 admitted in the provider filter**, for direct tailnet connections instead
   of a relay.
-- **Monitoring and alerting** for the host and the containers; the lab host had none.
+- **Monitoring and alerting** for the host and the containers.
 - **Kernel and sysctl hardening** beyond SHOULD 12 (Lynis' list: auditd rules, file
   integrity, a GRUB password), measured against Docker's need for forwarding.
 
-## Lessons from the lab host
+## Lessons from the tested hosts
 
 - A rule that looks right in a file is not proof: every point above was accepted only
   after a measurement from outside the host. A request from the host to itself proves
@@ -182,13 +183,13 @@ Each point names what it is for, what it depends on, and how to check it.
 
 ## Open
 
-- SHOULD 11–15 were added after the final audit of the lab host and were **not applied
-  there** (decision of 2026-11-04: documentation only); their measurements are the audit's
-  readings, not a hardened host.
-
-- Log rotation for the reverse proxy and monitoring were not set up on the lab host.
-- Backups ran into a throwaway repository on the same host; an off-host target was not
-  tested.
-- The IPv4 tailnet anti-spoofing drop (added 2026-11-04) was measured on the lab host
-  with a forged source from a container; the operator's own clients confirm that the
-  tailnet path still works (regression of 2026-11-04).
+- SHOULD 11–15 are documentation: no tested host carries them, and their values are the
+  final audit's readings (decision of 2026-11-04).
+- Log rotation for the reverse proxy and host monitoring are outside the tested
+  configuration.
+- A backup to an off-host target is outside the tested configuration; the tested
+  repository was on the same host.
+- Docker's default address pools include `192.168.0.0/16`, which can overlap a LAN; set
+  the pools before the first network (SHOULD 5).
+- The IPv4 tailnet anti-spoofing drop refuses a forged source from a container, and the
+  tailnet path still works for real clients (2026-11-04).

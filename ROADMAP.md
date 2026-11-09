@@ -5,10 +5,9 @@ Planning overview. See [current evidence and shipped work](#current-evidence-and
 What remains to be built, what blocks it, and what proves it finished. Shipped
 work belongs to [`CHANGELOG.md`](CHANGELOG.md), per-stack status to the generated
 [`LIFECYCLE.md`](LIFECYCLE.md), and per-category detail to the `README.md` in each
-top-level directory. What the stabilization programme established, and what is
-still open with the evidence behind it, is in
-[`docs/v1-readiness-audit.md`](docs/v1-readiness-audit.md); actionable work is in
-GitHub Issues. This file holds direction only.
+top-level directory. The stabilization programme's findings register is the record
+[`docs/v1-readiness-audit.md`](docs/v1-readiness-audit.md); open work is below and
+in GitHub Issues. This file holds direction only.
 
 ---
 
@@ -31,12 +30,11 @@ products with separate structures, and v1.0 is the one checkpoint they share.
 
 Open in this repository:
 
-- **A host run for every stack that can have one.** Each stack has run at least
-  once on a clean install, with the date in its `UPSTREAM.md`. Where something
-  particular stands in the way — a GPU, port 25 and public DNS, an archived
-  upstream — its `UPSTREAM.md` names it instead. [`LIFECYCLE.md`](LIFECYCLE.md)
-  shows which stacks have a date. A date comes only from a host session, so this
-  is measured there, not in editing ([DEC-080](.ai/decisions.md#dec-080)).
+- **A host run for every stack that can have one** — in place: 120 of the 121
+  stacks carry a test date on a clean install in their `UPSTREAM.md`, and
+  `apps/vllm` names what it needs, an NVIDIA GPU ([`LIFECYCLE.md`](LIFECYCLE.md),
+  [DEC-080](.ai/decisions.md#dec-080)). What stays is keeping the dates current as
+  pins move.
 - **Traefik middlewares, checked against the applications on a host.** The
   names and the structure are settled by the middleware model of v0.9.5: four
   positions on every router, defined once. What is not established is how the
@@ -44,11 +42,11 @@ Open in this repository:
   set themselves, the `429` count of a first load under the bucket of 500, the
   TLS exceptions without a recorded reason. The list is section 5 of
   [`core/traefik/docs/middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md#5-not-verified-on-a-host);
-  it is measured in host sessions, not in editing.
+  each is a measurement on a host.
 - **Trusted proxies narrowed to the Traefik hop.** An application behind its own
   nginx has to trust the proxy that sets `X-Forwarded-For` and `X-Forwarded-Proto`,
-  and only that proxy. `business/invoiceninja` ships `TRUSTED_PROXIES` with the
-  ranges measured on the step 8 lab host — Docker's default pools — as an interim
+  and only that proxy. `business/invoiceninja` ships `TRUSTED_PROXIES` with
+  Docker's default address pools as an interim
   value, not a standard: it trusts every container Docker can address.
   `apps/nextcloud`'s `NC_TRUSTED_PROXIES` asks for the edge network's subnet, which
   Docker assigns per host and anew when the network is recreated. The target
@@ -86,8 +84,11 @@ Site work does not otherwise wait for a version — see
 
 Every production service carries a memory, PID and swap ceiling, and states a
 healthcheck or why it has none; `python3 scripts/ci/check-structure.py` fails on
-any that does not. What remains is the values: the ceilings in place are derived
-by rule, generously, and several compose files say so. Turning them into measured
+any that does not. What remains is the values: most ceilings are derived by rule,
+generously, and several compose files say so. 21 services carry twice a peak taken
+at a cold start, each with a comment naming it, and a peak per service is recorded
+in [`docs/labs/stack-refresh/2026-11-08-results.md`](docs/labs/stack-refresh/2026-11-08-results.md#resource-peaks);
+a peak under load is still the basis v0.10.0 needs. Turning them into measured
 values needs a running install per stack — the procedure is
 [`docs/resource-measurement.md`](docs/resource-measurement.md), the target values
 and the derivation rule are in
@@ -101,16 +102,11 @@ defined in the [status model](docs/standards/status-model.md).
 
 ## Continuous — not tied to a version
 
-**App testing runs in parallel to everything above.** When there is bandwidth,
-pick a stack without a test date, run the App Chain, record the date and the
-version that ran. This blocks and triggers no release.
-
-- Verified before the standards moved and worth a second run: Vaultwarden,
-  WordPress, Nextcloud, Seafile / Seafile Pro, Invoice Ninja.
-- Moved to a new major in a dependency sweep since their last run —
-  [`LIFECYCLE.md`](LIFECYCLE.md) shows the pin beside the version that last ran.
-- Never started on a host: UrBackup, `apps/vllm`, and the security-tooling,
-  PAM/bastion and secret-sharing stacks added in v0.9.1.
+**App testing runs in parallel to everything above.** A stack whose pin moved
+past the version that last ran gets the App Chain again, with the new date and
+version recorded; [`LIFECYCLE.md`](LIFECYCLE.md) shows the pin beside the version
+that ran. This blocks and triggers no release. `apps/vllm` needs a host with an
+NVIDIA GPU.
 
 **Cal.diY hardening** ([`apps/caldiy/docs/hardening-plan.md`](apps/caldiy/docs/hardening-plan.md))
 runs on its own track. Phase 0 and Phase 1 configuration has landed; the Phase 0
@@ -209,9 +205,9 @@ Concepts with no timeline, picked up app by app as they are re-verified:
 
 - **Per-stack facts:** [`LIFECYCLE.md`](LIFECYCLE.md) — the pin, the newest upstream
   release, the findings, the last test date.
-- **Shipped changes:** [`CHANGELOG.md`](CHANGELOG.md). The v0.9.7 record includes
-  the ingress host run and the later image updates; those updates moved many
-  stacks to pins newer than the version that last ran.
+- **Shipped changes:** [`CHANGELOG.md`](CHANGELOG.md). The newest entry covers the
+  stacks at their current pins: 32 pins moved, and 120 stacks carry a test date
+  on a host.
 - **Version-update history:** the [2026-10-31 inventory and batch plan](docs/audits/upstream-version-inventory-2026-10-31.md)
   describes the starting point. The later sweep is recorded in the v0.9.7
   changelog and each stack's `UPSTREAM.md`; the old batch table is not a current
@@ -226,7 +222,7 @@ Concepts with no timeline, picked up app by app as they are re-verified:
 **Historical decision, September 2026.** The candidate rounds were exceptions to
 the application hold, not a change to the v1.0 goals. The September 22 candidates
 were narrowed to open-source products, and sixteen stacks were added by September
-24, each initially `scaffolded`. The [September 21](docs/audits/candidate-evaluation-2026-09-21.md)
+24. The [September 21](docs/audits/candidate-evaluation-2026-09-21.md)
 and [September 22](docs/audits/candidate-evaluation-2026-09-22.md) evaluations
 retain the product-by-product evidence; the [decision record](.ai/decisions.md)
 explains the exceptions. Verification at current pins belongs to the backlog
@@ -257,8 +253,7 @@ Each category README owns its planned products: [apps](apps/README.md),
 **Historical decision, October 3, 2026.** [Stalwart](apps/stalwart/),
 [docker-mailserver](apps/docker-mailserver/) and
 [mailserver-jeboehm](apps/mailserver-jeboehm/) were added as a third exception to
-the hold, each initially `scaffolded`, with mail ports published through an opt-in
-overlay. The v1.0 requirements stayed the same.
+the hold, with mail ports published through an opt-in overlay. The v1.0 requirements stayed the same.
 
 At that evaluation Mailu met the selection requirements but was held until a
 release carried the recorded security fix. The

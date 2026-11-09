@@ -25,18 +25,18 @@ which version and when, whether a restore was performed — is in
 | App | Use case | Notes |
 |---|---|---|
 | [Akaunting](akaunting/) | Accounting — invoices, bills, bank accounts, reports | Business Source License: production use free up to two users, one company or one thousand invoices. Image lags the source by one minor release |
-| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | Credentials moved into Docker Secrets; not yet exercised on a host |
+| [Invoice Ninja](invoiceninja/) | Invoicing, billing, quotes, client portal | Credentials in Docker Secrets; restore rehearsed |
 | [Dolibarr](dolibarr/) | ERP / CRM — accounting, HR, inventory, projects | Migrated from `apps/dolibarr/` |
 | [ERPNext](erpnext/) | ERP — accounting, stock, buying, selling, manufacturing, projects, HR | Ten services from one image on the Frappe framework; `ops/create-site.sh` creates the site. Scheduled jobs start hours after setup (upstream time-zone behaviour) |
 | [FacturaScripts](facturascripts/) | Invoicing, accounting, inventory — extended through plugins | Updates run in the application: the image seeds the webroot, the in-app updater owns it afterwards. Cron service included |
 | [Kimai](kimai/) | Time tracking per project / customer | Integrates with Invoice Ninja via webhooks |
-| [SolidInvoice](solidinvoice/) | Invoicing — clients, quotes, recurring invoices, payments | One container with SQLite. **Setup not verified**: the web installer was not completed, and the command-line installer does not finish in 3.0.1 |
+| [SolidInvoice](solidinvoice/) | Invoicing — clients, quotes, recurring invoices, payments | One container with SQLite. Setup runs through the web installer at `/install`, which answers whoever reaches it first — complete it over the VPN |
 
 ### Marketing & analytics
 
 | App | Use case | Notes |
 |---|---|---|
-| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | Two-router pattern documented: admin VPN-only + subscriber paths public |
+| [Listmonk](listmonk/) | Newsletter, mailing lists, transactional mail | Ships closed; the README's access split opens the subscriber paths and keeps the admin interface on the VPN |
 | [Matomo](matomo/) | GDPR-compliant web analytics for company / customer sites | Migrated from `apps/matomo/` — primary use-case is the business website |
 | [Plausible CE](plausible/) | Cookie-free, consent-banner-free web analytics for your own sites | PostgreSQL + ClickHouse. The first account is created from the command line: until one exists, the sign-up form makes whoever completes it the owner. Dashboard and tracker want different access policies — the two-router split is documented |
 

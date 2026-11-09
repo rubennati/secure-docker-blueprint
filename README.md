@@ -117,8 +117,9 @@ ports and prerequisites.
 **Requirements:** Docker Engine 28.0+ with Compose 2.33.1+, a Linux host (tested on Debian 12/13),
 `envsubst` (`gettext-base`), and a domain whose DNS you control. The shipped DNS-01
 resolver uses Cloudflare; HTTP-01 and TLS-ALPN-01 work with other DNS providers.
-Most stacks start closed, reachable over the VPN only; those built to be reached from
-the internet, such as sign-in or link sharing, start public. A VPN is the recommended
+Every stack starts closed, reachable over the VPN only, except the few built to be
+reached from outside — share links, document servers, ntfy's push topics — which start
+public. A VPN is the recommended
 way in, and the shipped configuration uses Tailscale. Without one, admit your own
 networks through `TRUSTED_RANGES` and `access-trusted`; the Traefik dashboard then
 stays closed, and no setup step needs it.
