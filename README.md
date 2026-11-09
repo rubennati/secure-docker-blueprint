@@ -36,7 +36,7 @@ records deviations from the baseline in its own documentation.
 [AppSec component](core/crowdsec/docs/appsec.md) is opt-in and ships without the
 OWASP Core Rule Set.
 
-Quick Navigation: [Stacks](#stacks) · [Try a stack](#try-a-stack-on-your-machine) · [New host](#set-up-a-new-host) · [Add or update](#add-a-stack-to-a-host) · [Documentation](#documentation)
+Quick Navigation: [Stacks](#stacks) · [Try a stack](#try-a-stack-on-your-machine) · [New host](#set-up-a-new-host) · [Add or update](#add-a-stack-to-a-host) · [Status](#status) · [Documentation](#documentation)
 
 ## Stacks
 
