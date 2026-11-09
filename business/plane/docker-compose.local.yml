@@ -596,6 +596,7 @@ services:
       - "127.0.0.1:8080:80"
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 # --------------------------------------------------------
 # NETWORKS
 # --------------------------------------------------------
@@ -603,6 +604,12 @@ networks:
   app-internal:
     name: plane-local-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (measured on Docker 29: no host binding at all). Only
+  # plane-proxy joins it, for its port; the other services stay on app-internal.
+  published:
+    name: plane-local-published
 
 # --------------------------------------------------------
 # SECRETS

@@ -216,6 +216,7 @@ services:
       - "127.0.0.1:8080:8080"
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     # --- Health & Observability ---
     healthcheck:
@@ -232,6 +233,12 @@ networks:
   app-internal:
     name: zabbix-local-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (measured on Docker 29: no host binding at all). Only
+  # zabbix-web joins it, for its port; the other services stay on app-internal.
+  published:
+    name: zabbix-local-published
 
 # --------------------------------------------------------
 # SECRETS
