@@ -16,6 +16,13 @@ own, on a host address you set.) That single
 decision is what makes the rest of it manageable — one place for certificates,
 one place for access rules, one place to look when something is unreachable.
 
+## Only trying an application
+
+Most applications run on your own machine first, with Docker alone — no server,
+proxy, domain or certificate. Each guide's *Try it locally* section has the two
+commands and the address. That shows the application, not the protection around
+it; the path below is for a server.
+
 ## The path, in the order it has to happen
 
 The order is not a preference. Each step exists because the next one cannot be
@@ -63,6 +70,11 @@ docker network inspect <project>-edge --format '{{.Name}}'
 breaking changes, take a backup, then move the version tag. Each guide has an
 *Updates* section with the specifics — the database dumps and the order of
 operations differ per service.
+
+**Taking a new blueprint release.** `scripts/stacks.sh update <tag>` shows what
+the release changes for exactly the stacks on this server, and takes it only after
+you confirm — see the
+[deployment lifecycle](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/deployment-lifecycle.md#7--update-the-blueprint).
 
 **Something is broken.** Start at the layer rather than the application:
 [when something is broken](/operations/troubleshooting/).
