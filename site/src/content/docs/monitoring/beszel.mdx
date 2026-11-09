@@ -1,0 +1,250 @@
+---
+title: Beszel
+description: Host and per-container metrics with threshold alerts — a hub with a web interface, and agents that connect out to it and reach Docker only through a read-only proxy.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Beszel shows what your servers are doing — CPU, memory, disk, load and every
+container's share of them — and alerts when a threshold is crossed. A hub keeps
+the history and serves the interface; an agent on each host reports to it. The
+agent connects out to the hub and opens no port, and it reads Docker through a
+socket proxy that allows nothing but listing containers. Three services: hub,
+local agent and socket proxy.
+
+<StackEvidence stack="monitoring/beszel" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. The agent needs two
+values from the hub, so the hub starts first. From `monitoring/beszel/`:
+
+```bash
+cp .env.local.example .env.local
+mkdir -p volumes/local/hub-data
+docker compose -f docker-compose.local.yml --env-file .env.local up -d hub
+```
+
+Open `http://localhost:8090`, create the owner account, and put two values into
+`.env.local`: `AGENT_TOKEN` from **Settings → Tokens & Fingerprints**, and
+`AGENT_KEY` from **+ Add System** — the full key, including the `ssh-ed25519`
+prefix. Then start the rest:
+
+```bash
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+The local machine appears as `beszel-local` within seconds. Stop it again with
+the same command and `down`.
+
+## Installation
+
+From `monitoring/beszel/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   mkdir -p volumes/hub-data
+   ```
+
+2. List `beszel-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render and
+   restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Start the hub alone:
+
+   ```bash
+   docker compose up -d beszel-hub
+   docker compose logs beszel-hub --follow
+   ```
+
+   Wait for `Server started at http://0.0.0.0:8090`, then open
+   `https://<APP_TRAEFIK_HOST>` and create the owner account.
+
+4. Copy two values from the hub into `.env`, and give this host a name:
+
+   | Value | Where | Into |
+   |---|---|---|
+   | Registration token | **Settings → Tokens & Fingerprints** — enable it and copy | `AGENT_TOKEN` |
+   | Hub public key | **+ Add System** — the full key, `ssh-ed25519` prefix included | `AGENT_KEY` |
+   | A stable name | your choice | `AGENT_SYSTEM_NAME` |
+
+   Without `AGENT_SYSTEM_NAME` the agent registers under its container ID, which
+   changes every time the container is recreated.
+
+5. Start the agent:
+
+   ```bash
+   docker compose up -d agent
+   ```
+
+   It dials the hub and registers itself; there is no host or port to enter. From
+   now on `docker compose up -d` starts everything together.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps    # three services running — hub and agent have no healthcheck
+```
+
+The host appears in the interface with a green dot within about ten seconds,
+with its containers listed. Then set a threshold you know is crossed — disk
+usage at 1 %, for example — and wait for the alert to arrive.
+
+## Other hosts
+
+Each further host runs the standalone agent from `monitoring/beszel-agent/`: the
+agent and its socket proxy, nothing else. It connects out to the hub over HTTPS,
+so that host needs no inbound port — only a route to the hub's address.
+
+<StackEvidence stack="monitoring/beszel-agent" />
+
+From `monitoring/beszel-agent/` on that host:
+
+<Steps>
+
+1. ```bash
+   cp .env.example .env
+   ```
+
+2. Set four values in `.env`. The token and key are the same for every agent:
+
+   ```ini
+   HUB_URL=https://beszel.example.com
+   AGENT_TOKEN=...
+   AGENT_KEY=ssh-ed25519 AAAA...
+   AGENT_SYSTEM_NAME=hostb
+   ```
+
+   The agent refuses to start without `HUB_URL`.
+
+3. ```bash
+   docker compose up -d
+   docker compose logs -f
+   ```
+
+   Expect `WebSocket connected`. The host appears in the hub on its own.
+
+</Steps>
+
+Keep hub and agents on the same version.
+
+## Going further
+
+### What it reports
+
+| | |
+|---|---|
+| **Host** | CPU in total and per core, memory and swap, root filesystem usage, disk I/O, load average |
+| **Containers** | discovery, CPU, memory and network per container |
+| **Not available** | the host's network interface bandwidth |
+
+The agent runs as an ordinary container without host networking, and a
+container cannot see the host's network interfaces. The stack sets `NICS=-*`, so
+the field stays empty rather than showing the container's own traffic as the
+host's. Beszel's system **Bandwidth** alert therefore never fires; CPU, memory,
+disk, temperature and system-down alerts work. `EXTRA_FILESYSTEMS` adds mount
+points beyond the root filesystem.
+
+### Docker access
+
+The agent never holds the Docker socket. The socket proxy holds it read-only and
+grants `CONTAINERS` and `PING`, nothing else; it sits on an internal network with
+no route out, and the agent reaches it by service name. A compromised agent gets
+that read-only list, not root on the host. The proxy answers 403 to `/version`
+and `/info`, and the agent logs both at debug level and carries on.
+
+### Who can reach it
+
+The hub ships `access-vpn`, with `limit-standard` and `headers-standard`. Host
+metrics describe your systems in detail.
+
+### Alerts
+
+Thresholds are set per system in the hub. Beszel sends through Shoutrrr URLs —
+[ntfy](/monitoring/ntfy/), Gotify, Matrix, webhooks — and not by email. Disk
+usage is the threshold that warns before an incident rather than during one.
+System-down alerts only work while the hub runs; a hub that stops reports
+nothing, its own stop included. A [dead-man's switch](/monitoring/healthchecks/)
+covers that.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `volumes/hub-data` — the SQLite metric store and the hub's SSH private key |
+| **Critical** | The key. Without it, every agent has to be registered again by hand |
+| **Rebuildable** | the metric history |
+| **Quiescing** | stop the hub briefly, or dump the database — the store is live |
+
+For [borgmatic](/operations/backup/), back up the whole `hub-data` directory —
+the key is not in the database — and dump the store:
+
+```yaml
+sqlite_databases:
+    - name: beszel
+      path: /srv/docker/monitoring/beszel/volumes/hub-data/data.db
+```
+
+Confirm the database filename on the running instance. Restore order: the
+directory, then the hub; the agents reconnect without registering again.
+
+The standalone agent holds no state. After a loss, deploy it again with the same
+token and key.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/henrygd/beszel/releases).
+
+2. Back up `volumes/hub-data`.
+
+3. Raise `APP_TAG` in the hub's `.env` and in every agent's `.env`.
+
+4. Update the hub first, then the agents — on each:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+5. Check that every host reconnects and reports.
+
+</Steps>
+
+## Troubleshooting
+
+**The agent does not appear in the hub.** `AGENT_KEY` holds only the base64 part
+of the key — the `ssh-ed25519` prefix is required. The key can also be read on
+the hub host: `sudo ssh-keygen -y -f volumes/hub-data/id_ed25519`.
+
+**A host shows up twice, one entry stale.** It registered under its container ID
+before `AGENT_SYSTEM_NAME` was set. Delete the stale entry.
+
+**Files in `volumes/hub-data` cannot be read.** The hub runs as root and owns
+them. Use `sudo`.
+
+**`403 Forbidden` for `/version` and `/info` in the agent log.** Expected — see
+[Docker access](#docker-access).
+
+## Repository files
+
+- [`monitoring/beszel/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/beszel/README.md) — architecture, setup, security model
+- [`monitoring/beszel/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/beszel/.env.example)
+- [`monitoring/beszel-agent/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/beszel-agent/README.md) — the agent for further hosts
+- [`monitoring/beszel/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/beszel/UPSTREAM.md) — upgrade checklist
+
+## Official sources
+
+- [Beszel](https://beszel.dev/)
+- [Beszel on GitHub](https://github.com/henrygd/beszel)

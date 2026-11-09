@@ -1,0 +1,192 @@
+---
+title: Gatus
+description: Health checks, a status page and alerting defined in one YAML file — the configuration-as-code counterpart to Uptime Kuma, VPN-only by default.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Gatus probes endpoints on a schedule, evaluates conditions on each answer —
+status code, response time, body content, certificate expiry — shows the
+results on a status page and alerts when a condition fails. Everything it does is
+defined in `config/config.yaml`, which can live in version control beside the
+rest of your setup. One container; the result history is a SQLite file.
+
+<StackEvidence stack="monitoring/gatus" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `monitoring/gatus/`:
+
+```bash
+cp .env.local.example .env.local
+mkdir -p config
+cp config.example.yaml config/config.yaml
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080`. The example endpoints point at
+`example.com` hostnames and show red until you replace them with your own in
+`config/config.yaml`; Gatus reloads the file on save. Stop it again with the same
+command and `down`.
+
+## Installation
+
+From `monitoring/gatus/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. List `gatus-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render and
+   restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Create the directories and the configuration:
+
+   ```bash
+   mkdir -p config volumes/data
+   cp config.example.yaml config/config.yaml
+   ```
+
+   Keep `config.example.yaml` where it is, next to `docker-compose.yml`. Gatus
+   merges every `.yaml` file in `config/`, and two files with the same top-level
+   keys stop it at startup.
+
+4. Replace the example endpoints in `config/config.yaml` with yours, and set up
+   at least one alerting channel before adding `alerts:` to an endpoint:
+
+   ```yaml
+   endpoints:
+     - name: vaultwarden
+       url: "https://vault.example.com"
+       interval: 5m
+       conditions:
+         - "[STATUS] == 200"
+         - "[CERTIFICATE_EXPIRATION] > 240h"
+   ```
+
+5. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs gatus-app --follow
+   ```
+
+   Wait for `Listening on :8080`.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps    # one service, running — the image has no healthcheck
+```
+
+Open `https://<APP_TRAEFIK_HOST>`: every endpoint in the file appears with its
+results. Then break one condition on purpose — a wrong expected status, for
+example — save the file and watch the endpoint fail and the alert arrive.
+
+## Going further
+
+### Who can reach it
+
+The stack ships `access-vpn`, with `limit-standard` and `headers-standard`. The
+page and `/api/v1/endpoints/statuses` show every target URL, condition and alert
+destination. A login of Gatus's own is configured under `security:` in
+`config.yaml`; a login in front of it is `APP_TRAEFIK_AUTH=auth-authentik@file`
+([Authentik](/infrastructure/authentik/)). Make the page public only after
+checking what the configuration reveals.
+
+### Secrets in the configuration
+
+`config.yaml` reads `${NAME}` from the container's environment. Put webhook URLs
+and SMTP passwords there instead of into the file, and the file can go into
+version control as it is. Each name has to reach the container: add it to the
+service's `environment:` block in `docker-compose.yml`, with its value in `.env`.
+
+```yaml
+alerting:
+  ntfy:
+    url: "https://ntfy.example.com"
+    topic: "alerts"
+    token: "${NTFY_TOKEN}"
+```
+
+[ntfy](/monitoring/ntfy/), Gotify, Matrix, webhooks and email are all supported.
+`metrics: true` adds a Prometheus `/metrics` endpoint with per-endpoint
+availability, response times and certificate expiry.
+
+### Many endpoints
+
+SQLite carries about a hundred endpoints. For several hundred, or long
+retention, switch `storage.type` to `postgres` and add a database service.
+
+## Backup
+
+| | |
+|---|---|
+| **Configuration** | `config/config.yaml` — the endpoints and alert rules |
+| **State** | `volumes/data` — SQLite result history |
+| **Rebuildable** | the history; losing it costs graphs, not function |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+sqlite_databases:
+    - name: gatus
+      path: /srv/docker/monitoring/gatus/volumes/data/data.db
+```
+
+The path is the one `config.example.yaml` sets under `storage:`. Restore order:
+`config.yaml`, then the database if the history matters, then start.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/TwiN/gatus/releases).
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Open the page and check that every endpoint shows its status.
+
+</Steps>
+
+## Troubleshooting
+
+**Gatus exits at start with `only maps and slices/arrays can be merged`.** A
+second `.yaml` file sits in `config/` — usually a copy of the example. Move it
+out.
+
+**A change to `config.yaml` has no effect.** The reload hit a syntax error and
+kept the previous configuration. `docker compose logs gatus-app` names the line;
+check the log after every save.
+
+**An alert never fires.** The endpoint has `alerts:` but the channel it names is
+not configured under `alerting:`, or the referenced `${NAME}` is not set in the
+container's environment.
+
+## Repository files
+
+- [`monitoring/gatus/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/gatus/README.md) — setup, security model, integration patterns
+- [`monitoring/gatus/config.example.yaml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/gatus/config.example.yaml) — storage, UI, alerting and endpoint examples
+- [`monitoring/gatus/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/gatus/.env.example)
+- [`monitoring/gatus/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/gatus/UPSTREAM.md) — upgrade checklist
+
+## Official sources
+
+- [Gatus](https://gatus.io/)
+- [Gatus on GitHub](https://github.com/TwiN/gatus) — the configuration reference

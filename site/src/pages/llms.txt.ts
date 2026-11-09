@@ -31,6 +31,7 @@ const SECTIONS: { heading: string; prefix: string }[] = [
   { heading: 'Start', prefix: 'getting-started' },
   { heading: 'Infrastructure', prefix: 'infrastructure' },
   { heading: 'Applications', prefix: 'applications' },
+  { heading: 'Monitoring and alerting', prefix: 'monitoring' },
   { heading: 'Catalogue', prefix: 'catalogue' },
   { heading: 'Operations and recovery', prefix: 'operations' },
   { heading: 'Security', prefix: 'security' },
