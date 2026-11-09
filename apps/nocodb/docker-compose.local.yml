@@ -2,6 +2,7 @@
 #
 #   cp .env.local.example .env.local
 #   mkdir -p volumes/local/data
+#   sudo chown 0:0 volumes/local/data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   docker compose -f docker-compose.local.yml --env-file .env.local logs -f app
 #   http://localhost:8080

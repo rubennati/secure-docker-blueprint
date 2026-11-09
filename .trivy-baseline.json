@@ -1038,7 +1038,5 @@
       ]
     }
   },
-  "unscanned": {
-    "quay.io/minio/minio": "MinIO withdrew its public container images: quay.io answers UNAUTHORIZED, the Docker Hub repository is gone, and minio/minio was archived on GitHub on 2026-04-24. Not transient and not a rate limit — there is no public source left to scan. business/plane and monitoring/langfuse stop at it, which both READMEs state; replacing it with a versioned S3-compatible store is an open item in .ai/tasks.md."
-  }
+  "unscanned": {}
 }

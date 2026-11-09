@@ -11,7 +11,7 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-09 (v7.13.0) — lab host (VM), IPv4 LAN, moved from v7.12.1 on a new installation: an administrator from `lychee:create_user`, login, an album and a photo upload through the API, the photo still on disk after `down`/`up`
 
 ## What we use
 
@@ -19,7 +19,7 @@
 - Official `mariadb:12.3.3` as backend
 - Official `redis:8.10.3-alpine` for cache and sessions
 - Docker Secrets for DB password, DB root password — natively consumed by both services
-- Bind-mounts under `./volumes/` for `/conf`, `/uploads`, `/sym`, `/logs`, `/lychee-tmp`
+- Bind-mounts under `./volumes/` for `/app/public/uploads`, `/app/storage/logs`, `/app/storage/tmp` — the v7 image's paths
 
 ## What we changed and why
 
@@ -44,6 +44,10 @@
 
 ## Version notes
 
+- Moved to `v7.13.0` on 2026-11-09, run on the lab host. Features for the v8
+  layout (struct-of-arrays, configurable tile size), inline feedback for
+  throttled logins, and an SSRF hardening for unusual IP forms. No migration or
+  variable labelled.
 - Moved to `v7.12.1` on 2026-11-05, not run on a host at this tag. No breaking change
   and no manual step in the notes. The standard image moves to FrankenPHP 1.13.3
   and builds its own ImageMagick 7.1.2 with JPEG XL support, and turns off PHP's `session.upload_progress`; entrypoint,
@@ -103,7 +107,7 @@
      'mariadb-dump -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" lychee' \
      > lychee-db-$(date +%Y%m%d).sql
    # Uploads + conf
-   tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/ volumes/conf/
+   tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/
    ```
 
 3. Bump `APP_TAG` in `.env`

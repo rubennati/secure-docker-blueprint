@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (3.2.0) — lab host (VM), IPv4 LAN, run in a parallel batch: the site served and its job queue running before and after `down`/`up`, the refused client answered `403`; the administrator's login was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/requarks/wiki/pkgs/container/wiki
@@ -98,6 +100,9 @@ curl -s https://raw.githubusercontent.com/requarks/wiki/3.1.0/dev/build/Dockerfi
 
 ## Version notes
 
+- Moved to `3.2.0` on 2026-11-08 and run on the lab host (VM). 3.1.1 and 3.2.0
+  fix GHSA-p5rv-hmh3-wrv8, GHSA-7mf7-wprw-7fjm and GHSA-fxw3-8676-67fm; no
+  configuration change.
 - Moved to `2.5.317` on 2026-10-31, not run at this tag: `2.5.316` (2026-10-02)
   adds the export utility for Wiki.js 3.x, `2.5.317` (2026-10-23) is a rebuild
   with Node security updates. No breaking change, migration or advisory.

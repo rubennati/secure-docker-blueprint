@@ -2,6 +2,7 @@
 #
 #   cp .env.local.example .env.local
 #   ops/init.sh
+#   sudo chown "$USER":65534 .secrets/*.txt   # the proxy reads them as gid 65534
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   curl -H "Authorization: Bearer $(cat .secrets/litellm_master_key.txt)" http://localhost:4000/v1/models
 #   docker compose -f docker-compose.local.yml --env-file .env.local down

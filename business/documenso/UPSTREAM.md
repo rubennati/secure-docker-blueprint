@@ -13,7 +13,7 @@
 - **Origin:** US · Documenso Inc · non-EU (development largely from Hamburg, Germany)
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with your own certificate
-- **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
+- **Last verified:** 2026-11-08 (v2.21.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the sign-up page served at the closed default before and after `down`/`up`, the refused client answered `403`; no account and no document (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

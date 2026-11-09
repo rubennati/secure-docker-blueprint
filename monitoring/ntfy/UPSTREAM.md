@@ -14,7 +14,7 @@
 - **Role:** Push notifications over HTTP, the receiving end for every other alert
 - **Upstream reviewed:** 2026-07-27 — image, tag, configuration surface, channel
   support and licence checked against upstream documentation
-- **Last verified:** 2026-09-08 (v2.28.0) — v0.8.0 host session: clean start,
+- **Last verified:** 2026-11-08 (2.37.2) — lab host (VM), IPv4 LAN: a publisher account with read-write on one topic, a message published and polled with it, anonymous reads and publishing from the refused client answered `403`, the message kept after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
   `read_only` holding, deny-all proven, users and grants from the CLI, an
   iPhone outside the tailnet subscribed through the public router, one message
   delivered to it.

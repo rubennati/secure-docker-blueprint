@@ -692,14 +692,23 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > # "Invalid token"; the connector reads no secret file (the path is the office stack's)
 > docker compose exec -u www-data app php occ config:app:set onlyoffice jwt_secret --value="$(cat ../onlyoffice/.secrets/jwt_secret.txt)"
 > # (Euro-Office: ../euro-office/.secrets/jwt_secret.txt)
-> # Collabora (the richdocuments app, 12.x on Nextcloud 35): the server Nextcloud and
-> # the browser call, and the callback it hands out, both through activate-config — a
-> # callback set with config:app:set is reset to "autodetected" when activate-config
-> # runs afterwards
-> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="https://office.example.com" --callback-url="http://<nginx>"
+> # Collabora (the richdocuments app, 12.x on Nextcloud 35), with office-collabora.yml
+> # in COMPOSE_FILE: Nextcloud calls Collabora at nginx's port 9980, which passes
+> # discovery, capabilities and /cool/convert-to to Collabora — its public route closes
+> # convert-to, and previews need it; the browser's address comes from Collabora's
+> # discovery. The callback is nginx as well. Both through activate-config — a callback
+> # set with config:app:set is reset to "autodetected" when activate-config runs afterwards
+> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="http://<nginx>:9980" --callback-url="http://<nginx>"
 > # COLLABORA_ALIASGROUP in the Collabora stack admits the callback host as an alias of
 > # Nextcloud's group: https://cloud\.example\.com:443,http://nextcloud-nginx:80
 > ```
+>
+> Collabora also fetches template presets at the URLs Nextcloud writes into its settings
+> response. With `OVERWRITEHOST` applied to every request those point at the closed
+> public name, and the document does not open. `NC_OVERWRITECONDADDR` in `.env` limits
+> the overwrites to requests from Traefik — the regex of the subnet in
+> `NC_TRUSTED_PROXIES`, `'^172\.19\.'` for `172.19.0.0/16` — so a call that arrives
+> over nginx gets URLs at nginx.
 >
 > The route stays closed; the office traffic never passes it. OnlyOffice refuses
 > requests to private addresses by default (`request-filtering-agent`,
@@ -712,9 +721,11 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > `TRUSTED_RANGES`. **Measured on the lab host** (`docs/labs/ingress/2026-11-01-results.md`,
 > "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
 > XLSX and PPTX opened, saved and reopened behind the closed route, without
-> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora does not work behind the closed route:** the
-> WOPI calls take nginx, but Collabora then fetches a template preset at Nextcloud's
-> public name, the closed route refuses it, and the document does not open — open.
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora** (stack-refresh lab, 2026-11-08): with
+> `office.yml`, `office-collabora.yml`, `NC_OVERWRITECONDADDR` and these settings, a
+> `.docx` opened, was edited, saved and reopened behind the closed route, its preview
+> was rendered through the internal address, and `/cool/convert-to` answered `403` on
+> Collabora's public route — also after `down`/`up` of both stacks.
 
 ## OnlyOffice integration notes
 

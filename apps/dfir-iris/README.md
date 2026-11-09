@@ -141,9 +141,11 @@ no case record pointing at them.**
 ```yaml
 postgresql_databases:
     - name: iris_db
-      container: dfir-iris-db
       username: postgres
-      password: "{credential file /srv/docker/apps/dfir-iris/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec dfir-iris-db pg_dump
+      pg_restore_command: docker exec -i dfir-iris-db pg_restore
+      psql_command: docker exec -i dfir-iris-db psql
 files:
     - path: /srv/docker/apps/dfir-iris/.secrets
     - path: /srv/docker/apps/dfir-iris/volumes/downloads

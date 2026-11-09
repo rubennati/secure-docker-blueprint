@@ -12,7 +12,7 @@
 - **Origin:** LangGenius · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers
-- **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the setup through `/install`, a marketplace plugin with a model provider, a workflow with code, HTTP and LLM nodes, a restart, and a restore from its three dumps
+- **Last verified:** 2026-11-08 (1.19.0) — lab host (VM), IPv4 LAN, after Celery beat's schedule file was moved to the tmpfs (corrected): `/install` refused without the init password and the administrator created with it, every service up — the API, web, worker, beat, plugin daemon, sandbox and SSRF proxy — and the setup still finished after `down`/`up`, the refused client answered `403`; the console login was not driven (the console encrypts the password client-side), no model provider or plugin (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

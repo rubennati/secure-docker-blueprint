@@ -14,7 +14,7 @@
 - **Origin:** Netherlands · Authentik Security · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider with forward-auth, OAuth2, OpenID Connect and SAML
-- **Last verified:** 2026-11-02 (v2026.5.7) — lab host behind Traefik 3.7.17 with PostgreSQL 16 and Redis 7.4: first-run setup from the root URL, a login through the flow executor with password and TOTP (a lab script driving the endpoints the browser UI uses, not a browser), forward-auth through the embedded outpost (302 to the login, `X-Authentik-Username` after it, 500 and never 200 with the server stopped), e-mail delivered through a relay over the worker's `app-egress` network with the corrected compose file applied (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (2026.8.5) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 18.6, Redis with cap_drop; init-perms chowning the bind mounts): the initial-setup flow completed through the flow executor API, after which `/` led to the login, an API token for akadmin answering `users/me` as superuser, a group created and present after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

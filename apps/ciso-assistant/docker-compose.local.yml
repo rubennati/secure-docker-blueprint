@@ -2,6 +2,8 @@
 #
 #   cp .env.local.example .env.local
 #   ops/init.sh
+#   mkdir -p volumes/data
+#   sudo chown -R 1001:1001 volumes/data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   open http://localhost:3000        # log in as ADMIN_EMAIL, .secrets/admin_pwd.txt
 #   docker compose -f docker-compose.local.yml --env-file .env.local down

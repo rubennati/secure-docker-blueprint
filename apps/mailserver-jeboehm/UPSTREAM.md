@@ -13,7 +13,7 @@
 - **Origin:** Germany · Jeffrey Boehm (individual maintainer) · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail
-- **Last verified:** not yet — needs a host with port 25 open and public DNS
+- **Last verified:** 2026-11-08 (8.1.2) — lab host (VM), IPv4 LAN, a new installation: a certificate from core/acme-certs, `ops/setup.sh` created the domain, the administrator and the DKIM key, a message delivered locally through the MTA and found with `doveadm search`, IMAP authentication, the administration interface behind the route, all before and after `down`/`up`, the refused client answered `403`; outbound port 25 is open on this host but there is no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 
@@ -88,6 +88,8 @@ address Postfix and Dovecot see on a published port.
 
 ## Version notes
 
+- Moved to `8.1.2` on 2026-11-08 and run on the lab host (VM) as a new
+  installation. Patch releases of the 8.1 line.
 - Moved to `8.0.18` on 2026-10-31 (released the same day), all five images
   together, not run at this tag. 8.0.9 to 8.0.18 are dependency and bug-fix
   releases with no breaking change, variable change or migration; 8.0.15

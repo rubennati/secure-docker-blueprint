@@ -112,14 +112,14 @@ services:
     # 269 MiB anonymous with the provisioned data source and no dashboard
     # open, measured 2026-09-23. Grafana renders server-side for alerts and
     # reports, so the ceiling is well above the idle figure.
-    memswap_limit: 1g            # == memory: no swap
+    memswap_limit: 2g            # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 2g   # 2x the peak on the stack-refresh lab host (822 MiB)
           # cpus: derived starting value, not measured — v0.10.0
           cpus: "1.00"
-          pids: 200
+          pids: 256
         reservations:
           memory: 256m
 

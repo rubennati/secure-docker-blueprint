@@ -65,7 +65,9 @@ docker compose up -d
 # 7. Follow logs — wait for "ready to handle connections" on api, then "Listening on" on ui
 docker compose logs -f
 
-# 8. Open UI and create the first account — it becomes the admin
+# 8. Over the VPN, open the UI and create the first account — it becomes the admin.
+#    The route ships closed (APP_TRAEFIK_ACCESS=access-vpn); switch it to
+#    access-public afterwards, so the forms reach their respondents.
 # https://<APP_TRAEFIK_HOST>
 # Public registration is disabled after the first account is created (SELF_HOSTED=true).
 ```
@@ -75,12 +77,12 @@ docker compose logs -f
 ```bash
 docker compose ps                                    # all seven services up
 curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI via opnform-nginx)
-curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via opnform-nginx → php-fpm)
+curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform-nginx → php-fpm)
 ```
 
 ## Security Model
 
-- **First-user-wins admin** — the first registered account becomes the workspace admin. Register immediately after first start. Subsequent signups are blocked by `SELF_HOSTED=true`.
+- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.`, measured on the lab host at 2.8.4) by `SELF_HOSTED=true`.
 - **`APP_KEY`** encrypts Laravel sessions and tokens. Rotating invalidates all active sessions.
 - **`JWT_SECRET`** signs API tokens. Rotating logs out all users.
 - **`FRONT_API_SECRET` / `NUXT_API_SECRET`** is a shared secret between the Laravel API and the Nuxt SSR layer. Both must have the same value.
@@ -104,9 +106,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via opnform-
 ```yaml
 postgresql_databases:
     - name: opnform
-      container: opnform-db
       username: opnform
-      password: "{credential file /srv/docker/apps/opnform/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec opnform-db pg_dump
+      pg_restore_command: docker exec -i opnform-db pg_restore
+      psql_command: docker exec -i opnform-db psql
 ```
 
 Form submissions are database rows; anything a respondent uploaded is in

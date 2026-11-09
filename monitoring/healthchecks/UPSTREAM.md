@@ -11,7 +11,7 @@
 - **Origin:** Latvia · Pēteris Caune · EU
 - **Domain:** Monitoring
 - **Role:** Dead-man's switch that alerts when a cron job or backup stops reporting
-- **Last verified:** 2026-09-08 (v4.4) — v0.8.0 host session: clean start on SQLite, first admin from the CLI, a check with a one-minute period and grace, the ntfy and email integrations attached; the expiry produced a down notification and the next ping an up notification, both delivered to an iPhone and to the mail sink.
+- **Last verified:** 2026-11-08 (5.0.3) — lab host (VM), IPv4 LAN, after the README's `chown` was given `sudo`: a superuser created with `createsuperuser`, a login to the checks page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

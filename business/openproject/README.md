@@ -123,9 +123,11 @@ This stack uses **named volumes**. Their host paths are
 ```yaml
 postgresql_databases:
     - name: openproject
-      container: openproject-db
       username: openproject
-      password: "{credential file /srv/docker/business/openproject/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec openproject-db pg_dump
+      pg_restore_command: docker exec -i openproject-db pg_restore
+      psql_command: docker exec -i openproject-db psql
 ```
 
 `secret_key_base` in `.secrets/` derives session and token values. Restoring

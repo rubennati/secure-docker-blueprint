@@ -10,7 +10,7 @@
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
-- **Last verified:** 2026-09-21 (v1.19.1-unprivileged) — behind Traefik with TLS: the REST API through the route, gRPC with 100,000 points, snapshot recovery, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (1.20.0-unprivileged) — lab host (VM), IPv4 LAN: a collection created and a point written through the route with the API key, a request without the key refused, a snapshot taken, the point present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

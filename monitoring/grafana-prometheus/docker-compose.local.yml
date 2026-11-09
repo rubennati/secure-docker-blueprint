@@ -175,6 +175,7 @@ services:
       - "127.0.0.1:3000:3000"
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     # --- Health & Observability ---
     # /api/health answers without a session. The image carries no curl; busybox
@@ -193,6 +194,12 @@ networks:
   app-internal:
     name: grafana-local-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (measured on Docker 29: no host binding at all). Only
+  # grafana joins it, for its port; the other services stay on app-internal.
+  published:
+    name: grafana-local-published
 
 # --------------------------------------------------------
 # SECRETS

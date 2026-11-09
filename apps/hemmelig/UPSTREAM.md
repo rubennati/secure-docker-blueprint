@@ -14,7 +14,7 @@
 - **Origin:** Norway · Bjarne Øverli (individual maintainer) · non-EU (EEA, not EU)
 - **Domain:** Identity, access and secrets
 - **Role:** Ephemeral secret sharing with a built-in request flow
-- **Last verified:** not yet — upstream archived; plan a replacement
+- **Last verified:** 2026-11-08 (v7.6.1) — lab host (VM), IPv4 LAN, run in a parallel batch: the first account signed up through the API before and after `down`/`up`; the route is public by design; upstream archived (docs/labs/stack-refresh/2026-11-08-results.md)
 - **Verification snapshot:** 2026-09-19 — clean start and one full migration
   cycle, not a full operational verification (see below)
 

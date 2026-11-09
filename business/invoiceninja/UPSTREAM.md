@@ -13,7 +13,7 @@
 - **Domain:** Business operations
 - **Role:** Invoicing, quotes and payments
 - **Note:** Elastic License 2.0 is not OSI-approved — source-available, not open source. Self-hosting permitted; providing it as a managed service to others is restricted.
-- **Last verified:** 2026-11-03 (5.13.52) — lab host behind Traefik 3.7.17 on its edge network: the README's setup, login and API, a client, an invoice with its PDF, the invoice mail and a payment, and the README's borgmatic entries restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-13 (5.13.40)
+- **Last verified:** 2026-11-08 (5.13.53) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (MySQL 8.4, Redis with cap_drop): the first administrator from the secret files logged in through the API, a client and an invoice created and its PDF rendered, the invoice present after `down`/`up`, the refused client answered `403`; the README's MySQL entry restored into a throwaway server (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Pinned Versions
 

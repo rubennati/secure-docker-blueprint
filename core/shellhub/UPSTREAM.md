@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-09 (v0.29.3) — lab host (VM), IPv4 LAN, a new installation after the correction of the published port: all five services healthy, the UI served through Traefik before and after `down`/`up`, the refused client answered `403`, and the SSH port 2222 answered with its banner and host key from another machine on the LAN; no agent enrolled (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/shellhub-io/shellhub

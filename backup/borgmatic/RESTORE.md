@@ -53,27 +53,26 @@ A difference is not automatically a failure — see [what a quiesced backup look
 
 Restore into a throwaway database, not the live one. `--container` is the safest override: it names the target explicitly, so there is no chance of the configured one being used.
 
-PostgreSQL — the throwaway server runs the **same major version** as the live one,
-and the restore runs the `pg_restore_command` and `psql_command` of the database's
-entry, so the client that wrote the dump restores it ([README](README.md#postgresql-the-clients-major-version-is-the-servers)).
-Check the entry first; an entry without them uses the newest client on the `PATH`:
+PostgreSQL — the entries run the server's own client through `docker exec`
+([README](README.md#postgresql-the-servers-own-client-through-docker-exec)), so the
+restore runs inside a container too. Start the throwaway server from the **same image
+as the live one** and restore through a second configuration whose entry names it:
 
 ```bash
-sudo grep -A12 'name: myapp' /etc/borgmatic/config.yaml | grep -E '_command|container'
-docker exec myapp-db postgres --version     # the live server's major, e.g. 16
+IMG=$(docker inspect myapp-db --format '{{.Config.Image}}')
+docker run -d --name restore-test -e POSTGRES_USER=myapp -e POSTGRES_DB=myapp \
+  -e POSTGRES_PASSWORD="$(openssl rand -hex 16)" "$IMG"
 
-PW=$(openssl rand -hex 16)
-docker run -d --name restore-test -e POSTGRES_PASSWORD="$PW" postgres:16
-docker exec restore-test createdb -U postgres myapp
-
-sudo borgmatic restore --archive latest --database myapp \
-  --container restore-test --username postgres --password "$PW"
+# /etc/borgmatic/restore-test.yaml — a copy of the stack's entry, the commands pointed at the throwaway
+#   pg_restore_command: docker exec -i restore-test pg_restore
+#   psql_command: docker exec -i restore-test psql
+sudo borgmatic -c /etc/borgmatic/restore-test.yaml restore --archive latest --database myapp
 ```
 
-With a client of another major the restore can stop on a statement the server does
-not know — measured with client 17 against server 16 (`SET transaction_timeout = 0`,
-the Paperless entries in the [rehearsal log](#rehearsal-log)). A rehearsal that fails
-there is the finding: the backup it tested would fail the same way on the day.
+Measured on 2026-11-08 at servers 14, 16 and 18: the host's client 17 stopped on
+`transaction_timeout` (14, 16) or refused to dump at all (18); through `docker exec`
+every database came back with identical rows (the [rehearsal log](#rehearsal-log)). A
+failed restore reports only a UTF-8 decode error by default — run it again with `-v 2`.
 
 MariaDB — no published port needed, and the database has to exist first:
 
@@ -269,3 +268,16 @@ last test date.
 | 2026-11-03 | `apps/ghost` | the same stack, the corrected entry | the README's corrected `mysql_databases` entry; the dump restored with `--container` into a throwaway instance | Pass | 96 tables, 1,138 rows identical; the throwaway site rendered the post with its theme, and the staff login with the mailed device code worked. The failed attempt above stays: it is why the entry carries `tls: false`. |
 | 2026-11-03 | `apps/paperless-gpt` | archive of a paperless-gpt v0.28.0 stack on the lab host | the README's `source_directories` and `sqlite_databases` entries | Pass, in place | borgmatic's SQLite restore writes to the configured path, so it replaced the live database rather than a throwaway one, and left the file `root:root` (the README says uid 1000). Integrity check and row counts matched the archive; not counted as a rehearsal into a separate instance. |
 | 2026-11-03 | `core/crowdsec` | archive of the CrowdSec v1.7.8 stack directory on the lab host, taken with the container stopped as the README asks — 7.5 MB, a local throwaway repository | the README's backup, `source_directories` only; the stack directory extracted into a throwaway instance on its own network, its central API off (`DISABLE_ONLINE_API=true`) and its log source empty | Pass | The restored engine started healthy: the same two decisions, all 100 alerts, the eight collections, the machine and the `traefik-bouncer`. The bouncer key from `core/traefik/.env` was accepted by the restored local API (a wrong key 403), and the restored AppSec answered `/.env` with 403. |
+| 2026-11-08 | `business/listmonk` | archive of a listmonk v6.2.0 stack with its PostgreSQL 18.6 dump on the lab host (VM), borgmatic 2.2.0, borg 1.4.0, a local throwaway repository, `volumes/uploads` included | the README's `postgresql_databases` entry as shipped, with the host's client 17.11; then `pg_dump_command`/`pg_restore_command` through `docker exec`, a lab variant, into a fresh `postgres:18.6-alpine` | Fail | As shipped no archive was written: `pg_dump` 17.11 aborts on server 18.6 (`server version mismatch`). Through `docker exec` the dump and the restore exited 0: 17 tables, 87 rows identical, and a throwaway listmonk v6.2.0 on the restored database logged the admin in and listed the test subscriber. FA-03 stays open. |
+| 2026-11-08 | `apps/opnform` | archive of an OpnForm 2.8.4 stack with its PostgreSQL 16.15 dump on the lab host (VM), `volumes/storage` included | the README's entry as shipped; then the `docker exec` lab variant, into a fresh `postgres:16.15-alpine` | Fail | As shipped the archive was written, and `pg_restore` 17.11 stopped at `unrecognized configuration parameter "transaction_timeout"`; borgmatic reported only a `utf-8` decode error, the real one only with `-v 2`. Through `docker exec`: exit 0, 45 tables, 133 rows identical. |
+| 2026-11-08 | `apps/immich` | archive of an Immich v3.3.6 stack with its PostgreSQL 14.23 (vectorchord) dump on the lab host (VM), `volumes/library` included | the README's entry as shipped; then the `docker exec` lab variant, into a fresh container of the same image digest | Fail | As shipped `pg_restore` 17.11 stopped at `transaction_timeout`. Through `docker exec`: exit 0, 73 tables, 233,636 rows identical. |
+| 2026-11-08 | `apps/lycheeorg` | archive of a Lychee v7.12.1 stack with its MariaDB 12.3.3 dump on the lab host (VM), `volumes/uploads` included — after the correction of the v7 mount paths | the README's `mariadb_databases` entry as shipped; restored with `--container` into a fresh `mariadb:12.3.3` | Pass | 55 tables, 1,149 rows identical (a first count, taken while the app still wrote, differed; the second matched). |
+| 2026-11-08 | `business/invoiceninja` | archive of an Invoice Ninja 5.13.53 stack with its MySQL 8.4.13 dump on the lab host (VM) | the README's `mysql_databases` entry as shipped (`tls: false`); restored with `--container` into a fresh `mysql:8.4.13` | Pass | 80 tables, 1,484 rows identical, the test client and invoice among them. `mysqldump` warned about the missing `PROCESS` privilege for tablespaces and wrote the archive. |
+| 2026-11-08 | `business/openproject` | archive of an OpenProject 17.9.6 stack with its PostgreSQL 18.6 dump on the lab host (VM) | the `docker exec` lab variant only — the README's entry cannot dump server 18 with client 17 (the `business/listmonk` row) | Not run as shipped | Through `docker exec`: exit 0, 218 tables, 3,502 rows identical. |
+| 2026-11-08 | `business/vikunja` | archive of a Vikunja 2.8.0 stack with its PostgreSQL 18.6 dump on the lab host (VM) | the `docker exec` lab variant only, as above | Not run as shipped | Through `docker exec`: exit 0, 44 tables, 195 rows identical. |
+| 2026-11-08 | `business/zammad` | archive of a Zammad 7.2.2-0045 stack with its PostgreSQL 18.6 dump on the lab host (VM), `volumes/zammad-storage` included, the Elasticsearch index not (rebuildable) | the `docker exec` lab variant only, as above | Not run as shipped | Through `docker exec`: exit 0, 132 tables, 251,722 rows identical. |
+| 2026-11-08 | `core/authentik` | archive of an authentik 2026.8.5 stack with its PostgreSQL 18.6 dump on the lab host (VM), `volumes/data` included | the `docker exec` lab variant only, as above | Not run as shipped | Through `docker exec`: exit 0, 231 tables, 3,456 rows identical. |
+| 2026-11-08 | `core/dockhand` | archive of a Dockhand v1.0.57 stack with its PostgreSQL 16.15 dump on the lab host (VM) | the `docker exec` lab variant only — the README's entry with client 17 fails at `pg_restore` on server 16 (the `apps/opnform` row) | Not run as shipped | Through `docker exec`: exit 0, 40 tables, 76 rows; identical except `container_events`, which the running instance writes continuously (64 live, 62 in the dump). |
+| 2026-11-09 | `core/infisical` | archive of an Infisical v0.167.7 stack with its PostgreSQL 18.6 dump on the lab host (VM) | the README's `postgresql_databases` entry as shipped — the server's own client through `docker exec` (FA-03); restored into a fresh `postgres:18.6-alpine` | Pass | 787 tables, row counts identical per table. |
+| 2026-11-09 | `apps/shlink` | archive of a Shlink 5.1.8 stack with its PostgreSQL 18.6 dump on the lab host (VM) | the README's entry as shipped, as above | Pass | 15 tables, 13 rows identical per table. |
+| 2026-11-09 | `apps/ghost` | archive of a Ghost stack with its MySQL 8.4.13 dump on the lab host (VM), `volumes/content` included | the README's `mysql_databases` entry as shipped (`tls: false`); restored with `--container` into a fresh `mysql:8.4.13` | Pass | 102 tables, 575 rows identical. `mysqldump` warned about the missing `PROCESS` privilege for tablespaces and wrote the archive, as for Invoice Ninja. |

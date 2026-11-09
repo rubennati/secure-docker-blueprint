@@ -13,7 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
-- **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (16.54.0) — lab host (VM), IPv4 LAN: moved from v16.53.0, `ops/create-site.sh` created the site with ERPNext, Administrator logged in through the API, a ToDo created and read back after `down`/`up`, socket.io answering polling and the websocket upgrade (`101`) through Traefik, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the
@@ -155,6 +155,10 @@ documents, stock and reports; email; PDF printing; an image upgrade with
 
 ## Version notes
 
+- Moved to `v16.54.0` on 2026-11-08 and run on the lab host (VM). Fixes, among
+  them a migration error with Asset Depreciation Schedules on older sites; no
+  configuration change. The nginx configuration forwards `Upgrade` on the
+  `/socket.io` locations only (checked for FA-12).
 - Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28), not run on a host at
   this tag. The step from v16.37 to v16.50 is upstream's coordinated
   renumbering of Frappe, ERPNext and HRMS, not a skipped range. Breaking

@@ -117,9 +117,11 @@ setting lives in the database.
 ```yaml
 postgresql_databases:
     - name: listmonk
-      container: listmonk-db
       username: listmonk
-      password: "{credential file /srv/docker/business/listmonk/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec listmonk-db pg_dump
+      pg_restore_command: docker exec -i listmonk-db pg_restore
+      psql_command: docker exec -i listmonk-db psql
 ```
 
 Subscriber lists and their opt-in state are database rows. Restoring an **older**

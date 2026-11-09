@@ -50,6 +50,12 @@ services:
     # in config.json, so the Docker Secret mount path *is* the secret
     # reference — no entrypoint wrapper needed. config.json itself carries
     # no credentials.
+    # The CVE scanner downloads and unpacks the Trivy databases into the temp
+    # directory; on the /tmp tmpfs they counted against the memory limit
+    # (shmem) and the cgroup killed zot in a loop. TMPDIR puts them on the
+    # registry volume.
+    environment:
+      TMPDIR: /var/lib/registry/.tmp
     secrets:
       - zot_htpasswd
 

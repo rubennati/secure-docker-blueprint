@@ -12,7 +12,7 @@
 - **Origin:** US · Infisical Inc · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Central secret manager, an alternative to per-stack Docker Secrets
-- **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
+- **Last verified:** 2026-11-09 (v0.167.7) — lab host (VM), IPv4 LAN, moved from v0.167.6: `/api/status` answered through Traefik, a restore of its PostgreSQL 18.6 dump with the README's entry matched per table, the same after `down`/`up`
 
 ## What we use
 
@@ -37,6 +37,9 @@
 
 ## Version notes
 
+- Moved to `v0.167.7` on 2026-11-09, run on the lab host. Fixes in secrets, PKI
+  and PAM, and agent-vault additions; no breaking change, variable or migration
+  labelled.
 - Moved to `v0.167.6` on 2026-11-05, not run on a host at this tag. Upstream's
   upgrade-impact records (`upgrade-impact/data/releases/`) list startup
   database migrations in most releases of the range, no manual step for them.

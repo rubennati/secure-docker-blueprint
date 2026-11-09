@@ -12,7 +12,7 @@
 - **Origin:** New Zealand · InnoCraft Ltd · non-EU
 - **Domain:** Business operations
 - **Role:** Web analytics under your control
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (5.14.2-apache) — lab host (VM), IPv4 LAN, at the closed default: the installation wizard driven over HTTP with the database settings from the environment, the super user logged in, a tracking hit accepted, the refused client answered `403`; `down`/`up` checked before the installation (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

@@ -10,7 +10,7 @@
 - **Decision facts checked:** not yet
 - **Domain:** Security operations
 - **Role:** Vulnerability management: import scanner and pentest findings, deduplicate them and track them to closure
-- **Last verified:** 2026-09-22 (3.3.100) — behind Traefik with TLS: the first start, the API with a token, scan imports, the interface, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (3.5.0) — lab host (VM), IPv4 LAN: the initializer migrated, loaded 393 scanner definitions and created the administrator from `ADMIN_USER` and the secret file, an API token for it, a product type created and present after `down`/`up`, celery worker and beat running, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The licence names DefectDojo, Inc.; no jurisdiction was found in the pages checked.
 

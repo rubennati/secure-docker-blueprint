@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v2.6.2) — lab host (VM), IPv4 LAN, run in a parallel batch: the application served through the route before and after `down`/`up`, the refused client answered `403`; no threat model saved (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/owasp/threat-dragon

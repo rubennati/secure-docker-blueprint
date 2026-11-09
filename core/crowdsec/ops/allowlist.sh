@@ -29,19 +29,32 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-LIST_NAME="${CROWDSEC_ALLOWLIST_NAME:-admin-devices}"
 LIST_DESCRIPTION="Administrative devices exempt from every decision — core/crowdsec/README.md, step 5"
 # Whole VPN ranges: accepted, but named for what they are when they appear.
 VPN_RANGES="100.64.0.0/10 fd7a:115c:a1e0::/48"
 
 usage() { sed -n '2,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 2; }
 
+# Read the variables this script uses from .env, not the whole file: .env is a
+# Compose file, not a shell script, and the shipped CROWDSEC_COLLECTIONS holds
+# unquoted spaces, which `source` would run as a command.
+env_value() {
+  sed -n "s/^$1=//p" "${ROOT_DIR}/.env" | tail -n 1 \
+    | sed -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
 if [ -f "${ROOT_DIR}/.env" ]; then
-  set -a
-  # shellcheck source=/dev/null
-  source "${ROOT_DIR}/.env"
-  set +a
+  for var in COMPOSE_PROJECT_NAME CONTAINER_NAME_APP CROWDSEC_ALLOWLIST_ADMIN CROWDSEC_ALLOWLIST_NAME; do
+    if grep -q "^${var}=" "${ROOT_DIR}/.env"; then
+      value="$(env_value "${var}")"
+      # One reference, as Compose resolves it: CONTAINER_NAME_APP=${COMPOSE_PROJECT_NAME}
+      if [[ "${value}" =~ ^\$\{([A-Z_]+)\}$ ]]; then
+        ref="${BASH_REMATCH[1]}"; value="${!ref:-}"
+      fi
+      printf -v "${var}" '%s' "${value}"
+    fi
+  done
 fi
+LIST_NAME="${CROWDSEC_ALLOWLIST_NAME:-admin-devices}"
 
 # The engine's cscli. ALLOWLIST_CSCLI replaces the docker exec in tests.
 cscli() {

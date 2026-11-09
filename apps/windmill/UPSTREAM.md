@@ -11,7 +11,7 @@
 - **Origin:** Windmill Labs · no country stated in its published terms · no country
 - **Domain:** Automation and data
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
-- **Last verified:** 2026-09-23 (1.814.0) — behind Traefik with TLS: the bootstrap behind `acc-deny`, jobs on both workers, the UI under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (1.864.1) — lab host (VM), IPv4 LAN: moved from 1.862.0, the stack started at `access-blocked`, `ops/bootstrap-admin.sh` replaced the default superadmin (`admin@windmill.dev`/`changeme` refused afterwards), the route opened, a workspace created, a Python job on the worker and a native job with an outbound request run through Traefik before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -241,6 +241,9 @@ Traefik:
 
 ## Version notes
 
+- Moved to `1.864.1` on 2026-11-08 and run on the lab host (VM). 1.863.0 adds
+  configurable SSO email and username claims; 1.864.x are fixes; no
+  configuration change.
 - Moved to `1.862.0` on 2026-11-05, not run on a host at this tag; the
   verification sections below were run against `1.814.0`. Upstream's changelog
   marks no breaking change from 1.815.0 to 1.862.0; database migrations run on

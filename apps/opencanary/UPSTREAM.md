@@ -13,7 +13,7 @@
   the open-source counterpart to Thinkst's commercial Canary product —
   confirmed via upstream's own README; this stack uses only the
   open-source project
-- **Last verified:** not yet — needs a real host for the ports below 1024, which Docker Desktop cannot show
+- **Last verified:** 2026-11-08 (0.9.10) — lab host (VM), IPv4 LAN, after the network and port corrections: FTP, Telnet, MySQL, RDP and HTTP (8081) published, a login attempt from another LAN machine logged with its real source address (docs/labs/stack-refresh/2026-11-08-results.md)
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   every enabled fake service exercised against a live container; the
   production compose's sub-1024 port publishing not confirmed on this test

@@ -10,7 +10,7 @@
 - **Origin:** UK · linuxserver.io community · non-EU
 - **Domain:** Dashboards
 - **Role:** Application launcher with widgets
-- **Last verified:** 2026-11-02 (2.8.3) — lab host behind Traefik 3.7.17: healthy; the `basic` posture's gate answered 401 without and with wrong credentials, and with right ones the dashboard and its settings page loaded (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (2.8.4) — lab host (VM), IPv4 LAN: the dashboard behind the basicAuth gate (`401` without, `200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

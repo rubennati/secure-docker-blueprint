@@ -78,7 +78,7 @@ Planned: **DayOtter** (scheduling platform, AGPL-3.0). It publishes no image, so
 
 | App | Stack | Description |
 |---|---|---|
-| [Nextcloud](nextcloud/) | App + MariaDB + Redis + Nginx + Cron | File sync, collaboration, optional OnlyOffice |
+| [Nextcloud](nextcloud/) | App + MariaDB + Redis + Nginx + Cron | File sync, collaboration, optional OnlyOffice, Euro-Office or Collabora |
 | [Paperless-ngx](paperless-ngx/) | App + Postgres + Redis + Gotenberg + Tika | Document management with OCR, optional Authentik SSO |
 | [Seafile](seafile/) | App + MariaDB + Memcached + optional components | File sync & share (community edition) |
 | [Seafile Pro](seafile-pro/) | App + MariaDB + Memcached + SeaDoc + ClamAV + SeaSearch | File sync & share (pro edition) |

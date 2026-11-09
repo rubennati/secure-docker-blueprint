@@ -10,7 +10,7 @@
 - **Origin:** Greece · Alex Tselegidis · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Appointment booking in PHP, established since 2013
-- **Last verified:** 2026-11-03 (1.6.1) — lab host behind Traefik 3.7.17 on its edge network: the installation wizard, the backend login, the REST API with a customer and an appointment, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (1.5.x)
+- **Last verified:** 2026-11-09 (1.6.1) — lab host (VM), IPv4 LAN, a new installation: the installation wizard completed through the API, the administrator signed in, the same after `down`/`up`
 
 ## What we use
 

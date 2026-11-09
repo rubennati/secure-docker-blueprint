@@ -185,6 +185,7 @@ services:
     # SSH port below is this service's own direct host publish.
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     ports:
       # Where agents dial in, and where `ssh <device>@<host>` connects out.
@@ -324,6 +325,12 @@ networks:
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (measured on Docker 29: no host binding at all). Only
+  # server joins it, for its port; the other services stay on app-internal.
+  published:
+    name: ${COMPOSE_PROJECT_NAME}-published
 
 # --------------------------------------------------------
 # SECRETS

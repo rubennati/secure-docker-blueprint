@@ -101,6 +101,17 @@ class AdministrativeExemption(unittest.TestCase):
         self.assertEqual(rc, 0, out)
         self.assertEqual(self.s.calls(), [])
 
+    def test_env_with_unquoted_spaces_is_read_not_run(self):
+        # The shipped .env.example carries CROWDSEC_COLLECTIONS unquoted with
+        # spaces; sourcing the file ran its second word as a command (exit 127).
+        self.s.env("192.0.2.10")
+        with open(self.s.stack / ".env", "a", encoding="utf-8") as f:
+            f.write("CROWDSEC_COLLECTIONS=crowdsecurity/traefik crowdsecurity/http-cve\n")
+        rc, out = self.s.run("apply")
+        self.assertEqual(rc, 0, out)
+        self.assertNotIn("No such file", out)
+        self.assertIn("allowlists add admin-devices 192.0.2.10", " ".join(self.s.calls()))
+
     def test_missing_env_file_is_an_error(self):
         self.s.env(with_env=False)
         rc, out = self.s.run("apply")

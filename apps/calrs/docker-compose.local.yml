@@ -3,6 +3,7 @@
 #   cp .env.local.example .env.local
 #   ops/init.sh
 #   mkdir -p volumes/data
+#   sudo chown 999:999 volumes/data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   open http://localhost:3000        # register — the first account is the administrator
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -24,6 +25,9 @@ services:
     environment:
       CALRS_BASE_URL: http://localhost:3000
       CALRS_DATA_DIR: /var/lib/calrs
+      # Nothing sits in front of the published port here, so no peer is a proxy
+      # (1.23.3): the rate limits take the address from the connection.
+      CALRS_TRUSTED_PROXIES: none
       TZ: ${TZ}
     volumes:
       - ./config/entrypoint.sh:/entrypoint.sh:ro

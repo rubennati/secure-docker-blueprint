@@ -12,7 +12,7 @@
 - **Origin:** US · Alex Tran · non-EU
 - **Domain:** Photos
 - **Role:** Photo and video backup with mobile apps and machine-learning search
-- **Last verified:** 2026-11-03 (v3.2.0) — lab host behind Traefik 3.7.17 on its edge network, machine learning off: the admin, a second user kept from the admin's assets, uploads with byte-identical originals and thumbnails, and the README's restore pipeline with a plain `pg_dump`; the `postgresql_databases` entry did not restore (the host's PostgreSQL client) (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-04-17 (Last checked)
+- **Last verified:** 2026-11-08 (v3.3.6) — lab host (VM), IPv4 LAN, fresh install with the PR #340 hardening (Postgres 14 with vectorchord, Valkey with cap_drop): the admin created through `admin-sign-up`, a second admin setup refused, an image uploaded and downloaded byte-identical after `down`/`up`, `/api/server/ping` 200, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

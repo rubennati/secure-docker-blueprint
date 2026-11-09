@@ -10,7 +10,7 @@
 - **Origin:** Calnode · no country stated in its published terms · no country
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages, an admin interface and a REST API, as one binary with SQLite
-- **Last verified:** 2026-09-22 (0.9.0) — behind Traefik with TLS: the setup, the API, the admin interface after `reset-admin`, a guest booking, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (0.14.0) — lab host (VM), IPv4 LAN: moved from 0.13.0, the owner created with `ops/setup.sh` (a second run answered `409`), a password set with `reset-admin`, the booking page and the admin served, the owner kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 
@@ -93,6 +93,9 @@ server; the MCP server; Litestream replication and restore; backup and restore.
 
 ## Version notes
 
+- Moved to `0.14.0` on 2026-11-08 and run on the lab host (VM). A responsive
+  admin and SvelteKit 2.70.4, its security release; upstream: "There are no
+  database migrations in this release."
 - Moved to `0.13.0` on 2026-11-05, not run on a host at this tag; `Last verified`
   stays at `0.9.0`. Back up `volumes/data` first: `0.12.0` adds migration `00071`,
   a table rewrite of `invite_delivery`, and the down migration is lossy. `0.12.0`

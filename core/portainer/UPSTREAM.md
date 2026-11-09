@@ -12,7 +12,7 @@
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU
 - **Domain:** Infrastructure
 - **Role:** Docker management web interface, reaching Docker through a filtered socket proxy
-- **Last checked:** 2026-04-16
+- **Last verified:** 2026-11-08 (2.45.3) — lab host (VM), IPv4 LAN: the administrator created with the setup token from the log (refused without it), the local Docker host through the socket proxy, the Edge environment of the lab container connected through port 8000 bound to one address (the lab's stand-in for the VPN address) and managed — containers listed, one created, started, its log read, stopped and removed — before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 Note: this setup uses Portainer **CE** (Community Edition). Portainer Business Edition (`portainer/portainer-ee`) is a different paid product with additional features and a different license — not used here.
 

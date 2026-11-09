@@ -9,7 +9,7 @@
 - **Origin:** France · Traefik Labs · EU
 - **Domain:** Developer tools
 - **Role:** Tiny service that shows what the proxy forwards, to check routing and TLS
-- **Last verified:** 2026-11-01 (v1.12.0) — lab host behind Traefik 3.7.17 on its edge network: the client address preserved over IPv4 and IPv6, one test router per access policy answering as decided (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-09 (v1.12.0) — lab host (VM), IPv4 LAN: used as the check-3 probe throughout — the trusted client answered with its own address in `X-Real-Ip`, the refused client `403`, the same after `down`/`up` and a reboot
 
 ## What we use
 

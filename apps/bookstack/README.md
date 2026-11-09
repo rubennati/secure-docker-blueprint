@@ -58,7 +58,8 @@ docker compose up -d
 docker compose logs bookstack-app --follow
 # Watch for: "Starting Apache web server"
 
-# 8. Open UI and log in with default credentials
+# 8. Over the VPN, open the UI and log in with the default credentials; the route
+#    ships closed (APP_TRAEFIK_ACCESS=access-vpn) — open it once the account is changed
 # https://<APP_TRAEFIK_HOST>
 # Default: admin@admin.com / password — CHANGE IMMEDIATELY
 ```
@@ -72,7 +73,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/login    # 200 OK
 
 ## Security Model
 
-- **Default admin credentials must be changed on first login** — BookStack ships with `admin@admin.com` / `password`. Change in the UI immediately after setup.
+- **Default admin credentials must be changed on first login** — BookStack ships with `admin@admin.com` / `password`, and on the lab host (VM) at v26.09.2 that login reached the settings of a new instance. The route therefore ships at `access-vpn`: log in over the VPN, change the account, then open the route for readers.
 - **`APP_KEY`** encrypts sessions and password-reset tokens. Rotating invalidates all existing sessions (acceptable).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **MariaDB is on `app-internal` (`internal: true`)** — not reachable from outside the app.

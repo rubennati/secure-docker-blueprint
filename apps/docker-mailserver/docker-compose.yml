@@ -31,11 +31,11 @@ services:
     # --- Resources ---
     # 308 MiB idle with Rspamd and two mailboxes, measured 2026-10-03. The limit
     # is derived, not measured under load — v0.10.0.
-    memswap_limit: 2g            # == memory: no swap
+    memswap_limit: 3g            # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 2g
+          memory: 3g   # 2x the peak on the stack-refresh lab host (1251 MiB)
           pids: 500
         reservations:
           memory: 384m

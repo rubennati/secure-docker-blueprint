@@ -10,7 +10,7 @@
 - **Origin:** SolidInvoice · no country stated in its published terms · no country
 - **Domain:** Business operations
 - **Role:** Invoicing: clients, quotes, invoices, recurring invoices and payments
-- **Last verified:** 2026-09-22 (3.0.1) — behind Traefik with TLS: the web installer to the end, the onboarding with a client and an invoice, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (3.1.2) — lab host (VM), IPv4 LAN: the stack healthy and `/` redirecting a new instance to the web installer at `/install` before and after `down`/`up`, the refused client answered `403`; the installer was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 

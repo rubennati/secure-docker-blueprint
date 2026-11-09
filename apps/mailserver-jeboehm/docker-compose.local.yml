@@ -2,6 +2,11 @@
 #
 #   cp .env.local.example .env.local
 #   ops/init.sh --local
+#   sudo chown -R 1000:1000 volumes/local/mail
+#   sudo chown -R root:1000 volumes/local/certs && sudo chmod 640 volumes/local/certs/tls.key
+#   sudo chown root:root volumes/local/spool && sudo chmod 755 volumes/local/spool
+#   sudo chown -R 11333:11333 volumes/local/filter
+#   sudo chown -R 999:999 volumes/local/redis
 #   ops/setup.sh --local
 #   http://localhost:8080 — user and password are printed by setup.sh
 #   SMTP localhost:1025 · submission localhost:1587 · IMAP localhost:1993
