@@ -214,7 +214,7 @@ Borgmatic's integrations map onto stacks this blueprint already ships. This tabl
 |---|---|---|
 | PostgreSQL · MySQL · MariaDB · SQLite | 31 · 3 · 17 stacks, plus several SQLite | `container:` dump hook, plus that engine's client on the host |
 | MongoDB | `apps/heyform`, `apps/unifi`, `business/opensign`, `monitoring/checkmate` | `container:` dump hook, plus the MongoDB tools on the host |
-| Healthchecks | `monitoring/healthchecks` | `healthchecks.ping_url` |
+| Healthchecks | `monitoring/healthchecks` | `healthchecks.ping_url` — on the same host its loopback port, `http://127.0.0.1:8001/ping/<uuid>` |
 | Uptime Kuma | `monitoring/uptime-kuma` | `uptime_kuma.push_url` |
 | Zabbix | `monitoring/zabbix` | `zabbix.server` — that stack's web interface, the `/api_jsonrpc.php` endpoint, not its trapper port |
 | ntfy | `monitoring/ntfy` | `ntfy.topic`, with `ntfy.server` pointing at that stack |

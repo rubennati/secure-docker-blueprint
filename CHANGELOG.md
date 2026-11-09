@@ -30,6 +30,11 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   Docker network. **Migration:** an existing `.env` keeps its value — to move, set
   `CROWDSEC_LAPI_PORT=8081` and change the bouncer's `api_url` (core/crowdsec README,
   "LAPI port on the host").
+- **Healthchecks also listens on `127.0.0.1:8001`** (`HC_LOCAL_PORT`), for jobs on the
+  same host: the watchdogs and borgmatic ping there instead of through Traefik, where a
+  closed access policy refused them. No public `/ping/` route is needed.
+  **Migration:** add `HC_LOCAL_PORT=8001` to an existing `.env`.
+
 ### Fixed
 
 - **Upstream data no longer offers a pre-release or another release line as the

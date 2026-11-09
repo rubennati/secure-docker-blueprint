@@ -81,15 +81,17 @@ watchdog was watching. No new alerting channel is needed — Healthchecks
 already reaches ntfy, email or a webhook per
 [`monitoring/README.md`](../../monitoring/README.md#alerting).
 
-**A Healthchecks on the same host.** The ping goes out through Traefik, and a
-request from the Docker host itself arrives there as the gateway address of
-`proxy-public`, not as the host's own address. Behind a closed access policy
-it is refused, and `core/traefik/ops/scripts/validate.sh` rejects that gateway
-in `TRUSTED_RANGES`, because every container on `proxy-public` would pass with
-it (lab host). Ping a Healthchecks that the host can reach — on another host,
-or hosted — or give `monitoring/healthchecks` a route for `/ping/` that admits
-the host. While Traefik itself is down, the Traefik watchdog's failure pings
-cannot pass it either; the check's grace time is what reports that.
+**A Healthchecks on the same host.** Ping its loopback port,
+`http://127.0.0.1:8001/ping/<uuid>` (`HC_LOCAL_PORT` in `monitoring/healthchecks`),
+not its public name. Through Traefik a request from the Docker host itself arrives
+as the gateway address of the edge network, not as the host's own address; behind
+a closed access policy it is refused, and `core/traefik/ops/scripts/validate.sh`
+rejects that gateway in `TRUSTED_RANGES`, because every container on the network
+would pass with it. The loopback port needs neither Traefik nor a public route —
+verified on the lab host (VM) on 2026-11-09 with both watchdogs started from their
+shipped units. It also keeps the Traefik watchdog's failure pings arriving while
+Traefik itself is down. A Healthchecks on another host, or hosted, is pinged by its
+public URL as before.
 
 ## Docker daemon watchdog
 

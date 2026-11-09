@@ -38,7 +38,8 @@ services:
       # Django
       DEBUG: "False"
       SECRET_KEY: ${HC_SECRET_KEY}
-      ALLOWED_HOSTS: ${APP_TRAEFIK_HOST}
+      # 127.0.0.1: the loopback port below, where jobs on this host ping.
+      ALLOWED_HOSTS: ${APP_TRAEFIK_HOST},127.0.0.1
       SITE_ROOT: https://${APP_TRAEFIK_HOST}
       SITE_NAME: ${HC_SITE_NAME}
       # Behind reverse proxy
@@ -72,6 +73,12 @@ services:
     # --- Networking ---
     networks:
       - proxy-public
+    # Loopback only, for jobs on this host (the watchdogs, borgmatic): through
+    # Traefik their pings arrive as the edge network's gateway, which a closed
+    # access policy refuses and TRUSTED_RANGES in core/traefik must not admit. Nothing
+    # outside the host reaches this port; the UI keeps its router and policy.
+    ports:
+      - "127.0.0.1:${HC_LOCAL_PORT}:8000"
 
     # --- Traefik ---
     labels:
