@@ -61,7 +61,7 @@ From `business/documenso/`:
    cp .env.example .env
    ```
 
-2. Generate the four secrets:
+2. Generate the secrets and store the SMTP password:
 
    ```bash
    mkdir -p .secrets volumes/postgres
@@ -96,8 +96,10 @@ From `business/documenso/`:
    docker compose logs documenso-app --follow
    ```
 
-5. Open `https://<APP_TRAEFIK_HOST>`. The first account becomes the
-   administrator.
+5. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and create the first account
+   — it becomes the administrator. The route ships closed (`access-vpn`) for that
+   reason; once the account exists, set `APP_TRAEFIK_ACCESS=access-public` in
+   `.env` and run `docker compose up -d` so signers can reach it.
 
 </Steps>
 
@@ -146,9 +148,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: documenso
-      container: documenso-db
       username: documenso
-      password: "{credential file /srv/docker/business/documenso/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec documenso-db pg_dump
+      pg_restore_command: docker exec -i documenso-db pg_restore
+      psql_command: docker exec -i documenso-db psql
 ```
 
 **`cert.p12` is not a secret like the others.** Every signature this instance has
@@ -197,7 +201,7 @@ application itself gives no sign of it.
 
 ## Repository files
 
-- [`business/documenso/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/documenso/README.md) — setup, security model, the first-deploy gate
+- [`business/documenso/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/documenso/README.md) — setup, security model, the first-deploy checklist
 - [`business/documenso/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/documenso/UPSTREAM.md) — source, upgrade checklist, deviations
 - [`business/opensign/`](https://github.com/rubennati/secure-docker-blueprint/blob/main/business/opensign/README.md) — e-signature, no guide here yet
 

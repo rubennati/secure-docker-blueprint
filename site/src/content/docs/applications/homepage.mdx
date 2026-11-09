@@ -43,7 +43,7 @@ From `apps/homepage/`:
    ```
 
    Then set `APP_BASIC_AUTH_USERS`. The route ships with a basic-auth gate,
-   because Homepage has no login of its own and its configuration holds the API keys of every widget; the placeholder is not a valid hash. Every `$` in the hash is
+   because the stack does not enable Homepage's own authentication and its configuration holds the API keys of every widget; the placeholder is not a valid hash. Every `$` in the hash is
    doubled for Compose — the command does it, paste the whole line:
 
    ```bash
@@ -75,7 +75,8 @@ change, so no restart is needed.
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/                         # 401 — the gate asks
+curl -fsSI -u 'ops:the-password' https://<APP_TRAEFIK_HOST>/  # 200 with the credentials
 ```
 
 Then add a service to `config/services.yaml` and watch it appear without a
@@ -109,7 +110,8 @@ lose.
 <Steps>
 
 1. Read the [release notes](https://github.com/gethomepage/homepage/releases).
-   The step from 0.x to 1.x changed the configuration format.
+   The step from 1.x to 2.x changed the configuration format and added Homepage's
+   own authentication.
 
 2. Commit the current configuration.
 

@@ -126,6 +126,17 @@ Upstream works around an `io_uring` issue by running MariaDB with seccomp and
 AppArmor unconfined. This stack keeps the defaults; the block is present in
 `docker-compose.yml` and commented out, to be enabled only if that crash appears.
 
+### What it sends outward
+
+On first run and on renewal, PhotoPrism posts to `my.photoprism.app/v1/hello`
+with a **persistent client serial**, the version, the operating system, the
+architecture and the CPU core count. The serial does not rotate, so the vendor
+can follow this installation over time.
+
+**There is no supported way to switch it off.** `hub.Disable()` exists but is
+reachable only through the test configuration. Blocking it needs an egress rule
+on the host or the network.
+
 ## Backup
 
 | | |

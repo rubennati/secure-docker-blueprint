@@ -200,6 +200,30 @@ The shipped header profile sends `X-Frame-Options: DENY`, so the client portal
 cannot be embedded in someone else's page. If you want customers to see it
 inside their own site, that is the setting to change — otherwise leave it.
 
+## Updates
+
+Invoice Ninja runs its database migrations on start; within the v5 series updates
+are cumulative and need no intermediate version.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/invoiceninja/invoiceninja/releases)
+   and check the [dockerfiles repository](https://github.com/invoiceninja/dockerfiles/tree/debian)
+   for nginx or compose changes.
+
+2. Back up the database, the storage volume and `.secrets/app_key.txt`.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Log in and open a recent invoice — the data and its PDF should be intact.
+
+</Steps>
+
 ## Troubleshooting
 
 **The design preview returns an error, but invoices still arrive** — the

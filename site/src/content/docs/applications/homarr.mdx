@@ -71,7 +71,7 @@ From `apps/homarr/`:
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/   # 307 to /init until the setup wizard is done, then 200
 ```
 
 Then add one integration and confirm its tile shows live data. That is the check
@@ -93,6 +93,19 @@ needs. [Dockhand](/infrastructure/dockhand/) shows the same pattern.
 The stack ships `access-vpn`. A dashboard with working integrations holds API
 tokens for everything it displays, which makes it worth more than the tiles
 suggest.
+
+### What it sends outward
+
+Homarr reports weekly to a PostHog instance at `hog.homarr.dev`, keyed on an ID
+minted on first run and stored in this stack's database. It also checks GitHub
+for a new version at startup.
+
+Turn the telemetry off after first login: **Manage → Settings → Analytics**,
+switch off `general`. It is a database setting, so it cannot be pre-set here.
+
+`NO_EXTERNAL_CONNECTION=true` stops both calls, but it also stops the icon
+repository refreshing, which is most of what Homarr is for. The UI switch is the
+narrower instrument.
 
 ## Backup
 

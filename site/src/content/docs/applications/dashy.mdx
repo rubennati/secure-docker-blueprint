@@ -72,7 +72,8 @@ From `apps/dashy/`:
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/                         # 401 — the gate asks
+curl -fsSI -u 'ops:the-password' https://<APP_TRAEFIK_HOST>/  # 200 with the credentials
 ```
 
 ## Going further

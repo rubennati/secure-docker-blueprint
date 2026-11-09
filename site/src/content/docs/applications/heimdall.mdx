@@ -63,8 +63,9 @@ From `apps/heimdall/`:
    docker compose logs heimdall-app --follow
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>`. There is no login at first — everything
-   else, from tiles to accounts, is configured in the interface.
+4. Open `https://<APP_TRAEFIK_HOST>` and pass the basic-auth prompt. Heimdall
+   has no account at first — everything else, from tiles to accounts, is
+   configured in the interface.
 
 </Steps>
 
@@ -72,7 +73,8 @@ From `apps/heimdall/`:
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/                         # 401 — the gate asks
+curl -fsSI -u 'ops:the-password' https://<APP_TRAEFIK_HOST>/  # 200 with the credentials
 ```
 
 Then add one tile and reload. A dashboard that keeps the tile confirms the

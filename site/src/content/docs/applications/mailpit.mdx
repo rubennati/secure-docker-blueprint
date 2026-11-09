@@ -60,15 +60,28 @@ For a deployment on a server. From `apps/mailpit/`:
    mkdir -p volumes/data
    ```
 
-3. Start it:
+3. Create the login for the UI and the API — a bcrypt htpasswd, one user per
+   line. Store the printed password now; it is not shown again:
+
+   ```bash
+   mkdir -p .secrets && chmod 700 .secrets
+   MP_PW="$(openssl rand -base64 24)"; echo "$MP_PW"
+   docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$MP_PW" > .secrets/mailpit_htpasswd.txt
+   unset MP_PW
+   chmod 600 .secrets/mailpit_htpasswd.txt
+   ```
+
+   Without the file the start stops with `bind source path does not exist`.
+
+4. Start it:
 
    ```bash
    docker compose up -d
    ```
 
-4. Open `https://<APP_TRAEFIK_HOST>`. There is no setup and no account. The
-   router ships `access-vpn`, so the page answers on the VPN and nowhere
-   else.
+5. Open `https://<APP_TRAEFIK_HOST>` and log in as `ops`. There is no setup page
+   and no account inside Mailpit. The router ships `access-vpn`, so the page
+   answers on the VPN and nowhere else.
 
 </Steps>
 
@@ -100,6 +113,10 @@ everywhere:
 | password | anything non-empty, in the stack's `.secrets/` file as usual |
 | encryption | none |
 
+The sending stack has to share the network: set `TRAEFIK_NETWORK=proxy-public`
+in its `.env`. On its own edge network, the examples' default, `mailpit` does not
+resolve.
+
 The port matters more than it looks. Many mail clients force STARTTLS on 587
 and implicit TLS on 465, and this port offers neither — a stack that hard-codes
 587 fails against it. Restart the stack, trigger a password reset, read it in
@@ -107,18 +124,18 @@ the UI.
 
 ## Who can read it
 
-Everything in the inbox is readable by whoever reaches the UI, and the UI has
-no login of its own. That is why it ships VPN-only, and why the sink is for
-trying stacks out: a stack whose users are real people sends real reset links,
-and those belong in a mailbox.
+Everything in the inbox — reset links, verification links, invitations — is
+readable by whoever logs in to the UI. That is why it ships VPN-only behind the
+htpasswd login, and why the sink is for trying stacks out: a stack whose users
+are real people sends real reset links, and those belong in a mailbox.
 
 Every container on the proxy network reaches the SMTP port, as a sink must be.
 The HTTP side is narrower: the API and the UI answer requests that carry the
 Traefik hostname or come from the healthcheck on localhost, and refuse a
 container calling `http://mailpit:8025/` with 403. That is a Host-header check,
-so it stops a casual read of the inbox rather than a determined one. An
-htpasswd file in `MP_UI_AUTH_FILE` would close it properly, at the price of a
-login prompt in the browser.
+so on its own it would stop only a casual read; the htpasswd login in
+`MP_UI_AUTH_FILE` is what holds against a container that reaches port 8025
+directly.
 
 Nothing leaves the machine. The version check upstream runs against the GitHub
 API is switched off; the link checker and screenshots in the UI fetch external

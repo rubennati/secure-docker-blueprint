@@ -66,7 +66,7 @@ Then in the login form:
 | Field | Value |
 |---|---|
 | Server | `wordpress-db` |
-| Username | `wordpress_user` |
+| Username | `wp_user` |
 | Password | from `apps/wordpress/.secrets/db_pwd.txt` |
 | Database | `wordpress` |
 
@@ -86,19 +86,29 @@ Every target stack has to be running before Adminer starts.
 Enter the hostname or address in the login form directly. What it takes to reach
 it depends on your network rather than on this stack.
 
-## Where it earns its place
+## Backup
 
-Adminer has nothing to back up, and it is useful in the other direction: after
-restoring a database, bring Adminer up, confirm the tables hold the rows you
-expect, and take it down again. That is a check on the restore without installing
-a database client on the host.
+| | |
+|---|---|
+| **Database** | None of its own. |
+| **State** | None. Connection details are typed per session and never kept. |
+| **Quiescing** | Not applicable. |
+
+Nothing to back up: Adminer is a client, not a store.
+
+It earns one line in a restore plan for the opposite reason. After restoring a
+database, bring Adminer up, confirm the tables hold the rows you expect, and take
+it down again — a check on the restore without installing a database client on
+the host.
 
 ## Updates
 
 <Steps>
 
-1. Read the [release notes](https://github.com/vrana/adminer/releases). The step
-   from 4.x to 5.x is a major change.
+1. Read the [changelog](https://github.com/vrana/adminer/blob/master/CHANGELOG.md).
+   The 6.x line refuses servers that accept any password (PostgreSQL with `trust`
+   authentication, for example), drops several plugins and needs an ES6 browser;
+   `UPSTREAM.md` lists the changes per release.
 
 2. Raise `APP_TAG` in `.env`, then:
 

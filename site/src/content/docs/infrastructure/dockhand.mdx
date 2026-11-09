@@ -131,9 +131,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: dockhand
-      container: dockhand-db
       username: dockhand
-      password: "{credential file /srv/docker/core/dockhand/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec dockhand-db pg_dump
+      pg_restore_command: docker exec -i dockhand-db pg_restore
+      psql_command: docker exec -i dockhand-db psql
 ```
 
 **`encryption_key.txt` decrypts what the database holds.** A database restored

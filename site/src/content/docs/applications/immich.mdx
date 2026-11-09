@@ -75,9 +75,12 @@ From `apps/immich/`:
 
    Wait for `Immich Server is listening on`.
 
-5. Open `https://<APP_TRAEFIK_HOST>` and register immediately. The first account
-   to sign up becomes the administrator, and until it is claimed anyone who
-   reaches the page can claim it.
+5. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and register. The first
+   account to sign up becomes the administrator, with no setup secret; the route
+   ships closed (`access-vpn`) for that reason. Once the administrator exists, a
+   second sign-up is refused — set `APP_TRAEFIK_ACCESS=access-public` in `.env`
+   and run `docker compose up -d` if the phones are to upload from outside the
+   VPN.
 
 </Steps>
 
@@ -92,6 +95,38 @@ Then upload one photo from the mobile app and confirm it appears with a
 thumbnail, and that search finds it by content. Those three together cover the
 server, the library path and the machine-learning worker; the ping covers only
 the first.
+
+## Going further
+
+### Importing an existing library
+
+The official CLI imports a folder. Create an API key under Account Settings →
+API Keys first:
+
+```bash
+npm install -g @immich/cli
+immich upload --recursive /path/to/photos \
+  --key <API-KEY> --server https://<APP_TRAEFIK_HOST>
+```
+
+For a Google Photos Takeout or a large library with duplicates, the community
+importer [`immich-go`](https://github.com/simulot/immich-go) reads the Takeout's
+sidecar metadata, skips files already in Immich by content hash, builds albums
+from folders and has a dry-run mode:
+
+```bash
+./immich-go upload from-google-photos \
+  --server https://<APP_TRAEFIK_HOST> --api-key <API-KEY> /path/to/takeout
+```
+
+### Storage and acceleration
+
+`UPLOAD_LOCATION` can be an NFS or SMB share; `volumes/postgres` must stay on
+local storage, because PostgreSQL corrupts on network filesystems. Transcoding
+and machine-learning inference can use a GPU or NPU — upstream's
+[hardware acceleration guide](https://docs.immich.app/features/ml-hardware-acceleration)
+has the `extends:` block and the image tag to use. The first inference downloads
+the CLIP model, several minutes on a slow link.
 
 ## Backup
 
@@ -108,9 +143,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: immich
-      container: immich-db
       username: immich
-      password: "{credential file /srv/docker/apps/immich/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec immich-db pg_dump
+      pg_restore_command: docker exec -i immich-db pg_restore
+      psql_command: docker exec -i immich-db psql
 ```
 
 `UPLOAD_LOCATION` points outside the stack directory, which is why it gets
@@ -120,7 +157,22 @@ anything.
 
 ## Restore
 
-Restore the dump exactly as below. Each part of the pipeline is required:
+A plain `psql < dump.sql` does not restore this database, and it does not report
+that it failed. The restore expects one database in plain SQL, taken with the
+server stopped so it cannot capture a torn state:
+
+```bash
+docker compose stop immich-app
+docker compose exec -T db sh -c 'pg_dump --username="$POSTGRES_USER" "$POSTGRES_DB"' | gzip > dump.sql.gz
+docker compose start immich-app
+```
+
+Restore it only into a fresh install — a database the Immich server has never
+started against. If the server has run, recreate `volumes/postgres` first; where
+the database cannot be started on its own, set `DB_SKIP_MIGRATIONS=true` before
+bringing the stack up, so the server does not migrate a database that is about to
+be replaced. Then load the dump exactly as below. Each part of the pipeline is
+required:
 
 ```bash
 gunzip --stdout dump.sql.gz \

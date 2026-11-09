@@ -199,9 +199,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: paperless
-      container: paperless-db
       username: paperless_user
-      password: "{credential file /srv/docker/apps/paperless-ngx/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec paperless-db pg_dump
+      pg_restore_command: docker exec -i paperless-db pg_restore
+      psql_command: docker exec -i paperless-db psql
 ```
 
 No quiescing — the dump is consistent on its own.

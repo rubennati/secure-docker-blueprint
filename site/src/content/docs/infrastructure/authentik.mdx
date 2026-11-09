@@ -172,14 +172,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: authentik
-      container: authentik-db
       username: authentik
-      password: "{credential file /srv/docker/core/authentik/.secrets/db_pwd.txt}"
-      format: custom
-      # Server: postgres 16 (DB_TAG) — so the client of major 16.
-      pg_dump_command: /usr/lib/postgresql/16/bin/pg_dump
-      pg_restore_command: /usr/lib/postgresql/16/bin/pg_restore
-      psql_command: /usr/lib/postgresql/16/bin/psql
+      # The server's own client, inside its container
+      pg_dump_command: docker exec authentik-db pg_dump
+      pg_restore_command: docker exec -i authentik-db pg_restore
+      psql_command: docker exec -i authentik-db psql
 ```
 
 **This is the stack whose loss cascades.** Every service behind it depends on it,

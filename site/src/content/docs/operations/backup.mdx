@@ -39,10 +39,12 @@ sudo apt install mariadb-client        # or mongodb-database-tools
 
 PostgreSQL is the exception: no client on the host. Every entry runs the server's
 own `pg_dump`, `pg_restore` and `psql` inside the database container through
-`docker exec`, so the client's version always matches the server's. Measured on the
-lab host: the distribution's client 17 failed against servers 14, 16 and 18, and the
-container's client restored every database with identical rows (FA-03,
-[borgmatic's README](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/README.md#postgresql-the-servers-own-client-through-docker-exec)).
+`docker exec`, so the client's version always matches the server's. A
+distribution's client of another major fails against the server — `pg_dump`
+refuses a newer server, and `pg_restore` stops on settings an older one does not
+know — while the container's own client dumps and restores every major the
+stacks pin
+([borgmatic's README](https://github.com/rubennati/secure-docker-blueprint/blob/main/backup/borgmatic/README.md#postgresql-the-servers-own-client-through-docker-exec)).
 
 ## Installation
 
@@ -132,9 +134,25 @@ The rest of this page is what those sections assume you understand.
 ## Databases need dumping, not copying
 
 Copying a running database's files captures a torn, mid-transaction state that
-only reveals itself at restore. Add one entry per database — a MariaDB one here; a
-PostgreSQL entry also names `pg_dump_command`, `pg_restore_command` and
-`psql_command` from the server's major (see [Before you start](#before-you-start)):
+only reveals itself at restore. Add one entry per database. A PostgreSQL entry
+runs the server's own programs in its container and needs no password:
+
+```yaml
+postgresql_databases:
+    - name: myapp
+      username: myapp
+      # The server's own client, inside its container
+      pg_dump_command: docker exec myapp-db pg_dump
+      pg_restore_command: docker exec -i myapp-db pg_restore
+      psql_command: docker exec -i myapp-db psql
+```
+
+The official `postgres` images trust connections on the local socket, so the
+client inside the container needs no credential. The database container has to
+be running for a backup, and the dump runs inside its memory limit.
+
+A MariaDB entry uses the client on the host, reaching the container by its
+address:
 
 ```yaml
 mariadb_databases:
@@ -228,8 +246,10 @@ throwaway target — never into the live deployment.
 <Steps>
 
 1. Bring up a scratch database and create the target. Borgmatic will not create
-   it for you. For PostgreSQL, use the same image tag as the live server, so the
-   client named in the entry matches it:
+   it for you. For PostgreSQL, start the throwaway from the stack's database
+   image: the entry's `docker exec` commands name the live container, so the
+   rehearsal uses a second configuration whose entry names `restore-test`
+   instead (`docker exec -i restore-test pg_restore`, the same for `psql`):
 
    ```bash
    PW=$(openssl rand -hex 16)
@@ -314,7 +334,9 @@ keep_monthly: 6
 Restricting the backup key on the target to `borg serve --append-only` is worth
 doing, and it is routinely overstated. From Borg's own documentation, it affects
 the low-level structure only — delete and prune still appear to work. A
-compromised client can still make archives *look* gone.
+compromised client can still make archives *look* gone. It is also a property
+of the key on the remote target, so check it there: a restore from a local
+repository says nothing about it.
 
 What survives is the data, until `borg compact` runs. So: run retention from
 somewhere else, prefer storage-level immutability where the target offers it, and
@@ -330,6 +352,10 @@ healthchecks:
     ping_url: https://healthchecks.example.com/ping/your-uuid
     states: [start, finish, fail]
 ```
+
+With Healthchecks running on the same host, ping its loopback port instead —
+`http://127.0.0.1:8001/ping/your-uuid` (`HC_LOCAL_PORT`). Through the public name
+a closed access policy refuses the host itself.
 
 ## Troubleshooting
 
