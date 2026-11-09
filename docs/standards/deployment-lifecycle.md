@@ -151,7 +151,8 @@ Which releases exist: `git tag --sort=-v:refname`. What changed between two of t
 
 ## 3 — Configure a stack
 
-`cp .env.example .env`, then set every `__REPLACE_ME__` the file carries. Each stack's
+`cp .env.example .env`, then set every value the file leaves for you: each empty secret
+(`docker compose` names any required one still missing) and every `__REPLACE_ME__`. Each stack's
 `README.md` documents its variables, and `.env.example` names every value that has to be
 set. Secrets do not belong in `.env` — see [`secrets.md`](secrets.md) for what goes in
 `.secrets/` and how it is generated.

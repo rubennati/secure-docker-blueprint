@@ -34,9 +34,9 @@ services:
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     environment:
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
-      POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
+      POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD:?Set DB_ADMIN_PASSWORD in .env.local}
       POSTGRES_DB: ${DB_NAME}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql/data
@@ -68,8 +68,8 @@ services:
       POSTGRES_ADMIN_USER: ${DB_ADMIN_USER}
       POSTGRES_ADMIN_PASSWORD: ${DB_ADMIN_PASSWORD}
       CELERY_BROKER: amqp://rabbitmq
-      IRIS_SECRET_KEY: ${IRIS_SECRET_KEY}
-      IRIS_SECURITY_PASSWORD_SALT: ${IRIS_SECURITY_PASSWORD_SALT}
+      IRIS_SECRET_KEY: ${IRIS_SECRET_KEY:?Set IRIS_SECRET_KEY in .env.local}
+      IRIS_SECURITY_PASSWORD_SALT: ${IRIS_SECURITY_PASSWORD_SALT:?Set IRIS_SECURITY_PASSWORD_SALT in .env.local}
       IRIS_AUTHENTICATION_TYPE: local
     volumes:
       - ./volumes/local/downloads:/home/iris/downloads

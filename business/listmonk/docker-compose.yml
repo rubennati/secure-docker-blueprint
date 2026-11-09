@@ -87,7 +87,7 @@ services:
       LISTMONK_db__host: db
       LISTMONK_db__port: "5432"
       LISTMONK_db__user: ${DB_USER}
-      LISTMONK_db__password: ${DB_PWD_INLINE}
+      LISTMONK_db__password: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
       LISTMONK_db__database: ${DB_NAME}
       LISTMONK_db__ssl_mode: disable
     networks:

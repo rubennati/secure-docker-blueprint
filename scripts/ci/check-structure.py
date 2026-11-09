@@ -40,6 +40,11 @@ FAIL (blocks CI — dangerous or leak-prone):
                     `# public by design: <reason>` line above it — a stack
                     ships closed and opens by the operator's choice
                     (DEC-043 addendum, 2026-11-02)
+  placeholder-secret a credential in .env.example or .env.local.example
+                    still reads __REPLACE_ME__ — a forgotten one becomes the
+                    password itself (Vaultwarden's admin panel opened on it,
+                    2026-11-08); a secret ships empty, and the compose file
+                    refuses an empty required one with ${VAR:?Set VAR in .env}
   retired-name      a stack still carries the vocabulary from before the
                     model: *_TRAEFIK_SECURITY or *_TRAEFIK_THREAT, an
                     acc-* / sec-* / tls-basic|aplus|modern value, a router
@@ -806,6 +811,25 @@ def check_env_pins(app: Path, findings: list[dict]) -> None:
                                            "reproducible — pin a full version"})
 
 
+CREDENTIAL_VAR = re.compile(r"^[A-Z0-9_]*(PASS|PWD|TOKEN|SECRET|KEY|KEK|PFX|AUTH_USERS)[A-Z0-9_]*$")
+
+
+def check_placeholder_secrets(app: Path, findings: list[dict]) -> None:
+    """A credential never ships as __REPLACE_ME__: the application would take
+    the placeholder itself as the password or key when the operator forgets
+    one. It ships empty; an empty required one stops `docker compose` through
+    `${VAR:?...}` in the compose file."""
+    for name in (".env.example", ".env.local.example"):
+        path = app / name
+        if not path.exists():
+            continue
+        for key, value in parse_env(path)[0]:
+            if CREDENTIAL_VAR.match(key) and value == "__REPLACE_ME__":
+                findings.append({"level": "FAIL", "rule": "placeholder-secret",
+                                 "detail": f"{name}: {key}=__REPLACE_ME__ — ship it empty and refuse an empty "
+                                           f"required value in compose with ${{{key}:?Set {key} in .env}}"})
+
+
 def check_env(app: Path, findings: list[dict]) -> None:
     env = app / ".env.example"
     if not env.exists():
@@ -1327,6 +1351,7 @@ def main() -> int:
         check_files(app, findings, root_gi)
         check_env(app, findings)
         check_env_pins(app, findings)
+        check_placeholder_secrets(app, findings)
         check_local_pins(app, findings)
         check_compose(app, findings)
         check_routers(app, findings)

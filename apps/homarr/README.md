@@ -19,7 +19,7 @@ Data lives in `./volumes/appdata/`. Integrations encrypt their credentials using
 Runs on `http://localhost:7575` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local # fill the empty secrets
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:7575
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -107,7 +107,7 @@ Leave disabled if you don't need live container status.
 
 ## Known Issues
 
-- **`SECRET_ENCRYPTION_KEY` leak in inbox source** — the upstream example and many tutorials include a specific hex string as example. Any .env.example containing it would be a backdoor. Our `.env.example` uses `__REPLACE_ME__` — regenerate in Setup step 2.
+- **`SECRET_ENCRYPTION_KEY` leak in inbox source** — the upstream example and many tutorials include a specific hex string as example. Any .env.example containing it would be a backdoor. Our `.env.example` ships it empty and compose refuses to start without it — generate it in Setup step 2.
 - **`SECRET_ENCRYPTION_KEY` not `_FILE`-capable** — upstream reads it from env only. Stays in `.env` (gitignored).
 
 ## Open findings

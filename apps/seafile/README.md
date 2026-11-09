@@ -49,7 +49,7 @@ Full details: [config/README.md](config/README.md).
 Runs on `http://127.0.0.1:8000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local # fill the empty secrets
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://127.0.0.1:8000
 docker compose -f docker-compose.local.yml --env-file .env.local down

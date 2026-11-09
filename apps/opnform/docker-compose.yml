@@ -153,11 +153,11 @@ services:
       APP_DEBUG: "false"
       APP_URL: https://${APP_TRAEFIK_HOST}
       FRONT_URL: https://${APP_TRAEFIK_HOST}
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       APP_TRUSTED_PROXIES: "*"
       # Secrets shared with Nuxt UI (SSR authentication)
-      JWT_SECRET: ${JWT_SECRET}
-      FRONT_API_SECRET: ${FRONT_API_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      FRONT_API_SECRET: ${FRONT_API_SECRET:?Set FRONT_API_SECRET in .env}
       # Database
       DB_CONNECTION: pgsql
       DB_HOST: db
@@ -166,7 +166,7 @@ services:
       DB_USERNAME: ${DB_USER}
       # Laravel reads DB_PASSWORD from env only (no _FILE support).
       # Value must match .secrets/db_pwd.txt.
-      DB_PASSWORD: ${DB_PWD_INLINE}
+      DB_PASSWORD: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
       # Cache + queue + sessions via Redis
       CACHE_DRIVER: redis
       QUEUE_CONNECTION: redis

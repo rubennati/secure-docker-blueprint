@@ -23,7 +23,7 @@
 
 | Change | Reason |
 |--------|--------|
-| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now `__REPLACE_ME__` + `artisan key:generate` documented |
+| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now shipped empty and required by compose; `artisan key:generate` documented |
 | **Hardcoded DB password `secret` replaced** | Now Docker Secret + `DB_PWD_INLINE` |
 | **`image: monica` → `monica:${APP_TAG}`** | Pinned tag (blueprint convention) |
 | **Traefik labels instead of `ports: 8005:80`** | Blueprint routes via Traefik |

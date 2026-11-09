@@ -159,7 +159,7 @@ services:
       # The application has no login of its own, so the proxy carries one. Same
       # shape as apps/paperless-gpt: the access policy says who may reach it,
       # the basic-auth middleware asks them who they are.
-      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.users=${APP_BASIC_AUTH_USERS}"
+      - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.users=${APP_BASIC_AUTH_USERS:?Set APP_BASIC_AUTH_USERS in .env}"
       - "traefik.http.middlewares.${COMPOSE_PROJECT_NAME}-auth.basicauth.realm=Scrutiny"
       # Middlewares — the four positions; APP_TRAEFIK_AUTH (.env) names the
       # basic-auth gate above, provider-qualified.

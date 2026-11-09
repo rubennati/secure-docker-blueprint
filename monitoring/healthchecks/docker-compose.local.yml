@@ -19,7 +19,7 @@ services:
       DB: sqlite
       DB_NAME: /data/hc.sqlite
       DEBUG: "False"
-      SECRET_KEY: ${HC_SECRET_KEY}
+      SECRET_KEY: ${HC_SECRET_KEY:?Set HC_SECRET_KEY in .env.local}
       ALLOWED_HOSTS: localhost,127.0.0.1
       SITE_ROOT: http://localhost:8000
       SITE_NAME: Healthchecks (local)

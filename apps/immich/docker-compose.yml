@@ -188,7 +188,7 @@ services:
       DB_PORT: "5432"
       DB_DATABASE_NAME: ${DB_NAME}
       DB_USERNAME: ${DB_USER}
-      DB_PASSWORD: ${DB_PWD_INLINE}
+      DB_PASSWORD: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
       # Redis
       REDIS_HOSTNAME: redis
       REDIS_PORT: "6379"

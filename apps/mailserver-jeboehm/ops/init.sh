@@ -13,9 +13,11 @@ chmod 700 .secrets
 
 if [ "${1:-}" = "--local" ]; then
   [ -f .env.local ] || { echo ".env.local is missing — copy it from .env.local.example first" >&2; exit 1; }
-  while grep -q '__REPLACE_ME__' .env.local; do
-    awk -v v="$(openssl rand -hex 16)" '!done && /__REPLACE_ME__/ { sub(/__REPLACE_ME__/, v); done = 1 } { print }' .env.local > .env.local.tmp
-    mv .env.local.tmp .env.local
+  for name in DB_PASSWORD DB_ROOT_PASSWORD REDIS_PASSWORD CONTROLLER_PASSWORD DOVEADM_API_KEY; do
+    if grep -qE "^$name=$" .env.local; then
+      awk -v n="$name" -v v="$(openssl rand -hex 16)" '$0 == n "=" { $0 = n "=" v } { print }' .env.local > .env.local.tmp
+      mv .env.local.tmp .env.local
+    fi
   done
   DOMAIN=$(grep -E '^APP_MAIL_DOMAIN=' .env.local | tail -1 | cut -d= -f2-)
   if [ ! -s "$BASE/certs/tls.crt" ]; then

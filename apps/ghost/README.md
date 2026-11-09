@@ -39,7 +39,7 @@ The ActivityPub service has the same limitation — `ops/activitypub-entrypoint.
 Runs on `http://localhost:2368` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local # fill the empty secrets
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:2368
 docker compose -f docker-compose.local.yml --env-file .env.local down

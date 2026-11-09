@@ -17,7 +17,7 @@ services:
     cap_add: [CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID]
     environment:
       DATABASE_URL: file:/app/database/hemmelig.db
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Set BETTER_AUTH_SECRET in .env.local}
       BETTER_AUTH_URL: http://localhost:8080
       HEMMELIG_BASE_URL: http://localhost:8080
       NODE_ENV: production

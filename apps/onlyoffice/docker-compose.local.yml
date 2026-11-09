@@ -15,7 +15,7 @@ services:
     entrypoint: ["/app/ds/run-document-server.sh"]
     environment:
       JWT_ENABLED: "true"
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.local}
       WOPI_ENABLED: "true"
       TZ: ${TZ}
     volumes:

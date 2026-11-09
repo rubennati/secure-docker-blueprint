@@ -10,6 +10,18 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Security
 
+- **A forgotten secret no longer becomes the password.** Every secret a container
+  reads from the environment shipped as `__REPLACE_ME__` in `.env.example` or
+  `.env.local.example`; left in place, the application took the placeholder itself as
+  the password or key (on a lab host it opened Vaultwarden's admin panel). Those
+  secrets now ship empty in 52 stacks, and the compose file requires each with
+  `${VAR:?Set VAR in .env}`: `docker compose` stops before the start and names the
+  variable. Optional ones stay empty without the guard (`CF_DNS_API_TOKEN` for hosts
+  without DNS-01, `HC_SMTP_PASSWORD`, `VW_ADMIN_TOKEN`, which keeps the admin panel
+  off). `check-structure.py` fails a credential left as `__REPLACE_ME__`
+  (`placeholder-secret`); `apps/mailserver-jeboehm`'s `ops/init.sh --local` fills the empty
+  values, and Traefik's `validate.sh` warns on an empty Cloudflare token.
+
 - **Every stack ships closed.** Fifteen stacks shipped `access-public` although
   their first visitor became the admin or a default login was active: Photoview,
   WordPress, Documenso, Matomo and OpenSign (setup wizard or first sign-up),

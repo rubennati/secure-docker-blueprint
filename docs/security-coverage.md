@@ -36,7 +36,7 @@ A merge is blocked when one of these is violated without a documented exception.
 | Control | Coverage |
 |---|---|
 | Network isolation — a network with `internal: true` | 70 / 131 compose files |
-| `__REPLACE_ME__` sentinels an operator must replace | 45 occurrences across `.env.example` files |
+| `__REPLACE_ME__` sentinels an operator must replace | 3 occurrences across `.env.example` files |
 
 ## Soft controls
 

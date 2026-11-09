@@ -37,7 +37,7 @@ services:
       DB_NAME: /data/hc.sqlite
       # Django
       DEBUG: "False"
-      SECRET_KEY: ${HC_SECRET_KEY}
+      SECRET_KEY: ${HC_SECRET_KEY:?Set HC_SECRET_KEY in .env}
       ALLOWED_HOSTS: ${APP_TRAEFIK_HOST}
       SITE_ROOT: https://${APP_TRAEFIK_HOST}
       SITE_NAME: ${HC_SITE_NAME}

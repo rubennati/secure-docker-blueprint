@@ -22,8 +22,8 @@ services:
     security_opt: [no-new-privileges:true]
     environment:
       VIKUNJA_SERVICE_PUBLICURL: "http://localhost:3456"
-      VIKUNJA_SERVICE_SECRET: ${JWT_KEY}
-      VIKUNJA_DATABASE_PASSWORD: ${DB_PASSWORD}
+      VIKUNJA_SERVICE_SECRET: ${JWT_KEY:?Set JWT_KEY in .env.local}
+      VIKUNJA_DATABASE_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
 
       VIKUNJA_DATABASE_TYPE: postgres
       VIKUNJA_DATABASE_HOST: db

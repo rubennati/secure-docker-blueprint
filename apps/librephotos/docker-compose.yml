@@ -91,17 +91,17 @@ services:
       # repository, not through an in-app notice.
       UPDATE_CHECK: "false"
       TZ: ${TZ}
-      SECRET_KEY: ${SECRET_KEY}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       BACKEND_HOST: backend
       ADMIN_EMAIL: ${ADMIN_EMAIL}
       ADMIN_USERNAME: ${ADMIN_USERNAME}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       DB_BACKEND: postgresql
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       # LibrePhotos reads DB_PASS from env only (no _FILE support).
       # Value must match contents of .secrets/db_pwd.txt.
-      DB_PASS: ${DB_PWD_INLINE}
+      DB_PASS: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
       DB_HOST: db
       DB_PORT: "5432"
       MAPBOX_API_KEY: ${MAPBOX_API_KEY}

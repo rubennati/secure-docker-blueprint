@@ -14,7 +14,7 @@ services:
     security_opt: [no-new-privileges:true]
     environment:
       TZ: ${TZ}
-      SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY}
+      SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY:?Set HOMARR_SECRET_ENCRYPTION_KEY in .env.local}
     volumes:
       - ./volumes/local/appdata:/appdata
       # - /var/run/docker.sock:/var/run/docker.sock:ro

@@ -22,7 +22,7 @@ services:
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql/data
@@ -48,7 +48,7 @@ services:
       DT_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       DT_DATASOURCE_USERNAME: ${DB_USER}
       DT_DATASOURCE_PASSWORD: ${DB_PASSWORD}
-      DT_SECRET_MANAGEMENT_DATABASE_KEK: ${DT_KEK}
+      DT_SECRET_MANAGEMENT_DATABASE_KEK: ${DT_KEK:?Set DT_KEK in .env.local}
       DT_CORS_ENABLED: "true"
       DT_CORS_ALLOWED_ORIGINS: http://localhost:8080
       TZ: ${TZ}

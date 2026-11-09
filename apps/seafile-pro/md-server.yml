@@ -31,11 +31,11 @@ services:
 
     # --- Configuration ---
     environment:
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY}
+      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in .env}
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
-      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD}
+      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD:?Set SEAFILE_MYSQL_DB_PASSWORD in .env}
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
       - SEAFILE_LOG_TO_STDOUT=false
       - MD_PORT=8084
@@ -48,7 +48,7 @@ services:
       - CACHE_PROVIDER=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
 
     # --- Storage ---
     volumes:

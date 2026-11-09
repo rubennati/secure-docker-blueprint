@@ -25,7 +25,7 @@
 
 | Change | Reason |
 |--------|--------|
-| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now `__REPLACE_ME__` with `artisan key:generate --show` documented in Setup |
+| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now shipped empty and required by compose; `artisan key:generate --show` documented in Setup |
 | **Default passwords replaced** — inbox had `DB_ROOT_PASSWORD=rootpassword`, `DB_PASSWORD=lychee`, `REDIS_PASSWORD=defaultdefault` | All now secrets or removed |
 | **`DB_PASSWORD_FILE` used natively** — inbox commented the option out and passed the password inline | Lychee reads `DB_PASSWORD_FILE` directly; using Docker Secrets avoids the `DB_PWD_INLINE` duplication pattern |
 | **Redis password removed** | Redis is on `app-internal` only; password was `defaultdefault` placeholder anyway. Add a password if exposing redis externally |

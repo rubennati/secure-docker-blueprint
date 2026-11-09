@@ -33,7 +33,7 @@ services:
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql/data
@@ -80,7 +80,7 @@ services:
       AUTHENTIK_POSTGRESQL__USER: ${DB_USER}
       AUTHENTIK_POSTGRESQL__NAME: ${DB_NAME}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${DB_PASSWORD}
-      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY}
+      AUTHENTIK_SECRET_KEY: ${AUTHENTIK_SECRET_KEY:?Set AUTHENTIK_SECRET_KEY in .env.local}
       AUTHENTIK_ERROR_REPORTING__ENABLED: "false"
       TZ: ${TZ}
     volumes:

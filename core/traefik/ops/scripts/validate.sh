@@ -530,9 +530,9 @@ if [ "${AUTHENTIK_FORWARD_AUTH_ENABLED}" = true ]; then
   fi
 fi
 
-# Warn about sentinel values (not a hard fail – HTTP-01 users don't need this)
-if [ "${CF_DNS_API_TOKEN:-}" = "__REPLACE_ME__" ]; then
-  echo "WARNING: CF_DNS_API_TOKEN is still set to __REPLACE_ME__. DNS-01 (wildcard certs) will fail."
+# Warn about a missing token (not a hard fail – HTTP-01 users don't need this)
+if [ -z "${CF_DNS_API_TOKEN:-}" ] || [ "${CF_DNS_API_TOKEN}" = "__REPLACE_ME__" ]; then
+  echo "WARNING: CF_DNS_API_TOKEN is empty. DNS-01 (wildcard certs) will fail."
 fi
 
 # Dashboard certificate strategy.

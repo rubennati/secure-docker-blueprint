@@ -26,7 +26,7 @@
 |--------|--------|
 | **Real IP + real TZ removed** — inbox had a hardcoded RFC1918 address in `APP_URL` and a non-UTC timezone | Prevent leak; `APP_URL` now `https://${APP_TRAEFIK_HOST}`, `TZ` defaults to `UTC` |
 | **Hardcoded passwords removed** — inbox source had placeholder DB user password and root password inline in the compose file | Now Docker Secrets (`.secrets/db_pwd.txt`, `.secrets/db_root_pwd.txt`) + `DB_PWD_INLINE` duplicate for BookStack |
-| **Hardcoded `APP_KEY` removed** | Inbox example would have been a backdoor across copies. Now `__REPLACE_ME__` with generation command documented in Setup. |
+| **Hardcoded `APP_KEY` removed** | Inbox example would have been a backdoor across copies. Now shipped empty and required by compose, with the generation command documented in Setup. |
 | **MariaDB switched from LSIO to official** — inbox used `lscr.io/linuxserver/mariadb` | Blueprint consistency: other apps use `mariadb:<tag>`. BookStack app stays LSIO because that's the canonical deployment path. |
 | **Traefik labels instead of port `:8011:80`** | Blueprint routes via Traefik |
 | **`security_opt: no-new-privileges`** on both services | Baseline |

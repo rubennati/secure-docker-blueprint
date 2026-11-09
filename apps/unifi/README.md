@@ -18,7 +18,7 @@ The web UI goes through Traefik (HTTPS). The L2/L3 device ports are exposed dire
 Runs on `https://localhost:8443` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local # fill the empty secrets
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # https://localhost:8443
 docker compose -f docker-compose.local.yml --env-file .env.local down

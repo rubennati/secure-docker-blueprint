@@ -917,6 +917,35 @@ class AuthPosture(unittest.TestCase):
         self.assertIn("apps/whoami", posture_of["none"])
 
 
+class PlaceholderSecret(unittest.TestCase):
+    """A credential ships empty, never as __REPLACE_ME__."""
+
+    def _run(self, env: str, local: str = "") -> list[str]:
+        with tempfile.TemporaryDirectory() as tmp:
+            app = Path(tmp) / "apps" / "widget"
+            app.mkdir(parents=True)
+            (app / ".env.example").write_text("COMPOSE_PROJECT_NAME=widget\n" + env)
+            if local:
+                (app / ".env.local.example").write_text(local)
+            findings: list[dict] = []
+            cs.check_placeholder_secrets(app, findings)
+            return [f["detail"] for f in findings if f["rule"] == "placeholder-secret"]
+
+    def test_a_placeholder_credential_fails(self):
+        self.assertEqual(len(self._run("ADMIN_PASSWORD=__REPLACE_ME__\n")), 1)
+        self.assertEqual(len(self._run("", "DB_PWD_INLINE=__REPLACE_ME__\nAPP_KEY=__REPLACE_ME__\n")), 2)
+
+    def test_empty_credentials_and_other_placeholders_pass(self):
+        self.assertEqual(self._run("ADMIN_PASSWORD=\nEDGE_ID=__REPLACE_ME__\n"), [])
+
+    def test_no_stack_ships_a_placeholder_credential(self):
+        root = Path(__file__).resolve().parents[2]
+        found: list[dict] = []
+        for env in sorted(root.glob("*/*/.env.example")):
+            cs.check_placeholder_secrets(env.parent, found)
+        self.assertEqual([f["detail"] for f in found], [])
+
+
 class PublicDefault(unittest.TestCase):
     """A stack ships closed: access-public needs posture public or a
     `# public by design:` reason above the access variable."""

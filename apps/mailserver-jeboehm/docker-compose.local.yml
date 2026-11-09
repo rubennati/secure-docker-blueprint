@@ -48,7 +48,7 @@ services:
       DB_PORT: 3306
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       WAITSTART_TIMEOUT: 2m
       TZ: ${TZ}
 
@@ -103,7 +103,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DOVEADM_API_KEY: ${DOVEADM_API_KEY}
+      DOVEADM_API_KEY: ${DOVEADM_API_KEY:?Set DOVEADM_API_KEY in .env.local}
       TZ: ${TZ}
 
     # --- Storage ---
@@ -152,8 +152,8 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.local}
+      CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD:?Set CONTROLLER_PASSWORD in .env.local}
       TZ: ${TZ}
 
     # --- Storage ---
@@ -300,7 +300,7 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       TZ: ${TZ}
 
     # --- Storage ---
