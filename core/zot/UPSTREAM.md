@@ -92,4 +92,4 @@
   `imagetrust` extension needs its own key material, added deliberately.
   See README.md.
 - **OIDC is not configured** — htpasswd only. See README.md.
-
+- **An image push and pull lie outside the verification snapshot above.**
