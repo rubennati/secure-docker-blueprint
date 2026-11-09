@@ -4,7 +4,7 @@
 
 Generated 2026-11-09 from the sources named in [`docs/standards/status-model.md`](docs/standards/status-model.md). **Do not edit by hand** — run `python3 scripts/ci/lifecycle-report.py --write`.
 
-121 stacks. 114 pin the newest upstream release, 3 pin an older one. 120 have a test date on a host, 25 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-09.
+121 stacks. 107 pin the newest upstream release, 10 pin an older one. 120 have a test date on a host, 25 of them with a restore. 4 have an upstream that is archived or has not released for twelve months. Upstream checked 2026-11-09.
 
 Every column is a fact, not a grade. Between two checks, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status) shows what upstream has published since.
 
@@ -36,7 +36,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`core/orion-belt`](core/orion-belt/) | `1.4.0` · 2026-10-24 | = Pin | [1 · 27](core/orion-belt/README.md#open-findings) | [2026-11-08](core/orion-belt/UPSTREAM.md) |
 | [`core/portainer`](core/portainer/) | `2.45.3` · 2026-10-21 | = Pin | [0 · 6](core/portainer/README.md#open-findings) | [2026-11-08](core/portainer/UPSTREAM.md) |
 | [`core/portainer-agent`](core/portainer-agent/) | `2.45.3` · 2026-10-21 | = Pin | [0 · 6](core/portainer-agent/README.md#open-findings) | [2026-11-08](core/portainer-agent/UPSTREAM.md) |
-| [`core/shellhub`](core/shellhub/) | `v0.29.3` · 2026-11-05 | = Pin | [1 · 28](core/shellhub/README.md#open-findings) | [2026-11-09](core/shellhub/UPSTREAM.md) |
+| [`core/shellhub`](core/shellhub/) | `v0.29.3` · 2026-11-05 | `v0.30.0` · 2026-11-09 | [1 · 28](core/shellhub/README.md#open-findings) | [2026-11-09](core/shellhub/UPSTREAM.md) |
 | [`core/step-ca`](core/step-ca/) | `0.30.2` · 2026-03-23 | = Pin | [4 · 70](core/step-ca/README.md#open-findings) | [2026-11-08](core/step-ca/UPSTREAM.md) |
 | [`core/teleport`](core/teleport/) | `18.11.9` · 2026-11-08 | = Pin | [0 · 2](core/teleport/README.md#open-findings) | [2026-11-08](core/teleport/UPSTREAM.md) |
 | [`core/traefik`](core/traefik/) | `v3.7.17` · 2026-10-30 | = Pin | [0 · 7](core/traefik/README.md#open-findings) | [2026-11-01](core/traefik/UPSTREAM.md) |
@@ -74,7 +74,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/httpbin`](apps/httpbin/) | `0.10.4` · 2026-06-16 | = Pin | [4 · 27](apps/httpbin/README.md#open-findings) | [2026-11-09](apps/httpbin/UPSTREAM.md) |
 | [`apps/immich`](apps/immich/) | `v3.3.6` · 2026-11-04 | = Pin | [16 · 102](apps/immich/README.md#open-findings) | [2026-11-08](apps/immich/UPSTREAM.md) · with restore |
 | [`apps/it-tools`](apps/it-tools/) | `2024.10.22-7ca5933` · 2024-10-22 | = Pin · ⚠️ no release since 2024-10-22 | [2 · 27](apps/it-tools/README.md#open-findings) | [2026-11-09](apps/it-tools/UPSTREAM.md) |
-| [`apps/librephotos`](apps/librephotos/) | `1.5.1` · 2026-10-31 | = Pin | [1 · 33](apps/librephotos/README.md#open-findings) | [2026-11-08](apps/librephotos/UPSTREAM.md) |
+| [`apps/librephotos`](apps/librephotos/) | `1.5.1` · 2026-10-31 | `1.6.0` · 2026-11-09 | [1 · 33](apps/librephotos/README.md#open-findings) | [2026-11-08](apps/librephotos/UPSTREAM.md) |
 | [`apps/litellm`](apps/litellm/) | `v1.108.3` · 2026-11-07 | = Pin | [1 · 27](apps/litellm/README.md#open-findings) | [2026-11-08](apps/litellm/UPSTREAM.md) |
 | [`apps/lycheeorg`](apps/lycheeorg/) | `v7.13.0` · 2026-11-09 | = Pin | [1 · 28](apps/lycheeorg/README.md#open-findings) | [2026-11-09](apps/lycheeorg/UPSTREAM.md) · with restore |
 | [`apps/mailpit`](apps/mailpit/) | `v1.33.1` · 2026-11-07 | = Pin | 0 · 0 | [2026-11-08](apps/mailpit/UPSTREAM.md) |
@@ -98,7 +98,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/seafile`](apps/seafile/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [3 · 103](apps/seafile/README.md#open-findings) | [2026-11-08](apps/seafile/UPSTREAM.md) · with restore |
 | [`apps/seafile-pro`](apps/seafile-pro/) | `13.0.29` · 2026-11-04 | `14.0.9` · 2026-10-13 | [23 · 783](apps/seafile-pro/README.md#open-findings) | [2026-11-08](apps/seafile-pro/UPSTREAM.md) · with restore |
 | [`apps/shlink`](apps/shlink/) | `5.1.8` · 2026-10-21 | = Pin | [2 · 33](apps/shlink/README.md#open-findings) | [2026-11-08](apps/shlink/UPSTREAM.md) · with restore |
-| [`apps/stalwart`](apps/stalwart/) | `v1.0.3` · 2026-11-04 | = Pin | [0 · 3](apps/stalwart/README.md#open-findings) | [2026-11-08](apps/stalwart/UPSTREAM.md) |
+| [`apps/stalwart`](apps/stalwart/) | `v1.0.3` · 2026-11-04 | `v1.1.0` · 2026-11-09 | [0 · 3](apps/stalwart/README.md#open-findings) | [2026-11-08](apps/stalwart/UPSTREAM.md) |
 | [`apps/threat-dragon`](apps/threat-dragon/) | `v2.6.2` · 2026-05-10 | = Pin | [2 · 30](apps/threat-dragon/README.md#open-findings) | [2026-11-08](apps/threat-dragon/UPSTREAM.md) |
 | [`apps/tymeslot`](apps/tymeslot/) | `1.41.0-slim` · 2026-11-05 | = Pin | [1 · 27](apps/tymeslot/README.md#open-findings) | [2026-11-08](apps/tymeslot/UPSTREAM.md) · with restore |
 | [`apps/unifi`](apps/unifi/) | `10.6.109` · 2026-11-03 | = Pin | [12 · 57](apps/unifi/README.md#open-findings) | [2026-11-08](apps/unifi/UPSTREAM.md) |
@@ -106,7 +106,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/velociraptor`](apps/velociraptor/) | `0.77.3` · 2026-10-05 | = Pin | [0 · 10](apps/velociraptor/README.md#open-findings) | [2026-11-08](apps/velociraptor/UPSTREAM.md) |
 | [`apps/vllm`](apps/vllm/) | `v0.33.0` · 2026-11-02 | = Pin | [0 · 9](apps/vllm/README.md#open-findings) | — · [needs a host with an NVIDIA GPU](apps/vllm/UPSTREAM.md) |
 | [`apps/whoami`](apps/whoami/) | `v1.12.0` · 2026-07-30 | = Pin | [0 · 16](apps/whoami/README.md#open-findings) | [2026-11-09](apps/whoami/UPSTREAM.md) |
-| [`apps/wikijs`](apps/wikijs/) | `3.2.0` · 2026-11-08 | = Pin | [1 · 49](apps/wikijs/README.md#open-findings) | [2026-11-08](apps/wikijs/UPSTREAM.md) |
+| [`apps/wikijs`](apps/wikijs/) | `3.2.0` · 2026-11-08 | `3.3.0` · 2026-11-09 | [1 · 49](apps/wikijs/README.md#open-findings) | [2026-11-08](apps/wikijs/UPSTREAM.md) |
 | [`apps/windmill`](apps/windmill/) | `1.864.1` · 2026-11-06 | = Pin | [1 · 34](apps/windmill/README.md#open-findings) | [2026-11-08](apps/windmill/UPSTREAM.md) |
 | [`apps/wordpress`](apps/wordpress/) | `7.1.4-php8.3-apache` · 2026-11-08 | not determinable | [1 · 28](apps/wordpress/README.md#open-findings) | [2026-11-08](apps/wordpress/UPSTREAM.md) |
 | [`apps/yopass`](apps/yopass/) | `16.1.0` · 2026-11-07 | = Pin | [0 · 2](apps/yopass/README.md#open-findings) | [2026-11-08](apps/yopass/UPSTREAM.md) |
@@ -131,9 +131,9 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`business/plane`](business/plane/) | `v1.4.3` · 2026-10-28 | = Pin | [8 · 112](business/plane/README.md#open-findings) | [2026-11-08](business/plane/UPSTREAM.md) |
 | [`business/plausible`](business/plausible/) | `v3.2.1` · 2026-05-15 | = Pin | [1 · 50](business/plausible/README.md#open-findings) | [2026-11-08](business/plausible/UPSTREAM.md) |
 | [`business/solidinvoice`](business/solidinvoice/) | `3.1.2` · 2026-10-21 | = Pin | [0 · 2](business/solidinvoice/README.md#open-findings) | [2026-11-08](business/solidinvoice/UPSTREAM.md) |
-| [`business/twenty`](business/twenty/) | `v2.56.1` · 2026-11-05 | = Pin | [1 · 35](business/twenty/README.md#open-findings) | [2026-11-08](business/twenty/UPSTREAM.md) |
+| [`business/twenty`](business/twenty/) | `v2.56.1` · 2026-11-05 | `v2.57.0` · 2026-11-09 | [1 · 35](business/twenty/README.md#open-findings) | [2026-11-08](business/twenty/UPSTREAM.md) |
 | [`business/vikunja`](business/vikunja/) | `2.8.0` · 2026-11-05 | = Pin | [1 · 25](business/vikunja/README.md#open-findings) | [2026-11-08](business/vikunja/UPSTREAM.md) · with restore |
-| [`business/zammad`](business/zammad/) | `7.2.2-0045` · 2026-11-06 | = Pin | [1 · 33](business/zammad/README.md#open-findings) | [2026-11-08](business/zammad/UPSTREAM.md) · with restore |
+| [`business/zammad`](business/zammad/) | `7.2.2-0045` · 2026-11-06 | `7.2.2-0047` · 2026-11-09 | [1 · 33](business/zammad/README.md#open-findings) | [2026-11-08](business/zammad/UPSTREAM.md) · with restore |
 
 ## `monitoring/`
 
@@ -148,7 +148,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`monitoring/gotify`](monitoring/gotify/) | `3.1.1` · 2026-09-15 | = Pin | [2 · 31](monitoring/gotify/README.md#open-findings) | [2026-11-08](monitoring/gotify/UPSTREAM.md) |
 | [`monitoring/grafana-prometheus`](monitoring/grafana-prometheus/) | `13.3.0` · 2026-10-27 | = Pin | [0 · 7](monitoring/grafana-prometheus/README.md#open-findings) | [2026-11-08](monitoring/grafana-prometheus/UPSTREAM.md) |
 | [`monitoring/healthchecks`](monitoring/healthchecks/) | `v5.0.3` · 2026-10-27 | = Pin | [0 · 9](monitoring/healthchecks/README.md#open-findings) | [2026-11-08](monitoring/healthchecks/UPSTREAM.md) |
-| [`monitoring/langfuse`](monitoring/langfuse/) | `4.76.0` · 2026-11-05 | = Pin | [1 · 30](monitoring/langfuse/README.md#open-findings) | [2026-11-08](monitoring/langfuse/UPSTREAM.md) |
+| [`monitoring/langfuse`](monitoring/langfuse/) | `4.76.0` · 2026-11-05 | `4.77.0` · 2026-11-09 | [1 · 30](monitoring/langfuse/README.md#open-findings) | [2026-11-08](monitoring/langfuse/UPSTREAM.md) |
 | [`monitoring/ntfy`](monitoring/ntfy/) | `v2.37.2` · 2026-11-04 | = Pin | [0 · 1](monitoring/ntfy/README.md#open-findings) | [2026-11-08](monitoring/ntfy/UPSTREAM.md) |
 | [`monitoring/scrutiny`](monitoring/scrutiny/) | `v0.10.0-web` · 2026-11-01 | = Pin | [0 · 51](monitoring/scrutiny/README.md#open-findings) | [2026-11-08](monitoring/scrutiny/UPSTREAM.md) |
 | [`monitoring/uptime-kuma`](monitoring/uptime-kuma/) | `2.5.9` · 2026-10-31 | = Pin | [7 · 455](monitoring/uptime-kuma/README.md#open-findings) | [2026-11-08](monitoring/uptime-kuma/UPSTREAM.md) |

@@ -1164,9 +1164,9 @@
         "reallibrephotos/librephotos-frontend:1.5.1",
         "reallibrephotos/librephotos-proxy:1.5.1"
       ],
-      "last_release": "2026-10-31",
-      "newest": "1.5.1",
-      "newest_date": "2026-10-31",
+      "last_release": "2026-11-09",
+      "newest": "1.6.0",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
       "pinned": "1.5.1",
       "pinned_date": "2026-10-31",
@@ -1174,7 +1174,7 @@
       "quiet": false,
       "reason": null,
       "repo": "LibrePhotos/librephotos",
-      "status": "current"
+      "status": "behind"
     },
     "apps/litellm": {
       "archived": false,
@@ -2303,9 +2303,9 @@
       "images": [
         "stalwartlabs/stalwart:v1.0.3"
       ],
-      "last_release": "2026-11-04",
-      "newest": "v1.0.3",
-      "newest_date": "2026-11-04",
+      "last_release": "2026-11-09",
+      "newest": "v1.1.0",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
       "pinned": "v1.0.3",
       "pinned_date": "2026-11-04",
@@ -2313,7 +2313,7 @@
       "quiet": false,
       "reason": null,
       "repo": "stalwartlabs/stalwart",
-      "status": "current"
+      "status": "behind"
     },
     "apps/threat-dragon": {
       "archived": false,
@@ -2619,9 +2619,9 @@
         "postgres:18.6-alpine",
         "ghcr.io/requarks/wiki:3.2.0"
       ],
-      "last_release": "2026-11-08",
-      "newest": "3.2.0",
-      "newest_date": "2026-11-08",
+      "last_release": "2026-11-09",
+      "newest": "3.3.0",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
       "pinned": "3.2.0",
       "pinned_date": "2026-11-08",
@@ -2629,7 +2629,7 @@
       "quiet": false,
       "reason": null,
       "repo": "requarks/wiki",
-      "status": "current"
+      "status": "behind"
     },
     "apps/windmill": {
       "archived": false,
@@ -3699,16 +3699,16 @@
         "redis:8.10.3-alpine"
       ],
       "last_release": "2026-11-05",
-      "newest": "v2.56.1",
-      "newest_date": "2026-11-05",
-      "newest_date_source": "release",
+      "newest": "v2.57.0",
+      "newest_date": "2026-11-09",
+      "newest_date_source": "image",
       "pinned": "v2.56.1",
       "pinned_date": "2026-11-05",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "twentyhq/twenty",
-      "status": "current"
+      "status": "behind"
     },
     "business/vikunja": {
       "archived": false,
@@ -3790,8 +3790,8 @@
         "docker.elastic.co/elasticsearch/elasticsearch:9.5.6"
       ],
       "last_release": null,
-      "newest": "7.2.2-0045",
-      "newest_date": "2026-11-06",
+      "newest": "7.2.2-0047",
+      "newest_date": "2026-11-09",
       "newest_date_source": "image",
       "pinned": "7.2.2-0045",
       "pinned_date": "2026-11-06",
@@ -3799,7 +3799,7 @@
       "quiet": false,
       "reason": null,
       "repo": "zammad/zammad",
-      "status": "current"
+      "status": "behind"
     },
     "core/acme-certs": {
       "archived": false,
@@ -4392,9 +4392,9 @@
         "shellhubio/ui:v0.29.3",
         "shellhubio/gateway:v0.29.3"
       ],
-      "last_release": "2026-11-05",
-      "newest": "v0.29.3",
-      "newest_date": "2026-11-05",
+      "last_release": "2026-11-09",
+      "newest": "v0.30.0",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
       "pinned": "v0.29.3",
       "pinned_date": "2026-11-05",
@@ -4402,7 +4402,7 @@
       "quiet": false,
       "reason": null,
       "repo": "shellhub-io/shellhub",
-      "status": "current"
+      "status": "behind"
     },
     "core/step-ca": {
       "archived": false,
@@ -4971,9 +4971,9 @@
         "redis:8.10.3-alpine",
         "pgsty/silo:RELEASE.2026-10-26T00-00-00Z"
       ],
-      "last_release": "2026-11-05",
-      "newest": "4.76.0",
-      "newest_date": "2026-11-05",
+      "last_release": "2026-11-09",
+      "newest": "4.77.0",
+      "newest_date": "2026-11-09",
       "newest_date_source": "release",
       "pinned": "4.76.0",
       "pinned_date": "2026-11-05",
@@ -4981,7 +4981,7 @@
       "quiet": false,
       "reason": null,
       "repo": "langfuse/langfuse",
-      "status": "current"
+      "status": "behind"
     },
     "monitoring/ntfy": {
       "archived": false,
