@@ -11,8 +11,7 @@ and phones. It is the stack in this Blueprint with the most moving parts: an
 application container, a separate web server, a database, a cache, and a
 background worker.
 
-<StackEvidence stack="apps/nextcloud"
-  gap="desktop and mobile client sync." />
+<StackEvidence stack="apps/nextcloud" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -23,7 +22,19 @@ background worker.
 On your own machine, with no proxy, domain or certificate. From `apps/nextcloud/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "REDIS_PASSWORD=$(openssl rand -hex 32)"
+  echo "ADMIN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/html
+sudo chown 999:999 volumes/local/mysql
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

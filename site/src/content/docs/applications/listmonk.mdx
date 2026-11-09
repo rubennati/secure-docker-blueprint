@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Listmonk manages subscribers, sends campaigns, handles double opt-in and tracks
 opens and clicks. Two containers — a single Go binary and PostgreSQL.
 
-<StackEvidence stack="business/listmonk"
-  gap="everything below. The stack has never been brought up here: the install path, the admin wizard, sending through a real relay and bounce handling are all read from the stack's files rather than observed." />
+<StackEvidence stack="business/listmonk" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,11 @@ opens and clicks. Two containers — a single Go binary and PostgreSQL.
 On your own machine, with no proxy, domain or certificate. From `business/listmonk/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "DB_PASSWORD=$(openssl rand -hex 32)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

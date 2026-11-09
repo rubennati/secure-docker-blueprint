@@ -10,8 +10,7 @@ Dockhand deploys and updates Compose stacks by watching a Git repository: you
 push, it applies. Three containers — the interface, PostgreSQL, and a proxy that
 stands between it and the Docker daemon.
 
-<StackEvidence stack="core/dockhand"
-  gap="everything below. The stack has never been brought up here: the first login, adding the local environment through the socket proxy and a Git-driven deploy are read from the stack's files rather than observed." />
+<StackEvidence stack="core/dockhand" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,14 @@ stands between it and the Docker daemon.
 On your own machine, with no proxy, domain or certificate. From `core/dockhand/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "ENCRYPTION_KEY=$(openssl rand -base64 32 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

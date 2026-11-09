@@ -10,8 +10,7 @@ Homarr is a dashboard whose tiles show live state rather than only links — it
 talks to the services behind them through their APIs. One container with its own
 SQLite database.
 
-<StackEvidence stack="apps/homarr"
-  gap="a restore. The data directory and the encryption key have to come back together, and that has not been performed here." />
+<StackEvidence stack="apps/homarr" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,11 @@ SQLite database.
 On your own machine, with no proxy, domain or certificate. From `apps/homarr/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "HOMARR_SECRET_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

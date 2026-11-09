@@ -8,8 +8,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 OnlyOffice Document Server is a shared editing backend — it provides browser-based Office document editing for any application that integrates with it, such as [Seafile Pro](/applications/seafile-pro/) or Nextcloud. It runs as a single container and serves an editor that embeds as an iframe inside the consuming application.
 
-<StackEvidence stack="apps/onlyoffice"
-  gap="the official desktop and mobile clients. A PPTX that did not reopen once in two runs through Nextcloud is unexplained." />
+<StackEvidence stack="apps/onlyoffice" />
 
 One OnlyOffice instance can serve multiple consuming applications simultaneously. Each application must hold the same JWT secret and have its origin listed in the allowed-origins setting.
 
@@ -22,7 +21,11 @@ One OnlyOffice instance can serve multiple consuming applications simultaneously
 On your own machine, with no proxy, domain or certificate. From `apps/onlyoffice/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "JWT_SECRET=$(openssl rand -base64 30 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

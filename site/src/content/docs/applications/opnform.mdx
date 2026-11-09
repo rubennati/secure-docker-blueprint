@@ -10,8 +10,7 @@ OpnForm builds forms with a drag-and-drop editor, conditional logic, file upload
 and webhooks. Seven containers — a Laravel API with its worker and scheduler, a
 Nuxt frontend, nginx in front of both, PostgreSQL and Redis.
 
-<StackEvidence stack="apps/opnform"
-  gap="everything below. The stack has never been brought up here: the seven-service startup order, the storage permissions the entrypoint sets, and a form submission with an attachment are read from the stack's files rather than observed." />
+<StackEvidence stack="apps/opnform" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,19 @@ Nuxt frontend, nginx in front of both, PostgreSQL and Redis.
 On your own machine, with no proxy, domain or certificate. From `apps/opnform/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "APP_KEY=base64:$(openssl rand -base64 32)"
+  echo "JWT_SECRET=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "FRONT_API_SECRET=$(openssl rand -base64 32 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

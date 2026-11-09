@@ -8,8 +8,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 CrowdSec watches Traefik's access logs and decides which IPs to ban for attack patterns (brute force, CVE probes, path traversal). On its own it detects but doesn't block — blocking is added separately, in layers you choose.
 
-<StackEvidence stack="core/crowdsec"
-  gap="SSH and host log sources — Debian 13 keeps no `auth.log`, so only the proxy layer feeds the engine." />
+<StackEvidence stack="core/crowdsec" />
 
 Needs: [Traefik](/infrastructure/traefik/) running.
 

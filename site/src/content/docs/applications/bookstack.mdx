@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 BookStack organises documentation in shelves, books, chapters and pages. Two
 containers — the application and MariaDB.
 
-<StackEvidence stack="apps/bookstack"
-  gap="a restore. The database and the upload directory have to come back from the same point in time, and that has not been performed here." />
+<StackEvidence stack="apps/bookstack" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,19 @@ containers — the application and MariaDB.
 On your own machine, with no proxy, domain or certificate. From `apps/bookstack/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+APP_TAG=$(sed -n 's/^APP_TAG=//p' .env.local)
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "APP_KEY=$(docker run --rm --entrypoint /bin/bash "lscr.io/linuxserver/bookstack:$APP_TAG" appkey)"
+} >> .env.local
+
+mkdir -p volumes/local/config volumes/local/mysql
+sudo chown -R 1000:1000 volumes/local/config
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

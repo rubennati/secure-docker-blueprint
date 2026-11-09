@@ -10,8 +10,7 @@ Immich backs up photos and videos from phones and searches them by what is in
 them. Four containers — the server, a machine-learning worker, PostgreSQL with
 vector extensions, and Valkey for the job queue.
 
-<StackEvidence stack="apps/immich"
-  gap="everything below. The stack has never been brought up here: the first-run migrations, mobile app upload and the restore path are read from the stack's files and upstream documentation rather than observed." />
+<StackEvidence stack="apps/immich" />
 
 **To try it:** Docker, and storage for whatever library you import. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,14 @@ vector extensions, and Valkey for the job queue.
 On your own machine, with no proxy, domain or certificate. From `apps/immich/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "DB_PASSWORD=$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:999 volumes/local/redis
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

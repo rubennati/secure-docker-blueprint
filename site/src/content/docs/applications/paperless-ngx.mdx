@@ -11,8 +11,7 @@ into a folder is OCR'd, classified and filed, and its text becomes searchable.
 Five containers — the application with its workers and consumer, a database, a
 cache, and two converters it hands other formats to.
 
-<StackEvidence stack="apps/paperless-ngx"
-  gap="the mobile app and other official clients, and a real client's address in the log — every check ran from a probe on the host." />
+<StackEvidence stack="apps/paperless-ngx" />
 
 **To try it:** Docker, and the OCR language packs you intend to use. See [Try it locally](#try-it-locally).
 
@@ -23,7 +22,18 @@ cache, and two converters it hands other formats to.
 On your own machine, with no proxy, domain or certificate. From `apps/paperless-ngx/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "SECRET_KEY=$(openssl rand -base64 48 | tr -d '\n')"
+  echo "ADMIN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

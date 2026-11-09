@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 NocoDB puts a spreadsheet-like interface and a REST API over a database: tables,
 views, forms. One container with its own SQLite store by default.
 
-<StackEvidence stack="apps/nocodb"
-  gap="a restore. The data directory and the signing secret have to come back together, and that has not been performed here." />
+<StackEvidence stack="apps/nocodb" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,14 @@ views, forms. One container with its own SQLite store by default.
 On your own machine, with no proxy, domain or certificate. From `apps/nocodb/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "NC_AUTH_JWT_SECRET=$(openssl rand -hex 64)" >> .env.local
+
+mkdir -p volumes/local/data
+sudo chown 0:0 volumes/local/data
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

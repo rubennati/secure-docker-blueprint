@@ -11,8 +11,7 @@ services behind it. Traefik can delegate authentication to it without the servic
 being changed at all, and applications that speak OAuth2, OIDC or SAML can use it
 directly.
 
-<StackEvidence stack="core/authentik"
-  gap="a restore. The database, the secret key and the signing certificates have to come back together, and that has not been performed here." />
+<StackEvidence stack="core/authentik" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -23,7 +22,14 @@ directly.
 On your own machine, with no proxy, domain or certificate. From `core/authentik/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "AUTHENTIK_SECRET_KEY=$(openssl rand -base64 60 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

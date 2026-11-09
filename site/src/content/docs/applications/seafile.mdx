@@ -10,8 +10,7 @@ Seafile syncs files between devices and shares them with other people, with
 desktop and mobile clients and optional collaborative editing. Eight containers,
 split across five compose files so the optional parts can be switched off.
 
-<StackEvidence stack="apps/seafile"
-  gap="the official desktop, mobile and SeaDrive clients, e-mail, and the metadata server's features." />
+<StackEvidence stack="apps/seafile" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,20 @@ split across five compose files so the optional parts can be switched off.
 On your own machine, with no proxy, domain or certificate. From `apps/seafile/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "SEAFILE_DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "REDIS_PASSWORD=$(openssl rand -hex 32)"
+  echo "SEAFILE_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "JWT_PRIVATE_KEY=$(openssl rand -base64 48 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+sudo chown 999:999 volumes/local/mysql
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

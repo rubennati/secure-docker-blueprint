@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Easy!Appointments lets customers book time slots with a provider. Two containers
 — PHP with Apache, and MariaDB. No build step and no Node.js.
 
-<StackEvidence stack="apps/easyappointments"
-  gap="a restore. The database and the storage directory have to come back from the same point in time, and that has not been performed here." />
+<StackEvidence stack="apps/easyappointments" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,17 @@ Easy!Appointments lets customers book time slots with a provider. Two containers
 On your own machine, with no proxy, domain or certificate. From `apps/easyappointments/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/storage
+sudo chown -R 33:33 volumes/local/storage
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

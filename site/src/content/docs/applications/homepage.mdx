@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Homepage is a dashboard described entirely in YAML: one file for services, one for
 bookmarks, one for widgets, one for settings. One container, no database.
 
-<StackEvidence stack="apps/homepage"
-  gap="a restore. There is nothing here to restore as long as the configuration is committed — which is the assumption, not a verified fact." />
+<StackEvidence stack="apps/homepage" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,6 +21,9 @@ On your own machine, with no proxy, domain or certificate. From `apps/homepage/`
 
 ```bash
 cp .env.local.example .env.local
+
+mkdir -p volumes/local/config
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

@@ -10,8 +10,7 @@ OpenProject covers work packages, Gantt charts, boards, time tracking and wikis.
 Six containers — the application server, a background worker, a scheduler, a
 one-shot seeder, memcached and PostgreSQL.
 
-<StackEvidence stack="business/openproject"
-  gap="a restore. The database and the attachment volume have to come back from the same point in time, and that has not been performed here." />
+<StackEvidence stack="business/openproject" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,14 @@ one-shot seeder, memcached and PostgreSQL.
 On your own machine, with no proxy, domain or certificate. From `business/openproject/`:
 
 ```bash
-cp .env.local.example .env.local # fill the empty secrets
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "SECRET_KEY_BASE=$(openssl rand -base64 64 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

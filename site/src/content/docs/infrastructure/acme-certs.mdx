@@ -11,8 +11,7 @@ proxy — a NAS, a firewall, a router, a mail server. This stack issues and rene
 certificates for them and writes the files somewhere you can upload from. One
 container.
 
-<StackEvidence stack="core/acme-certs"
-  gap="everything below. The stack has never been brought up here: issuing against a real zone, the renewal timer and the export format are read from the stack's files rather than observed." />
+<StackEvidence stack="core/acme-certs" />
 
 Needs: a domain whose DNS is at Cloudflare, and a scoped API token for it.
 
