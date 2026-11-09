@@ -4,14 +4,14 @@
 
 - **Project:** Portainer Agent
 - **Repo:** https://github.com/portainer/agent
+- **Releases:** https://github.com/portainer/portainer/releases — the agent's versions follow Portainer's; its own repository has published no release since 2020
 - **Docker Hub:** https://hub.docker.com/r/portainer/agent
 - **License:** zlib (https://github.com/portainer/agent/blob/develop/LICENSE)
 - **Decision facts checked:** not yet
 - **Origin:** New Zealand · Portainer.io Ltd · non-EU (official agent for the Portainer platform)
 - **Domain:** Infrastructure
 - **Role:** Remote Docker agent for Portainer
-- **Based on version:** `2.45.3`
-- **Last verified:** 2026-05-05 (v2.39.1)
+- **Last verified:** 2026-11-08 (2.45.3) — the Edge agent on a remote Docker host, managed from Portainer 2.45.3: connected through the tunnel on port 8000 after the Edge identifier was associated, containers listed, created, started, logged, stopped and removed, reconnected by itself after Portainer's `down`/`up`; no port published on the agent host (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we changed and why
 
@@ -31,7 +31,7 @@ connection failures.
 ## Version notes
 
 - Moved `portainer/agent` to `2.45.3` on 2026-11-05, together with the central
-  `portainer/portainer-ce` in `core/portainer/`, not run on a host at this tag. The
+  `portainer/portainer-ce` in `core/portainer/`. The
   automatic proposal `3.0.1` was not taken: Docker Hub carries agent tags `3.0.0` and
   `3.0.1` under the `sts` tag, but there is no Portainer CE 3.x release or image to
   pair them with (the newest server release is 2.45.3 LTS, 2026-10-21), and this

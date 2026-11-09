@@ -439,10 +439,14 @@ The key is shown once. To replace a lost one, delete the entry and add it again.
 
 ### 3. Configure set-only mode
 
+The engine publishes its LAPI on the host only with the overlay: set
+`COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in `core/crowdsec/.env` and run
+`docker compose up -d`; `ss -tlnp | grep 8081` then shows `127.0.0.1:8081`.
+
 In the `.yaml.local` override:
 
 ```yaml
-api_url: http://127.0.0.1:8080/
+api_url: http://127.0.0.1:8081/   # CROWDSEC_LAPI_PORT — the package's own default is 8080
 api_key: <key from step 2>
 mode: nftables
 deny_action: DROP
@@ -461,7 +465,7 @@ installs its own unscoped chain, which is the configuration this document exists
 replace. Check the spelling against the shipped `.yaml` — an unknown key is accepted
 silently.
 
-`api_url` points at the LAPI the engine publishes on loopback. It is a host-local surface
+`api_url` points at the LAPI the overlay publishes on loopback. It is a host-local surface
 reachable by any process on the host, and it is not reachable from a container, which is
 why the bouncer runs on the host.
 

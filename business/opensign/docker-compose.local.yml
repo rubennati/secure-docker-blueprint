@@ -13,9 +13,11 @@ services:
     container_name: opensign-local-db
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]   # chowns and later searches the data directory, then switches to mongodb (measured)
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PWD}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PWD:?Set DB_ROOT_PWD in .env.local}
       MONGO_INITDB_DATABASE: ${DB_NAME}
       TZ: ${TZ}
     volumes:
@@ -39,14 +41,14 @@ services:
       TZ: ${TZ}
       APP_ID: opensign
       appName: ${APP_NAME}
-      MASTER_KEY: ${MASTER_KEY}
+      MASTER_KEY: ${MASTER_KEY:?Set MASTER_KEY in .env.local}
       MONGODB_URI: "mongodb://${DB_ROOT_USER}:${DB_ROOT_PWD}@db:27017/${DB_NAME}?authSource=admin"
       PARSE_MOUNT: /app
       SERVER_URL: "http://localhost:8080/app"
       PUBLIC_URL: "http://localhost:3000"
       USE_LOCAL: "true"
-      PFX_BASE64: ${PFX_BASE64}
-      PASS_PHRASE: ${PASS_PHRASE}
+      PFX_BASE64: ${PFX_BASE64:?Set PFX_BASE64 in .env.local}
+      PASS_PHRASE: ${PASS_PHRASE:?Set PASS_PHRASE in .env.local}
     volumes:
       - ./volumes/local/api-files:/usr/src/app/files
     ports:

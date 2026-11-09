@@ -78,12 +78,12 @@ services:
     # A ceiling against runaway growth, not an appetite. TRAEFIK_MEMORY in .env
     # carries the measurement and the reason; the default here keeps an existing
     # .env working.
-    memswap_limit: ${TRAEFIK_MEMORY:-256m}   # == memory: no swap
+    memswap_limit: ${TRAEFIK_MEMORY:-512m}   # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: ${TRAEFIK_MEMORY:-256m}
-          pids: 50
+          memory: ${TRAEFIK_MEMORY:-512m}
+          pids: 64     # 2x the measured peak (28)
         reservations:
           memory: 64M
 
@@ -99,8 +99,8 @@ services:
     # every file it writes (acme.json, the logs, the plugin cache) belongs to
     # root. NET_BIND_SERVICE is kept for ports 80/443, although Docker already
     # sets ip_unprivileged_port_start=0 in the container's network namespace,
-    # so a runtime that does not still works. Measured on the step 8 lab host
-    # (2026-11-04): start, a fresh plugin download, an ACME DNS-01 issuance,
+    # so a runtime that does not still works. Checked on 2026-11-04:
+    # start, a fresh plugin download, an ACME DNS-01 issuance,
     # log writing and a reload under this set (final audit, FA-04).
     cap_drop:
       - ALL

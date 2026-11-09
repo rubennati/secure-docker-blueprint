@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 BookStack organises documentation in shelves, books, chapters and pages. Two
 containers — the application and MariaDB.
 
-<StackEvidence stack="apps/bookstack"
-  gap="a restore. The database and the upload directory have to come back from the same point in time, and that has not been performed here." />
+<StackEvidence stack="apps/bookstack" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,19 @@ containers — the application and MariaDB.
 On your own machine, with no proxy, domain or certificate. From `apps/bookstack/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+APP_TAG=$(sed -n 's/^APP_TAG=//p' .env.local)
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "APP_KEY=$(docker run --rm --entrypoint /bin/bash "lscr.io/linuxserver/bookstack:$APP_TAG" appkey)"
+} >> .env.local
+
+mkdir -p volumes/local/config volumes/local/mysql
+sudo chown -R 1000:1000 volumes/local/config
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -45,7 +56,7 @@ From `apps/bookstack/`:
 
    ```bash
    docker run --rm --entrypoint /bin/bash \
-     lscr.io/linuxserver/bookstack:version-v26.05.2 appkey
+     lscr.io/linuxserver/bookstack:version-v26.09.2 appkey
    ```
 
 3. Generate the database secrets and mirror the password into `.env`:
@@ -75,8 +86,10 @@ From `apps/bookstack/`:
    docker compose logs bookstack-app --follow
    ```
 
-6. Open `https://<APP_TRAEFIK_HOST>` and log in with the default account —
-   `admin@admin.com` with the password `password` — then change both immediately.
+6. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and log in with the default
+   account — `admin@admin.com` with the password `password` — then change both
+   immediately. The route ships closed (`access-vpn`) because that default login
+   works on a new instance; open it for readers once the account is changed.
 
 </Steps>
 
@@ -92,12 +105,14 @@ depends on the ownership from step 4.
 
 ## Going further
 
-### Public by default
+### Who can reach it
 
-The stack ships `access-public` with `limit-standard` and `headers-standard`. A
-wiki people are meant to read has to be readable; BookStack's own permissions
-decide who sees what. If the content is internal, `access-vpn` in `.env` is the
-change.
+The stack ships `access-vpn` with `limit-standard` and `headers-standard`, so
+the default login above is never reachable from the internet. A wiki people are
+meant to read has to be readable: once the account is changed, set
+`APP_TRAEFIK_ACCESS=access-public` in `.env` and run `docker compose up -d`;
+BookStack's own permissions then decide who sees what. For internal content,
+keep `access-vpn`.
 
 ## Backup
 
@@ -107,6 +122,9 @@ change.
 | **Password** | `.secrets/db_pwd.txt` |
 | **State** | `volumes/mysql` (database) · `volumes/config` (images, attachments) |
 | **Quiescing** | Not needed — the dump is consistent on its own. |
+
+Pages reference uploaded images by path, so the database and `volumes/config`
+come back from the same backup run.
 
 For [borgmatic](/operations/backup/):
 

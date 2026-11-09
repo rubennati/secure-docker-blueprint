@@ -14,7 +14,7 @@ x-shared: &zammad-shared
     POSTGRESQL_USER: ${DB_USER}
     # NOTE: Zammad (Rails) does not support _FILE env vars for credentials.
     # The password is passed inline from .env. Use a strong random value.
-    POSTGRESQL_PASS: ${DB_PWD_INLINE}
+    POSTGRESQL_PASS: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
     POSTGRESQL_OPTIONS: "?pool=50"
     REDIS_URL: "redis://redis:6379"
     MEMCACHE_SERVERS: "memcached:11211"
@@ -45,6 +45,17 @@ services:
     container_name: ${CONTAINER_NAME_DB}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user.
+    # Set per image family: docs/standards/security-baseline.md.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
     memswap_limit: 1G          # == memory: no swap
@@ -82,6 +93,12 @@ services:
     container_name: ${CONTAINER_NAME_REDIS}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop:
+      - ALL
+    # The image's entrypoint drops to its own user only when it starts as root;
+    # started as that user it needs no capability. The data directory has to
+    # belong to it (README, setup).
+    user: "999:1000"
     read_only: true
     tmpfs: [/tmp]
     # --- Resources ---
@@ -114,6 +131,8 @@ services:
     container_name: ${CONTAINER_NAME_MEMCACHED}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # no cap_add: the image runs as its own user and needs none (measured)
 
     # --- Resources ---
     # `-m 256M` is configured below; the rest is process overhead.
@@ -149,7 +168,7 @@ services:
       resources:
         limits:
           memory: 4G
-          pids: 300
+          pids: 400
         reservations:
           memory: 512M
 

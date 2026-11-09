@@ -11,8 +11,7 @@
 - **Origin:** Latvia · Pēteris Caune · EU
 - **Domain:** Monitoring
 - **Role:** Dead-man's switch that alerts when a cron job or backup stops reporting
-- **Based on version:** `v5.0.3`
-- **Last verified:** 2026-09-08 (v4.4) — v0.8.0 host session: clean start on SQLite, first admin from the CLI, a check with a one-minute period and grace, the ntfy and email integrations attached; the expiry produced a down notification and the next ping an up notification, both delivered to an iPhone and to the mail sink.
+- **Last verified:** 2026-11-08 (5.0.3) — over IPv4: a superuser created with `createsuperuser`, a login to the checks page before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -41,10 +40,11 @@
 Healthchecks uses semver. Django migrations run on container start.
 
 1. Check [GitHub releases](https://github.com/healthchecks/healthchecks/releases) for breaking changes — especially "Database schema" or "Config changes" sections
-2. Back up the SQLite DB:
+2. Back up the SQLite DB. The image has no `sqlite3` binary; its Python carries
+   SQLite's online backup, which copies a consistent file while the app runs:
 
    ```bash
-   docker compose exec app sqlite3 /data/hc.sqlite ".backup '/data/hc.sqlite.backup'"
+   docker compose exec app python3 -c "import sqlite3; s = sqlite3.connect('/data/hc.sqlite'); d = sqlite3.connect('/data/hc.sqlite.backup'); s.backup(d); d.close()"
    cp volumes/data/hc.sqlite.backup /safe/offsite/location/
    ```
 
@@ -65,7 +65,7 @@ If the upgrade breaks, restore the pre-upgrade SQLite backup and revert `APP_TAG
 ## Version notes
 
 - Moved to `v5.0.3` on 2026-11-05 (released 2026-10-27), across v5.0, v5.0.1 and
-  v5.0.2, not run on a host at this tag. The v4 line ends at v4.4, so the
+  v5.0.2. The v4 line ends at v4.4, so the
   CRITICAL image findings at `v4.4` have no fix on v4. Breaking in v5.0: the
   image serves HTTP with gunicorn instead of uWSGI and starts through
   `/opt/healthchecks/run.sh`; a compose file that overrides `command` with
@@ -102,7 +102,7 @@ docker compose exec healthchecks-app /opt/healthchecks/manage.py createsuperuser
 docker compose exec app /opt/healthchecks/manage.py <command>
 
 # Backup SQLite DB to a file inside the volume (then copy offsite)
-docker compose exec app sqlite3 /data/hc.sqlite ".backup '/data/hc.sqlite.backup'"
+docker compose exec app python3 -c "import sqlite3; s = sqlite3.connect('/data/hc.sqlite'); d = sqlite3.connect('/data/hc.sqlite.backup'); s.backup(d); d.close()"
 
 # Send a test email (verify SMTP config)
 docker compose exec app /opt/healthchecks/manage.py sendtestemail your@email.example

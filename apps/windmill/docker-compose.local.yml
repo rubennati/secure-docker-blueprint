@@ -1,8 +1,13 @@
 # Windmill — local
 #
 #   cp .env.local.example .env.local
+#   mkdir -p volumes/local/postgres volumes/local/worker_cache
+#   sudo chown 1000:1000 volumes/local/worker_cache   # the workers run as uid 1000
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   curl http://localhost:8000/api/version
+#   curl http://localhost:8000/api/health/status
+#   DC="docker compose -f docker-compose.local.yml --env-file .env.local" \
+#     ./ops/bootstrap-admin.sh you@example.com
+#   http://localhost:8000
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
 
 services:
@@ -17,7 +22,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql

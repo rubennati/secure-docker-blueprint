@@ -149,7 +149,7 @@ The honest coverage, including where it is worse than for a pulled image:
 | Image CVEs | Trivy, for registry images only | **In-repo builds are not scanned.** `scripts/ci/list-images.sh` skips `*-local:*` because Trivy cannot pull a locally built image, so `vikunja-local` is the one production image in this repository with no CVE scan. The external shape has no such gap — its image is in a registry and is scanned. |
 | Dockerfile contents | nothing | No checker reads a Dockerfile. An unpinned or `:latest` `FROM` passes CI silently; `check-structure.py`'s tag rules read Compose `image:` values only. Trivy's config scan touches it and is non-blocking. |
 | Base image freshness | nothing | Renovate's custom managers match `.env.example`, and the `FROM` line resolves its tag from a build arg, so the base pin of the one in-repo build is watched by nothing. |
-| Pin correctness | nothing | **This has already drifted unnoticed.** `business/vikunja/.env.example` carries `APP_TAG=2.6.0` alongside the digest that the `Dockerfile` pairs with its `2.3.0` default — the tag was bumped and the digest was not. Because `FROM` resolves by digest, the build labels an older base as the newer version. Nothing caught it, which is the concrete reason the pin rule above exists. |
+| Pin correctness | nothing | `business/vikunja` keeps `APP_TAG` and `APP_DIGEST` side by side in `.env.example` and as the `Dockerfile` defaults, and both are re-resolved together by hand. No checker compares them. Because `FROM` resolves by digest, a tag moved without its digest would label an older base as the newer version — the concrete reason the pin rule above exists. |
 | Image signing / provenance attestation | nothing | Not done anywhere in this repository, for any image. |
 | External build governance | the fork's own review gate | Unverifiable from here. This repository can name `FORK_PROCESS.md`, `SECURITY_REVIEW.md`, `IMAGE_BUILD.md` and `RELEASE_PROCESS.md`; it cannot check that they were followed. |
 
@@ -160,9 +160,9 @@ Two further boundaries:
 nothing more; [`env-structure.md`](env-structure.md) has no digest convention, and
 `APP_DIGEST` exists in exactly one `.env.example`.
 
-**The baseline-aligned criteria were not extended.**
-[`../maintenance.md`](../maintenance.md) requires an `UPSTREAM.md` naming an
-upstream licence and a verified version. Both real cases satisfy that because both
+**The stack criteria were not extended.**
+[`../maintenance.md`](../maintenance.md#stack-criteria) requires an `UPSTREAM.md`
+naming an upstream licence and the version a host run tested. Both real cases satisfy that because both
 have an upstream. A genuinely first-party application would have neither, and the
 criteria still require both — this repository has no such stack to widen them for.
 

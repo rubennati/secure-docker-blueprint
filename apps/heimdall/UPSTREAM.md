@@ -10,8 +10,7 @@
 - **Origin:** UK · linuxserver.io community · non-EU
 - **Domain:** Dashboards
 - **Role:** Application launcher with widgets
-- **Based on version:** `2.8.4`
-- **Last verified:** 2026-11-02 (2.8.3) — step 8 lab host behind Traefik 3.7.17: healthy; the `basic` posture's gate answered 401 without and with wrong credentials, and with right ones the dashboard and its settings page loaded (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (2.8.4) — over IPv4: the dashboard behind the basicAuth gate (`401` without, `200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -49,7 +48,7 @@ LinuxServer.io images get frequent minor bumps (weekly). Major upgrades infreque
 
 - Moved to `2.8.4` on 2026-11-05 (Heimdall v2.8.4 released 2026-10-29; the tag
   resolves to the LinuxServer build `v2.8.4-ls371` of 2026-10-30), a patch release on
-  the same line, not run on a host at this tag. The automatic proposal `2021.11.28`
+  the same line. The automatic proposal `2021.11.28`
   is an old date-style LinuxServer tag, not a newer release. Heimdall updates its
   Composer packages to clear audit advisories (#1619), and the LinuxServer rebuild
   brings a newer Alpine base; the release lists no specific CVEs, so whether the

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-09 (v0.29.3) — over IPv4, a new installation: all five services healthy, the UI served through Traefik before and after `down`/`up`, the refused client answered `403`, and the SSH port 2222 answered with its banner and host key from another machine on the LAN; no agent enrolled (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/shellhub-io/shellhub
@@ -14,7 +16,6 @@
 - **Origin:** Brazil · O.S. Systems · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** SSH access through agents on each target that connect out, so targets open no inbound port
-- **Based on version:** `v0.29.3` (server, ui, gateway)
 - **Verification snapshot:** 2026-09-19 — full stack started clean, healthchecks
   passing; no agent registered, no SSH session exercised
 
@@ -58,8 +59,7 @@
 
 ## Version notes
 
-- Moved from `v0.27.0-rc.11` to `v0.29.3` on 2026-11-05, not run on a host at
-  this tag. The first stable tags after the release candidate; server, ui and
+- Moved from `v0.27.0-rc.11` to `v0.29.3` on 2026-11-05. The first stable tags after the release candidate; server, ui and
   gateway move together. Changes that matter for this stack:
   v0.27.0 removes the namespace-wide device auto-accept (replaced by
   provisioning keys), the pre-authorized pairing code (`SHELLHUB_PAIRING_CODE`
@@ -79,8 +79,7 @@
   Agents older than v0.29.2 still connect, but only v0.29.2 and later get the
   EOF fix. Source: https://github.com/shellhub-io/shellhub/releases
 
-- `DB_TAG` moved from `18.0` to `18.6` on 2026-11-05, not run on a host at this
-  tag. A patch release within 18: no dump and restore (18.5 was never
+- `DB_TAG` moved from `18.0` to `18.6` on 2026-11-05. A patch release within 18: no dump and restore (18.5 was never
   released). Manual items from the 18.2 and 18.6 release notes, none expected to
   apply to ShellHub's schema: reindex `ltree` indexes; only `pgoutput` and
   `test_decoding` are allowed as logical decoding plugins; pgcrypto refuses
@@ -90,8 +89,7 @@
   CVE-2026-14663 and CVE-2026-6464 — the full list is in
   https://www.postgresql.org/docs/release/18.6/.
 
-- `VALKEY_TAG` is pinned to `9.1.3-alpine` on 2026-11-05, not run on a host at
-  this tag; until then it followed the floating `9.1-alpine`, which now points
+- `VALKEY_TAG` is pinned to `9.1.3-alpine` on 2026-11-05; until then it followed the floating `9.1-alpine`, which now points
   at the same 9.1.3 build. The image the scan had pulled under the floating tag
   carried OpenSSL 3.5.4 (CVE-2026-31789); the 9.1.3 build, on Alpine 3.24.3,
   ships the fixed one.

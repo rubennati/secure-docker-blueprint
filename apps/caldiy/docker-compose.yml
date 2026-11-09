@@ -193,7 +193,7 @@ services:
       NEXT_PUBLIC_EMBED_LIB_URL: https://${APP_TRAEFIK_HOST}/embed/embed.js
       NEXTAUTH_URL: https://${APP_TRAEFIK_HOST}/api/auth
       # Allowed hostnames — prevents host header injection; matches APP_TRAEFIK_HOST automatically
-      # Multiple hostnames: set ALLOWED_HOSTNAMES='"host1","host2"' in .env to override
+      # Multiple hostnames: list them here, e.g. '"host1","host2"'
       ALLOWED_HOSTNAMES: '"${APP_TRAEFIK_HOST}"'
       # Telemetry disabled
       # Licence — MIT community edition
@@ -206,7 +206,7 @@ services:
       # Generate: docker run --rm node:lts-alpine npx --yes web-push generate-vapid-keys
       # Public key set here (NEXT_PUBLIC_ prefix exposes it to the browser by design).
       # Private key injected from Docker Secret — never set VAPID_PRIVATE_KEY in .env.
-      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY}
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:?Set VAPID_PUBLIC_KEY in .env}
       # Legal — self-hosters should set these to their own policy pages
       NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL: ${NEXT_PUBLIC_WEBSITE_PRIVACY_POLICY_URL}
       NEXT_PUBLIC_WEBSITE_TERMS_URL: ${NEXT_PUBLIC_WEBSITE_TERMS_URL}

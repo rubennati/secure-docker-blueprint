@@ -12,8 +12,7 @@
 - **Origin:** LangGenius · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** LLM application platform: chat and workflow apps, knowledge bases, plugin-based model providers
-- **Based on version:** `1.19.0`
-- **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the setup through `/install`, a marketplace plugin with a model provider, a workflow with code, HTTP and LLM nodes, a restart, and a restore from its three dumps
+- **Last verified:** 2026-11-08 (1.19.0) — over IPv4: `/install` refused without the init password and the administrator created with it, every service up — the API, web, worker, beat, plugin daemon, sandbox and SSRF proxy — and the setup still finished after `down`/`up`, the refused client answered `403`; the console login was not driven (the console encrypts the password client-side), no model provider or plugin (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -118,7 +117,7 @@ Behind Traefik with TLS, with the Ollama stack's route as the model endpoint:
   512 MiB, `plugin-daemon` 245 MiB, `dify-web` 180 MiB, `sandbox` 147 MiB,
   PostgreSQL 93 MiB, pgvector 69 MiB
 
-**Not yet exercised:** webhooks and `/e/`; workflow collaboration over `/socket.io/`, which is not
+**Outside this verification:** webhooks and `/e/`; workflow collaboration over `/socket.io/`, which is not
 routed; an Agent app; upgrade from an earlier Dify.
 
 ## Verification performed (2026-09-19)
@@ -152,7 +151,7 @@ the model backend:
 
 ## Version notes
 
-- pgvector moved to `0.8.7-pg16` on 2026-10-31, not run at this tag; the stack's
+- pgvector moved to `0.8.7-pg16` on 2026-10-31; the stack's
   state is anchored on the application pin, which did not move. 0.8.2 to 0.8.7 list no breaking change and no advisory; HNSW vacuuming
   and buffer-overflow fixes. After the image moves, upstream's upgrade note applies
   per database: `ALTER EXTENSION vector UPDATE;`.
@@ -165,7 +164,7 @@ the model backend:
   environment; 0.6.12 redacts errors and aborts failed endpoint streams (marked
   breaking) and moves to Go 1.26.10 for CVE-2026-111943; 0.6.13 raises go-jose.
 - Moved to `1.19.0` (api, worker, web) and `PLUGIN_TAG` to `0.6.14-local` on
-  2026-11-05, not run on a host at these tags. Upstream's 1.19.0 compose ships the
+  2026-11-05. Upstream's 1.19.0 compose ships the
   daemon at `0.6.14-local` (1.18.0 still shipped `0.6.10-local`), so both move
   together; `SANDBOX_TAG` stays at `0.2.15`, unchanged upstream. Back up the three
   databases, `storage`, `plugin_daemon` and the secrets before the first start, and
@@ -193,8 +192,8 @@ the model backend:
   0.6.11 also stops plugin subprocesses inheriting the daemon's environment and keeps
   the uv cache inside the container: whether plugins still install with `HOME=/tmp`
   and the read-only root is the first thing to check on a host.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -217,7 +216,7 @@ the model backend:
   https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
   https://github.com/langgenius/dify/blob/main/docker/docker-compose.yaml
 - Moved `db` from `postgres:15.14-alpine` to `15.19-alpine` on 2026-11-05 (15.19
-  released 2026-08-13), not run on a host at this tag. Minor releases within 15: no
+  released 2026-08-13). Minor releases within 15: no
   dump/restore. 15.19 restricts logical decoding output plugins to the new
   `output_plugin_libraries` setting (CVE-2026-6471) and makes `pgcrypto` refuse PGP
   messages encrypted with a cipher OpenSSL rejected; it asks for a reindex only of
@@ -238,5 +237,5 @@ the model backend:
    against upstream's compose file for the same release
 5. `docker compose pull && docker compose up -d`; the api migrates at start
 6. Open the console, run a chat, then check that installed plugins load
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

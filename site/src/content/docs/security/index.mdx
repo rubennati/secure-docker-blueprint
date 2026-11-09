@@ -68,12 +68,12 @@ on, or it is outside the Compose files entirely.
 | Credentials as mounted files rather than environment values | applied where the image supports it | keep the files off the machine's backups' blast radius |
 | Intrusion detection — log analysis, community blocklist | shipped, optional | switch on and operate |
 | HTTP blocking at the proxy | shipped, optional | switch on |
-| Host firewall — input path closed except the VPN | ruleset rendered by the proxy stack for its exposure profile; not loaded by the blueprint, not verified on a host yet | install it, with a way back |
-| Host firewall blocking — banned addresses dropped before any port | configuration and procedure documented; the agent is a host package; its blocking rules not yet run on a host | install and operate it |
+| Host firewall — input path closed except the VPN | ruleset rendered by the proxy stack for its exposure profile, tested on a host for the `direct` profile; not loaded by the blueprint | install it, with a way back |
+| Host firewall blocking — banned addresses dropped before any port | configuration and procedure documented, experimental; the agent is a host package | install and operate it |
 | Network firewall, VLAN, upstream segmentation | not covered | provide, if your environment has one |
 | Host patching, SSH hardening, endpoint protection | **not covered at all** | required, and entirely yours |
 | Malware scanning of uploaded files | available in some applications | choose and operate it |
-| Logging and monitoring | stacks are in the repository | operate them; no guide here yet |
+| Logging and monitoring | stacks are in the repository; [Monitoring](/monitoring/) covers the common ones | operate them |
 | Backup and restore | configuration, schedule and procedure | an off-site target, and a rehearsed restore |
 
 Two rows deserve emphasis because they are the most common gap in a self-hosted
@@ -108,9 +108,10 @@ Three ways out, in the order they cost you least:
 
 - **Publish on a named address only** — `"127.0.0.1:8080:8080"` never reaches a
   network interface. Web applications here publish nothing and are reached
-  through the reverse proxy; the few stacks whose protocol is not HTTP (UniFi,
-  OpenCanary, the access gateways) publish on an address you set, shipped as
-  `0.0.0.0` — see [firewalls](/security/firewalls/).
+  through the reverse proxy; the stacks whose protocol is not HTTP (UniFi,
+  OpenCanary, Velociraptor, the mail servers, Zabbix's trapper, the access
+  gateways) publish on an address you set, mostly shipped as `0.0.0.0` — see
+  [firewalls](/security/firewalls/).
 - **Put rules in the `DOCKER-USER` chain** — the documented place for filtering
   that has to run before Docker's own rules.
 - **Have something upstream that does not pass the port at all.** A router or

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (5.2.1) — over IPv4: the API on its own host name answered its version, the default `admin`/`admin` refused until changed, frontend and API up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/DependencyTrack/dependency-track/pkgs/container/apiserver · https://github.com/DependencyTrack/dependency-track/pkgs/container/frontend
@@ -10,10 +12,9 @@
 - **Origin:** OWASP Foundation project · United States (OWASP Foundation) · non-EU
 - **Domain:** Security operations
 - **Role:** Software composition analysis: SBOMs, components and known vulnerabilities across a portfolio
-- **Based on version:** `5.2.1`
-- **Verification snapshot:** 2026-09-19 — local Compose stack booted, all
-  three services healthy, real Docker Secrets and migrations exercised
-  against a live container; not yet run behind a real Traefik host
+- **Verification snapshot:** 2026-09-19 — local Compose stack booted, all three
+  services healthy, real Docker Secrets and migrations exercised against a live
+  container
 
 ## What we use
 
@@ -80,7 +81,7 @@ this trap.
 ## Version notes
 
 - Moved to `5.2.1` on 2026-11-05 (released 2026-10-25), API server and
-  frontend together, not run on a host at this tag. Upstream's upgrade notes
+  frontend together. Upstream's upgrade notes
   for 5.2.0: the API server image no longer contains `curl` (the healthcheck
   here now uses `wget -q -Y off -T 3`, upstream's own form) nor the Google
   Cloud SQL socket factory; usernames starting with `svc:` are reserved for
@@ -97,8 +98,7 @@ this trap.
   `/v1/finding/project/{uuid}/analyze` and removes the distrusted eMudhra root
   from the image's CA store; no GHSA published. The frontend has no breaking
   change.
-- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
-  host at this tag. PostgreSQL 18 support: "The lowest supported version is 11.
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: "The lowest supported version is 11.
   You are encouraged to use the newest available version."
   (https://dependencytrack.github.io/hyades/latest/operations/database). The 18
   image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:

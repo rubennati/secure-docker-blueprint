@@ -158,11 +158,11 @@ services:
       - ALL
 
     # --- Resources ---
-    memswap_limit: 1g          # == memory: no swap
+    memswap_limit: 2g          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 2g   # 2x the measured peak (964 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200

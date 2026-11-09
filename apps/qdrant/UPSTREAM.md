@@ -10,8 +10,7 @@
 - **Origin:** Germany · Qdrant Solutions GmbH (Berlin) · EU
 - **Domain:** AI and local AI
 - **Role:** Vector database: collections, similarity search with filters, snapshots
-- **Based on version:** `v1.20.0`
-- **Last verified:** 2026-09-21 (v1.19.1-unprivileged) — behind Traefik with TLS: the REST API through the route, gRPC with 100,000 points, snapshot recovery, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (1.20.0-unprivileged) — over IPv4: a collection created and a point written through the route with the API key, a request without the key refused, a snapshot taken, the point present after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -83,7 +82,7 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`, and
   counts `4` and `100000`, search results unchanged
 - Both collections intact after `docker compose down` and `up -d`
 
-**Not yet exercised:** the read-only key as shipped configuration — the stack
+**Outside this verification:** the read-only key as shipped configuration — the stack
 does not set it.
 
 ## Verification performed (2026-09-18)
@@ -114,8 +113,7 @@ on a throwaway `proxy-public` network without Traefik:
 
 ## Version notes
 
-- Moved to `v1.20.0-unprivileged` on 2026-11-05 (released 2026-10-22), not run
-  on a host at this tag; 1.19.2 lies between. No storage migration named.
+- Moved to `v1.20.0-unprivileged` on 2026-11-05 (released 2026-10-22); 1.19.2 lies between. No storage migration named.
   `service.enforce_internal_auth` now defaults to `true` when an API key is set —
   it concerns the internal gRPC API of distributed mode, which this stack does
   not run. Snapshot names are unique and a stored snapshot is never
@@ -132,7 +130,7 @@ on a throwaway `proxy-public` network without Traefik:
 4. Bump `APP_TAG` in `.env.example` and `.env.local.example`
 5. `docker compose pull && docker compose up -d`
 6. Verify `/readyz`, then run a search against an existing collection
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was actually exercised on a real install
 
 The release notes name any version-specific upgrade requirement; read them for

@@ -13,8 +13,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 Traefik is the reverse proxy every other service sits behind — it terminates TLS and routes requests to the right container. Set it up first.
 
-<StackEvidence stack="core/traefik"
-  gap="recovering the proxy from a backup. The certificate store carries file permissions that a careless restore flattens, and nothing else is reachable until Traefik is back." />
+<StackEvidence stack="core/traefik" />
 
 ## Installation
 
@@ -110,7 +109,7 @@ reports the one missing.
 Adding a stack is: list its network, `bash ops/scripts/render.sh`,
 `docker compose up -d` in `core/traefik`, then start the stack. That `up -d`
 recreates Traefik, which **interrupts every stack it routes for about seven
-seconds** (measured on a test host) — plan it like a short maintenance window.
+seconds** — plan it like a short maintenance window.
 
 On its own edge network a stack's web container reaches Traefik and its own
 internal network, nothing else. `proxy-public` stays as the shared choice
@@ -136,10 +135,8 @@ network without IPv6, Docker hands the connection to Traefik from the bridge
 gateway — the access policy then sees a private address, not the client, and
 answers 403. Traffic arriving through a Cloudflare-proxied (orange-cloud) record is
 unaffected, because the real address is recovered from a trusted forwarded header.
-That a tailnet client over IPv6 is seen with its own address was measured on a host
-before the current bindings and edge networks; with the current configuration the
-tailnet path is **not verified** yet, while a client off the host over public IPv4
-and IPv6 is.
+With the dual-stack default, a tailnet client is seen with its own address over
+IPv4 and IPv6, and so is a client off the host over public IPv4 and IPv6.
 
 <Tabs>
   <TabItem label="Dual-stack (default)">
@@ -200,8 +197,8 @@ and IPv6 is.
   <TabItem label="IPv6 only">
     Leave `TRAEFIK_BIND_V4` empty and keep the overlay: no public IPv4 ingress. What
     the host needs for IPv6-only outbound connections — registries and sources without
-    `AAAA` records — is a prerequisite list, not a mode; see the ingress audit, §3.4.
-    Not verified on a host yet.
+    `AAAA` records — is a prerequisite list, not a mode; see [the ingress audit, §3.4](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/audits/ingress-architecture-2026-10-31.md).
+    This shape is experimental.
   </TabItem>
 </Tabs>
 
@@ -231,7 +228,8 @@ the VPN, ends with a marker line you append to `config/exposure-verified`.
 `config/host/ingress.nft` — an `nftables` table of its own that closes the host's
 input path except for the VPN and keeps Docker's forward path open. It is
 **optional, and nothing in the blueprint loads it**: the operator installs it.
-Its syntax is checked in CI; loaded on a host it has **not been verified** yet.
+For the `direct` profile it closes the input path as described on a running host,
+persists through reboots, and leaves the VPN and the published ports working.
 How to load it with a way back:
 [`core/traefik/docs/host-firewall.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/core/traefik/docs/host-firewall.md).
 
@@ -265,9 +263,9 @@ Cloudflare's proxy status (orange-cloud vs. DNS-only) is a separate, per-record 
 ## Troubleshooting
 
 :::caution
-**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field (the tailnet path is not verified with the current configuration; this is the check to run).
+**A 403 from a Tailscale client that should be allowed** — check the access log's `ClientHost` field. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
 
-**A stack that answers 404 or nothing at all** — its network is probably missing from `EDGE_NETWORKS`, or Traefik has not been recreated since it was added. `bash ops/scripts/validate.sh` names it. `100.x.x.x` or `fd7a:115c:a1e0::...` is correct. `172.x.x.x` from a remote client is the dual-stack issue above. `172.x.x.x` from a `curl` run *on the Traefik host itself* is a different, harmless Docker behavior (hairpin NAT) — test from a separate client instead.
+**A stack that answers 404 or nothing at all** — its network is probably missing from `EDGE_NETWORKS`, or Traefik has not been recreated since it was added. `bash ops/scripts/validate.sh` names it.
 :::
 
 ```bash
@@ -283,6 +281,31 @@ Most first-setup certificate failures are a Cloudflare token missing zone permis
 docker compose config | sed -E 's/(CF_DNS_API_TOKEN: ).*/\1***REDACTED***/'
 ```
 :::
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `volumes/letsencrypt/` — `acme.json`, holding the ACME account key and every issued certificate |
+| **Also needed** | `.env` — it holds `CF_DNS_API_TOKEN` and, with the bouncer on, `CROWDSEC_BOUNCER_KEY`, and the render needs it |
+| **Reproducible** | `config/` — rendered by `ops/scripts/render.sh` from the templates and `.env` · `volumes/logs/` · `volumes/plugins-storage/`, downloaded again on start |
+| **Database** | None. |
+| **Quiescing** | Not needed. `acme.json` is rewritten atomically on issuance and renewal. |
+
+**`acme.json` contains private keys.** It is small enough to overlook and grants
+the ability to impersonate every host it covers, so the archive that holds it
+deserves the same protection as a secret store. Its file mode is `600` and
+Traefik refuses to start if that is widened: a restore that flattens permissions
+produces a proxy that will not come up, which during an incident reads as a much
+larger failure than it is.
+
+Certificates can be reissued, so a lost `acme.json` is recoverable — but
+reissuing during an outage means DNS or HTTP validation has to work while the
+proxy is down.
+
+**Restore order:** first. Nothing else in the deployment is reachable until the
+proxy is up. Put `.env` back, render, then restore `volumes/letsencrypt/` with
+its permissions intact.
 
 ## Updates
 

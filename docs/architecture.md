@@ -76,7 +76,7 @@ Internet / VPN
 
 **`<project>-edge`** — one per stack, the default of every `.env.example` (`TRAEFIK_NETWORK=${COMPOSE_PROJECT_NAME}-edge`). `core/traefik` creates each network listed in `EDGE_NETWORKS` and joins it; a stack whose network is not listed is unreachable. Only Traefik and the stack's web-facing service join it, so a web container reaches Traefik and its own `app-internal`, no other front end. Owner: [`core/traefik/docs/edge-networks.md`](../core/traefik/docs/edge-networks.md), [DEC-075](../.ai/decisions.md#dec-075).
 
-**`proxy-public`** — created by `core/traefik`; carries Traefik's published ports (`gw_priority`) and is the shared choice for stacks that reach each other by service name (Mailpit, for example). Dual-stack IPv4+IPv6 for a new installation (the example `.env` applies `network-dual-stack.yml`; DEC-063), IPv4-only without the overlay — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). The host runs of 2026-11-03/04 recorded preserved tailnet client addresses over both families, including after a reboot with the firewall drop-in (A1–A5, F9, T8). The admitting LAN paths and IPv6-only ingress remain unverified; these records do not re-verify later image pins ([`host-verification-ingress.md`](host-verification-ingress.md#results)). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
+**`proxy-public`** — created by `core/traefik`; carries Traefik's published ports (`gw_priority`) and is the shared choice for stacks that reach each other by service name (Mailpit, for example). Dual-stack IPv4+IPv6 for a new installation (the example `.env` applies `network-dual-stack.yml`; [DEC-063](../.ai/decisions.md#dec-063)), IPv4-only without the overlay — Tailscale ingress needs it to preserve real client IPs over IPv6, where Cloudflare ingress does not (it recovers the real IP from a trusted forwarded header instead). The host runs of 2026-11-03/04 recorded preserved tailnet client addresses over both families, including after a reboot with the firewall drop-in (A1–A5, F9, T8). The admitting LAN paths and IPv6-only ingress remain unverified; these records do not re-verify later image pins ([`host-verification-ingress.md`](host-verification-ingress.md#results)). See [`core/traefik/docs/ipv6-dual-stack.md`](../core/traefik/docs/ipv6-dual-stack.md).
 
 Two properties of this shape are measured, not assumed ([`audits/ingress-architecture-2026-10-31.md`](audits/ingress-architecture-2026-10-31.md)). Members of one Docker network reach each other's ports directly, so the four positions of the middleware model protect the path through Traefik and only that path: a compromised web container on `proxy-public` reaches every other web container on it without passing an access policy, a rate limit or a forward-auth gate. And Docker maps Traefik's published ports to its address on the network with the highest `gw_priority`, and without one to the first in Compose order — `crowdsec-security`, not `proxy-public`; since step 2 of the programme `docker-compose.yml` pins them to `proxy-public`, and an installation takes the pin on its next `docker compose up -d`. The decided direction is an edge network per installed stack, with `proxy-public` as the network that carries the published ports ([DEC-075](../.ai/decisions.md#dec-075)); it is implemented (`EDGE_NETWORKS`, step 5 of the programme), and an installation on the shared shape keeps it until it migrates ([`edge-networks.md`](../core/traefik/docs/edge-networks.md), "Moving a shared installation to edge networks"). The lateral path above remains for stacks that stay on `proxy-public`.
 
@@ -163,7 +163,7 @@ sequenceDiagram
   Note over N,K: stop / restart / package upgrade: Debian's unit runs "nft flush ruleset"<br/>— the drop-in replaces it with "destroy table inet blueprint_ingress"
 ```
 
-Measured on the step 8 lab host after a reboot (T8): the blueprint table at 7.3 s,
+Measured after a reboot (T8): the blueprint table at 7.3 s,
 Tailscale's rules at 18.1 s, Docker's at 18.7 s. Without the drop-in a restart of the
 service left only the blueprint table (Docker and Tailscale had to be restarted); with it,
 restart, the package's `try-restart` and stop/start left every other table identical
@@ -202,8 +202,7 @@ flowchart LR
 **A mixed operation per application is not provided.** One installation is `direct` or
 `proxied` for every router at once. With `proxied`, the forward rule refuses direct
 clients for every router on the published ports — a DNS-only application stays reachable
-over the VPN or a trusted range only. With `direct`, a proxied name still works (measured
-on the step 8 lab host), but Traefik sees Cloudflare's edge as the client, the client's
+over the VPN or a trusted range only. With `direct`, a proxied name still works (measured), but Traefik sees Cloudflare's edge as the client, the client's
 address is only in `CF-Connecting-IP`, which nothing here trusts, and the origin is
 reachable around the proxy. Per-application AppSec on and off is the same: one switch for
 the entrypoint.
@@ -216,7 +215,7 @@ ranges, its own header model and its own tests before it can be named here.
 
 | | State |
 |---|---|
-| Edge network per stack, access policies, auth postures | implemented; tested on a host (step 8) |
+| Edge network per stack, access policies, auth postures | implemented; tested on a host (2026-11) |
 | `direct` profile, dual-stack publishing, client address over IPv4 and IPv6 | implemented; tested on a host |
 | Host ruleset for `direct`: input VPN-only, anti-spoofing for both families (IPv4 since 2026-11-04), persistence | implemented (rendered, installed by the operator); tested on a host — F1–F9, M1, M2, a reboot with the drop-in (T8) |
 | Tailscale on the host with `--snat-subnet-routes=false`, split DNS | documented operator steps; tested on a host, both start orders and a reboot |
@@ -226,24 +225,21 @@ ranges, its own header model and its own tests before it can be named here.
 | `proxied` profile with origin protection (X4) | implemented; **tested on a host** (2026-11-04) — below |
 | The headers position first on every router (refusals carry HSTS) | implemented; tested on a host |
 | `nftables.service` drop-in: a restart or a package upgrade no longer flushes Docker's and Tailscale's tables | implemented (host file of `core/traefik`); tested on a host, including a reboot (T8) |
-| Firewall bouncer on the host | implemented, optional; not installed on the step 8 host |
+| Firewall bouncer on the host | implemented, optional, with the `firewall-bouncer.yml` overlay of `core/crowdsec`; lifecycle and readiness tested on a host, enforcement against real traffic open (`core/crowdsec/docs/firewall-bouncer.md`) |
 | Direct and proxied applications on one host, each with its own trust | **planned, not implemented** — below |
 | Per-application or per-path AppSec | **planned** (decision of 2026-11-03), not implemented |
 | Incident containment of one stack, evidence collection, controlled reconnection | **planned** — concept in [`docs/research/incident-response-concept.md`](research/incident-response-concept.md) |
 
 ### X4 — the `proxied` profile, tested
 
-Run on the step 8 lab host on 2026-11-04, with two clients of the operator — one in the
-tailnet with IPv4 and IPv6, one outside it with IPv4 only — and the host itself as a
-client through Cloudflare.
-
-What was changed, and back: `TRAEFIK_FORWARDED_PROXY=cloudflare`; a render (four files
-differ: `traefik.yml`, `dynamic/crowdsec.yml`, `host/ingress.nft`,
-`host/cloudflare-ranges.nft`); `docker compose up -d --force-recreate traefik`; the
-ranges file and the `proxied` ruleset installed and applied with `systemctl reload
-nftables`, under a timed way back. The return ran twice — once by the timer by itself,
-once by hand — and both times every changed file and the blueprint table were
-byte-identical to the state before.
+Tested on a dual-stack host on 2026-11-04 with a tailnet client (IPv4 and IPv6), an
+outside client (IPv4) and the host itself through Cloudflare. Switching to `proxied`
+is `TRAEFIK_FORWARDED_PROXY=cloudflare`, a render (it changes `traefik.yml`,
+`dynamic/crowdsec.yml`, `host/ingress.nft` and `host/cloudflare-ranges.nft`),
+`docker compose up -d --force-recreate traefik`, and the ranges file and the
+`proxied` ruleset applied with `systemctl reload nftables`. Switching back restores
+every changed file and the host ruleset byte for byte. The procedure and the raw
+results are in [`host-verification-ingress.md`](host-verification-ingress.md).
 
 | Check | Result |
 |---|---|
@@ -255,10 +251,10 @@ byte-identical to the state before.
 | A CrowdSec ban through Cloudflare | 403 after about six seconds on IPv4 and IPv6; no decision ever named a Cloudflare address; deleted, 200 again after the stream interval |
 | A container calling the origin's public address | dropped in `proxied` (its source is a Docker address, not Cloudflare); answered again after the return |
 
-Two lessons for operating it: a changed `traefik.yml` is invisible to `docker compose up
--d` — only `--force-recreate` loads it (the first attempt left Traefik trusting nobody,
-and the measurement showed the edge address); and a container that reaches applications
-through their public names loses that path in `proxied`.
+Two properties to plan for: a changed `traefik.yml` is invisible to `docker compose up
+-d` — only `--force-recreate` loads it, and until then Traefik trusts nobody and sees the
+edge address; and a container that reaches applications through their public names
+loses that path in `proxied`.
 
 Risks that stay: every DNS-only router is unreachable from outside the VPN for as long
 as the profile is set; the trusted ranges are Cloudflare's whole network
@@ -359,7 +355,7 @@ blocking rules have not been run on a host.
 
 `core/traefik` renders a host-firewall ruleset for its exposure profile
 (`config/host/ingress.nft`, [`core/traefik/docs/host-firewall.md`](../core/traefik/docs/host-firewall.md),
-DEC-078): it closes the host's input path except for the VPN and leaves Docker's forward
+[DEC-078](../.ai/decisions.md#dec-078)): it closes the host's input path except for the VPN and leaves Docker's forward
 path open. The operator installs it; nothing in the repository loads it automatically.
 The 2026-11-03/04 host tests covered the ruleset, persistence and VPN access;
 [the evidence and its limits](host-verification-ingress.md#results) remain separate
@@ -469,7 +465,10 @@ An application may assume:
 
 An application is expected to provide:
 
-- a way to run it without a reverse proxy at all, for local use;
+- where it shows something run alone, a local Compose file that runs without a
+  reverse proxy;
+- its route closed by default (`access-vpn`), with the auth posture stated beside
+  the auth value;
 - a healthcheck;
 - the Foundation baseline;
 - a documented `.env.example`.
@@ -483,8 +482,7 @@ An application must not:
 
 For the shared HTTPS ingress, an application consumes the reverse-proxy capability;
 Traefik is its implementation here. Native protocol ports follow the stack's own
-exposure model. Many stacks also provide a local Compose file that runs without
-a proxy.
+exposure model.
 
 ---
 

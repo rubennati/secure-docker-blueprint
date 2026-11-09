@@ -106,7 +106,7 @@ services:
       # Generate with:
       #   docker run -it --rm --entrypoint /bin/bash \
       #     lscr.io/linuxserver/bookstack:${APP_TAG} appkey
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       # Database
       DB_HOST: db
       DB_PORT: "3306"
@@ -114,7 +114,7 @@ services:
       DB_USERNAME: ${DB_USER}
       # BookStack cannot read DB_PASSWORD from a file. Value here must
       # match the contents of .secrets/db_pwd.txt — see README.
-      DB_PASSWORD: ${DB_PWD_INLINE}
+      DB_PASSWORD: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
 
     # --- Storage ---
     volumes:

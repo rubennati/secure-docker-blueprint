@@ -10,8 +10,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Photos
 - **Role:** Photo library with face recognition and search
-- **Based on version:** `1.5.1` (upstream moved from weekly builds to semver)
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (1.5.1) — over IPv4: the administrator from `.env` obtained a token through the API, all four services up before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -37,7 +36,7 @@
 | **`data=` path renamed to individual bind mounts** (`./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`, `./volumes/db`) | Inbox used a single `${data}` root variable that mixed DB and media; separating them makes backups and permissions cleaner |
 | **`shm_size: 256mb` on `db`** | Upstream's compose sets it from 1.5.0; with Docker's default 64 MB `/dev/shm`, large libraries fail with "could not resize shared memory segment" |
 | **`UPDATE_CHECK: "false"` on the backend** | From 1.5.0 the backend asks GitHub daily for a newer release; pins move through this repository |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Wiki-style access; consider `access-vpn` for family-only galleries |
+| **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | Closed by default; open the route (`access-public`) for clients outside the VPN |
 
 ## Version / tag notes
 
@@ -52,8 +51,7 @@
 - The backend healthcheck calls upstream's liveness endpoint `/api/healthz` with the command
   from upstream's own compose file (`deploy/compose/docker-compose.e2e.yml`). The `1.2.x`
   backend image ships no `curl`.
-- Moved to `1.5.1` on 2026-11-05 (released 2026-10-31), not run on a host at this
-  tag; 1.3.0, 1.4.0 and 1.5.0 lie between. Backend, frontend and proxy share
+- Moved to `1.5.1` on 2026-11-05 (released 2026-10-31); 1.3.0, 1.4.0 and 1.5.0 lie between. Backend, frontend and proxy share
   `APP_TAG` and all three exist at `1.5.1`. Changes:
   - 1.3.0: OpenCLIP ViT-B/32 replaces the separate tagging and CLIP models; a
     background job re-embeds and re-tags every photo once.
@@ -83,7 +81,7 @@
   sharing fixes and Pillow 13 (1.5.0). Upstream lists GHSA-975v-mx44-9jxq,
   GHSA-6367-m327-c4pf and GHSA-hq2w-x39h-8wmp with no patched release.
 - Moved `pgautoupgrade/pgautoupgrade` from `16-bookworm` to `18-trixie` on
-  2026-11-05, not run on a host at this tag. LibrePhotos states no maximum;
+  2026-11-05. LibrePhotos states no maximum;
   1.5.0 requires PostgreSQL 15 or newer, and upstream's compose
   (https://github.com/LibrePhotos/librephotos-docker) runs
   `pgautoupgrade/pgautoupgrade:latest`, which is PostgreSQL 18. 18 is built on

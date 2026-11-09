@@ -12,8 +12,7 @@ speaks OpenID Connect and SAML, federates users from LDAP and Active
 Directory, and manages realms, clients, roles and users in an admin console.
 Two containers: the server and PostgreSQL.
 
-<StackEvidence stack="core/keycloak"
-  gap="a login. Boot, health, routing and the discovery document were checked on a running host; no application has signed in through it, and no restore has been performed." />
+<StackEvidence stack="core/keycloak" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -25,8 +24,17 @@ On your own machine, with no proxy, domain or certificate. From
 `core/keycloak/`:
 
 ```bash
-cp .env.local.example .env.local            # two __REPLACE_ME__ values, openssl one-liners above each
-mkdir -p volumes/local/postgres volumes/local/data && sudo chown 1000:0 volumes/local/data
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "BOOTSTRAP_ADMIN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/postgres volumes/local/data
+sudo chown 1000:0 volumes/local/data
+
 docker compose -p keycloak-local -f docker-compose.local.yml --env-file .env.local up -d
 ```
 

@@ -67,11 +67,11 @@ services:
 
     # --- Resources ---
     # Runs once at start and exits.
-    memswap_limit: 512M          # == memory: no swap
+    memswap_limit: 1536m            # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1536m   # 2x the measured peak (642 MiB)
           pids: 100
         reservations:
           memory: 64M
@@ -117,11 +117,11 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s
-    memswap_limit: 1G          # == memory: no swap
+    memswap_limit: 2g          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2g   # 2x the measured peak (1022 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
@@ -147,11 +147,11 @@ services:
     # and detecting that needs a liveness signal from the application
     # itself rather than anything visible from outside.
 
-    memswap_limit: 512M          # == memory: no swap
+    memswap_limit: 1536m            # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1536m   # 2x the measured peak (713 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "0.50"
           pids: 100
@@ -195,6 +195,9 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The image runs as its own user and needs none.
     # --- Health & Observability ---
     # Not an HTTP service — this confirms the port accepts a connection.
     healthcheck:
@@ -224,6 +227,17 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user.
+    # Set per image family: docs/standards/security-baseline.md.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
     environment:
       # PostgreSQL 18 keeps its cluster under /var/lib/postgresql/<major> and
       # refuses to start when a volume sits on the old path without this. Same

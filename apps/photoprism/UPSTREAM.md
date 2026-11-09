@@ -13,13 +13,12 @@
 - **Origin:** Germany · PhotoPrism AG · EU
 - **Domain:** Photos
 - **Role:** Photo library with machine-learning classification and WebDAV
-- **Based on version:** `261029` (upstream tags `YYMMDD`)
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (261029) — over IPv4: the administrator from `.env` opened a session through the API, the app served before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
 - Upstream `photoprism/photoprism`
-- Official `mariadb:11` as backend
+- Official `mariadb:12.3.3` as backend
 - Docker Secrets for MariaDB password + root password
 - Bind-mount `./volumes/database`, `./volumes/storage`
 - Configurable `ORIGINALS_PATH` for photo source
@@ -44,7 +43,7 @@
 | **`PUID` / `PGID`** wired to `PHOTOPRISM_UID / GID` | Inbox had both commented out — app ran as root |
 | **Container names standardized** — `photoprism-app/db` | Project-scoped naming |
 | **Volume paths** — inbox used `./Pictures`, `./storage`, `./database` | Now `${ORIGINALS_PATH}` (default `./volumes/originals`), `./volumes/storage`, `./volumes/database` |
-| **`access-public`, `limit-standard` and `headers-standard` as shipped** | Consider `access-vpn` for family-only galleries |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | Closed by default; open the route (`access-public`) for clients outside the VPN |
 
 ## Upgrade checklist
 
@@ -77,7 +76,7 @@ Restore DB dump and `volumes/storage/`, revert `APP_TAG`.
 ## Version notes
 
 - Moved to `261029` on 2026-11-05 (released 2026-10-29), from `260919` across
-  `261007`, not run on a host at this tag. The automatic proposal `20220121` is an old
+  `261007`. The automatic proposal `20220121` is an old
   date-style tag, not a newer release. `260919` carried CRITICAL findings in
   `linux-libc-dev` of the Ubuntu base; the release notes name no base-image change, so
   whether `261029` clears them needs the next image scan. Fixed in the app: libheif
@@ -106,8 +105,7 @@ Restore DB dump and `volumes/storage/`, revert `APP_TAG`.
   https://docs.photoprism.app/getting-started/config-options/ ,
   https://github.com/photoprism/photoprism/blob/261029-963b58c50/setup/docker/compose.yaml ,
   https://github.com/photoprism/photoprism/commit/41ef81c48
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: PhotoPrism's own compose files pin
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: PhotoPrism's own compose files pin
   `mariadb:12.3.3` (https://dl.photoprism.app/docker/compose.yaml) and its FAQ
   requires MariaDB 10.5.12 or newer
   (https://docs.photoprism.app/getting-started/faq/). `MARIADB_AUTO_UPGRADE: "1"`, already set in

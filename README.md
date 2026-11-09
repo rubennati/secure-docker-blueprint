@@ -20,9 +20,9 @@ deployment patterns: a **static site** and a **web API**, following the same
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.9.8-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.9-blue)](CHANGELOG.md)
 
-**[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Verified status](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
+**[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Stacks at a glance](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 
 </div>
 
@@ -36,7 +36,7 @@ records deviations from the baseline in its own documentation.
 [AppSec component](core/crowdsec/docs/appsec.md) is opt-in and ships without the
 OWASP Core Rule Set.
 
-Quick Navigation: [Stacks](#stacks) · [Getting started](#getting-started) · [Overview](#how-the-pieces-fit) · [Repository layout](#repository-layout)
+Quick Navigation: [Stacks](#stacks) · [Try a stack](#try-a-stack-on-your-machine) · [New host](#set-up-a-new-host) · [Add or update](#add-a-stack-to-a-host) · [Status](#status) · [Documentation](#documentation)
 
 ## Stacks
 
@@ -54,6 +54,14 @@ run as a host tool. Each category below links to its full list.
 
 Where several tools solve the same problem, more than one is included.
 
+**What a host needs.** Only Traefik is required: every stack that publishes a domain
+routes through it. CrowdSec is recommended — it detects attacks in the logs and blocks
+only once you enable a remediation; its AppSec component (Coraza, with the optional
+OWASP Core Rule Set) is opt-in. Everything else in `core/` — identity, secrets, DNS and
+certificates, Docker management, bastions — is optional shared infrastructure, often
+several alternatives for one job: install it when you need it. `stacks.example` starts
+with Traefik, CrowdSec and the `whoami` test target.
+
 ## How the pieces fit
 
 A typical HTTPS application follows this path. Traefik applies the stack's access
@@ -69,7 +77,36 @@ flowchart LR
 [Architecture](docs/architecture.md) covers optional integrations, host controls
 and the boundaries between them.
 
+**A blueprint, not a fixed product.** Each stack ships secure defaults — closed access,
+secrets in files, pinned images, resource limits — and every one can be changed in
+`.env` or an overlay. What a stack may assume from the platform and what it must provide
+itself is [the application contract](docs/architecture.md#the-application-contract).
+
 ## Getting started
+
+Four ways in, depending on what you want to do.
+
+### Try a stack on your machine
+
+Most stacks ship a local variant: localhost, no Traefik, no domain, none of the
+protection around it. It shows the application, not how it runs on a host.
+
+```bash
+# Get the repository and pick a stack
+git clone https://github.com/rubennati/secure-docker-blueprint.git
+cd secure-docker-blueprint/apps/vaultwarden
+
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\nDB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 16)" "$(openssl rand -hex 16)" >> .env.local
+
+# Start it
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+The stack's README, section *Try it locally*, gives the URL and any first-login step.
+
+### Set up a new host
 
 Install Traefik before the application stacks that use its HTTPS routing.
 Each stack is then installed from its own README. Services with additional
@@ -80,8 +117,9 @@ ports and prerequisites.
 **Requirements:** Docker Engine 28.0+ with Compose 2.33.1+, a Linux host (tested on Debian 12/13),
 `envsubst` (`gettext-base`), and a domain whose DNS you control. The shipped DNS-01
 resolver uses Cloudflare; HTTP-01 and TLS-ALPN-01 work with other DNS providers.
-Most stacks start closed, reachable over the VPN only; those built to be reached from
-the internet, such as sign-in or link sharing, start public. A VPN is the recommended
+Every stack starts closed, reachable over the VPN only, except the few built to be
+reached from outside — share links, document servers, ntfy's push topics — which start
+public. A VPN is the recommended
 way in, and the shipped configuration uses Tailscale. Without one, admit your own
 networks through `TRUSTED_RANGES` and `access-trusted`; the Traefik dashboard then
 stays closed, and no setup step needs it.
@@ -108,11 +146,7 @@ cd core/traefik
 cp .env.example .env
 ```
 
-`stacks` starts with Traefik, CrowdSec and the `whoami` test target; add or remove lines
-and apply again. Apply refuses to remove a stack that still has `.env` or data, because
-Git would delete them with the directory. `scripts/stacks.sh update <tag>` previews a
-release for just these stacks before taking it — see
-[stacks on a host](docs/standards/deployment-lifecycle.md#2--choose-a-release-and-the-stacks).
+`stacks` starts with Traefik, CrowdSec and the `whoami` test target.
 
 Deploy from a tag rather than the default branch: `main` is where work lands between
 releases, and the combination of stacks on it at any moment is not one anybody has
@@ -133,6 +167,23 @@ its own README — for example [Vaultwarden](apps/vaultwarden/README.md) or
 Run `./scripts/overview.sh` **from the repository root** to list what is configured
 and running.
 
+### Add a stack to a host
+
+Add its path to `stacks`, run `scripts/stacks.sh apply`, then follow the stack's
+README. Removing a line and applying again removes the stack; apply refuses while the
+stack still has `.env` or data, because Git would delete them with the directory.
+
+### Update a host
+
+```bash
+scripts/stacks.sh update <tag>
+```
+
+shows what a release changes for exactly the stacks on this host, and takes it only
+after you confirm. Moving one stack to a newer upstream image within a release is a
+separate step — both are in the
+[deployment lifecycle](docs/standards/deployment-lifecycle.md#7--update-the-blueprint).
+
 ## Repository layout
 
 ```text
@@ -142,14 +193,15 @@ business/     business applications
 monitoring/   monitoring and observability
 backup/       backup and recovery
 development/  reusable patterns for software you build yourself
-docs/         architecture and standards
+docs/         architecture, standards and records (index: docs/README.md)
 scripts/      CI checks, the overview script and the stack list tool
 site/         SecDockBlue source
 ```
 
 Compose-based stacks normally contain `docker-compose.yml`, `.env.example`, a
-`README.md` with setup instructions, and an `UPSTREAM.md` recording image pins,
-upgrade notes and verification. [`apps/_reference/`](apps/_reference/) provides
+`README.md` with setup instructions, an `UPSTREAM.md` recording image pins,
+upgrade notes and verification, and most a local variant
+(`docker-compose.local.yml`, `.env.local.example`). [`apps/_reference/`](apps/_reference/) provides
 the application template. Host-installed components such as
 [Borgmatic](backup/borgmatic/) and the optional [Host Watchdog](core/host-watchdog/)
 have their own installation layout.
@@ -160,7 +212,7 @@ Four phases, and the repository covers all of them:
 
 - **Deploy** — a shared structure for Compose stacks, with configurable values documented in `.env.example`; host-installed tools have their own setup guides
 - **Secure** — `no-new-privileges`, Docker socket proxies, file-based secrets with documented exceptions, datastores unreachable from the host network, memory, PID and swap limits — checked on every pull request; capabilities dropped and a read-only root filesystem wherever the image allows it
-- **Operate** — healthchecks, resource and swap limits, monitoring stacks, and a recorded version each stack was last verified against
+- **Operate** — healthchecks, resource and swap limits, monitoring stacks, and the date and version each stack last ran on a host
 - **Recover** — Borgmatic with database-aware dumps, and restore playbooks per persistence pattern
 
 [`docs/architecture.md`](docs/architecture.md) covers the networking model and how the
@@ -171,25 +223,33 @@ stack is checked against.
 
 **Pre-1.0** — paths, variable names and defaults can still change.
 
-Verification depth varies by stack. [`LIFECYCLE.md`](LIFECYCLE.md) records what has been
-run, against which version, and what remains unverified.
+[`LIFECYCLE.md`](LIFECYCLE.md) shows one row per stack: the pin and when upstream
+released it, the newest upstream release, the CRITICAL and HIGH findings in the
+upstream images, and when the stack last ran on a host. Between two updates of
+that file, the weekly [stack status](https://github.com/rubennati/secure-docker-blueprint/issues?q=is%3Aissue+is%3Aopen+label%3Astack-status)
+shows what upstream has published since.
 
 ## Documentation
 
-| | |
+| Using the blueprint | |
 |---|---|
 | Every stack, by category | [core/](core/) · [apps/](apps/) · [business/](business/) · [monitoring/](monitoring/) · [backup/](backup/) |
-| Verification status per stack | [LIFECYCLE.md](LIFECYCLE.md) |
-| Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
-| Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |
-| Applications you build yourself | [development/](development/) (patterns) · [docs/standards/custom-application.md](docs/standards/custom-application.md) (rules) |
+| Pin, upstream, findings and last test per stack | [LIFECYCLE.md](LIFECYCLE.md) |
+| Deploy, update, roll back a host | [deployment lifecycle](docs/standards/deployment-lifecycle.md) |
 | Symptom-to-cause troubleshooting | [TROUBLESHOOTING.md](TROUBLESHOOTING.md) |
+| Applications you build yourself | [development/](development/) (patterns) · [docs/standards/custom-application.md](docs/standards/custom-application.md) (rules) |
+| Guided operator documentation | [SecDockBlue](https://secdockblue.rubennati.at) |
+| Release history | [CHANGELOG.md](CHANGELOG.md) |
+
+| Developing the blueprint | |
+|---|---|
+| Networking model, categories, capabilities | [docs/architecture.md](docs/architecture.md) |
+| What a stack may assume and must provide | [application contract](docs/architecture.md#the-application-contract) |
+| Compose, env, secrets, networking, restore rules | [docs/standards/](docs/standards/) |
 | Adding a stack, contributing | [CONTRIBUTING.md](CONTRIBUTING.md) · [new-app checklist](docs/standards/new-app-checklist.md) |
 | Reporting a vulnerability | [SECURITY.md](SECURITY.md) |
 | Repository maintenance process | [docs/maintenance.md](docs/maintenance.md) |
 | Planned work and what is out of scope | [ROADMAP.md](ROADMAP.md) |
-| Release history | [CHANGELOG.md](CHANGELOG.md) |
-| Guided operator documentation | [SecDockBlue](https://secdockblue.rubennati.at) |
 
 ## License
 

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (13.3.0) — over IPv4: the administrator from the secret file listed the Prometheus datasource and a query through it returned `up`, before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/grafana/grafana · https://hub.docker.com/r/prom/prometheus
@@ -13,7 +15,6 @@
 - **Origin:** US · Grafana Labs (Raintank, Inc.) · non-EU (Prometheus: CNCF, no single jurisdiction)
 - **Domain:** Monitoring
 - **Role:** Metrics collection and dashboards — a time series database, its scraper, and the interface that queries it
-- **Based on version:** `13.3.0` (Grafana), `v3.15.1` (Prometheus)
 
 ## Project maturity
 
@@ -96,7 +97,7 @@ Prometheus reaches exactly the targets in `config/prometheus.yml`.
 
 ## Version notes
 
-- Grafana moved to `13.3.0` on 2026-11-05, not run on a host at this tag; the
+- Grafana moved to `13.3.0` on 2026-11-05; the
   findings above were measured on `13.2.2`. The one breaking change listed is
   the `config.ini` section `marketplace`, renamed `plugins_marketplace`; this
   stack does not set it. The Alpine image drops `bash`; BusyBox `sh` and
@@ -107,8 +108,8 @@ Prometheus reaches exactly the targets in `config/prometheus.yml`.
   CVE-2026-81841, CVE-2026-88858, CVE-2026-88967, CVE-2026-93294,
   CVE-2026-95502, CVE-2026-100105 (13.3.0), and CVE-2026-103506 in the 13.2.5
   patch line.
-- Moved `prom/prometheus` to `v3.15.1` on 2026-11-05 (released 2026-10-21), not
-  run on a host at this tag; the `v3.16.0-rc` tags are pre-releases. 3.15.1 is a
+- Moved `prom/prometheus` to `v3.15.1` on 2026-11-05 (released 2026-10-21)
+  ; the `v3.16.0-rc` tags are pre-releases. 3.15.1 is a
   security release: the container image's CA certificates distrust "emSign ECC
   Root CA - G3" and "Comodo AAA Services root" after the compromise of eMudhra
   intermediate CA keys, the build moves to Go 1.27.3 (`net/http`,

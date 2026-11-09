@@ -103,22 +103,19 @@ keep_yearly: 1
 # Copying a running database's files can capture a torn, mid-transaction
 # state that only reveals itself at restore. Always dump.
 #
-# `container:` (borgmatic >= 2.0.8) resolves the container's IP through Docker,
-# so no ports need publishing. The dump command itself still runs ON THE HOST
-# and connects over TCP, so the matching client must be installed there —
-# mariadb-client, postgresql-client, mongodb-database-tools. Without it:
-#   [Errno 2] No such file or directory: 'mariadb-dump'
+# POSTGRESQL runs the server's own client inside the stack's database
+# container (FA-03): pg_dump_command, pg_restore_command and psql_command go
+# through `docker exec`. No `container:` and no `password:` — the official
+# postgres images trust the local socket, and the client's version is the
+# server's, also after a major upgrade. The container has to be running for a
+# backup. ../README.md, "PostgreSQL: the server's own client, through
+# `docker exec`".
 #
-# POSTGRESQL — operating rule: the client's major version is the server's (the
-# conservative choice, and the combination tested). Name the three
-# programs in every entry (pg_dump_command, pg_restore_command, psql_command)
-# from /usr/lib/postgresql/<major>/bin, the major of that entry's server — not
-# the `pg_dump` on the PATH, which is the newest installed (Debian 13: 17).
-# Measured: a dump by client 17 from server 16 failed its restore into 16
-# (`SET transaction_timeout`); with client 16 named here, backup and restore
-# passed. Backup and restore use the same entry's programs. When a server
-# changes major, change its three paths and rehearse a restore. ../README.md,
-# "PostgreSQL: the client's major version is the server's".
+# MYSQL / MARIADB: `container:` (borgmatic >= 2.0.8) resolves the container's
+# IP through Docker, so no ports need publishing. The dump command itself runs
+# ON THE HOST and connects over TCP, so the client must be installed there —
+# mariadb-client (mongodb-database-tools for MongoDB below). Without it:
+#   [Errno 2] No such file or directory: 'mariadb-dump'
 #
 # TLS: a distribution client is often newer than the pinned server and will
 # demand TLS the server does not offer. For a host-to-container connection over
@@ -138,23 +135,12 @@ keep_yearly: 1
 
 postgresql_databases:
     - name: myapp
-      container: myapp-db
       username: myapp
-      password: "{credential file /srv/docker/apps/myapp/.secrets/db_pwd.txt}"
       format: custom
-      # Server: postgres 16 (the stack's DB_TAG) — so the client of major 16.
-      pg_dump_command: /usr/lib/postgresql/16/bin/pg_dump
-      pg_restore_command: /usr/lib/postgresql/16/bin/pg_restore
-      psql_command: /usr/lib/postgresql/16/bin/psql
-    # A database on another major names that major's programs:
-    # - name: otherapp
-    #   container: otherapp-db
-    #   username: otherapp
-    #   password: "{credential file /srv/docker/apps/otherapp/.secrets/db_pwd.txt}"
-    #   format: custom
-    #   pg_dump_command: /usr/lib/postgresql/17/bin/pg_dump
-    #   pg_restore_command: /usr/lib/postgresql/17/bin/pg_restore
-    #   psql_command: /usr/lib/postgresql/17/bin/psql
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec myapp-db pg_dump
+      pg_restore_command: docker exec -i myapp-db pg_restore
+      psql_command: docker exec -i myapp-db psql
 
 mysql_databases:
     - name: myapp
@@ -180,7 +166,8 @@ sqlite_databases:
     - name: myapp
       path: /srv/docker/apps/myapp/volumes/data/database.sqlite
 
-# MongoDB — used by apps/unifi and business/opensign in this blueprint.
+# MongoDB — used by apps/heyform, apps/unifi, business/opensign and
+# monitoring/checkmate in this blueprint.
 mongodb_databases:
     - name: myapp
       container: myapp-db
@@ -203,6 +190,9 @@ checks:
 # so. Both services below are already in this blueprint under monitoring/.
 # Use one; two is noise.
 
+# A monitoring/healthchecks on this same host: ping its loopback port,
+# http://127.0.0.1:8001/ping/<uuid> (HC_LOCAL_PORT) — through the public name a
+# closed access policy refuses the host. Verified with borgmatic 2.2.0.
 healthchecks:
     ping_url: https://healthchecks.example.com/ping/00000000-0000-0000-0000-000000000000
     states:

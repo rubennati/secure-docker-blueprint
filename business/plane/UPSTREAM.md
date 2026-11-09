@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v1.4.3) — over IPv4, with Silo as the object store: /god-mode claimed, a workspace, project and work item created, an image attachment uploaded through the pre-signed URL into Silo and read back byte-identical, all still there after down/up
+
 ## Source
 
 - **Image:** https://hub.docker.com/u/makeplane
@@ -13,7 +15,6 @@
 - **Origin:** US · Plane Software, Inc. · non-EU
 - **Domain:** Business operations
 - **Role:** Project management — issues, cycles, modules and pages, with a collaborative editor and public project pages
-- **Based on version:** `v1.4.3`
 
 ## Project maturity
 
@@ -24,19 +25,18 @@ than that belongs on a network.
 ## What we use
 
 Thirteen services from six application images, plus PostgreSQL, Valkey,
-RabbitMQ and MinIO. Upstream's own shape, with the pins changed:
+RabbitMQ and Silo (a MinIO fork). Upstream's own shape, with the pins changed:
 
 | | Upstream's Community Edition compose | Here |
 |---|---|---|
-| MinIO | `minio/minio:latest` | `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` |
+| Object store | `pgsty/silo:RELEASE.2026-09-16T00-00-00Z` | `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` |
 | PostgreSQL | `postgres:15.7-alpine` (2024) | `postgres:15.19-alpine` |
 | Valkey | `valkey/valkey:7.2.11-alpine` | `valkey/valkey:7.2.14-alpine` |
 | RabbitMQ | `rabbitmq:3.13.6-management-alpine` (2024) | `rabbitmq:3.13.7-management-alpine` |
 
-**`minio/minio` no longer exists on Docker Hub** — the API answers 404 for the
-repository. Upstream's published Community Edition compose therefore names an
-image that cannot be pulled. `quay.io/minio/minio` is the same image
-`monitoring/langfuse` already pins.
+Upstream's compose names `pgsty/silo` for the object store since v1.4.3; this
+file pins the newest Silo release, the same tag `monitoring/langfuse` uses. See
+"Object store: Silo instead of MinIO" below.
 
 ## What we changed and why
 
@@ -44,9 +44,9 @@ image that cannot be pulled. `quay.io/minio/minio` is the same image
 |--------|--------|
 | Eight Docker Secrets through `config/entrypoint.sh` | Plane reads every setting from the environment and has no `_FILE` variant. Upstream's defaults are `plane`/`plane` for PostgreSQL and RabbitMQ and `access-key`/`secret-key` for MinIO |
 | A second wrapper for RabbitMQ | 3.13 rejects `RABBITMQ_DEFAULT_PASS_FILE` as deprecated and exits. Its suggested alternative is a configuration file, which would put the password on the host |
-| No published ports | Upstream's proxy publishes 80 and 443. Traefik fronts the bundled proxy instead, which keeps MinIO and the four interfaces off `proxy-public` |
+| No published ports | Upstream's proxy publishes 80 and 443. Traefik fronts the bundled proxy instead, which keeps the object store and the four interfaces off `proxy-public` |
 | Network aliases on the internal network | Measured below |
-| `user:` on the backend, live, Valkey and MinIO | Every Plane image declares root |
+| `user:` on the backend, live, Valkey and the object store | Every Plane image declares root |
 | `cap_add` per service rather than none | Measured below — three different images need three different sets |
 | `CORS_ALLOWED_ORIGINS` set to the host | Upstream leaves it empty |
 | `CERT_*` deliberately unset | Measured below |
@@ -103,37 +103,36 @@ task checks `instance.is_telemetry_enabled`, a field on the instance record, so
 it is switched off in `/god-mode` after setup rather than in this compose file.
 The README says so in its setup steps.
 
-## MinIO withdrew its public images (2026-09-24)
+## Object store: Silo instead of MinIO
 
-`quay.io/minio/minio` answers `401 Unauthorized`, the Docker Hub repository is
-gone, and [`minio/minio`](https://github.com/minio/minio) was archived on GitHub
-with its last push on 2026-04-24. Its final release, `RELEASE.2025-10-15`, is
-newer than the tag pinned here and is equally unavailable.
+MinIO withdrew its public container images on 2026-09-24: `quay.io/minio/minio`
+answers `401 Unauthorized`, the Docker Hub repository is gone, and
+[`minio/minio`](https://github.com/minio/minio) was archived on GitHub with its last
+push on 2026-04-24. The tag pinned here before, `RELEASE.2025-09-07T16-13-09Z`,
+could not be pulled from anywhere public, so the stack did not start.
 
-Checked on 2026-09-24: `quay.io`, Docker Hub, `ghcr.io`, and an older release
-tag — all refused. `quay.io` itself is fine; `quay.io/prometheus/prometheus`
-pulls from the same host.
+The store is now [`pgsty/silo`](https://github.com/pgsty/silo) (AGPL-3.0), a
+maintained MinIO fork with release tags on Docker Hub. Upstream's own Community Edition compose names it since v1.4.3. It reads
+MinIO's variables (`MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD_FILE`) and serves the S3
+API on port 9000, so the service keeps the name `plane-minio` and its clients are
+unchanged. The image has no `mc`; the healthcheck is Silo's own
+`silo healthcheck ready`. It runs as uid 1000 with `cap_drop: ALL` and no
+capability added.
 
-`cgr.dev/chainguard/minio` is public and is what upstream's own compose file
-uses. Its public repository carries `latest` and `latest-dev` and no version
-tags — the rest of its tag list is signatures and attestations — so a pin taken
-from it is a digest with no promise of staying pullable. It gets an installation
-running; it is not something this repository can pin.
-
-A versioned, S3-compatible replacement — SeaweedFS and Garage both publish one —
-is the real fix, and it changes the configuration rather than a tag.
+Not tested: a data directory written by the old MinIO image. Every run of this
+stack since the withdrawal started empty.
 
 ## Version notes
 
-- Moved to `v1.4.3` on 2026-10-31 (released 2026-10-28), all six images together,
-  not run at this tag. No breaking change, variable, migration or image order is
+- Moved to `v1.4.3` on 2026-10-31 (released 2026-10-28), all six images together. No breaking change, variable, migration or image order is
   labelled; the REST API now answers a validation error for assignees or labels
   outside the project instead of dropping them. The release fixes access-control
   issues (project publish, published boards, sub-work-items, invitations, sign-in
   rate limiting) and raises sanitize-html, djangorestframework, sharp, js-yaml,
   fast-uri, qs, morgan and postcss-selector-parser; npm is removed from the
   runtime images. Upstream's bundled object store is now `pgsty/silo` pinned to a
-  release tag — relevant to the MinIO item in `.ai/tasks.md`, not changed here.
+  release tag, the image this stack runs (see "Object store: Silo instead of
+  MinIO").
 
 ## Upgrade checklist
 
@@ -150,8 +149,8 @@ is the real fix, and it changes the configuration rather than a tag.
 
 ```bash
 # Upstream's Community Edition compose — the one setup.sh downloads
-curl -sL https://github.com/makeplane/plane/releases/download/v1.4.2/docker-compose.yml
+curl -sL https://github.com/makeplane/plane/releases/download/v1.4.3/docker-compose.yml
 
 # The proxy's Caddyfile, with upstream's service names in it
-docker run --rm --entrypoint sh makeplane/plane-proxy:v1.4.2 -c 'cat /etc/caddy/Caddyfile'
+docker run --rm --entrypoint sh makeplane/plane-proxy:v1.4.3 -c 'cat /etc/caddy/Caddyfile'
 ```

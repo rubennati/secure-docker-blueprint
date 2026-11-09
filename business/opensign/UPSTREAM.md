@@ -11,8 +11,7 @@
 - **Origin:** India · OpenSign Inc · non-EU
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with qualified-certificate support
-- **Based on version:** `main`, digest-pinned (no semver tags published — see Known Issues in README)
-- **Last checked:** 2026-05-11
+- **Last verified:** 2026-11-08 (main) — over IPv4, at the closed default, the `main` images built on 2026-11-02 (upstream publishes no version tags): the first admin created through the `addadmin` cloud function, `checkadminexist` then `exist`, a login with a session before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -43,8 +42,7 @@ OpenSign uses Parse Server (Node.js) as the backend API with MongoDB as the data
 ## Version notes
 
 - Re-pinned `main` on 2026-11-05 to the images built on 2026-11-02 from
-  upstream commit `9258b593c0` (after the v3.1.0 release), not run on a host at
-  these digests: UI `opensign/opensign`
+  upstream commit `9258b593c0` (after the v3.1.0 release): UI `opensign/opensign`
   `sha256:093910c698c135e272a794ec1df81324c584b0c1011bb95da0c04ff22adb45ac`,
   API `opensign/opensignserver`
   `sha256:49819bc883aa5b0053106f2d60d49334231c723cc37c01a304a9322e46bfc06f`.

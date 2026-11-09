@@ -2,17 +2,13 @@
 
 Self-hosted photo gallery focused on fast browsing and clean presentation. Three-service stack: Laravel app, MariaDB backend, Redis cache.
 
-## Open findings
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `lychee-app` | `lycheeorg/lychee:v7.12.1` | PHP/Laravel app on FrankenPHP |
+| `lychee-app` | `lycheeorg/lychee:v7.13.0` | PHP/Laravel app on FrankenPHP |
 | `db` | `mariadb:12.3.3` | Primary store (albums, photo metadata, users) |
 | `redis` | `redis:8.10.3-alpine` | Cache + session driver |
 
@@ -21,7 +17,14 @@ The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in t
 Runs on `http://localhost:8000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8000
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -47,8 +50,10 @@ openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
 
 # 4. Volume ownership (Lychee entrypoint drops to PUID/PGID)
-mkdir -p volumes/{conf,uploads,sym,logs,tmp,mysql,redis}
-sudo chown -R 1000:1000 volumes/conf volumes/uploads volumes/sym volumes/logs volumes/tmp
+mkdir -p volumes/{uploads,logs,tmp,mysql,redis}
+sudo chown -R 1000:1000 volumes/uploads volumes/logs volumes/tmp
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 
 # 5. Start
 docker compose up -d
@@ -57,7 +62,8 @@ docker compose up -d
 docker compose logs lychee-app --follow
 # Watch for: "Started Apache"
 
-# 7. Open UI and create the admin account on first visit
+# 7. Over the VPN, open the UI and create the admin account on first visit. The
+#    route ships closed (APP_TRAEFIK_ACCESS=access-vpn); open it afterwards
 # https://<APP_TRAEFIK_HOST>
 # The first-visit wizard creates the admin user.
 ```
@@ -71,7 +77,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 
 ## Security Model
 
-- **First-visit admin creation** — the first time the web UI is opened, Lychee prompts for admin credentials. Open it yourself immediately after `docker compose up -d` so an attacker cannot claim the account.
+- **First-visit admin creation** — until an admin exists, `/` redirects to `/install/admin`, whose form creates the admin for whoever submits it — no setup secret, no CSRF token; afterwards it answers `403` (v7.12.1). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`APP_KEY`** encrypts Laravel sessions and signed URLs. Rotating invalidates all sessions (acceptable).
 - **`DB_PASSWORD_FILE` is supported natively** — Lychee reads the password from `/run/secrets/DB_PWD`. No inline duplication needed.
 - **`MYSQL_PASSWORD_FILE` + `MYSQL_ROOT_PASSWORD_FILE`** — MariaDB also reads secrets from files.
@@ -87,8 +93,8 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 |---|---|
 | **Database** | MariaDB · container `lychee-db` · database `lychee` · user `lychee` |
 | **Password** | `.secrets/db_pwd.txt` |
-| **State** | `./volumes/mysql` (database) · `./volumes/uploads` (the photos) · `./volumes/conf` |
-| **Reproducible** | `./volumes/sym` (symlinks) · `./volumes/redis` (cache) · `./volumes/logs` · `./volumes/tmp` |
+| **State** | `./volumes/mysql` (database) · `./volumes/uploads` (the photos) |
+| **Reproducible** | `./volumes/redis` (cache) · `./volumes/logs` · `./volumes/tmp` |
 | **Quiescing** | Not needed. The dump is consistent on its own. |
 
 ```yaml
@@ -112,6 +118,24 @@ than an error.
 - **`STARTUP_DELAY=30`** — Lychee waits 30 s for MariaDB before starting. Leave as-is unless your DB is unusually slow.
 - **WebAuthn is enabled by default** — disable via `DISABLE_WEBAUTHN=true` if you do not want passkey support.
 - **Redis password is not configured here** — Redis runs on the internal network only. If you expose it or move it off-host, add a password.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `v7.13.0` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `lycheeorg/lychee:v7.13.0` | 0 · 2 | — | — |
+| `mariadb:12.3.3` | 0 · 1 | — | 1 · 25 |
+| `redis:8.10.3-alpine` | — | — | — |
+
+<!-- findings:end -->
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

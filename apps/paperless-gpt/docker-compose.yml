@@ -31,11 +31,11 @@ services:
     user: "${APP_UID}:${APP_GID}"
 
     # --- Resources ---
-    memswap_limit: 512m          # == memory: no swap
+    memswap_limit: 768m          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 768m   # 2x the measured peak (278 MiB)
           # cpus: derived starting value, not measured — v0.10.0
           cpus: "1.00"
           pids: 200

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v3.13.1) — over IPv4: the first account registered as superadmin, a second superadmin refused (`Invite not found`), the state kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/bluewave-labs/Checkmate/pkgs/container/checkmate
@@ -13,7 +15,6 @@
 - **Origin:** Canada · BlueWave Labs · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime, certificate, hardware and container monitoring with incidents, maintenance windows and status pages
-- **Based on version:** `v3.13.1`
 
 ## Project maturity
 
@@ -107,7 +108,7 @@ the rest — also reach their vendors, which is what a notification channel is.
 
 ## Version notes
 
-- Moved to `v3.13.1` on 2026-11-05, not run on a host at this tag. Upstream's
+- Moved to `v3.13.1` on 2026-11-05. Upstream's
   notes for `v3.13.0` and `v3.13.1` say no new required variables and no
   migrations. The image moves to Node 24 and the server to Express 5, and
   `v3.13.0` turns on an anonymous daily telemetry heartbeat by default, which
@@ -133,6 +134,6 @@ the rest — also reach their vendors, which is what a notification channel is.
 curl -s https://raw.githubusercontent.com/bluewave-labs/Checkmate/develop/docker/docker-compose.yaml
 
 # Every setting the server reads, with its defaults and validation
-docker run --rm --entrypoint sh ghcr.io/bluewave-labs/checkmate:v3.12.0 \
+docker run --rm --entrypoint sh ghcr.io/bluewave-labs/checkmate:v3.13.1 \
     -c 'cat /app/server/dist/config/envValidation.js; cat /app/server/.env.example'
 ```

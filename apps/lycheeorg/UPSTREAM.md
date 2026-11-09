@@ -11,8 +11,7 @@
 - **Origin:** Community · LycheeOrg · EU contributors
 - **Domain:** Photos
 - **Role:** Photo gallery
-- **Based on version:** `v7.12.1`
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-09 (v7.13.0) — over IPv4, moved from v7.12.1 on a new installation: an administrator from `lychee:create_user`, login, an album and a photo upload through the API, the photo still on disk after `down`/`up`
 
 ## What we use
 
@@ -20,13 +19,13 @@
 - Official `mariadb:12.3.3` as backend
 - Official `redis:8.10.3-alpine` for cache and sessions
 - Docker Secrets for DB password, DB root password — natively consumed by both services
-- Bind-mounts under `./volumes/` for `/conf`, `/uploads`, `/sym`, `/logs`, `/lychee-tmp`
+- Bind-mounts under `./volumes/` for `/app/public/uploads`, `/app/storage/logs`, `/app/storage/tmp` — the v7 image's paths
 
 ## What we changed and why
 
 | Change | Reason |
 |--------|--------|
-| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now `__REPLACE_ME__` with `artisan key:generate --show` documented in Setup |
+| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now shipped empty and required by compose; `artisan key:generate --show` documented in Setup |
 | **Default passwords replaced** — inbox had `DB_ROOT_PASSWORD=rootpassword`, `DB_PASSWORD=lychee`, `REDIS_PASSWORD=defaultdefault` | All now secrets or removed |
 | **`DB_PASSWORD_FILE` used natively** — inbox commented the option out and passed the password inline | Lychee reads `DB_PASSWORD_FILE` directly; using Docker Secrets avoids the `DB_PWD_INLINE` duplication pattern |
 | **Redis password removed** | Redis is on `app-internal` only; password was `defaultdefault` placeholder anyway. Add a password if exposing redis externally |
@@ -41,11 +40,15 @@
 | **`TRUSTED_PROXIES: "*"`** added | Required so Laravel honours `X-Forwarded-Proto=https` from Traefik (otherwise Lychee generates `http://` absolute URLs → Mixed Content warnings) |
 | **Container names standardized** — `lychee-app/db/redis` instead of `lychee/lychee_db/lychee_redis` | Project-scoped naming |
 | **100+ lines of commented env-var examples trimmed** | Moved to upstream docs reference; `.env.example` is lean. Every dropped option remains available via standard env vars if needed |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Typical for a public gallery |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first visitor creates the admin account; open the route (`access-public`) after that for a public gallery |
 
 ## Version notes
 
-- Moved to `v7.12.1` on 2026-11-05, not run on a host at this tag. No breaking change
+- Moved to `v7.13.0` on 2026-11-09. Features for the v8
+  layout (struct-of-arrays, configurable tile size), inline feedback for
+  throttled logins, and an SSRF hardening for unusual IP forms. No migration or
+  variable labelled.
+- Moved to `v7.12.1` on 2026-11-05. No breaking change
   and no manual step in the notes. The standard image moves to FrankenPHP 1.13.3
   and builds its own ImageMagick 7.1.2 with JPEG XL support, and turns off PHP's `session.upload_progress`; entrypoint,
   `PUID`/`PGID`, the volume paths and the healthcheck on `:2019/metrics` are
@@ -57,8 +60,7 @@
   vulnerability (v7.11.0), complete stripping against XSS and blocking of
   IPv6-transition spellings of internal IPv4 addresses (v7.10.0), dependency CVEs
   (v7.8.4).
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: Lychee requires "MariaDB (version >
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: Lychee requires "MariaDB (version >
   10.2)" with no upper bound
   (https://lycheeorg.dev/docs/getting-started/manual-installation/); upstream's
   compose uses `mariadb:11`. `MARIADB_AUTO_UPGRADE: "1"`, already set in both
@@ -70,8 +72,8 @@
   row another transaction changed after its snapshot fails with error 1020
   instead of overwriting it; the new default collation `utf8mb4_uca1400_ai_ci`
   does not apply, as the stack sets `utf8mb4_unicode_ci` explicitly.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -104,7 +106,7 @@
      'mariadb-dump -u root -p"$(cat /run/secrets/DB_ROOT_PWD)" lychee' \
      > lychee-db-$(date +%Y%m%d).sql
    # Uploads + conf
-   tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/ volumes/conf/
+   tar czf lychee-data-$(date +%Y%m%d).tgz volumes/uploads/
    ```
 
 3. Bump `APP_TAG` in `.env`

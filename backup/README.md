@@ -14,9 +14,9 @@ What has been established about each stack — verified against which version an
 | Tool | Direction | Notes |
 |---|---|---|
 | [Borgmatic](borgmatic/) | This host → off-site | **The documented default for server backup.** Host-installed; a backup and a restore have both been performed and are logged in [`borgmatic/RESTORE.md`](borgmatic/RESTORE.md#rehearsal-log). Append-only enforcement is the one documented mechanism not yet exercised. |
-| [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Configuration complete, not yet verified. |
-| [Rclone Web](rclone-web/) | Files ⇄ storage providers | Browser interface for rclone: remotes, copy and sync jobs, serves. Interface and API on one host; the API holds every remote's credentials. Not yet verified. |
-| [Kopia](kopia/) | Your machines → this host | Repository server: each machine runs its own Kopia client with its own account and never holds the repository password. Deduplicated and encrypted; the repository lives on this host's disk or on a remote provider. Not yet verified behind Traefik. |
+| [UrBackup](urbackup/) | Your devices → this host | Client backup for Windows, macOS and Linux; whole-disk image restore on Windows. Checked with a Linux client: a file backup and its download. |
+| [Rclone Web](rclone-web/) | Files ⇄ storage providers | Browser interface for rclone: remotes, copy and sync jobs, serves. Interface and API on one host; the API holds every remote's credentials. |
+| [Kopia](kopia/) | Your machines → this host | Repository server: each machine runs its own Kopia client with its own account and never holds the repository password. Deduplicated and encrypted; the repository lives on this host's disk or on a remote provider. |
 
 ## Planned
 
@@ -124,10 +124,13 @@ Borgmatic dumps natively for **PostgreSQL, MySQL, MariaDB, MongoDB and SQLite** 
 ```yaml
 postgresql_databases:
   - name: caldiy
-    container: caldiy-db
+    # The server's own client, inside its container (FA-03)
+    pg_dump_command: docker exec caldiy-db pg_dump
+    pg_restore_command: docker exec -i caldiy-db pg_restore
+    psql_command: docker exec -i caldiy-db psql
 ```
 
-Borgmatic asks Docker for the container's address and connects. No published ports and no `docker exec` wrapper — but the dump runs on the host, so the host needs a client for each engine, and for PostgreSQL the client of each server's major version ([borgmatic/README.md](borgmatic/README.md#postgresql-the-clients-major-version-is-the-servers)). Dumps stream straight into the archive through named pipes — no intermediate files with awkward permissions.
+Borgmatic asks Docker for the container's address and connects. No published ports. The dump runs on the host, so the host needs a client for each engine — except PostgreSQL, whose dump runs with the server's own client through `docker exec` ([borgmatic/README.md](borgmatic/README.md#postgresql-the-servers-own-client-through-docker-exec)). Dumps stream straight into the archive through named pipes — no intermediate files with awkward permissions.
 
 Restore is `borgmatic restore --archive latest --database <name>`. Two things to know before you need it: **restore is destructive** — it replaces the live database — and **the database must already exist**; Borgmatic does not create it.
 

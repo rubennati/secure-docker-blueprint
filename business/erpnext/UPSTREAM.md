@@ -13,8 +13,7 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** ERP on the Frappe framework: accounting, invoicing, stock, buying, selling, manufacturing, projects and HR
-- **Based on version:** `v16.53.0`
-- **Last verified:** 2026-09-23 (v16.35.0) — behind Traefik with TLS: the site created and the setup wizard, a customer, live updates over the websocket, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (16.54.0) — over IPv4: moved from v16.53.0, `ops/create-site.sh` created the site with ERPNext, Administrator logged in through the API, a ToDo created and read back after `down`/`up`, socket.io answering polling and the websocket upgrade (`101`) through Traefik, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from Frappe's cloud and enterprise terms, which name Frappe
 Technologies Pvt. Ltd. and place arbitration in Mumbai. The licence is the
@@ -23,7 +22,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 ## What we use
 
-- `frappe/erpnext:v16.53.0` — one image for every role, published for amd64 and
+- `frappe/erpnext:v16.54.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
 - `mariadb:11.8.9` (upstream's compose pin) and `redis:8.10.3-alpine` (upstream pins `8.6-alpine`).
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
@@ -78,7 +77,7 @@ Checked in a browser afterwards, through the route: the desk's realtime socket
 connects over the websocket transport, stays connected, and reconnects when asked
 to. The desk loaded in 66 requests, with the company and the customer in place.
 
-**Not yet exercised:** a scheduled job's first run after the time-zone delay;
+**Outside this verification:** a scheduled job's first run after the time-zone delay;
 email; reports and printing; the queues under load.
 
 ## Verification performed (2026-09-22)
@@ -108,7 +107,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
 - Backup as the README describes (737 tables); restore into an empty database in
   12 s, the archive unpacked, ownership restored — site, company and customer back
 
-**Not yet exercised:** a scheduled job's first run after the delay; email;
+**Outside this verification:** a scheduled job's first run after the delay; email;
 reports and printing; the queues under load.
 
 ## Verification performed (2026-09-21)
@@ -150,14 +149,17 @@ throwaway `proxy-public` network without Traefik. `volumes/sites`, `volumes/logs
   the same moment — the second failed on the read-only root and started cleanly on
   its automatic restart
 
-**Not yet exercised:** Traefik routing and TLS; the desk in a browser; accounting
+**Outside this verification:** Traefik routing and TLS; the desk in a browser; accounting
 documents, stock and reports; email; PDF printing; an image upgrade with
 `bench migrate`; backup and restore; more than one site.
 
 ## Version notes
 
-- Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28), not run on a host at
-  this tag. The step from v16.37 to v16.50 is upstream's coordinated
+- Moved to `v16.54.0` on 2026-11-08. Fixes, among
+  them a migration error with Asset Depreciation Schedules on older sites; no
+  configuration change. The nginx configuration forwards `Upgrade` on the
+  `/socket.io` locations only (checked for FA-12).
+- Moved to `v16.53.0` on 2026-11-05 (released 2026-10-28). The step from v16.37 to v16.50 is upstream's coordinated
   renumbering of Frappe, ERPNext and HRMS, not a skipped range. Breaking
   changes listed: v16.36.0 adds access checks to several actions and record
   lookups and carries the new role grants into customized permissions;
@@ -177,8 +179,7 @@ documents, stock and reports; email; PDF printing; an image upgrade with
   it by default and Frappe background jobs then fail with error 1020.
   No ERPNext advisory names a fix after v16.35.0; the move clears CRITICAL
   findings in the image scan.
-- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05, not run on a host
-  at this tag; across 8.8 and 8.10, minor releases of the same major with no
+- Moved `redis` from `8.6-alpine` to `8.10.3-alpine` on 2026-11-05; across 8.8 and 8.10, minor releases of the same major with no
   breaking change listed (they add commands, compact hashes and performance work).
   Redis does not load data files written by a newer version, so a rollback needs the
   backup of the Redis data. Security fixes in the 8.10 line: CVE-2026-62356 (8.10.1,
@@ -204,5 +205,5 @@ documents, stock and reports; email; PDF printing; an image upgrade with
 5. Apply the new release's migrations, upstream's step (not exercised here):
    `docker compose exec erpnext-backend bench --site "$SITE_NAME" migrate`
 6. Log in and open the desk
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

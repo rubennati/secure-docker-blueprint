@@ -11,15 +11,16 @@ deployment is its acceptance test. Neither substitutes for the other.
 
 | Level | Catches | Where |
 |---|---|---|
-| Static | structure, tags, plaintext secrets, exposed datastores, status contradictions | `scripts/ci/*.py`, locally and in CI |
+| Static | structure, tags, plaintext secrets, exposed datastores, stale generated views | `scripts/ci/*.py`, locally and in CI |
 | Compose | files that do not parse or resolve | `docker compose config` |
 | Real | behavior exercised by the test, including core functions and recovery | a clean install on a host |
 
-## The bar for ✅
+## The bar for a test date
 
 Ten criteria in `docs/maintenance.md`, of which three cannot be automated: a clean
 install completed, the core function actually usable, and Traefik routing confirmed.
-"The container is running" is not one of them.
+"The container is running" is not one of them. Only a run that passes them sets
+`Last verified`.
 
 ## Evidence over exit codes
 

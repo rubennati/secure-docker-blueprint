@@ -21,7 +21,7 @@ services:
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql/data
@@ -67,8 +67,8 @@ services:
       REDIS_URL: redis://redis:6379
       SITE_URL: http://localhost:8080
       TELEMETRY_ENABLED: "false"
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
-      AUTH_SECRET: ${AUTH_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env.local}
+      AUTH_SECRET: ${AUTH_SECRET:?Set AUTH_SECRET in .env.local}
     ports:
       - "127.0.0.1:8080:8080"
     networks: [infisical-local]

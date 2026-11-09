@@ -11,8 +11,7 @@
 - **Origin:** UK · Alicia Sykes (Lissy93) · non-EU
 - **Domain:** Dashboards
 - **Role:** One page linking everything you run, configured in a single YAML file
-- **Based on version:** `4.9.15`
-- **Last verified:** 2026-05-02 (v4.0.4)
+- **Last verified:** 2026-11-08 (4.9.17) — over IPv4: moved from 4.9.15, the dashboard served behind the basicAuth gate (`401` without, `200` with the credentials), the refused client answered `403`, the same after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -39,8 +38,10 @@
 
 ## Version notes
 
-- Moved `lissy93/dashy` to `4.9.15` on 2026-11-05 (pushed 2026-11-02), not run on
-  a host at this tag. Upstream publishes a GitHub release only for each minor
+- Moved to `4.9.17` on 2026-11-08. 4.9.16 and
+  4.9.17 fix a race in sub-page loading and bump dependencies; no configuration
+  change.
+- Moved `lissy93/dashy` to `4.9.15` on 2026-11-05 (pushed 2026-11-02). Upstream publishes a GitHub release only for each minor
   (4.9.0, 2026-10-23); the patch tags 4.8.8 to 4.9.15 are version bumps on `master`.
   Security fixes in the range: config files were readable without login through
   encoded URLs (4.9.0, #2387); auth headers were sent to lookalike origins (4.9.12,

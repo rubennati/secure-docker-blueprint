@@ -11,12 +11,11 @@
 - **Origin:** EU · euro-office consortium (Nextcloud, IONOS, XWiki, Proton) · EU
 - **Domain:** Documents and e-signature
 - **Role:** EU-governed fork of OnlyOffice, a drop-in document editing server
-- **Based on version:** `v9.3.4-hotfix.1`
-- **Last verified:** 2026-11-02 (v9.3.4-hotfix.1) — step 8 lab host on its edge network, after correcting the entrypoint and paths: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud's OnlyOffice connector (`office.yml`) and Seafile CE and Pro, switched from OnlyOffice by settings alone; the command service and conversion refuse a missing or foreign token; the admin panel stays off; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-09 (v9.3.7-1) — over IPv4, moved from v9.3.4-hotfix.1 on a new installation: the healthcheck answered `true` through the public route, the same after `down`/`up`; not edited with Nextcloud at this tag
 
 ## What we use
 
-- `ghcr.io/euro-office/documentserver:v9.3.4-hotfix.1` — single container (bundles its own DB + queue)
+- `ghcr.io/euro-office/documentserver:v9.3.7-1` — single container (bundles its own DB + queue)
 - Custom `config/entrypoint.sh` to inject `JWT_SECRET` from a Docker Secret (no `_FILE` support)
 
 ## What we changed vs. upstream `docker run`
@@ -41,5 +40,11 @@
 
 ## Known limitations
 
-- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; the stack copied OnlyOffice's and the container exited 127 in a restart loop until corrected (step 8 lab host, 2026-11-02)
+- **Not OnlyOffice's file layout** — the image starts with `/entrypoint.sh` and keeps data and logs under `euro-office` paths; with OnlyOffice's paths the container exits 127 in a restart loop (2026-11-02)
 - **Young project** — smaller release history than OnlyOffice; watch releases closely
+
+## Version notes
+
+- Moved to `v9.3.7-1` on 2026-11-09. Upstream now builds
+  `vX.Y.Z-N` tags as stable patch builds that refresh the OS packages daily;
+  brotli 1.2.1. No configuration change.

@@ -1,0 +1,167 @@
+---
+title: PrivateBin
+description: Encrypted pastes for handing over a password or a token — encrypted in the browser, burn-after-read and expiry, no accounts and no server-side key.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+PrivateBin moves something short-lived between two people without it landing in
+chat history or email: a password, an API token, recovery codes, a configuration
+fragment. The browser encrypts the paste before it leaves; the key travels in the
+part of the URL after `#`, which the browser never sends to the server. The
+server stores ciphertext only. Burn-after-read and expiry are options per paste.
+One container, no database.
+
+<StackEvidence stack="apps/privatebin" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/privatebin/`:
+
+```bash
+cp .env.local.example .env.local
+mkdir -p volumes/local/data
+sudo chown 65534:82 volumes/local/data
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+Then open `http://localhost:8080` and create a paste. Stop it again with the same
+command and `down`.
+
+## Installation
+
+From `apps/privatebin/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. List `privatebin-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render
+   and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Create the data directory for the image's fixed user and group:
+
+   ```bash
+   mkdir -p volumes/data
+   sudo chown 65534:82 volumes/data
+   ```
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f
+   ```
+
+   Wait for `ready to handle connections`.
+
+</Steps>
+
+There is no account to create and no secret to generate.
+
+## Verify
+
+```bash
+docker compose ps    # one service, healthy
+```
+
+Open `https://<APP_TRAEFIK_HOST>`, create a paste with **Burn after reading**,
+and open the link in a private window: the text appears once. Open the link
+again — the paste is gone.
+
+## Going further
+
+### Who can reach it
+
+The stack ships `access-public`, with `limit-standard` and `headers-standard`:
+the person receiving the link is usually not on your VPN. Anyone who reaches the
+page can create pastes. The link is the only key to a paste, so it is as
+sensitive as what it carries.
+
+### What it is, and what it is not
+
+The flow starts with the sender: you write the paste and send the link. Nobody
+can send you a link that asks *you* for a secret — Hemmelig has that request
+flow built in, Yopass in its paid edition; both are in [the
+catalogue](/catalogue/).
+
+PrivateBin keeps no accounts, no list of what you sent and nothing past each
+paste's expiry. It is a disposable paste with encryption in the browser, not a
+credential inbox or a vault.
+
+### Hardening
+
+The container runs read-only with every capability dropped, as the fixed
+non-root user `65534:82` the image ships. The `/tmp` and `/run` tmpfs mounts
+allow execution, because the image's init copies its service scripts into `/run`
+at every start; without that, nginx and PHP never start.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `volumes/data` — every paste, as encrypted files |
+| **Rebuildable** | nothing — this is the only copy of every paste that has not expired |
+| **Quiescing** | not needed; each paste is a file of its own |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+source_directories:
+    - /srv/docker/apps/privatebin/volumes/data
+```
+
+Restore order: `volumes/data`, then the container. A paste restored past its
+expiry disappears at the next cleanup.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/PrivateBin/PrivateBin/releases)
+   for storage format or configuration changes.
+
+2. Back up `volumes/data`.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Create a paste and open it.
+
+</Steps>
+
+## Troubleshooting
+
+**Pastes cannot be saved.** `volumes/data` is not owned by `65534:82`. Correct the
+ownership and recreate the container.
+
+**The container runs but the page never answers.** The `exec` flag is missing on
+the `/run` tmpfs mount, so nginx and PHP never start — keep the mounts as the
+compose file ships them.
+
+**A link does not open the paste.** The part after `#` was cut off when the link
+was copied or forwarded. The paste cannot be decrypted without it.
+
+## Repository files
+
+- [`apps/privatebin/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/privatebin/README.md) — what it is and is not, security model
+- [`apps/privatebin/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/privatebin/.env.example)
+- [`apps/privatebin/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/privatebin/UPSTREAM.md) — upgrade checklist and deviations
+
+## Official sources
+
+- [PrivateBin wiki](https://github.com/PrivateBin/PrivateBin/wiki)
+- [PrivateBin on GitHub](https://github.com/PrivateBin/PrivateBin)

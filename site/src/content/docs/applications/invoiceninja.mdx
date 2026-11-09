@@ -10,8 +10,7 @@ Invoice Ninja issues invoices and quotes, tracks payments, and gives each client
 a portal to view and pay them. Four containers: the application with its
 scheduler and queue workers, a web server, a database, and a cache.
 
-<StackEvidence stack="business/invoiceninja"
-  gap="a restore — the backup is configured but has not been rehearsed." />
+<StackEvidence stack="business/invoiceninja" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,18 @@ scheduler and queue workers, a web server, a database, and a cache.
 On your own machine, with no proxy, domain or certificate. From `business/invoiceninja/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+APP_TAG=$(sed -n 's/^APP_TAG=//p' .env.local)
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "REDIS_PASSWORD=$(openssl rand -hex 32)"
+  echo "IN_PASSWORD=$(openssl rand -base64 24 | tr -d '\n')"
+  echo "APP_KEY=$(docker run --rm "invoiceninja/invoiceninja-debian:$APP_TAG" php artisan key:generate --show | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -189,6 +199,30 @@ yourself a test invoice.
 The shipped header profile sends `X-Frame-Options: DENY`, so the client portal
 cannot be embedded in someone else's page. If you want customers to see it
 inside their own site, that is the setting to change — otherwise leave it.
+
+## Updates
+
+Invoice Ninja runs its database migrations on start; within the v5 series updates
+are cumulative and need no intermediate version.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/invoiceninja/invoiceninja/releases)
+   and check the [dockerfiles repository](https://github.com/invoiceninja/dockerfiles/tree/debian)
+   for nginx or compose changes.
+
+2. Back up the database, the storage volume and `.secrets/app_key.txt`.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs app --follow
+   ```
+
+4. Log in and open a recent invoice — the data and its PDF should be intact.
+
+</Steps>
 
 ## Troubleshooting
 

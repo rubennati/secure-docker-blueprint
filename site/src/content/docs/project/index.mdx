@@ -44,8 +44,8 @@ judged against, and a stack can satisfy three of them and still lose your data:
 - **Recover** — getting the service back, which is more than getting the bytes
   back. [Backup and restore](/operations/backup/).
 
-Where a guide exists it says what was actually exercised and what was not, so
-the gaps are visible per service rather than averaged away.
+Where a guide exists it opens with when the stack last ran on a host and what
+came back, so the evidence is visible per service rather than averaged away.
 
 ## The defaults
 
@@ -53,6 +53,8 @@ Set on every service, and checked on every change before it is merged:
 
 - `no-new-privileges`, so a process inside the container cannot gain rights it was not started with. An exception has to record the reason, the alternatives that were weighed, and an explicit acceptance of the remaining risk
 - No `privileged` container. Neither the reverse proxy nor any application mounts the Docker socket: Traefik reads it through a filtering proxy that allows read calls only. The Docker-management tools are the documented exceptions — their proxies allow changes, and the Portainer and Hawser agents mount the socket directly
+- Every stack ships closed: its route starts at `access-vpn`, and the operator opens it once the first-run setup is done. `access-public` ships only where the stack's login posture is public — a website, a share link — or a stated reason stands beside it
+- Required secrets ship empty, and the compose file refuses to start until each is set, so no placeholder can become the password itself
 - Databases and caches on `internal` networks, never published to the host
 - Every image pinned to an exact version, never `:latest` and never a major-only tag such as `8` or `v2`
 
@@ -68,9 +70,9 @@ Available to every service, switched on per stack:
 
 The first group is enforced mechanically, so it holds for whatever is in the
 repository. The second describes what the image allows, which differs per
-service — each guide opens with the version it was written against, the date it
-was verified where one exists, and a line naming what was not exercised. The
-[FAQ](/faq/) explains how to read that.
+service — each guide opens with when the stack last ran on a host, at which
+version, and whether a restore came back. The [FAQ](/faq/) explains how to read
+that.
 
 [Security baseline →](https://github.com/rubennati/secure-docker-blueprint/blob/main/docs/standards/security-baseline.md)
 

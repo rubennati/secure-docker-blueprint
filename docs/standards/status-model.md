@@ -1,63 +1,68 @@
 # Status Model
 
-One lifecycle, for one reader: a maintainer deciding what to work on. It answers
-*what has been established about this stack*, and nothing else.
+A stack carries no state. The repository shows facts about it, each read from one
+artefact, and leaves the conclusion to the reader. The first reader is whoever is
+about to install or update a stack; the maintainer deciding what to work on next
+is the second.
 
-It carries no promise to an operator. Whether a stack suits a deployment is a
-question the repository cannot answer, because it does not know the deployment.
-That belongs on the operator site, in the form of concrete evidence and named
-gaps — see [`writing-style.md`](writing-style.md#audience-per-file).
+No fact is a grade, and nothing falls. A pin move changes the pin and nothing
+else: the date of the last test stays, and the version that was tested appears
+beside it.
 
 ---
 
-## The lifecycle
+## What a stack shows
 
-Four states. Each is **measured from an artefact**, never typed into a table.
+One row per stack, in [`LIFECYCLE.md`](../../LIFECYCLE.md) and in the site
+catalogue, both generated from the same source.
 
-| State | Established by | Read from |
+| Column | Shows | Read from |
 |---|---|---|
-| `scaffolded` | the stack exists | a compose file in the stack directory, or a host-installed component its category README lists |
-| `verified` | it ran, against a named version | `Last verified: DATE (vX.Y.Z)` in `<stack>/UPSTREAM.md` |
-| `baseline-aligned` | `verified`, and the security baseline holds | `check-baseline.py` and `check-structure.py` report no failure for that stack |
-| `ops-proven` | `baseline-aligned`, and its data came back | the stack appears in the rehearsal log of [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log) |
+| **Stack** | the name, linked to the stack folder | the stack directory |
+| **Pin** | the pinned version of the primary image, and the date upstream released it | `<stack>/.env.example`; the date from `upstream-status.json` |
+| **Newest** | the newest stable release, or the newest LTS release where upstream names one, and its date; `= Pin` when the pin is the newest; the date upstream was checked; ⚠️ when the upstream repository is archived or has published no release for twelve months | `upstream-status.json` |
+| **Findings** | CRITICAL and HIGH findings across every image of the stack, at the current pin | `upstream-status.json` |
+| **Last tested** | the date of the last run on a host; `with restore` when a backup of its data was restored; the tested version, only where it differs from the pin | `Last verified:` in `<stack>/UPSTREAM.md`; the rehearsal log of [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log) |
 
-A date without a version does not reach `verified`. Which version was checked is
-what makes the claim usable a year later; a bare date says only that someone
-looked.
+Everything else is in the stack folder, which is the detail page:
 
-Nor does a version that no longer matches the current pin — including a pin
-that is itself a moving target. `verified` names a release, not a version
-that might change with no commit here at all. `scripts/ci/lifecycle-report.py`
-compares the two (`pin_matches_verified()`) and requires them to match
-exactly, once normalized: a leading `v`, an `_IMAGE` pin's image-name prefix,
-a digest suffix, and the one documented packaging variant a stack's own
-`UPSTREAM.md` establishes (`1.15.1-slim` pinned against `1.15.1` verified,
-per `apps/tymeslot/UPSTREAM.md`) are formatting, not a different release. A
-pin that deliberately floats a version component — `traefik:v3.7`, core/traefik's
-pin until 2026-11-02, verified against the exact `v3.7.13` that was tested at the
-time — is **not**
-tolerated: that pin can resolve to a newer patch upstream with no repository
-change to re-verify against, which is exactly the silent-drift risk this
-check exists to catch. Anything that does not match exactly after
-normalization is reported as `pin-drifted`, non-blocking on introduction the
-same way `legacy-stamp` is.
+- `README.md` — what the stack is, how it is set up, backup and restore, and
+  `## Open findings`: every CRITICAL and HIGH finding at the current pin, the
+  list generated from the scan, a reason written by hand where a finding is left
+  in place on purpose
+- `UPSTREAM.md` — the upstream sources, the `Last verified` line with what the run
+  established, the notes of each version move
+- `docker-compose.local.yml`, where the stack has a local test variant
 
-**`verified` and `baseline-aligned` currently hold the same set.** Both checkers
-report zero failures across the repository, so every stack that clears the date
-also clears the baseline. The two separate the moment a checker fails for one
-stack, which is what the tier is for.
+## Rules
 
-## Why it is measured
-
-The previous model had a public axis of symbols typed into README tables and an
-internal axis derived from those symbols by lookup. The internal axis therefore
-carried no information the public one did not, and both depended on somebody
-remembering to edit a table.
-
-They fell behind. `apps/nextcloud` and `business/invoiceninja` were built,
-hardened and verified on a live host on 2026-07-29; their symbols still said
-preview when this standard was rewritten. Measurement moved both without anyone
-typing anything.
+- **Every fact has one artefact.** Nothing is typed into a table; a table is
+  generated or it does not exist.
+- **A test date belongs to the run.** A run on a host checks the setup — the
+  routing, TLS, the hardening, a restart, a restore, the application's own
+  function the README names. A later pin move neither erases the date nor
+  establishes a new one; the reader sees both the pin and the version that ran.
+- **Release dates come from upstream releases,** not from the registry: an image
+  tag is rebuilt and pushed again, and its push date says nothing about the
+  release. They are read from the first GitHub repository in the `## Source`
+  section of `UPSTREAM.md`, or from the one a `**Releases:**` line there names,
+  where an image's versions are released elsewhere than its source.
+- **Newest means the same kind of tag as the pin.** A tag that cannot be compared
+  is shown as not determinable, never as current.
+- **Upstream data is written into the repository** at every pin move and before
+  every release, by `scripts/ci/upstream-status.py`, with the date it was checked.
+  Between those, the weekly issue labelled `stack-status` is the early warning
+  ([DEC-079](../../.ai/decisions.md#dec-079)).
+- **A finding is information.** It fails no job
+  ([DEC-079](../../.ai/decisions.md#dec-079)); it is fixed by moving the pin or
+  recorded with a reason.
+- **The security baseline is not a column.** `check-baseline.py` and
+  `check-structure.py` enforce it for every stack; a stack that breaks it fails CI.
+- **No test date means not run on a host yet.** For a blueprint that is the
+  ordinary case and needs no sentence. Where something particular stands in the
+  way — a GPU, port 25 and public DNS, an archived upstream — the stack's
+  `UPSTREAM.md` names it (`Last verified: not yet — reason`), and the reason
+  appears in the row.
 
 ## Who owns which fact
 
@@ -66,10 +71,13 @@ disagree, the owner wins, and the derived file was generated from stale input.
 
 | Fact | Owner |
 |---|---|
-| Pinned image version | `<stack>/.env.example` |
-| Last verified date and version | `<stack>/UPSTREAM.md` |
-| Security baseline alignment | `<stack>/docker-compose.yml`, checked by `check-baseline.py` and `check-structure.py` |
+| Pinned image version | `<stack>/.env.example`; for a host-installed component, which has none, `Based on version` in its `UPSTREAM.md` |
+| Upstream release dates, newest release, archived or quiet upstream, findings at the pin | `upstream-status.json`, written by `scripts/ci/upstream-status.py` |
+| Last test date and version, and what the run established | `<stack>/UPSTREAM.md`, `Last verified` |
+| What stands in the way of a host run, where something particular does | `<stack>/UPSTREAM.md` |
 | Restore evidence | `backup/borgmatic/RESTORE.md`, rehearsal log |
+| Reasons for findings left in place | `<stack>/README.md`, `## Open findings`; the exceptions in `.trivy-baseline.json` |
+| Security baseline alignment | `<stack>/docker-compose.yml`, checked by `check-baseline.py` and `check-structure.py` |
 | Backup and restore documentation | `<stack>/README.md` |
 
 Restore evidence sits in the rehearsal log because that is where it is produced:
@@ -78,13 +86,11 @@ the log records the archive, the scope, the result and the numbers. The log's
 
 ## LIFECYCLE.md is generated
 
-`scripts/ci/lifecycle-report.py` produces [`LIFECYCLE.md`](../../LIFECYCLE.md)
-and `site/src/data/lifecycle.json`. **Neither is edited by hand.**
-
-The Markdown view shows **Pinned**, **Verified version** and **Last verified**
-separately. The first is today's configuration; the other two describe the last
-recorded test. A pin update preserves that historical version and date and does
-not establish a new verification. A missing verified version is shown as `—`.
+`scripts/ci/lifecycle-report.py` produces [`LIFECYCLE.md`](../../LIFECYCLE.md),
+`site/src/data/lifecycle.json` and the findings block under `## Open findings` in
+each stack README; `scripts/ci/site-catalogue.py` reads the same facts for the
+catalogue. **None of them is edited by hand** — the text around the findings
+block is.
 
 ```bash
 python3 scripts/ci/lifecycle-report.py --write
@@ -98,13 +104,32 @@ not.
 `lifecycle-report.py --check` fails when:
 
 - `LIFECYCLE.md` or `lifecycle.json` is out of date with respect to its sources
-- a stack directory carries no `UPSTREAM.md`
-- the rehearsal log names a stack that does not exist
+- the rehearsal log, an exception in `.trivy-baseline.json` or
+  `upstream-status.json` names a stack that does not exist
+
+A stack without `UPSTREAM.md` is reported by `check-structure.py` (`missing-file`).
+
+It also fails when a findings block in a stack README differs from
+`upstream-status.json`, and when a stack has findings at its pin or a recorded
+exception and its README has no `## Open findings` section.
 
 It reports without failing when a stack still carries the pre-v0.5.1
-`Last checked: DATE` field. Thirty stacks do. They sit at `scaffolded` until
-someone verifies them against a named version — the field is not converted
-automatically, because writing `verified` asserts that evidence exists.
+`Last checked: DATE` field, which names no version (`legacy-stamp`), and when
+`upstream-status.json` was written for another pin (`not-checked`).
+
+## Why there are no states
+
+The first model typed status symbols into README tables
+([DEC-009](../../.ai/decisions.md#dec-009)); they drifted apart. The second
+measured four states from artefacts — `scaffolded`, `verified`,
+`baseline-aligned`, `ops-proven` ([DEC-066](../../.ai/decisions.md#dec-066)).
+Measurement stopped the drift, but the states still named what the maintainer had
+done, not what a reader can rely on, and they read like certificates a blueprint
+cannot issue. A state held only at the exact pin it was tested at, so the pin
+round of 2026-11-05 moved the count of `ops-proven` stacks from 14 to 2 without a
+single stack changing except its pins.
+[DEC-080](../../.ai/decisions.md#dec-080) replaces the states with the facts
+above.
 
 ---
 

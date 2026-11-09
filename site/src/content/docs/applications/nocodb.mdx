@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 NocoDB puts a spreadsheet-like interface and a REST API over a database: tables,
 views, forms. One container with its own SQLite store by default.
 
-<StackEvidence stack="apps/nocodb"
-  gap="a restore. The data directory and the signing secret have to come back together, and that has not been performed here." />
+<StackEvidence stack="apps/nocodb" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -21,7 +20,14 @@ views, forms. One container with its own SQLite store by default.
 On your own machine, with no proxy, domain or certificate. From `apps/nocodb/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "NC_AUTH_JWT_SECRET=$(openssl rand -hex 64)" >> .env.local
+
+mkdir -p volumes/local/data
+sudo chown 0:0 volumes/local/data
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -33,10 +39,17 @@ From `apps/nocodb/`:
 
 <Steps>
 
-1. Copy the environment file and set `APP_TRAEFIK_HOST` and `TZ`:
+1. Copy the environment file and set `APP_TRAEFIK_HOST`, `TZ` and
+   `NC_ADMIN_EMAIL`, then give the super-admin a password. NocoDB refuses to
+   start while `NC_ADMIN_EMAIL` is set and the password is empty, and wants at
+   least 8 characters with an uppercase letter, a number and a special
+   character:
 
    ```bash
    cp .env.example .env
+   NC_PW='Nc1!'"$(openssl rand -hex 12)"; echo "$NC_PW"   # store it now
+   sed -i "s|^NC_ADMIN_PASSWORD=.*|NC_ADMIN_PASSWORD=${NC_PW}|" .env
+   unset NC_PW
    ```
 
 2. Generate the secret that signs every API token NocoDB issues:
@@ -48,10 +61,12 @@ From `apps/nocodb/`:
 
    Copy it off the host now.
 
-3. Create the data directory:
+3. Create the data directory and hand it to root. NocoDB runs as root without
+   capabilities, so it cannot write into a directory another user owns:
 
    ```bash
    mkdir -p volumes/data
+   sudo chown 0:0 volumes/data
    ```
 
 4. Start it and wait for the first-boot initialisation, around thirty seconds:
@@ -63,8 +78,9 @@ From `apps/nocodb/`:
 
    Wait for the dashboard line.
 
-5. Open `https://<APP_TRAEFIK_HOST>` and create the super-admin account. The
-   first account to sign up claims it; signup closes behind it, because
+5. Over the VPN, open `https://<APP_TRAEFIK_HOST>` and log in with
+   `NC_ADMIN_EMAIL` and the password from step 1 — the super-admin is created on
+   the first start. Signup by anyone else is closed, because
    `NC_INVITE_ONLY_SIGNUP` is `true` in the shipped configuration.
 
 </Steps>

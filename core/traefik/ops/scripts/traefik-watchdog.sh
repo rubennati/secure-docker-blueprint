@@ -31,6 +31,7 @@ source "$ENV_FILE"
 : "${HEALTHCHECKS_PING_URL:?set in $ENV_FILE}"
 CONFIRM_AFTER="${CONFIRM_AFTER:-3}"
 SETTLE_SECONDS="${SETTLE_SECONDS:-15}"
+START_TIMEOUT="${START_TIMEOUT:-120}"
 STATE_FILE="${STATE_FILE:-/var/lib/traefik-watchdog/state}"
 
 mkdir -p "$(dirname "$STATE_FILE")"
@@ -75,11 +76,24 @@ echo "$STREAK restarting" > "$STATE_FILE"
 docker restart "$CONTAINER_NAME" >/dev/null 2>&1 || true
 sleep "$SETTLE_SECONDS"
 
-status_after="$(docker inspect --format '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "unknown")"
-if [ "$status_after" != "unhealthy" ]; then
+# A restarted container reports `starting` until its first healthcheck passes.
+# Only `healthy` counts as recovered: taking `starting` for success reset the
+# episode, and a restart that did not help was repeated on every confirmation
+#. Wait out `starting` for up to START_TIMEOUT seconds.
+inspect_health() {
+  docker inspect --format '{{.State.Health.Status}}' "$CONTAINER_NAME" 2>/dev/null || echo "unknown"
+}
+status_after="$(inspect_health)"
+waited=0
+while [ "$status_after" = "starting" ] && [ "$waited" -lt "$START_TIMEOUT" ]; do
+  sleep 5
+  waited=$((waited + 5))
+  status_after="$(inspect_health)"
+done
+if [ "$status_after" = "healthy" ]; then
   echo "0 ok" > "$STATE_FILE"
   report "" "restarted after $STREAK unhealthy checks, now $status_after"
 else
   echo "$STREAK escalated" > "$STATE_FILE"
-  report /fail "restarted after $STREAK unhealthy checks, still unhealthy — not retrying automatically"
+  report /fail "restarted after $STREAK unhealthy checks, now $status_after — not retrying automatically"
 fi

@@ -3,7 +3,7 @@
 
 The site had a hand-kept list of stacks and fell 48 behind. Each stack already owns
 its facts in UPSTREAM.md — this adds two fields there, `Domain` and `Role`, and
-reads the rest from the owners: the version and state from lifecycle.json, the name
+reads the rest from the owners: the pin and its facts from lifecycle.json, the name
 from the README heading, the upstream link from the Source block.
 
 `--check` fails CI when the generated file is stale, when a stack has no valid
@@ -100,7 +100,7 @@ INFRASTRUCTURE = {
     "postgres": "PostgreSQL", "pgvector": "PostgreSQL", "pgautoupgrade": "PostgreSQL",
     "timescale": "PostgreSQL", "mariadb": "MariaDB", "mysql": "MySQL", "percona": "MySQL",
     "redis": "Redis", "valkey": "Valkey", "memcached": "Memcached",
-    "minio": "object storage", "seaweedfs": "object storage",
+    "minio": "object storage", "silo": "object storage", "seaweedfs": "object storage",
     "elasticsearch": "Elasticsearch", "opensearch": "OpenSearch",
     "clickhouse": "ClickHouse", "rabbitmq": "RabbitMQ", "mongo": "MongoDB",
     "nats": "NATS", "kafka": "Kafka", "qdrant": "Qdrant", "weaviate": "Weaviate",
@@ -307,13 +307,17 @@ def footprint(production: list[Path], overlays: list[Path]) -> dict | None:
 
 
 def version(life: dict, upstream: str) -> str:
-    """The pinned tag, without a leading `v` and without the image name."""
+    """The pinned tag, without a leading `v`, the image name or a digest.
+
+    A host-installed component has no `.env.example`; its UPSTREAM.md names the
+    version it is based on, and that is the only place the version lives.
+    """
     pinned = life.get("pinned", "")
     tag = pinned.split("=", 1)[1].strip() if "=" in pinned else ""
     if not tag:
         m = re.search(r"^- \*\*Based on version:\*\* `?([^`\n]+?)`?\s*$", upstream, re.MULTILINE)
         tag = m.group(1) if m else ""
-    tag = tag.rsplit(":", 1)[-1]
+    tag = tag.split("@", 1)[0].rsplit(":", 1)[-1]
     return re.sub(r"^v(?=\d)", "", tag)
 
 
@@ -341,10 +345,24 @@ def collect() -> tuple[dict, list[str]]:
             "role": role,
             "upstream": upstream_link(text),
             "version": version(life, text),
-            "state": life.get("state", "scaffolded"),
-            "verified": life.get("verified") if life.get("verified_anchored") and life.get("verified") not in (None, "—") else None,
-            "verified_version": life.get("verified_version") or None,
-            "open_findings": life.get("open_findings", 0),
+            "pinned_date": life.get("pinned_date"),
+            # current · behind · undetermined · not checked
+            "upstream_status": life.get("upstream", "not checked"),
+            "newest": life.get("newest") if life.get("upstream") == "behind" else None,
+            "newest_date": life.get("newest_date") if life.get("upstream") == "behind" else None,
+            "checked": life.get("checked"),
+            "archived": bool(life.get("archived")),
+            "quiet": bool(life.get("quiet")),
+            "last_release": life.get("last_release"),
+            # None: not scanned at the current pin, never read as zero.
+            "critical": life.get("critical"),
+            "high": life.get("high"),
+            "tested": life.get("tested") if life.get("tested_anchored") else None,
+            # Only where the pin has moved since the run.
+            "tested_version": (life.get("tested_version") or None)
+            if life.get("tested_anchored") and life.get("tested_differs") else None,
+            "restored": bool(life.get("tested_anchored") and life.get("restored")),
+            "gap": life.get("gap") or None,
             "footprint": footprint(
                 _structure.compose_files(stack), _structure.overlay_files(stack)
             ),

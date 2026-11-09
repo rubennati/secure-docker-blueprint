@@ -74,6 +74,12 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The image's entrypoint drops to its own user only when it starts as root;
+    # started as that user it needs no capability. The data directory has to
+    # belong to it (README, setup).
+    user: "999:1000"
     read_only: true
     tmpfs:
       - /tmp
@@ -147,7 +153,7 @@ services:
       PHP_TZ: ${TZ}
       TIMEZONE: ${TZ}
       APP_URL: https://${APP_TRAEFIK_HOST}
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       # Database
       DB_CONNECTION: mysql
       DB_HOST: db
@@ -172,11 +178,11 @@ services:
 
     # --- Storage ---
     volumes:
-      - ./volumes/conf:/conf
-      - ./volumes/uploads:/uploads
-      - ./volumes/sym:/sym
-      - ./volumes/logs:/logs
-      - ./volumes/tmp:/lychee-tmp
+      # The v7 image's paths (upstream docker-compose.yaml); /conf, /uploads and
+      # /sym were the v6 image's and are no longer read.
+      - ./volumes/uploads:/app/public/uploads
+      - ./volumes/logs:/app/storage/logs
+      - ./volumes/tmp:/app/storage/tmp
 
     # --- Health & Observability ---
     # healthcheck: inherited from the image, which declares its own.

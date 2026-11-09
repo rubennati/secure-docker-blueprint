@@ -10,8 +10,7 @@
 - **Origin:** United States · Linux Foundation project (contributed by Solo.io) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM and MCP gateway: one authenticated endpoint in front of model providers and MCP servers
-- **Based on version:** `v1.7.0`
-- **Last verified:** 2026-09-21 (v1.5.0) — behind Traefik with TLS: both routes, a provider credential from a Docker Secret, an MCP target under `/mcp`, a restart, and a restore
+- **Last verified:** 2026-11-08 (1.7.0) — over IPv4: `ops/init.sh` rendered the config with the UI htpasswd mounted as the README shows, `/v1/models` answered with the client key and `401` without it before and after `down`/`up`, the UI behind its basicAuth gate, the refused client answered `403`; no completion through a backend (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -62,7 +61,7 @@ Behind Traefik with TLS, both routes on the shipped `acc-private` and `sec-2`:
   answered, and the request log continued from four to five rows
 - Peak 8.8 MiB of memory, 16 PIDs
 
-**Not yet exercised:** a hosted provider's own check of the credential — none
+**Outside this verification:** a hosted provider's own check of the credential — none
 was available; the injection was proven against the echo provider.
 
 ## Verification performed (2026-09-19)
@@ -85,8 +84,7 @@ serving `smollm2:135m` as the backend:
 
 ## Version notes
 
-- Moved to `v1.7.0` on 2026-11-05 (released 2026-10-27), across v1.6.0, not run
-  on a host at this tag. Breaking in v1.6.0: Anthropic Messages requests now
+- Moved to `v1.7.0` on 2026-11-05 (released 2026-10-27), across v1.6.0. Breaking in v1.6.0: Anthropic Messages requests now
   prefer the OpenAI Responses format over Chat Completions; a provider base URL
   without a path now means `/` (the template's `http://ollama:11434/v1` already
   carries its path); the standalone `llm` mode matches standard LLM paths only
@@ -118,5 +116,5 @@ serving `smollm2:135m` as the backend:
 4. Bump `APP_TAG` in `.env.example`
 5. Validate the config with `--validate-only` against the new image
 6. `docker compose pull && docker compose up -d`; make a real `/v1` request
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

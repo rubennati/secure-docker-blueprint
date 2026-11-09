@@ -4,7 +4,8 @@
 #   ops/init.sh
 #   sudo chown -R 1000:1000 volumes/data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   cat .secrets/obot_bootstrap_token.txt     # the first sign-in
+#   http://localhost:8080 — sign in with the bootstrap token:
+#   cat .secrets/obot_bootstrap_token.txt
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
 #
 # Not routed — but the socket proxy and what it allows are identical to the
@@ -256,6 +257,7 @@ services:
       - "127.0.0.1:8080:8080"
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     # --- Health & Observability ---
     # The image ships no HTTP client at all — no curl, no wget, and busybox is
@@ -275,6 +277,12 @@ networks:
   app-internal:
     name: obot-local-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (Docker 29 binds nothing on the host). Only
+  # obot-app joins it, for its port; the other services stay on app-internal.
+  published:
+    name: obot-local-published
 
 # --------------------------------------------------------
 # SECRETS

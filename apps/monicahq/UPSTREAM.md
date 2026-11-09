@@ -10,8 +10,7 @@
 - **Origin:** Canada · Monica HQ · non-EU
 - **Domain:** Business operations
 - **Role:** Personal CRM for the people in your life
-- **Based on version:** `4.1.2-apache`
-- **Last verified:** 2026-11-03 (4.1.2-apache) — step 8 lab host behind Traefik 3.7.17 on its edge network: the first account, signup closed after it, login, a contact, the session cookies `Secure` with `SESSION_SECURE_COOKIE`, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-04-17 (Last checked)
+- **Last verified:** 2026-11-09 (4.1.2) — over IPv4, a new installation with the README's key step: an account registered in the browser (the app requires mixed case and a symbol), signed in again after `down`/`up`
 
 ## What we use
 
@@ -24,7 +23,7 @@
 
 | Change | Reason |
 |--------|--------|
-| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now `__REPLACE_ME__` + `artisan key:generate` documented |
+| **Hardcoded `APP_KEY` removed** — inbox had a plaintext Laravel key | Shared key = backdoor across copies. Now shipped empty and required by compose; `artisan key:generate` documented |
 | **Hardcoded DB password `secret` replaced** | Now Docker Secret + `DB_PWD_INLINE` |
 | **`image: monica` → `monica:${APP_TAG}`** | Pinned tag (blueprint convention) |
 | **Traefik labels instead of `ports: 8005:80`** | Blueprint routes via Traefik |

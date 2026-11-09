@@ -12,6 +12,17 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint chowns the bind-mounted
+    # data directory the README creates (CHOWN), searches it on every later start
+    # through directories only the mongodb user may enter (DAC_READ_SEARCH), then
+    # switches to that user (SETUID, SETGID).
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - SETUID
+      - SETGID
 
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
@@ -97,7 +108,7 @@ services:
       MONGO_PORT: "27017"
       MONGO_DBNAME: ${DB_NAME}
       MONGO_USER: ${DB_APP_USER}
-      MONGO_PASS: ${DB_APP_PWD_INLINE}
+      MONGO_PASS: ${DB_APP_PWD_INLINE:?Set DB_APP_PWD_INLINE in .env}
 
     # --- Storage ---
     volumes:
@@ -151,7 +162,7 @@ services:
       # Service — UniFi's UI runs on 8443/HTTPS inside the container
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8443"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.scheme=https"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serversTransport=skip-verify@file"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.serverstransport=backend-selfsigned@file"
 
 # --------------------------------------------------------
 # NETWORKS

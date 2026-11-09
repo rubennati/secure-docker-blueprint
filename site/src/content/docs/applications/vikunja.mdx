@@ -9,8 +9,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 Vikunja manages tasks in kanban boards, lists, Gantt and table views. Two
 containers — a single binary serving both API and interface, and PostgreSQL.
 
-<StackEvidence stack="business/vikunja"
-  gap="a restore. The database, the attachment volume and the session key have to come back together, and that has not been performed here." />
+<StackEvidence stack="business/vikunja" />
 
 **To try it:** Docker, and the same build step, which the local stack runs too. See [Try it locally](#try-it-locally).
 
@@ -21,8 +20,16 @@ containers — a single binary serving both API and interface, and PostgreSQL.
 On your own machine, with no proxy, domain or certificate. From `business/vikunja/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
-docker compose -f docker-compose.local.yml --env-file .env.local up -d --build
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "JWT_KEY=$(openssl rand -base64 48 | tr -d '\n')"
+} >> .env.local
+
+docker compose -f docker-compose.local.yml --env-file .env.local build
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
 Then open `http://localhost:3456`. Stop it again with the same command and `down`.
@@ -115,9 +122,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: vikunja
-      container: vikunja-db
       username: vikunja
-      password: "{credential file /srv/docker/business/vikunja/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container
+      pg_dump_command: docker exec vikunja-db pg_dump
+      pg_restore_command: docker exec -i vikunja-db pg_restore
+      psql_command: docker exec -i vikunja-db psql
 ```
 
 `jwt_key.txt` signs the session tokens. Restoring without it logs everyone out —

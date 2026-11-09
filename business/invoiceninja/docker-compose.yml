@@ -105,13 +105,13 @@ services:
       retries: 5
       start_period: 120s
 
-    memswap_limit: 1G          # == memory: no swap
+    memswap_limit: 1536m          # == memory: no swap
     deploy:
       resources:
         limits:
           # Chromium renders the PDFs and the live design previews; it exceeds
           # 512M under concurrent load or with complex templates.
-          memory: 1G
+          memory: 1536m   # 2x the measured peak (605 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
@@ -133,6 +133,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The master chowns its cache directories and the workers switch to uid 101.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
     # --- Configuration ---
     environment:
@@ -206,6 +213,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint switches to the mysql user and reads its files as root.
+    cap_add:
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
 
     # --- Configuration ---
     # DEVIATION: MySQL rather than MariaDB — upstream targets MySQL 8 and ships
@@ -241,11 +255,11 @@ services:
       retries: 12
       start_period: 60s
 
-    memswap_limit: 1G          # == memory: no swap
+    memswap_limit: 1536m          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 1536m   # 2x the measured peak (558 MiB)
           # cpus: derived starting value, not measured — v0.9.0
           cpus: "1.00"
           pids: 200
@@ -264,6 +278,20 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Starts as root: sh reads the password secret, then the entrypoint fixes
+    # ownership of /data and drops to its redis user. That sequence needs the
+    # set below (docs/standards/security-baseline.md, per image family).
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
 
     # --- Configuration ---
     # The password is read from the secret at startup, so it never appears in

@@ -11,8 +11,7 @@
 - **Origin:** US · NocoDB Inc · non-EU
 - **Domain:** Automation and data
 - **Role:** Spreadsheet-style interface on top of a database
-- **Based on version:** `2026.10.1`
-- **Last verified:** 2026-05-02 (v0.301.5)
+- **Last verified:** 2026-11-08 (2026.10.1) — over IPv4: the super-admin from `.env` signed in through the API before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -63,8 +62,7 @@ Migrating data from SQLite to Postgres requires running NocoDB's CLI `nc-migrate
 
 ## Version notes
 
-- Moved to `2026.10.1` on 2026-11-05 (released 2026-10-29), not run on a host at
-  this tag. Upstream lists no manual migration step; schema migrations run at
+- Moved to `2026.10.1` on 2026-11-05 (released 2026-10-29). Upstream lists no manual migration step; schema migrations run at
   start. Behaviour changes in 2026.09.1 to 2026.10.1: v3 API currency options
   are `currency_code` and `currency_locale`, and the form validators
   `minValue`, `maxValue` and `custom` are rejected; CSV currency exports drop the

@@ -11,12 +11,11 @@
 - **Origin:** Windmill Labs · no country stated in its published terms · no country
 - **Domain:** Automation and data
 - **Role:** Code-first scripts, flows, APIs and scheduled jobs on a queue
-- **Based on version:** `1.862.0`
-- **Last verified:** 2026-09-23 (1.814.0) — behind Traefik with TLS: the bootstrap behind `acc-deny`, jobs on both workers, the UI under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (1.864.1) — over IPv4: moved from 1.862.0, the stack started at `access-blocked`, `ops/bootstrap-admin.sh` replaced the default superadmin (`admin@windmill.dev`/`changeme` refused afterwards), the route opened, a workspace created, a Python job on the worker and a native job with an outbound request run through Traefik before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
-- Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.862.0`. Upstream's
+- Official image, pinned tag: `ghcr.io/windmill-labs/windmill:1.864.1`. Upstream's
   own `.env` defaults to the floating `:main` tag; not used here.
 - `postgres:18.6` — Windmill's own requirement (upstream's compose moved from 16
   to 18). Debian-based, not the `-alpine` variant most other stacks here pin,
@@ -168,7 +167,7 @@ Behind Traefik with TLS, with the shipped `acc-private` on this run and
 - The operator signed in; the workspace list and the run history rendered (262
   and 811 requests, all answered)
 
-**Not yet exercised:** job isolation (NSJAIL needs bare metal); the UI's release
+**Outside this verification:** job isolation (NSJAIL needs bare metal); the UI's release
 check, which the stack does not switch off.
 
 ## Verification performed (2026-09-22)
@@ -212,7 +211,7 @@ Behind Traefik with TLS:
   `pg_dumpall` when `name: all` has no `format`, and with `pg_dump` for a named
   database; the README now uses `name: all`
 
-**Not yet exercised:** NSJAIL on bare metal; job isolation of any kind.
+**Outside this verification:** NSJAIL on bare metal; job isolation of any kind.
 
 ## Verification performed (2026-09-18)
 
@@ -242,8 +241,10 @@ Traefik:
 
 ## Version notes
 
-- Moved to `1.862.0` on 2026-11-05, not run on a host at this tag; the
-  verification sections below were run against `1.814.0`. Upstream's changelog
+- Moved to `1.864.1` on 2026-11-08. 1.863.0 adds
+  configurable SSO email and username claims; 1.864.x are fixes; no
+  configuration change.
+- Moved to `1.862.0` on 2026-11-05. Upstream's changelog
   marks no breaking change from 1.815.0 to 1.862.0; database migrations run on
   start. The nsjail changes in the range (dependency resolution, builds and
   Bun/npm installs under nsjail, a real nsjail start-up probe) apply only when
@@ -261,7 +262,7 @@ Traefik:
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`
 6. Verify `/api/version`, then submit a real job
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was actually exercised on a real install
 
 A move from an existing Postgres 16 install to 18 is a separate procedure:

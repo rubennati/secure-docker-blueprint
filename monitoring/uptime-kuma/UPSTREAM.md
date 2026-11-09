@@ -10,8 +10,7 @@
 - **Origin:** Hong Kong · Louis Lam · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime monitoring with a status page and many notification channels
-- **Based on version:** `2.5.9`
-- **Last verified:** 2026-09-13 (2.5.4) — patch recreated on a live host, healthy, route unchanged. 2026-09-08 (2.5.3) — v0.8.0 host session: clean start on SQLite, owner account from the setup page, ntfy notification with an access token, a TCP monitor on a container on `proxy-public`; stopping that container produced the down alert on an iPhone within twenty seconds, starting it the up alert.
+- **Last verified:** 2026-11-08 (2.5.9) — over IPv4: the stack healthy and `/` redirecting a new instance to `/setup-database` before and after `down`/`up`, the refused client answered `403`; the setup and a monitor were not created (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -34,7 +33,7 @@
 - `2.x` carries breaking changes against `1.x`. Upstream publishes a migration
   guide for an existing v1 instance:
   https://github.com/louislam/uptime-kuma/wiki/Migration-From-v1-To-v2
-- Moved to `2.5.8` on 2026-10-31, not run on a host at this tag. `2.5.8` fixes
+- Moved to `2.5.8` on 2026-10-31. `2.5.8` fixes
   GHSA-v2p3-6f5h-6hhf (remote code execution, admin only) and drops TLS from the
   TCP Port monitor: an existing TLS TCP monitor becomes a plain TCP monitor, with
   no migration step. `2.5.7` moves the image to Node.js 22.23.4, which distrusts
@@ -42,7 +41,7 @@
   GHSA-98hr-q8q8-5j23 (rootless privilege escalation) and GHSA-wf2j-5mc7-5c4w
   (ping badge denial of service) — name no fixed version on the list page and
   were not read further.
-- Moved to `2.5.9` on 2026-11-05, not run on a host at this tag. A patch release
+- Moved to `2.5.9` on 2026-11-05. A patch release
   with no breaking change and no migration: bug fixes (runtime timeout fallback,
   push monitor retries, status page refresh timer, recurring maintenance timezone)
   and dependency updates. It fixes GHSA-86ch-2247-gr56 (RSS cache poisoning) and

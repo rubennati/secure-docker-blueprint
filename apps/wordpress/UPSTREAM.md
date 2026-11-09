@@ -9,8 +9,7 @@
 - **Origin:** US · Automattic / WordPress Foundation · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Content management system for sites and blogs
-- **Based on version:** `7.1.4-php8.3-apache`
-- **Last checked:** 2026-04-15
+- **Last verified:** 2026-11-08 (7.1.4-php8.3-apache) — over IPv4, at the closed default: the installer run, the administrator logged in before and after `down`/`up`, the REST index answering, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -29,8 +28,8 @@
 
 ## Version notes
 
-- Moved to `7.1.4-php8.3-apache` on 2026-11-05 (image built 2026-11-03), not
-  run on a host at this tag. WordPress 7.1 raises the database version to
+- Moved to `7.1.4-php8.3-apache` on 2026-11-05 (image built 2026-11-03)
+  . WordPress 7.1 raises the database version to
   61833: the first visit to the admin area asks for a database update. The
   image copies WordPress into `/var/www/html` only when that directory is
   empty, so an existing `volumes/wordpress` keeps its core files until
@@ -45,8 +44,7 @@
   GHSA-9vrg-x932-q57q, GHSA-j255-3x8q-7q7g, GHSA-wjwj-p342-9fq7,
   GHSA-7q86-3j97-744j, GHSA-2p22-wv7j-cvfv, GHSA-mqjw-vvgg-xfvf,
   GHSA-vchg-92fx-636p, GHSA-j3rg-rwgx-7wx7 (7.1.4).
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: WordPress recommends "MariaDB version
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: WordPress recommends "MariaDB version
   10.11 or greater" (https://wordpress.org/about/requirements/).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs
   `mariadb-upgrade` at the first start on 12.3 after a backup of the system

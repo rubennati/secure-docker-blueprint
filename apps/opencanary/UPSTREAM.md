@@ -13,7 +13,7 @@
   the open-source counterpart to Thinkst's commercial Canary product —
   confirmed via upstream's own README; this stack uses only the
   open-source project
-- **Based on version:** `0.9.10`
+- **Last verified:** 2026-11-08 (0.9.10) — over IPv4: FTP, Telnet, MySQL, RDP and HTTP (8081) published, a login attempt from another LAN machine logged with its real source address (docs/labs/stack-refresh/2026-11-08-results.md)
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
   every enabled fake service exercised against a live container; the
   production compose's sub-1024 port publishing not confirmed on this test
@@ -21,8 +21,8 @@
 
 ## What we use
 
-- `thinkst/opencanary:0.9.9` — the official image, confirmed present as a
-  specific version tag on Docker Hub (not just `latest`)
+- `thinkst/opencanary:0.9.10` — the official image, under a specific version
+  tag on Docker Hub (not just `latest`)
 
 ## Why not `network_mode: host` (upstream's own default)
 
@@ -79,7 +79,7 @@ enabled module (FTP, HTTP, MySQL, RDP, Telnet) works identically this way.
 
 ## Version notes
 
-- Moved to `0.9.10` on 2026-10-31 (released 2026-09-21), not run at this tag.
+- Moved to `0.9.10` on 2026-10-31 (released 2026-09-21).
   The release fixes credential decoding in the HTTP proxy's Basic Auth, a ReDoS
   in the MongoDB SCRAM username extraction, the HTTP proxy's handling of injected
   HTML, and NTLM proxy-auth logging that exited the service; it adds connection

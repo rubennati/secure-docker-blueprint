@@ -16,6 +16,17 @@ services:
 
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint chowns the bind-mounted
+    # data directory the README creates (CHOWN), searches it on every later start
+    # through directories only the mongodb user may enter (DAC_READ_SEARCH), then
+    # switches to that user (SETUID, SETGID).
+    cap_add:
+      - CHOWN
+      - DAC_READ_SEARCH
+      - SETUID
+      - SETGID
 
     deploy:
       resources:
@@ -27,7 +38,7 @@ services:
 
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
-      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       MONGO_INITDB_DATABASE: ${DB_NAME}
 
     volumes:

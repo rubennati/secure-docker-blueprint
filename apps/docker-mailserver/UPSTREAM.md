@@ -13,7 +13,7 @@
 - **Origin:** Community · docker-mailserver organisation · no single jurisdiction
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd in one container, configured by files, without a database or a web interface
-- **Based on version:** `16.0.1`
+- **Last verified:** 2026-11-08 (17.0.0) — over IPv4, a new installation at the new major: a certificate from core/acme-certs, `ops/setup.sh` created the postmaster mailbox and the DKIM key, an account added, a message delivered locally and found with `doveadm search`, IMAP authentication, all before and after `down`/`up`; no mail ports published, no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
 
 `tvial/docker-mailserver` on Docker Hub is this project's former image name; its
 newest tag is from 2021-01-16.
@@ -25,7 +25,7 @@ between 2025-03-01 and 2026-09-04. No advisory is published in the repository.
 
 ## What we use
 
-- `ghcr.io/docker-mailserver/docker-mailserver:16.0.1`, one container.
+- `ghcr.io/docker-mailserver/docker-mailserver:17.0.0`, one container.
 - `mail.yml`, an opt-in overlay that publishes 25, 465 and 993.
 - `ops/setup.sh`, which creates the postmaster mailbox and the DKIM key.
 
@@ -95,3 +95,16 @@ The update check is off.
 4. `docker compose exec app supervisorctl status` — the services above `RUNNING`
 5. Send a message between two accounts and read `setup fail2ban`
 6. Record the result in `Last verified` once it ran on a host
+
+## Version notes
+
+- Moved to `17.0.0` on 2026-11-08, a major release; a new
+  installation works at this tag. Breaking per upstream: the Xapian FTS plugin is removed
+  (migrate to Flatcurve), the Postfix LDAP configuration is generated from
+  layered sources with renamed `POSTFIX_*_QUERY_FILTER` variables and no default
+  filters, Rspamd uses Valkey instead of Redis, `SA_SPAM_SUBJECT` is gone
+  (`SPAM_SUBJECT`), the base image is Debian 13, and `setup config dkim` writes
+  `<domain>-<selector>.private` (this stack's `ops/setup.sh` and README follow
+  it). This stack uses neither LDAP nor Xapian nor `ENABLE_RSPAMD_REDIS`. An
+  existing installation with DKIM keys from 16.x keeps them; their file names
+  differ from what `setup config dkim` now writes.

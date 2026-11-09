@@ -5,6 +5,8 @@ providers and MCP servers, with routing, a web UI and a request log. Standalone 
 it needs no other stack, and any OpenAI-compatible or MCP backend can sit behind
 it. Upstream: [agentgateway](https://github.com/agentgateway/agentgateway).
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 ```text
@@ -38,6 +40,7 @@ network with this one. Validate a change before restarting:
 
 ```bash
 docker run --rm -v "$PWD/config/config.yaml:/config/config.yaml:ro" \
+  -v "$PWD/.secrets/agw_ui_htpasswd.txt:/run/secrets/AGW_UI_HTPASSWD:ro" \
   cr.agentgateway.dev/agentgateway:v1.7.0 -f /config/config.yaml --validate-only
 ```
 
@@ -120,6 +123,7 @@ and a restore of `volumes/data` with the config. Full log in
 ```bash
 ops/init.sh
 mkdir -p volumes/data
+sudo chown 65532:65532 volumes/data
 docker compose -f docker-compose.local.yml up -d
 curl -H "Authorization: Bearer $(cat .secrets/agw_api_key.txt)" http://localhost:4000/v1/models
 docker compose -f docker-compose.local.yml down

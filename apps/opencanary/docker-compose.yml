@@ -88,11 +88,10 @@ services:
 # NETWORKS
 # --------------------------------------------------------
 networks:
-  # internal: true — nothing here needs outbound internet access by
-  # default. If you enable webhook/Slack/Teams/hpfeeds alerting (see
-  # README.md#alerting), remove internal: true so the container can reach
-  # that endpoint; inbound published ports work either way, since Docker's
-  # port publishing is independent of a network's internal flag.
+  # Not internal: Docker publishes no port of a container that is attached
+  # only to an internal network — on Docker 29 every canary port then answers
+  # "connection refused". The canary needs
+  # its published ports; that this network also has egress is the cost.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
+    internal: false

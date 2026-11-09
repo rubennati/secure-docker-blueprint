@@ -12,8 +12,7 @@
 - **Domain:** Business operations
 - **Role:** Customer support across website chat, email and messaging channels in one shared inbox
 - **Edition gating:** everything under the repository's `enterprise/` directory is licensed under `enterprise/LICENSE` rather than MIT — https://github.com/chatwoot/chatwoot/blob/develop/LICENSE · checked 2026-09-21
-- **Based on version:** `v4.19.1`
-- **Last verified:** 2026-09-22 (v4.18.0) — behind Traefik with TLS: the onboarding, the dashboard and its websocket, the API, a website widget, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (4.19.1) — over IPv4: the onboarding form created the administrator, a sign-in through the API before and after `down`/`up`, sidekiq healthy, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the governing-law clause of Chatwoot's terms of service
 (State of California).
@@ -23,7 +22,7 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 - `chatwoot/chatwoot:v4.19.1` for web and worker. Upstream's production compose pins
   `:latest`; not used here. A `-ce` tag also exists; this stack uses the tag upstream's
   compose names.
-- `pgvector/pgvector:0.8.1-pg16` — upstream's production compose uses
+- `pgvector/pgvector:0.8.7-pg16` — upstream's production compose uses
   `pgvector/pgvector:pg16`.
 - `redis:8.10.3-alpine` — upstream's uses `redis:alpine`.
 - Local file storage, upstream's default.
@@ -60,7 +59,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   the archive unpacked — login and the contact back
 - Peaks: Sidekiq 559 MiB, Rails 484 MiB, PostgreSQL 78 MiB, Redis 14 MiB
 
-**Not yet exercised:** email in and out; channels other than the website widget;
+**Outside this verification:** email in and out; channels other than the website widget;
 the captain and AI features.
 
 ## Verification performed (2026-09-21)
@@ -86,19 +85,19 @@ from a peer container:
   values absent from the configured environment; PostgreSQL and Redis without a
   route out
 
-**Not yet exercised:** Traefik routing and TLS; the browser dashboard; the website
+**Outside this verification:** Traefik routing and TLS; the browser dashboard; the website
 widget and its websocket; email in and out; messaging channel integrations; the
 enterprise features; backup and restore; an upgrade across versions.
 
 ## Version notes
 
-- pgvector moved to `0.8.7-pg16` on 2026-10-31, not run at this tag; the stack's
+- pgvector moved to `0.8.7-pg16` on 2026-10-31; the stack's
   state is anchored on the application pin, which did not move. 0.8.2 to 0.8.7 list no breaking change and no advisory; 0.8.3 and
   0.8.4 fix index corruption and a repair error with HNSW vacuuming, 0.8.2, 0.8.6
   and 0.8.7 fix buffer overflows. After the image moves, upstream's upgrade note
   applies per database: `ALTER EXTENSION vector UPDATE;`.
 - Moved to `v4.19.1` on 2026-11-05 (released 2026-10-24), web and worker
-  together, not run on a host at this tag. v4.19.0 retires Captain V1:
+  together. v4.19.0 retires Captain V1:
   installations with V1 assistant instructions must migrate them to V2 before
   upgrading (upstream's `docs/captain_v1_sunset.md`); this stack has not
   exercised Captain. New optional variables only — `SEARCH_TIME_RANGE_LIMIT_DAYS`,
@@ -109,8 +108,8 @@ enterprise features; backup and restore; an upgrade across versions.
   for security hardening (Twilio webhook verification, CSS sanitization) and
   v4.19.1 moves the build stage to Node.js 24.22.1 (CVE-2026-111497, build only).
   No GHSA named.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -140,5 +139,5 @@ enterprise features; backup and restore; an upgrade across versions.
 4. Bump `APP_TAG` in `.env.example` — web and worker move together
 5. `docker compose pull && docker compose up -d`; the web service migrates at start
 6. Log in and open a conversation
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

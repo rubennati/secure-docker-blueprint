@@ -10,8 +10,7 @@
 - **Origin:** US · community (gethomepage) · non-EU
 - **Domain:** Dashboards
 - **Role:** Dashboard configured with YAML files
-- **Based on version:** `v2.7.0` (2.x — see Version / tag notes)
-- **Last verified:** 2026-05-03 (v0.10.9)
+- **Last verified:** 2026-11-08 (2.7.0) — over IPv4: the dashboard behind the basicAuth gate (`401` without, `200` with the credentials) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -38,7 +37,7 @@
   Read https://github.com/gethomepage/homepage/releases/tag/v2.0.0 before deploying.
 - The bump also closes a medium advisory: the service proxy accepted client-controlled
   methods and bodies to configured targets, fixed in 2.2.0. Moved on 2026-09-13.
-- Moved to `v2.7.0` on 2026-11-05, not run on a host at this tag. `v2.6.0` fixes
+- Moved to `v2.7.0` on 2026-11-05. `v2.6.0` fixes
   GHSA-qxcr-4rv3-v23r (high): an authentication gate bypass via the Next.js
   on-demand revalidation header, relevant where homepage's own authentication is
   on. `v2.6.0` also keeps `$` sequences in environment and file secrets as

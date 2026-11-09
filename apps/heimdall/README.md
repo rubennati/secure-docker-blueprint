@@ -2,6 +2,8 @@
 
 Self-hosted application dashboard — a pretty launcher for your homelab apps, with optional widgets that show status / stats per service.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:
@@ -50,7 +52,8 @@ All further configuration (items, backgrounds, users) happens in the Web UI.
 
 ```bash
 docker compose ps                              # healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
+curl -sSI https://<APP_TRAEFIK_HOST>/          # 401 — the basicAuth gate
+curl -fsSI -u ops:<password> https://<APP_TRAEFIK_HOST>/   # 200 OK
 ```
 
 ## Security Model
@@ -58,7 +61,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
 - **LinuxServer.io image with s6-overlay** — container starts as root to set up `/run`, drops to `PUID:PGID` internally. Do **not** set `user:` in compose (breaks s6-overlay).
 - **`ALLOW_INTERNAL_REQUESTS=false`** by default — Heimdall's status-check widgets cannot probe RFC1918 addresses. Flip to `true` if you want widgets to monitor internal app status (e.g. Uptime status of `wordpress-app:80`).
 - **Default access `access-vpn`** — VPN-only.
-- **A basicAuth gate in front of the route** (`APP_BASIC_AUTH_USERS`, DEC-077) — the UI is open until a Heimdall user with a password exists, and its enhanced apps store API keys; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash.
+- **A basicAuth gate in front of the route** (`APP_BASIC_AUTH_USERS`, [DEC-077](../../.ai/decisions.md#dec-077)) — the UI is open until a Heimdall user with a password exists, and its enhanced apps store API keys; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash.
 - **Optional authentication** — Heimdall supports user accounts in its UI. Not enabled by default; add via the UI if you share the instance, and keep the gate.
 
 ## Backup

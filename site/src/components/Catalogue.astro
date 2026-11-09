@@ -6,8 +6,9 @@
  * and checked in CI, so a stack cannot be missing from here or listed here
  * without existing. Nothing below is retyped.
  *
- * What was checked is shown as evidence, not as a grade: a date and the version
- * it was checked against, or the plain statement that no host run has happened.
+ * Each stack shows facts, not a grade (DEC-080): the pin and its release date,
+ * whether upstream has released a newer version, the CRITICAL and HIGH findings
+ * the pinned images carry, and when the stack last ran on a host.
  * The filter is plain DOM — it narrows the list; it does not rank it.
  *
  * The footprint line is the same kind of statement. It says how much machinery a
@@ -34,10 +35,20 @@ type Entry = {
 	role: string;
 	upstream: string | null;
 	version: string;
-	state: string;
-	verified: string | null;
-	verified_version: string | null;
-	open_findings: number;
+	pinned_date: string | null;
+	upstream_status: string;
+	newest: string | null;
+	newest_date: string | null;
+	checked: string | null;
+	archived: boolean;
+	quiet: boolean;
+	last_release: string | null;
+	critical: number | null;
+	high: number | null;
+	tested: string | null;
+	tested_version: string | null;
+	restored: boolean;
+	gap: string | null;
 	footprint: {
 		services: number;
 		init_services: number;
@@ -84,24 +95,31 @@ const groups = DOMAIN_ORDER.map((domain) => ({
 
 const REPO = 'https://github.com/rubennati/secure-docker-blueprint/tree/main/';
 
-const STATE_LABEL: Record<string, string> = {
-	scaffolded: 'Scaffolded',
-	verified: 'Verified',
-	'baseline-aligned': 'Baseline-aligned',
-	'ops-proven': 'Ops-proven',
+const day = (d: string) =>
+	new Date(d).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
+
+// Whether upstream has released a newer version, and whether it still releases.
+const upstreamLine = (e: Entry) => {
+	let line =
+		e.upstream_status === 'current'
+			? 'Newest upstream release'
+			: e.upstream_status === 'behind'
+				? `Upstream released ${e.newest}${e.newest_date ? ` on ${day(e.newest_date)}` : ''}`
+				: e.upstream_status === 'undetermined'
+					? 'Newer upstream release not determinable'
+					: 'Upstream not checked at this pin';
+	if (e.archived) line += ' · upstream archived';
+	else if (e.quiet) line += ` · no release since ${e.last_release ? day(e.last_release) : 'over a year'}`;
+	return line;
 };
 
-// A leading "v" is a tag spelling, not a different version.
-const sameVersion = (a: string, b: string) => a.replace(/^v/, '') === b.replace(/^v/, '');
-
-// The host run is evidence about the version it ran, not about the current pin.
-const checked = (e: Entry) => {
-	if (!e.verified) return 'Not yet run on a host';
-	const date = new Date(e.verified).toLocaleDateString('en-GB', { year: 'numeric', month: 'long', day: 'numeric' });
-	if (!e.verified_version) return `Last run on a host ${date}`;
-	return sameVersion(e.verified_version, e.version)
-		? `Last run on a host ${date} with this version`
-		: `Historical host run ${date} with ${e.verified_version}; the current pin ${e.version} is not verified on a host`;
+// A host run is about the setup; the version that ran is named where the pin moved since.
+const testedLine = (e: Entry) => {
+	if (!e.tested) return e.gap ? `Not run on a host: ${e.gap}` : 'Not run on a host yet';
+	let line = `Last run on a host ${day(e.tested)}`;
+	if (e.restored) line += ', with a restore';
+	if (e.tested_version) line += ` (version ${e.tested_version})`;
+	return line;
 };
 ---
 
@@ -129,6 +147,7 @@ const checked = (e: Entry) => {
 							<div class="cat__head">
 								<strong>{e.name}</strong>
 								{e.version && <code>{e.version}</code>}
+								{e.pinned_date && <span class="cat__date">released {e.pinned_date}</span>}
 							</div>
 							<p>{e.role}</p>
 							{e.footprint && <p class="cat__footprint">{e.footprint.summary}</p>}
@@ -154,11 +173,11 @@ const checked = (e: Entry) => {
 								</details>
 							)}
 							<p class="cat__meta">
-								<span class="cat__state">{STATE_LABEL[e.state] ?? e.state}</span>
-								<span>{checked(e)}</span>
-								{e.open_findings > 0 && (
+								<span>{upstreamLine(e)}</span>
+								<span>{testedLine(e)}</span>
+								{e.critical !== null && e.high !== null && (e.critical > 0 || e.high > 0) && (
 									<a class="cat__findings" href={`${REPO.replace('/tree/', '/blob/')}${e.path}/README.md#open-findings`}>
-										{e.open_findings} open CRITICAL finding{e.open_findings === 1 ? '' : 's'}
+										In the upstream images: {e.critical} CRITICAL · {e.high} HIGH
 									</a>
 								)}
 								<a href={`${REPO}${e.path}`}>Files</a>
@@ -281,9 +300,9 @@ const checked = (e: Entry) => {
 		color: var(--sl-color-gray-2);
 	}
 
-	.cat__state {
-		font-weight: 600;
-		color: var(--sl-color-gray-2);
+	.cat__date {
+		font-size: 0.8rem;
+		color: var(--sl-color-gray-3);
 	}
 	.cat__findings {
 		color: var(--sl-color-orange);

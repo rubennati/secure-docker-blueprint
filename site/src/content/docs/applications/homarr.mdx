@@ -10,8 +10,7 @@ Homarr is a dashboard whose tiles show live state rather than only links — it
 talks to the services behind them through their APIs. One container with its own
 SQLite database.
 
-<StackEvidence stack="apps/homarr"
-  gap="a restore. The data directory and the encryption key have to come back together, and that has not been performed here." />
+<StackEvidence stack="apps/homarr" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,11 @@ SQLite database.
 On your own machine, with no proxy, domain or certificate. From `apps/homarr/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+echo "HOMARR_SECRET_ENCRYPTION_KEY=$(openssl rand -hex 32)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -68,7 +71,7 @@ From `apps/homarr/`:
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/   # 307 to /init until the setup wizard is done, then 200
 ```
 
 Then add one integration and confirm its tile shows live data. That is the check
@@ -90,6 +93,19 @@ needs. [Dockhand](/infrastructure/dockhand/) shows the same pattern.
 The stack ships `access-vpn`. A dashboard with working integrations holds API
 tokens for everything it displays, which makes it worth more than the tiles
 suggest.
+
+### What it sends outward
+
+Homarr reports weekly to a PostHog instance at `hog.homarr.dev`, keyed on an ID
+minted on first run and stored in this stack's database. It also checks GitHub
+for a new version at startup.
+
+Turn the telemetry off after first login: **Manage → Settings → Analytics**,
+switch off `general`. It is a database setting, so it cannot be pre-set here.
+
+`NO_EXTERNAL_CONNECTION=true` stops both calls, but it also stops the icon
+repository refreshing, which is most of what Homarr is for. The UI switch is the
+narrower instrument.
 
 ## Backup
 

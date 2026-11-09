@@ -10,8 +10,7 @@
 - **Origin:** Greece · Alex Tselegidis · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Appointment booking in PHP, established since 2013
-- **Based on version:** `1.6.1`
-- **Last verified:** 2026-11-03 (1.6.1) — step 8 lab host behind Traefik 3.7.17 on its edge network: the installation wizard, the backend login, the REST API with a customer and an appointment, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (1.5.x)
+- **Last verified:** 2026-11-09 (1.6.1) — over IPv4, a new installation: the installation wizard completed through the API, the administrator signed in, the same after `down`/`up`
 
 ## What we use
 
@@ -38,8 +37,7 @@ The upstream Docker compose example is minimal (app + db, linked via env). Bluep
 
 ## Version notes
 
-- Moved to `1.6.1` on 2026-10-31 (released 2026-10-19), not run at this tag;
-  `Last verified` stays at 1.5.x. The release is largely security fixes: Guzzle
+- Moved to `1.6.1` on 2026-10-31 (released 2026-10-19). The release is largely security fixes: Guzzle
   and phpseclib raised to patched releases, CalDAV SSRF hardening, login
   throttling restored, a CAPTCHA bypass, REST API role and protected-settings
   checks, HTML escaping on the booking page. CORS and cookie `SameSite` settings

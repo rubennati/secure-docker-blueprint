@@ -13,6 +13,10 @@ FAIL (blocks CI — dangerous or leak-prone):
   plaintext-secret  a password/secret/token carries a real value in .env.example
   gitignore-gap     .gitignore missing or not covering .env / .secrets/ / volumes/
   db-exposed        a datastore joins proxy-public or publishes a host port
+  internal-port     a service publishes a port while every network it joins is
+                    `internal: true` — Docker binds nothing for it ("3000/tcp":
+                    null), so the port the file promises never answers (ShellHub's
+                    SSH port and five local files, stack-refresh lab, 2026-11-09)
   no-resources      service without a memory or pids limit
   no-swap-policy    service with a memory limit and no explicit memswap_limit —
                     coverage completed 2026-09-16 (every production service);
@@ -35,6 +39,16 @@ FAIL (blocks CI — dangerous or leak-prone):
                     auth-authentik@file is forward-auth; *-auth@docker is
                     basic), or `none` — no login anywhere — without a reason
                     or behind an open access policy (DEC-077)
+  public-default    an *_TRAEFIK_ACCESS=access-public in .env.example whose
+                    auth posture is not `public` and which has no
+                    `# public by design: <reason>` line above it — a stack
+                    ships closed and opens by the operator's choice
+                    (DEC-043 addendum, 2026-11-02)
+  placeholder-secret a credential in .env.example or .env.local.example
+                    still reads __REPLACE_ME__ — a forgotten one becomes the
+                    password itself (Vaultwarden's admin panel opened on it,
+                    2026-11-08); a secret ships empty, and the compose file
+                    refuses an empty required one with ${VAR:?Set VAR in .env}
   retired-name      a stack still carries the vocabulary from before the
                     model: *_TRAEFIK_SECURITY or *_TRAEFIK_THREAT, an
                     acc-* / sec-* / tls-basic|aplus|modern value, a router
@@ -613,6 +627,31 @@ def auth_postures(path: Path) -> list[tuple[str, str, str | None, str | None]]:
     return out
 
 
+PUBLIC_REASON = re.compile(r"^#\s*public by design:\s*\S")
+
+
+def public_by_design(path: Path) -> set[str]:
+    """The *_TRAEFIK_ACCESS variables with a `# public by design: <reason>`
+    line in the comment block directly above them."""
+    lines = path.read_text(encoding="utf-8", errors="replace").splitlines()
+    out: set[str] = set()
+    for i, raw in enumerate(lines):
+        line = raw.strip()
+        if line.startswith("#") or "=" not in line:
+            continue
+        key = line.partition("=")[0].strip()
+        m = POSITION_VAR.search(key)
+        if not m or m.group(1) != "ACCESS":
+            continue
+        j = i - 1
+        while j >= 0 and lines[j].strip().startswith("#"):
+            if PUBLIC_REASON.match(lines[j].strip()):
+                out.add(key)
+                break
+            j -= 1
+    return out
+
+
 IMAGE_VAR = re.compile(r"\$\{([A-Za-z0-9_]+)(?::?-([^}]*))?\}")
 
 
@@ -776,6 +815,25 @@ def check_env_pins(app: Path, findings: list[dict]) -> None:
                                            "reproducible — pin a full version"})
 
 
+CREDENTIAL_VAR = re.compile(r"^[A-Z0-9_]*(PASS|PWD|TOKEN|SECRET|KEY|KEK|PFX|AUTH_USERS)[A-Z0-9_]*$")
+
+
+def check_placeholder_secrets(app: Path, findings: list[dict]) -> None:
+    """A credential never ships as __REPLACE_ME__: the application would take
+    the placeholder itself as the password or key when the operator forgets
+    one. It ships empty; an empty required one stops `docker compose` through
+    `${VAR:?...}` in the compose file."""
+    for name in (".env.example", ".env.local.example"):
+        path = app / name
+        if not path.exists():
+            continue
+        for key, value in parse_env(path)[0]:
+            if CREDENTIAL_VAR.match(key) and value == "__REPLACE_ME__":
+                findings.append({"level": "FAIL", "rule": "placeholder-secret",
+                                 "detail": f"{name}: {key}=__REPLACE_ME__ — ship it empty and refuse an empty "
+                                           f"required value in compose with ${{{key}:?Set {key} in .env}}"})
+
+
 def check_env(app: Path, findings: list[dict]) -> None:
     env = app / ".env.example"
     if not env.exists():
@@ -863,6 +921,20 @@ def check_env(app: Path, findings: list[dict]) -> None:
                                  "detail": f"{key}: posture none behind {access} — no login anywhere needs a "
                                            "closed access policy (DEC-077.3)"})
 
+    # -- closed by default (DEC-043 addendum, 2026-11-02) ---------------------
+    posture_of = {k[: -len("AUTH")]: posture for k, _, posture, _ in auth_postures(env)}
+    reasoned = public_by_design(env)
+    for key, value in variables:
+        pm = POSITION_VAR.search(key)
+        if not pm or pm.group(1) != "ACCESS" or value != "access-public":
+            continue
+        if posture_of.get(key[: -len("ACCESS")]) == "public" or key in reasoned:
+            continue
+        findings.append({"level": "FAIL", "rule": "public-default",
+                         "detail": f"{key}=access-public ships the route open — a stack ships closed "
+                                   "(access-vpn) unless its auth posture is public or a "
+                                   "`# public by design: <reason>` line stands above the variable"})
+
     # -- the wide first-load burst is judged per router: check_routers --------
 
 
@@ -884,6 +956,34 @@ def _healthcheck_waived(text: str, service: str) -> bool:
 def check_compose(app: Path, findings: list[dict]) -> None:
     for path in compose_files(app):
         check_one_compose(app, path, findings)
+
+
+def check_internal_ports(app: Path, findings: list[dict]) -> None:
+    """A port published from internal networks only is never bound by Docker.
+
+    Every compose file of the stack is read on its own, the local file and the
+    overlays included. A network defined in another file of a split stack is not
+    known here and counts as not internal, so the rule stays silent rather than
+    guess."""
+    for path in sorted(app.glob("*.yml")):
+        try:
+            data = yaml.safe_load(path.read_text(encoding="utf-8", errors="replace")) or {}
+        except yaml.YAMLError:
+            continue
+        internal = {name for name, net in (data.get("networks") or {}).items()
+                    if isinstance(net, dict) and net.get("internal") is True}
+        for name, svc in (data.get("services") or {}).items():
+            if not isinstance(svc, dict) or not svc.get("ports") or svc.get("network_mode"):
+                continue
+            nets = svc.get("networks")
+            if not nets:
+                continue
+            netnames = list(nets) if isinstance(nets, (list, dict)) else []
+            if netnames and all(n in internal for n in netnames):
+                findings.append({"level": "FAIL", "rule": "internal-port", "service": name,
+                                 "detail": f"{path.name}: publishes a port, but joins only internal networks "
+                                           f"({', '.join(netnames)}) — Docker binds nothing; add a network "
+                                           "that is not internal"})
 
 
 def check_one_compose(app: Path, path: Path, findings: list[dict]) -> None:
@@ -1283,8 +1383,10 @@ def main() -> int:
         check_files(app, findings, root_gi)
         check_env(app, findings)
         check_env_pins(app, findings)
+        check_placeholder_secrets(app, findings)
         check_local_pins(app, findings)
         check_compose(app, findings)
+        check_internal_ports(app, findings)
         check_routers(app, findings)
         check_ports_and_labels(app, findings)
         check_network_name(app, findings)

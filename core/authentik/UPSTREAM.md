@@ -14,8 +14,7 @@
 - **Origin:** Netherlands · Authentik Security · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Identity provider with forward-auth, OAuth2, OpenID Connect and SAML
-- **Based on version:** `2026.8.5`
-- **Last verified:** 2026-11-02 (v2026.5.7) — step 8 lab host behind Traefik 3.7.17 with PostgreSQL 16 and Redis 7.4: first-run setup from the root URL, a login through the flow executor with password and TOTP (a lab script driving the endpoints the browser UI uses, not a browser), forward-auth through the embedded outpost (302 to the login, `X-Authentik-Username` after it, 500 and never 200 with the server stopped), e-mail delivered through a relay over the worker's `app-egress` network with the corrected compose file applied (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (2026.8.5) — over IPv4, a new installation with Postgres 18.6, Redis with cap_drop; init-perms chowning the bind mounts: the initial-setup flow completed through the flow executor API, after which `/` led to the login, an API token for akadmin answering `users/me` as superuser, a group created and present after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -44,8 +43,7 @@
 - Authentik releases use date-based versioning: `YYYY.MM.patch`. Majors (`2024.x` → `2025.x`) can include schema migrations.
 - `postgres:18.6-alpine` — safe to update within Postgres 18. A new major is not automatic (dump/restore or `pg_upgrade` required).
 - `redis:8.10.3-alpine` — safe to update within 8.x.
-- Moved to `2026.8.5` on 2026-11-05, not run on a host at this tag; `Last
-  verified` stays at 2026.5.7. Breaking in 2026.8: forwarded request headers
+- Moved to `2026.8.5` on 2026-11-05. Breaking in 2026.8: forwarded request headers
   (`X-Forwarded-Proto`, `-Host`, `-For`) are honoured only from a trusted proxy
   network, hence `AUTHENTIK_LISTEN__TRUSTED_PROXY_CIDRS` in `docker-compose.yml`;
   `hash_password` no longer takes the password as an argument (stdin or a hidden
@@ -61,8 +59,7 @@
   GHSA-cqj8-fxxf-9pg7) plus a libxml2 DOCTYPE patch; 2026.8.5 bumps
   certificate-related dependencies after the eMudhra CA incident.
   https://docs.goauthentik.io/docs/releases/2026.8
-- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
-  host at this tag. PostgreSQL 18 support: "authentik supports PostgreSQL 14 -
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: "authentik supports PostgreSQL 14 -
   18" (https://docs.goauthentik.io/install-config/configuration/); upstream's CI
   runs 14 and 18. The 18 image keeps its cluster under
   `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both
@@ -75,13 +72,13 @@
   database already exist are expected); then `docker compose up -d`. A return to
   the old major is only a restore of that dump.
 - Moved `alpine` (the `init-perms` one-shot) from `3.19` to `3.24` on
-  2026-11-05, not run on a host at this tag. 3.19 left upstream support in
+  2026-11-05. 3.19 left upstream support in
   2025-11; 3.24 is the current stable branch (3.24.3, 2026-10-23). The tag keeps
   the minor precision the stack used, so patch releases of 3.24 arrive on pull.
   `ops/scripts/init-volumes.sh` uses only BusyBox `mkdir`, `chown` and `chmod`,
   which no release from 3.20 to 3.24 changes. https://alpinelinux.org/releases/
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

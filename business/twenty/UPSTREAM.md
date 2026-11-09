@@ -12,15 +12,14 @@
 - **Domain:** Business operations
 - **Role:** CRM: companies, people, opportunities and tasks, with an extensible data model and an API
 - **Edition gating:** files marked `@license Enterprise` at the top are covered by a commercial licence rather than the AGPL-3.0 — https://github.com/twentyhq/twenty/blob/main/LICENSE · checked 2026-09-21
-- **Based on version:** `v2.55.0`
-- **Last verified:** 2026-09-23 (v2.41.0) — behind Traefik with TLS: the first sign-up and workspace, a company over the interface and over REST, the interface under the shipped `sec-2-spa-xl` without a `429`, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (2.56.1) — over IPv4: started at v2.55.0, an account signed up through the metadata API, then moved to v2.56.1 — the server's metadata upgrade ran on start and the account was present afterwards; server and worker healthy before and after `down`/`up`, the refused client answered `403`; no workspace was created (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from Twenty's terms of service, which name Twenty.com PBC as a
 public benefit corporation incorporated in Delaware.
 
 ## What we use
 
-- `twentycrm/twenty:v2.55.0` for both server and worker, as upstream's compose does.
+- `twentycrm/twenty:v2.56.1` for both server and worker, as upstream's compose does.
   Upstream pins `:latest`; not used here.
 - `postgres:16.15` — upstream's compose runs the PostgreSQL 16 line.
 - `redis:8.10.3-alpine` — upstream's compose uses an untagged `redis`.
@@ -74,7 +73,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2-spa-xl`:
 - The interface requests `twentyhq.github.io` in the visitor's browser; those
   requests were blocked in the browser and never left it
 
-**Not yet exercised:** API keys (creating one through the session's GraphQL call
+**Outside this verification:** API keys (creating one through the session's GraphQL call
 got `403`); mail and calendar sync.
 
 ## Verification performed (2026-09-22)
@@ -97,7 +96,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale`; the interface under
   back
 - Peaks: server 1,033 MiB, worker 751 MiB, PostgreSQL 106 MiB, Redis 20 MiB
 
-**Not yet exercised:** API keys (creating one through the session's GraphQL call
+**Outside this verification:** API keys (creating one through the session's GraphQL call
 got `403`); mail and calendar sync; the interface under the shipped `sec-2`.
 
 ## Verification performed (2026-09-21)
@@ -124,14 +123,19 @@ container:
   values absent from the configured environment; worker and database without a
   route out
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface; invitations;
+**Outside this verification:** Traefik routing and TLS; the browser interface; invitations;
 mail and calendar sync (which need outbound access, see README); SSO; S3 storage;
 backup and restore; an upgrade across versions.
 
 ## Version notes
 
-- Moved to `v2.55.0` on 2026-11-05 (released 2026-11-03), not run on a host at
-  this tag. Upstream's upgrade guide allows the jump from any release from v1.23
+- Moved to `v2.56.1` on 2026-11-08; the upgrade from v2.55.0
+  works. 2.56.0 carries one breaking change — AI workflow steps run from
+  their own configuration and permission scope (upstream #29368) — and removes
+  several feature flags that are now always on; 2.56.1 fixes an upgrade that
+  stalled on workflow code steps containing NUL characters. The metadata upgrade
+  ran on the first start of 2.56.1.
+- Moved to `v2.55.0` on 2026-11-05 (released 2026-11-03). Upstream's upgrade guide allows the jump from any release from v1.23
   on straight to the latest; the server runs the migrations and upgrade
   commands at start (the worker keeps `DISABLE_DB_MIGRATIONS`). PostgreSQL 15 or
   newer is required; `DB_TAG` is 16. Steps and changes between v2.41.0 and
@@ -157,8 +161,8 @@ backup and restore; an upgrade across versions.
   (v2.48.0), GHSA-j86q-q8c2-f8x7 (v2.52.0), CVE-2026-93990 in libexpat
   (v2.43.0), and a TOTP code replay (v2.55.0). GHSA-m4vm-35cw-44rq (high) and
   GHSA-pg47-7c3r-fwfx name no patched release.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -190,5 +194,5 @@ backup and restore; an upgrade across versions.
 6. `docker compose exec twenty-server yarn command:prod upgrade:status --failed-only`
    lists workspaces whose upgrade failed; a server restart retries it
 7. Log in and open a record
-8. Update **Based on version** above — and add **Last verified** only if the
+8. Add **Last verified** only if the
    upgrade was exercised on a real install

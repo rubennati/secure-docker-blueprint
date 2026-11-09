@@ -13,17 +13,16 @@
 - **Origin:** United States · ClickHouse, Inc. (Langfuse has been part of it since 2026-01) · non-EU
 - **Domain:** AI and local AI
 - **Role:** LLM observability: traces, scores and prompts from any instrumented application
-- **Based on version:** `4.75.0`
-- **Last verified:** 2026-09-22 (4.38.0) — behind Traefik with TLS: the UI, the Python SDK sending traces, scores and a prompt, a restart, and a restore
+- **Last verified:** 2026-11-08 (4.76.0) — over IPv4, with Silo as the object store: the provisioned key pair answered 200 and no key 401, an OpenTelemetry trace was stored as an event file in Silo, processed by the worker and read back from ClickHouse, still readable after down/up
 
 ## What we use
 
-- `docker.langfuse.com/langfuse/langfuse:4.75.0` and `…/langfuse-worker:4.75.0`.
+- `docker.langfuse.com/langfuse/langfuse:4.76.0` and `…/langfuse-worker:4.76.0`.
   Upstream's compose file uses the floating `:4`; not used here.
 - `postgres:18.6`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
-  `quay.io/minio/minio:RELEASE.2025-09-07T16-13-09Z` — the same five components as
-  upstream's compose, pinned. Upstream's MinIO is `cgr.dev/chainguard/minio` with no
-  tag; the quay image is a versioned release of the same server.
+  `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` — the same five components as upstream's compose, pinned.
+  Upstream's object store is `cgr.dev/chainguard/minio` with no tag; Silo is a
+  maintained MinIO fork with release tags (see "Object store: Silo instead of MinIO").
 - This is upstream's smallest self-hosted shape (Docker Compose). Nothing is
   collapsed: the worker, ClickHouse, Redis and blob storage are all required by the
   v4 architecture.
@@ -84,7 +83,7 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
   the archive unpacked — the prompt came back through the API, ClickHouse held
   606 events and 303 scores, and the SDK sent again with the restored keys
 
-**Not yet exercised:** evaluations, which the `trace-upsert` queue feeds; media
+**Outside this verification:** evaluations, which the `trace-upsert` queue feeds; media
 uploads (not supported, see README); the in-app agent; upgrade from a v3
 database.
 
@@ -110,30 +109,33 @@ Against the production `docker-compose.yml` (Docker Secrets, `entrypoint.sh`,
   from the configured environment of web, worker, ClickHouse and MinIO; the worker
   and ClickHouse have no route out
 
-## MinIO withdrew its public images (2026-09-24)
+## Object store: Silo instead of MinIO
 
-`quay.io/minio/minio` answers `401 Unauthorized`, the Docker Hub repository is
-gone, and [`minio/minio`](https://github.com/minio/minio) was archived on GitHub
-with its last push on 2026-04-24. Its final release, `RELEASE.2025-10-15`, is
-newer than the tag pinned here and is equally unavailable.
+MinIO withdrew its public container images on 2026-09-24: `quay.io/minio/minio`
+answers `401 Unauthorized`, the Docker Hub repository is gone, and
+[`minio/minio`](https://github.com/minio/minio) was archived on GitHub with its last
+push on 2026-04-24. The tag pinned here before, `RELEASE.2025-09-07T16-13-09Z`,
+could not be pulled from anywhere public, so the stack did not start.
 
-Checked on 2026-09-24: `quay.io`, Docker Hub, `ghcr.io`, and an older release
-tag — all refused. `quay.io` itself is fine; `quay.io/prometheus/prometheus`
-pulls from the same host.
+The store is now [`pgsty/silo`](https://github.com/pgsty/silo) (AGPL-3.0), a
+maintained MinIO fork with release tags on Docker Hub. Upstream's compose uses `cgr.dev/chainguard/minio`, which publishes `latest` only and cannot be pinned; `business/plane`'s upstream names Silo. It reads
+MinIO's variables (`MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD_FILE`) and serves the S3
+API on port 9000, so the service keeps the name `minio` and its clients are
+unchanged. The image has no `mc`; the healthcheck is Silo's own
+`silo healthcheck ready`. It runs as uid 1000 with `cap_drop: ALL` and no
+capability added.
 
-`cgr.dev/chainguard/minio` is public and is what upstream's own compose file
-uses. Its public repository carries `latest` and `latest-dev` and no version
-tags — the rest of its tag list is signatures and attestations — so a pin taken
-from it is a digest with no promise of staying pullable. It gets an installation
-running; it is not something this repository can pin.
-
-A versioned, S3-compatible replacement — SeaweedFS and Garage both publish one —
-is the real fix, and it changes the configuration rather than a tag.
+Not tested: a data directory written by the old MinIO image. Every run of this
+stack since the withdrawal started empty.
 
 ## Version notes
 
+- Moved to `4.76.0` on 2026-11-08 (released 2026-11-05), web and worker
+  together. No breaking change, variable or migration is
+  labelled; the release is small fixes and refactoring, and web and worker move
+  to the current Langfuse SDK internally.
 - Moved to `4.75.0` on 2026-11-05 (released 2026-11-04), web and worker
-  together, not run on a host at this tag. The releases from 4.51.0 to 4.75.0
+  together. The releases from 4.51.0 to 4.75.0
   carry no breaking-change section; migrations still run at start. The web and
   worker images moved from `node:24-alpine` to Red Hat UBI 9 micro with the
   `nodejs:24` RPM: no busybox and no package manager, but bash, sed, wget and
@@ -154,8 +156,7 @@ is the real fix, and it changes the configuration rather than a tag.
   Node.js 24.22.1 fixes in the images, and webhook, PostHog and storage
   secrets are required again when their destination changes (PRs #19261,
   #19566); no GHSA published.
-- Moved `postgres` from `17.6` to `18.6` on 2026-11-05, not run on a host at
-  this tag. PostgreSQL 18 support: Langfuse supports Postgres 12 and newer (v4
+- Moved `postgres` from `17.6` to `18.6` on 2026-11-05. PostgreSQL 18 support: Langfuse supports Postgres 12 and newer (v4
   needs 15 or newer), with no upper bound
   (https://langfuse.com/self-hosting/deployment/infrastructure/postgres). The 18
   image keeps its cluster under `/var/lib/postgresql/18/docker`; `PGDATA:
@@ -168,8 +169,7 @@ is the real fix, and it changes the configuration rather than a tag.
   < dump.sql` (errors that the bootstrap role and database already exist are
   expected); then `docker compose up -d`. A return to the old major is only a
   restore of that dump.
-- Moved `clickhouse/clickhouse-server` from `25.12` to `26.10.3.7` on 2026-11-05,
-  not run on a host at this tag. The tag keeps the minor precision the stack
+- Moved `clickhouse/clickhouse-server` from `25.12` to `26.10.3.7` on 2026-11-05. The tag keeps the minor precision the stack
   used; `26.10` points at 26.10.3.7 (2026-10-26), the newest stable release.
   Langfuse v4 needs ClickHouse 25.12 or newer and names no upper bound
   (https://langfuse.com/self-hosting/deployment/infrastructure/clickhouse).
@@ -191,8 +191,8 @@ is the real fix, and it changes the configuration rather than a tag.
   `arrayCount` now returns `UInt64` and `accurateCast` to `Nullable` throws
   instead of returning NULL; neither appears in Langfuse's release notes as a
   problem.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -224,7 +224,7 @@ is the real fix, and it changes the configuration rather than a tag.
 4. Bump `APP_TAG` in `.env.example` (web and worker move together)
 5. `docker compose pull && docker compose up -d`; migrations run at start
 6. Log in, then send a test trace
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install
 
 A move from v3 to v4 is a separate procedure: upstream's guide covers the

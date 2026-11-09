@@ -2,11 +2,7 @@
 
 Self-hosted helpdesk / ticketing / customer support. Multi-channel (email, web form, Twitter, Telegram, SMS), SLA tracking, time accounting, knowledge base.
 
-## Open findings
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -21,7 +17,7 @@ Heavy stack — 9 services. Upstream default deployment.
 | `init` | same + `zammad-init` | One-shot DB migrations on every start |
 | `db` | `postgres:18.6-alpine` | Primary data store |
 | `redis` | `redis:8.10.3-alpine` | Background job queue |
-| `memcached` | `memcached:1.6.41` | Rails cache |
+| `memcached` | `memcached:1.6.45` | Rails cache |
 | `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:9.5.6` | Full-text ticket search |
 
 ## Resource requirements
@@ -39,7 +35,12 @@ On a small VPS, consider `ELASTICSEARCH_ENABLED=false` — tickets will still wo
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/zammad-storage
+sudo chown 999:1000 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -54,6 +55,8 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ
 
 mkdir -p .secrets volumes/postgres volumes/redis volumes/elasticsearch volumes/zammad-storage
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
@@ -68,16 +71,18 @@ docker compose logs railsserver --follow
 # Watch for: "* Listening on http://[::]:3000"
 
 # https://<APP_TRAEFIK_HOST>
-# First visit prompts setup wizard — create admin account + organization
+# Over the VPN: the first visit prompts the setup wizard — create the admin
+# account and organization. The route ships closed (APP_TRAEFIK_ACCESS=access-vpn);
+# open it afterwards for the customer web form
 ```
 
 ## Security Model
 
-- **First-visit wizard creates the owner account** — open the UI yourself immediately after start.
+- **First-visit wizard creates the owner account** — until it has run (`/api/v1/getting_started` answers `setup_done: false` without authentication at 7.2.2), whoever opens the UI first becomes the owner. The route therefore ships at `access-vpn`: run the wizard over the VPN, then open it.
 - **`DB_PWD_INLINE` duplicates the DB password** — Zammad reads `POSTGRESQL_PASS` from env only.
 - **Elasticsearch has no auth here** — it's on `app-internal` only, not reachable from outside. If you move it off-host, add xpack.security.
 - **`no-new-privileges:true`** on all services.
-- **Default access `access-public`, with `limit-standard` and `headers-standard`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
+- **Default access `access-vpn` until the wizard has run, then `access-public`, with `limit-standard` and `headers-standard`** — customers submit tickets via public web form `/customer_ticket_new`; agents log in at `/#login`. For agent-only VPN access, see the two-router split pattern (see `business/listmonk/README.md` for the pattern).
 
 ## What it sends outward
 
@@ -102,9 +107,11 @@ off in **Settings → System → Services**.
 ```yaml
 postgresql_databases:
     - name: zammad_production
-      container: zammad-db
       username: zammad
-      password: "{credential file /srv/docker/business/zammad/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec zammad-db pg_dump
+      pg_restore_command: docker exec -i zammad-db pg_restore
+      psql_command: docker exec -i zammad-db psql
 ```
 
 **Excluding the Elasticsearch volume is deliberate, and it has a cost.** The index
@@ -141,3 +148,23 @@ Agents typically configure an inbound IMAP mailbox (Admin → Channels → Email
 
 For "customer opens ticket → added to marketing list" workflows, route via n8n:
 Zammad webhook (Admin → Triggers) → n8n → Listmonk API `POST /api/subscribers`.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `7.2.2-0045` — upstream has released `7.2.2-0047` since. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `docker.elastic.co/elasticsearch/elasticsearch:9.5.6` | — | 0 · 5 | — |
+| `ghcr.io/zammad/zammad:7.2.2-0045` | 0 · 2 | 0 · 1 | — |
+| `memcached:1.6.45` | 0 · 2 | — | — |
+| `postgres:18.6-alpine` | — | — | 1 · 25 |
+| `redis:8.10.3-alpine` | — | — | — |
+
+<!-- findings:end -->
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

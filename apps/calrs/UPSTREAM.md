@@ -10,8 +10,7 @@
 - **Origin:** France · Olivier Lambert · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Scheduling with booking pages and availability read from a CalDAV calendar you already run
-- **Based on version:** `1.22.0`
-- **Last verified:** 2026-09-22 (1.17.1) — behind Traefik with TLS: the bootstrap, the login, a guest booking, a restart, and the README's restore
+- **Last verified:** 2026-11-09 (1.23.3) — over IPv4, moved from 1.23.2 on a new installation: 79 migrations applied, the sign-in page served through Traefik before and after `down`/`up`, the refused client answered `403`; with `CALRS_TRUSTED_PROXIES` at its default the failed sign-ins were logged and rate-limited under the client's own address, not Traefik's (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 
@@ -24,7 +23,7 @@ distinction `core/orion-belt` records.
 
 ## What we use
 
-- `ghcr.io/olivierlambert/calrs:1.22.0` — upstream's own registry. Its README pins
+- `ghcr.io/olivierlambert/calrs:1.23.3` — upstream's own registry. Its README pins
   `:latest`; not used here.
 - One container. SQLite in the data directory; upstream ships no database service
   and the application needs none.
@@ -67,7 +66,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   restored — login, event type and booking back
 - Peak 34 MiB (limit 512 MiB)
 
-**Not yet exercised:** a CalDAV source; SMTP; teams and invite links.
+**Outside this verification:** a CalDAV source; SMTP; teams and invite links.
 
 ## Verification performed (2026-09-21)
 
@@ -89,14 +88,31 @@ throwaway `proxy-public` network without Traefik, and against
 - Hardening from `docker inspect`: uid 999, `read_only`, `cap_drop: ALL`,
   `no-new-privileges`, no published port
 
-**Not yet exercised:** Traefik routing and TLS; a real CalDAV source and therefore
+**Outside this verification:** Traefik routing and TLS; a real CalDAV source and therefore
 availability, booking and rescheduling; SMTP and the `.ics` invitations; OIDC
 login; the public booking page as a guest sees it; backup and restore.
 
 ## Version notes
 
-- Moved to `1.22.0` on 2026-11-05, not run on a host at this tag; `Last verified`
-  stays at `1.17.1`. Back up `volumes/data` first: migrations 064 to 076 add
+- Moved to `1.23.3` on 2026-11-09. A security release:
+  the rate limits believe `X-Forwarded-For` only from a trusted proxy
+  (`CALRS_TRUSTED_PROXIES`, new; default loopback and private ranges, which
+  covers Traefik on the edge network, so the production file keeps the
+  default; the local file sets `none`, nothing sits in front of it); outbound
+  calendar requests connect only to the addresses they checked, at every
+  request, so a CalDAV or EWS source on a private IP literal stops until it is
+  on the private-host allowlist (`CALRS_ALLOW_PRIVATE_HOSTS`); captcha and
+  meeting webhook no longer follow redirects. No migrations.
+- Moved to `1.23.2` on 2026-11-09. 1.23.1 is a security
+  release (a new user could be attached to an existing user's scheduling
+  account; the private-address check now also covers 64:ff9b:1::/48 and
+  198.18.0.0/15, so a resource feed on such an address stops until its host is
+  allowlisted); 1.23.2 refuses a booking whose availability cannot be read. No
+  migrations, no configuration change.
+- Moved to `1.23.0` on 2026-11-08. A minor release
+  (booking directory, first day of the week, calendar selection per source,
+  `X-Robots-Tag: noindex`); no configuration change.
+- Moved to `1.22.0` on 2026-11-05. Back up `volumes/data` first: migrations 064 to 076 add
   columns, tables and an index, and rolling back means restoring that backup with
   the old image. Migration 074 renames duplicate team slugs; since `1.19.0`
   `/u/{username}` pages follow the visitor's language. No configuration change;
@@ -112,5 +128,5 @@ login; the public booking page as a guest sees it; backup and restore.
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`; migrations run at start
 6. Log in, then open a booking page
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

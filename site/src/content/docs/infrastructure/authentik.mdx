@@ -11,8 +11,7 @@ services behind it. Traefik can delegate authentication to it without the servic
 being changed at all, and applications that speak OAuth2, OIDC or SAML can use it
 directly.
 
-<StackEvidence stack="core/authentik"
-  gap="a restore. The database, the secret key and the signing certificates have to come back together, and that has not been performed here." />
+<StackEvidence stack="core/authentik" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -23,7 +22,14 @@ directly.
 On your own machine, with no proxy, domain or certificate. From `core/authentik/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "AUTHENTIK_SECRET_KEY=$(openssl rand -base64 60 | tr -d '\n')"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -35,11 +41,11 @@ and Redis sit only on the stack's internal network. The worker also joins an
 outbound network, because it sends mail and runs the version check; nothing reaches it
 from outside.
 
-:::danger
-The first-run setup is open to anyone until an administrator exists — whoever
-reaches it first becomes the administrator. Complete it immediately after the
-first start, or start with `APP_TRAEFIK_ACCESS=access-vpn`, finish the setup from
-the VPN and only then switch to `access-public`.
+:::note
+The first-run setup lets whoever reaches it create the administrator. The
+deployed stack therefore ships with `APP_TRAEFIK_ACCESS=access-vpn`: you finish
+the setup over the VPN and open the route to `access-public` afterwards, because
+users must be able to log in from anywhere.
 :::
 
 ## Installation
@@ -78,10 +84,17 @@ From `core/authentik/`:
 
    Wait for `Startup complete`.
 
-4. Open the root URL `https://<APP_TRAEFIK_HOST>/`, which starts the setup
-   flow, and create the administrator now. Authentik 2026.5 refuses
+4. Over the VPN, open the root URL `https://<APP_TRAEFIK_HOST>/`, which starts
+   the setup flow, and create the administrator. Since 2026.5 Authentik refuses
    `/if/flow/initial-setup/` when it is opened directly. The flow stops working
    once an administrator exists.
+
+5. Open the route, so users can log in from anywhere:
+
+   ```bash
+   sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-public/' .env
+   docker compose up -d
+   ```
 
 </Steps>
 
@@ -131,19 +144,18 @@ modified and does not need to support any of this.
 
 If Traefik cannot reach the outpost, the request is refused — forward-auth
 fails closed, so an Authentik outage locks people out of the protected services
-rather than letting them through (measured on a host: `500`, never `200`, with
-and without a valid session).
+rather than letting them through: `500`, never `200`, with and without a valid
+session.
 
 The middleware address does not have to be on this host. One Authentik instance
 can protect services on several machines, as long as Traefik can reach it.
 
-:::note[Open: OIDC with Authentik behind a closed route]
+:::note[OIDC needs Authentik on its public route]
 Applications that log in through OpenID Connect themselves — Nextcloud,
 Paperless-ngx, Vikunja — call Authentik's public name from their own server
-container, not only from the browser. Authentik ships `access-public`, and that
-path works. With Authentik restricted to the VPN, how those server-side calls
-reach it is not decided yet; the variants are recorded as an open decision and
-none is documented as the setup.
+container, not only from the browser. That works with Authentik on
+`access-public`, as step 5 sets it. A setup that keeps Authentik restricted to
+the VPN while applications use OIDC is outside what this guide covers.
 :::
 
 The per-application steps, including the variant that protects only part of a
@@ -166,14 +178,11 @@ For [borgmatic](/operations/backup/):
 ```yaml
 postgresql_databases:
     - name: authentik
-      container: authentik-db
       username: authentik
-      password: "{credential file /srv/docker/core/authentik/.secrets/db_pwd.txt}"
-      format: custom
-      # Server: postgres 16 (DB_TAG) — so the client of major 16.
-      pg_dump_command: /usr/lib/postgresql/16/bin/pg_dump
-      pg_restore_command: /usr/lib/postgresql/16/bin/pg_restore
-      psql_command: /usr/lib/postgresql/16/bin/psql
+      # The server's own client, inside its container
+      pg_dump_command: docker exec authentik-db pg_dump
+      pg_restore_command: docker exec -i authentik-db pg_restore
+      psql_command: docker exec -i authentik-db psql
 ```
 
 **This is the stack whose loss cascades.** Every service behind it depends on it,

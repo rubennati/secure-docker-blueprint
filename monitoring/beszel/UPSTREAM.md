@@ -10,8 +10,7 @@
 - **Origin:** US · Henry Gd (community) · non-EU
 - **Domain:** Monitoring
 - **Role:** Lightweight host and per-container metrics hub
-- **Based on version:** `0.21.1`
-- **Last verified:** 2026-09-08 (0.19.0) — v0.8.0 host session: hub and the local agent on one host, owner account from the UI, the system registered at the host's Tailscale address, live host and per-container figures (38 containers), a disk-usage alert crossed on purpose and delivered through ntfy to an iPhone. The standalone `monitoring/beszel-agent` stack was not part of it — no second host.
+- **Last verified:** 2026-11-08 (0.21.1) — over IPv4: the first user created (a second creation refused), the local agent registered with the hub's key and a universal token and reported the host as up through its WebSocket, the user's login before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -44,8 +43,7 @@ Agents connect to the hub over an SSH key pair — no inbound ports needed on ag
 
 ## Version notes
 
-- Moved hub and agent to `0.21.1` on 2026-11-05 (released 2026-10-22), together,
-  not run on a host at this tag; `Last verified` stays at 0.19.0. No breaking
+- Moved hub and agent to `0.21.1` on 2026-11-05 (released 2026-10-22), together. No breaking
   change for a Docker deployment between 0.19.0 and 0.21.1 (0.21.1's
   `Agent.Start` signature change concerns only Go code that embeds the agent).
   New, from the release notes (https://github.com/henrygd/beszel/releases):
@@ -72,7 +70,7 @@ Agents connect to the hub over an SSH key pair — no inbound ports needed on ag
 2. Back up hub data:
 
    ```bash
-   cp -r volumes/data/ beszel-backup-$(date +%Y%m%d)/
+   sudo cp -a volumes/hub-data/ beszel-backup-$(date +%Y%m%d)/
    ```
 
 3. Bump `APP_TAG` in `.env` for both hub and all agent deployments

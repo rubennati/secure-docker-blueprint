@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (3.1.1) — over IPv4: an application created with the administrator from the secret file and a message sent with its token, the message kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/gotify/server/pkgs/container/server
@@ -11,7 +13,6 @@
 - **Origin:** Germany · Gotify community project · EU
 - **Domain:** Monitoring
 - **Role:** Self-hosted push notifications — applications post with a token, clients hold a stream open
-- **Based on version:** `3.1.1`
 
 ## Origin, stated precisely
 

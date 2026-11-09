@@ -8,8 +8,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 Vaultwarden is a self-hosted password manager compatible with Bitwarden clients — browser extensions, mobile apps, and the desktop client. It can hold access credentials to everything else you run; treat setup and backup accordingly.
 
-<StackEvidence stack="apps/vaultwarden"
-  gap="the official Bitwarden clients — desktop, mobile, browser and CLI. The client paths were driven through the API they use." />
+<StackEvidence stack="apps/vaultwarden" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -20,7 +19,14 @@ Vaultwarden is a self-hosted password manager compatible with Bitwarden clients 
 On your own machine, with no proxy, domain or certificate. From `apps/vaultwarden/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -hex 32)"
+} >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -62,9 +68,11 @@ From `apps/vaultwarden/`:
    sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
    ```
 
-5. Generate the admin token. Vaultwarden accepts a plain-text token as well;
-   this setup deliberately does not, because a plain token in `.env` is readable
-   by anything that can read the file or inspect the container:
+5. Optional: the admin panel. `VW_ADMIN_TOKEN` ships empty, which keeps the
+   panel at `/admin` off. Set it only when you need the panel, and never to a
+   plain word — Vaultwarden accepts a plain-text token as it stands, and a plain
+   token in `.env` is readable by anything that can read the file or inspect the
+   container. Generate a hash instead:
 
    ```bash
    docker compose run --rm --no-deps vaultwarden-app /vaultwarden hash
@@ -136,7 +144,8 @@ Open `https://your-domain` — the login page should load over TLS.
 
    Then reload the login page — "Create Account" should be gone.
 
-3. At `https://your-domain/admin`, set:
+3. With the admin panel switched on (installation step 5), set at
+   `https://your-domain/admin`:
 
    | Setting | Value |
    |---|---|
@@ -200,10 +209,34 @@ entries lose their files.
 
 **Login page not loading but the container is healthy:** check Traefik logs and confirm `APP_TRAEFIK_HOST` matches your DNS record exactly.
 
-**Email verification not arriving:** send a test email from `/admin` → Settings, and check your SMTP provider's outbound log if it fails.
+**Email verification not arriving:** recreate the app after changing the SMTP
+values — `docker compose up -d --force-recreate vaultwarden-app` — and confirm
+the container has them:
+
+```bash
+docker compose exec vaultwarden-app sh -c 'env | grep -E "^SMTP_HOST=|^SMTP_FROM=|^SMTP_PORT=|^SMTP_SECURITY=|^SMTP_USERNAME="'
+docker compose logs vaultwarden-app --tail=200 | grep -iE "smtp|mail|error|lettre"
+```
+
+With the admin panel on, **Admin → Users → Invite User** is an end-to-end test.
+Mail that lands in junk points at the sender domain's SPF, DKIM and DMARC records.
+
+**Push notifications do not sync:** `Unexpected push token received from bitwarden server: error decoding response body` means EU credentials (a `bitwarden.eu` registration) without the EU relay. Set `VW_PUSH_RELAY_URI=https://api.bitwarden.eu` and `VW_PUSH_IDENTITY_URI=https://identity.bitwarden.eu` in `.env` and recreate the container.
+
+**Admin → Diagnostics reports `Header 'x-frame-options' is present`:** the proxy is setting the frame header Vaultwarden controls per route. Confirm `.env` still has `APP_TRAEFIK_HEADERS=headers-application-owned`.
+
+**Admin → Diagnostics reports `HTTP Response validation: Error`:** the address in use does not match `DOMAIN`, which the compose file sets to `https://${APP_TRAEFIK_HOST}`, or HTTPS is not enforced end to end.
+
+**`/admin` fails in the normal browser but works in a private window:** clear the site data and check browser extensions before suspecting the server.
 
 ## Repository files
 
 - [`apps/vaultwarden/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/vaultwarden/README.md) — full setup and admin panel settings
 - [`apps/vaultwarden/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/vaultwarden/.env.example)
 - [`apps/vaultwarden/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/vaultwarden/UPSTREAM.md) — upstream notes, backup, and upgrade steps
+
+## Official sources
+
+- [Vaultwarden wiki](https://github.com/dani-garcia/vaultwarden/wiki)
+- [Release notes](https://github.com/dani-garcia/vaultwarden/releases)
+- [Bitwarden self-host registration for push](https://bitwarden.com/host/)

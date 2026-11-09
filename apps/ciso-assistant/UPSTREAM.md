@@ -13,15 +13,14 @@
 - **Use restrictions:** none — the community images this stack pins are released under AGPLv3, and the commercially licensed code in `enterprise/` ships only in separate enterprise binaries — https://github.com/intuitem/ciso-assistant-community/blob/main/LICENSE.md · checked 2026-09-21
 - **Edition gating:** SSO/SAML, the API, multiple frameworks and self-hosting are in the community edition; the Pro edition adds, among others, SCIM group provisioning, fine-grained per-object permissions, a multi-level domain hierarchy and custom fields — https://intuitem.com/compare · checked 2026-09-21
 - **Commercial model:** paid self-hosted edition — https://intuitem.com/compare · checked 2026-09-21
-- **Based on version:** `v4.2.1`
-- **Last verified:** 2026-09-22 (v4.0.5) — behind Traefik with TLS: the interface and the `/api` split, a framework imported into a compliance assessment, Huey's scheduled tasks, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (4.2.2) — over IPv4: moved from v4.2.1; the first start ran its migrations for about ten minutes, as the README says; the frontend runs within its 768m limit; the administrator from the secret file logged in through the API before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from intuitem's legal notice (RCS Versailles, France).
 
 ## What we use
 
-- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.1` for backend and Huey,
-  and `…/frontend:v4.2.1`. Upstream's compose pins `:latest` with `pull_policy:
+- `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2` for backend and Huey,
+  and `…/frontend:v4.2.2`. Upstream's compose pins `:latest` with `pull_policy:
   always`; not used here. Per upstream's licence file, the community binaries are
   AGPLv3; the commercially licensed code ships only in separate enterprise images.
 - `postgres:16.15` — upstream's template runs `postgres:16`.
@@ -79,7 +78,7 @@ local ext4 filesystem:
   2 GiB), PostgreSQL 136 MiB (1 GiB), frontend 431 MiB (512 MiB — about 410 MiB
   right after a start), Huey 276 MiB (1 GiB)
 
-**Not yet exercised:** email; SSO; the MCP server and the AI features, which this
+**Outside this verification:** email; SSO; the MCP server and the AI features, which this
 stack leaves out.
 
 ## Verification performed (2026-09-21)
@@ -103,15 +102,17 @@ Against the production `docker-compose.yml` (Docker Secrets, wrapper,
   values absent from the configured environment; no `django_secret_key` file in the
   data directory; Huey and PostgreSQL without a route out
 
-**Not yet exercised:** Traefik routing and TLS, including the `/api` split in
+**Outside this verification:** Traefik routing and TLS, including the `/api` split in
 practice; the browser interface; Huey actually running a task (it started and
 loaded its configuration against PostgreSQL); email; SSO; importing a framework
 into an assessment; backup and restore.
 
 ## Version notes
 
-- Moved to `v4.2.1` on 2026-11-05, backend and frontend together, not run on a
-  host at this tag. `v4.2.0` moves the frontend to SvelteKit 3 and adapter-node 6,
+- Moved to `v4.2.2` on 2026-11-08. A patch release
+  with a security hardening change (upstream #5229) and a new framework library;
+  the frontend needed 768m instead of 512m on this host (`docker-compose.yml`).
+- Moved to `v4.2.1` on 2026-11-05, backend and frontend together. `v4.2.0` moves the frontend to SvelteKit 3 and adapter-node 6,
   which drops the `ORIGIN` variable; this stack uses `PROTOCOL_HEADER` and
   `HOST_HEADER`, which remain, so login and CSRF behind Traefik are what a host
   run has to check. `v4.1.0` changes the current-user API (marked breaking
@@ -128,5 +129,5 @@ into an assessment; backup and restore.
 4. Bump `APP_TAG` in `.env.example` — backend, Huey and frontend move together
 5. `docker compose pull && docker compose up -d`; the backend migrates at start
 6. Log in and open an assessment
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

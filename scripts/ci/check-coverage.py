@@ -136,7 +136,7 @@ def main() -> int:
 
     # ── unchecked-dir: content under a stack root that neither checker sees ──
     by_structure = {str(p) for p in structure.find_apps()}
-    rows, _ = lifecycle.collect()
+    rows, _, _ = lifecycle.collect()
     by_lifecycle = {r["stack"] for r in rows}
 
     # Directories holding at least one tracked file, directly under a stack root.

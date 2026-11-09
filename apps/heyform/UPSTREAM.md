@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v3.0.6) — over IPv4: the app, MongoDB and Valkey healthy, the site served before and after `down`/`up`, the refused client answered `403`; no form built (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/heyform/community-edition
@@ -13,7 +15,6 @@
 - **Origin:** United States · HeyForm · non-EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Form builder and response collector, with conversational forms, logic, file uploads and submission export
-- **Based on version:** `v3.0.6`
 
 ## Project maturity
 
@@ -52,7 +53,7 @@ runs.
 
 Compose clears an image's `CMD` when `entrypoint` is set, so the start command
 is repeated in the compose file. Upstream's `CMD` probes three paths for the
-built server; in v3.0.3 it is at `dist/src/main.js`.
+built server; since v3.0.6 it is at `dist/main.js` (in v3.0.3 it was at `dist/src/main.js`).
 
 ## Verified on the images (2026-09-24)
 
@@ -129,13 +130,13 @@ can reach the host name can become such a member.
 
 ## Version notes
 
-- Moved to `v3.0.5` on 2026-10-31, not run at this tag. `v3.0.4` (2026-10-15)
+- Moved to `v3.0.5` on 2026-10-31. `v3.0.4` (2026-10-15)
   honours `VERIFY_USER_EMAIL` for password sign-ups; `v3.0.5` (2026-10-24)
   redirects an expired GraphQL session to the login, makes the legal-terms block
   enforce acceptance, and lets a self-hoster stop storing submitter IP addresses.
   No breaking change, variable, MongoDB or cache requirement change is labelled,
   and no advisory.
-- Moved to `v3.0.6` on 2026-11-05, not run on a host at this tag. Fixes to
+- Moved to `v3.0.6` on 2026-11-05. Fixes to
   answer logic, file uploads and the progress bar, new notification options
   (reply-to, respondent subject, owner skip), and Node 22.23.4 as the image
   base. The variable `HEYFORM_ALLOW_PRIVATE_OUTBOUND` is renamed
@@ -151,7 +152,7 @@ can reach the host name can become such a member.
 1. Read the release notes and the advisory list; check whether
    GHSA-chmm-jqpm-3pwx has gained a patched version.
 2. Bump `APP_TAG`. Check whether the built server is still at
-   `dist/src/main.js` — the compose file names it directly.
+   `dist/main.js` since v3.0.6 — the compose file names it directly.
 3. Check whether any new setting needs to be a secret, and whether
    `ENABLE_GOOGLE_FONTS` and `APP_DISABLE_REGISTRATION` still default the way
    this stack assumes.

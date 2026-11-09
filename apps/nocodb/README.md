@@ -4,13 +4,15 @@
 
 Open-source Airtable alternative. Turns any SQL database into a spreadsheet-like UI with views, forms, and a REST + GraphQL API. Commonly paired with **n8n** for low-code automation.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single-container deployment with NocoDB's built-in SQLite:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `nocodb-app` | `nocodb/nocodb:latest` | Web UI + REST/GraphQL API |
+| `nocodb-app` | `nocodb/nocodb:2026.10.1` | Web UI + REST/GraphQL API |
 
 Data lives in `./volumes/data/` (SQLite DB, attachments, user uploads).
 
@@ -19,7 +21,12 @@ Data lives in `./volumes/data/` (SQLite DB, attachments, user uploads).
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'NC_AUTH_JWT_SECRET=%s\n' "$(openssl rand -hex 64)" >> .env.local
+
+mkdir -p volumes/local/data
+sudo chown 0:0 volumes/local/data
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -32,15 +39,20 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```bash
 # 1. Create .env
 cp .env.example .env
-# Edit: APP_TRAEFIK_HOST, TZ
+# Edit: APP_TRAEFIK_HOST, TZ, NC_ADMIN_EMAIL and NC_ADMIN_PASSWORD — NocoDB
+#   refuses to start while NC_ADMIN_EMAIL is set and the password is empty
+#   (min 8 characters, an uppercase letter, a number and a special character)
 
 # 2. Generate JWT secret
 mkdir -p .secrets
 openssl rand -hex 64 > .secrets/nc_jwt_secret.txt
 # This encrypts every API token NocoDB issues. Back it up off-host.
 
-# 3. Create data volume
+# 3. Create data volume. NocoDB runs as root without capabilities
+#    (cap_drop: ALL, no DAC_OVERRIDE), so root may not write into a
+#    directory another user owns — hand it to root
 mkdir -p volumes/data
+sudo chown 0:0 volumes/data
 
 # 4. Start
 docker compose up -d

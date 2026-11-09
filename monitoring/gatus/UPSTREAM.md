@@ -10,8 +10,7 @@
 - **Origin:** Canada · TwinProduction · non-EU
 - **Domain:** Monitoring
 - **Role:** Uptime and status page defined as YAML
-- **Based on version:** `v5.38.0`
-- **Last checked:** 2026-05-03
+- **Last verified:** 2026-11-08 (v5.38.0) — over IPv4: the status API answering for the configured endpoints before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -42,7 +41,7 @@ See [Gatus config docs](https://github.com/TwiN/gatus#configuration) for the ful
 ## Version notes
 
 - Moved `twinproduction/gatus` to `v5.38.0` on 2026-11-05 (released 2026-10-28),
-  across v5.37.0, not run on a host at this tag. No breaking change is listed.
+  across v5.37.0. No breaking change is listed.
   v5.38.0 now validates maintenance windows on external, DNS and SSH endpoints, so a
   configuration with an invalid window there is refused at start instead of being
   ignored (`config.example.yaml` sets none); it redacts the Telegram token from send

@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (18.11.9) — over IPv4: `tctl status` reported the cluster at 18.11.9, a user created with `tctl users add` and still listed after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/gravitational/teleport
@@ -14,7 +16,6 @@
 - **Origin:** USA · Gravitational, Inc. · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Access through short-lived certificates instead of standing credentials
-- **Based on version:** `18.11.8`
 - **Verification snapshot:** 2026-09-19 — clean start and hardening under full
   container isolation; no real client connection, no join token exercised
 
@@ -41,7 +42,7 @@ enforce or verify.
 
 ## What we use
 
-- `public.ecr.aws/gravitational/teleport-distroless:18.11.8`, single
+- `public.ecr.aws/gravitational/teleport-distroless:18.11.9`, single
   container, `auth` and `proxy` roles combined — the realistic single-node
   shape for what this repository targets, not a production Teleport
   cluster's separated-role, HA topology
@@ -77,9 +78,10 @@ enforce or verify.
 
 ## Version notes
 
+- Moved to `18.11.9` on 2026-11-08; a new installation
+  works at this tag. A patch release of the 18.11 line.
 - Moved `public.ecr.aws/gravitational/teleport-distroless` to `18.11.8` on
-  2026-11-05 (released 2026-10-29), patch releases on the 18.11 line, not run on
-  a host at this tag; the image scan could not pull this registry before, so
+  2026-11-05 (released 2026-10-29), patch releases on the 18.11 line; the image scan could not pull this registry before, so
   whether the findings of `18.11.0` are gone needs the next scan. Public ECR
   carries no 18.12 or 19.x tag. 18.11.3 and 18.11.5 are private security
   releases whose details upstream does not publish; 18.11.6 moves the Go
@@ -122,4 +124,3 @@ enforce or verify.
 - **License requires the operator's own judgment** — see "Community
   Edition license" above. Nothing in this repository can verify a
   deployment stays within the free-use thresholds.
-- **Not yet run on a live host beyond a clean start.**

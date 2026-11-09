@@ -2,15 +2,7 @@
 
 Self-hosted photo and video backup with machine-learning–based search, facial recognition, and mobile apps for iOS/Android. Four-service stack: web server, ML worker, Postgres (with the VectorChord extension for embeddings), and Valkey (Redis-compatible).
 
-## Open findings
-
-The Immich server image, `immich-server:v3.3.6`, carries 5 CRITICAL findings that have published fixes: brotli from its Debian base and the Node packages handlebars, `proxy-addr` and `tar`. The machine-learning image, `immich-machine-learning:v3.3.6`, carries 7, five of them in Pillow 12.3.0, plus anyio and certifi. v3.3.6 is the newest stable release.
-
-**Risk:** the machine-learning service decodes uploaded photos with Pillow, so allow uploads only from trusted users. The server's findings need admin-set templates, unusual proxy settings or crafted archives. Watch for v3.4.0.
-
-The Immich database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1`, carries 4 CRITICAL findings: Perl 5.36 from its Debian 12 base (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) and the `gosu` Go runtime (CVE-2025-68121). Every current Immich PostgreSQL build, on any supported major, ships the same packages.
-
-**Risk:** PostgreSQL does not run Perl on user data, and gosu makes no network connection. Keep the database on the internal network and watch for a rebuilt image.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -26,7 +18,12 @@ The Immich database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1`, ca
 Runs on `http://localhost:2283` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:999 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:2283
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -52,6 +49,8 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
 # 4. Create volume directories
 mkdir -p volumes/postgres volumes/redis volumes/model-cache volumes/library
+# Valkey runs as the image's own user and cannot fix ownership itself
+sudo chown 999:999 volumes/redis
 
 # 5. Start
 docker compose up -d
@@ -60,7 +59,9 @@ docker compose up -d
 docker compose logs immich-app --follow
 # Watch for: "Immich Server is listening on..."
 
-# 7. Open UI and create the admin account
+# 7. Over the VPN, open the UI and create the admin account. The route ships
+#    closed (APP_TRAEFIK_ACCESS=access-vpn); switch it to access-public afterwards
+#    if the mobile apps reach it without the VPN
 # https://<APP_TRAEFIK_HOST>
 # First user to sign up becomes admin.
 ```
@@ -74,7 +75,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 
 ## Security Model
 
-- **First-user-wins admin** — the first registered account becomes admin. Register immediately after start so an attacker cannot claim it.
+- **First-user-wins admin** — until an admin exists, `POST /api/auth/admin-sign-up` makes the first caller the admin, with no setup secret; afterwards it answers `Admin setup is not available` (v3.3.6). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`DB_PASSWORD` restricted to `[A-Za-z0-9]`** — Immich does not support special characters in the DB password. Keep generation aligned (see Setup step 2).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **Postgres on `app-internal` (`internal: true`)** — only the Immich services can reach it.
@@ -95,9 +96,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 ```yaml
 postgresql_databases:
     - name: immich
-      container: immich-db
       username: immich
-      password: "{credential file /srv/docker/apps/immich/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec immich-db pg_dump
+      pg_restore_command: docker exec -i immich-db pg_restore
+      psql_command: docker exec -i immich-db psql
 ```
 
 **`UPLOAD_LOCATION` can point outside the stack directory** (the example keeps it
@@ -138,11 +141,13 @@ gunzip --stdout dump.sql.gz \
 | `--single-transaction` | a failure rolls the whole restore back instead of leaving a half-populated database that starts and looks plausible |
 | `ON_ERROR_STOP=on` | without it `psql` continues past errors and exits 0. This is the part that turns a failed restore into one you find out about later |
 
-Measured on the step 8 lab host (v3.2.0): this pipeline restored the `pg_dump` above
+At v3.2.0 this pipeline restored the `pg_dump` above
 with every row count and the originals intact. The upstream page's `pg_dumpall
 --clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
-block` — and the `postgresql_databases` entry under Backup fails on a host whose
-`pg_restore` is newer than the server's PostgreSQL 14 (`transaction_timeout`).
+block`. The `postgresql_databases` entry under Backup runs the server's own client
+through `docker exec`; the host's client 17 stopped on `transaction_timeout` against
+this PostgreSQL 14, the container's did not (2026-11-08: 73 tables,
+233,636 rows identical).
 
 Two preconditions upstream states, both of which invalidate a restore if missed:
 
@@ -207,6 +212,29 @@ curl -L https://github.com/simulot/immich-go/releases/latest/download/immich-go_
 ```
 
 > Use `immich-go` for Google Photos migrations or large libraries with duplicate risk. Use the official CLI for simple folder syncs.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `v3.3.6` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `ghcr.io/immich-app/immich-machine-learning:v3.3.6` | 0 · 3 | 7 · 35 | — |
+| `ghcr.io/immich-app/immich-server:v3.3.6` | 1 · 3 | 4 · 30 | — |
+| `ghcr.io/immich-app/postgres:14-vectorchord1.1.1@sha256:b38cad4a8bdb…` | 3 · 10 | — | 1 · 25 |
+| `valkey/valkey:9.1.3` | 0 · 3 | — | — |
+
+<!-- findings:end -->
+
+The Immich server image, `immich-server:v3.3.6`, carries 5 CRITICAL findings that have published fixes: brotli from its Debian base and the Node packages handlebars, `proxy-addr` and `tar`. The machine-learning image, `immich-machine-learning:v3.3.6`, carries 7, five of them in Pillow 12.3.0, plus anyio and certifi. v3.3.6 is the newest stable release.
+
+**Risk:** the machine-learning service decodes uploaded photos with Pillow, so allow uploads only from trusted users. The server's findings need admin-set templates, unusual proxy settings or crafted archives. Watch for v3.4.0.
+
+The Immich database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1`, carries 4 CRITICAL findings: Perl 5.36 from its Debian 12 base (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) and the `gosu` Go runtime (CVE-2025-68121). Every current Immich PostgreSQL build, on any supported major, ships the same packages.
+
+**Risk:** PostgreSQL does not run Perl on user data, and gosu makes no network connection. Keep the database on the internal network and watch for a rebuilt image.
 
 ## Details
 

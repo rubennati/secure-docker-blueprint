@@ -40,7 +40,7 @@ services:
       # Edge Mode
       EDGE: "1"
       EDGE_ID: ${EDGE_ID}
-      EDGE_KEY: ${EDGE_KEY}
+      EDGE_KEY: ${EDGE_KEY:?Set EDGE_KEY in .env}
       # Set to 1 only if the central Portainer uses a self-signed cert.
       EDGE_INSECURE_POLL: "0"
       LOG_LEVEL: INFO

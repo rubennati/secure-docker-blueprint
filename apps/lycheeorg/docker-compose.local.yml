@@ -1,6 +1,8 @@
 # Lychee — local
 #
 #   cp .env.local.example .env.local
+#   mkdir -p volumes/local/redis
+#   sudo chown 999:1000 volumes/local/redis
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
 #   # open http://localhost:8000
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -17,8 +19,8 @@ services:
     environment:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
-      MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       MARIADB_AUTO_UPGRADE: "1"
       TZ: ${TZ}
     command:
@@ -64,7 +66,7 @@ services:
       PHP_TZ: ${TZ}
       TIMEZONE: ${TZ}
       APP_URL: http://localhost:8000
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env.local}
       DB_CONNECTION: mysql
       DB_HOST: db
       DB_PORT: "3306"
@@ -82,11 +84,9 @@ services:
       DISABLE_WEBAUTHN: "false"
       TRUSTED_PROXIES: "*"
     volumes:
-      - ./volumes/local/conf:/conf
-      - ./volumes/local/uploads:/uploads
-      - ./volumes/local/sym:/sym
-      - ./volumes/local/logs:/logs
-      - ./volumes/local/tmp:/lychee-tmp
+      - ./volumes/local/uploads:/app/public/uploads
+      - ./volumes/local/logs:/app/storage/logs
+      - ./volumes/local/tmp:/app/storage/tmp
     ports:
       - "127.0.0.1:8000:8000"
     networks: [lychee-local]

@@ -3,50 +3,24 @@
 Current work items. Larger direction lives in [`../ROADMAP.md`](../ROADMAP.md);
 this file is the short list.
 
-## Open after v0.9.1
+## Open
 
-State at the v0.9.1 tag (2026-09-20): `dev` and `main` level, no open pull requests,
-no open Dependabot alerts, CI green. Everything below is what is not done.
+Everything below that carries an open box is not done; a closed item names its
+evidence.
 
-### 1. Image findings as facts — closes audit finding C1
+### 1. Image findings as facts — closed 2026-11-08
 
-Decision and reasoning: [`decisions.md`](decisions.md#2026-09-20--image-findings-are-recorded-as-facts-and-the-shipped-access-default-follows-them).
-Input data: the last full Trivy scan on `main` (2026-09-17, `trivy-image-scan-results`
-artifact; a new run started after the v0.9.1 merge and includes the 26 new images).
-Snapshot of the 2026-09-17 scan: 99 images, 59 with at least one CRITICAL finding, 1003
-CRITICAL in total, every one with a published fix, plus 11 466 HIGH; n8n could not be
-scanned (registry rate limit). Largest: `opensign/opensign` 196, `opensign/opensignserver`
-206, `louislam/uptime-kuma` 127, `cal.diy` 45, `lycheeorg/lychee` 25, `sdoc-server` 24,
-Paperless-ngx 23, OpenProject 22, Seafile 20.
+The facts per stack are `upstream-status.json`, the findings block in each stack
+README and the site catalogue (DEC-079, DEC-080); every stack ships closed, checked
+by `check-structure.py` `public-default` (DEC-043 addendum). Issue #249 (the
+2026-10-19 baseline pairs) is answered by the same: findings are shown per stack
+and rewritten at every pin move.
 
-- [ ] Generate a per-image facts file from the scan: CRITICAL and HIGH counts, how many
-      have a fix, image age, scan date. Checked in CI for staleness like the other
-      generated files.
-- [ ] Add an `Exposure` field to `UPSTREAM.md` with a reason, first for the five images
-      above; the rest get the rule-derived value.
-- [ ] Checker: a stack whose findings mark it private-only or lab-only cannot ship
-      `APP_TRAEFIK_ACCESS=access-public`.
-- [x] Trivy gate: block only on CRITICAL findings absent from the recorded facts.
-      Done — `scripts/ci/trivy-gate.py` against `.trivy-baseline.json`, which records
-      513 findings across 76 image repositories as of the 2026-09-21 scan of `dev`.
-      Closes audit C1. The bullets around it — the per-image facts file, the
-      `Exposure` field and the access checker — are the *decision-data* half and
-      remain open; the gate does not depend on them.
-- [ ] Catalogue page: show the facts (counts, fix available, age, licence limits) in
-      neutral wording; no judgement of the project.
-- [ ] For OpenSign and Uptime Kuma: check whether upstream has published a newer image;
-      if so bump the pin (normal upgrade), if not record the facts.
+### 2. A host run for every stack (audit S1, DEC-080) — closed 2026-11-09
 
-### 2. Host verification of the scaffolded stacks (audit S1)
-
-[`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md) is the ordered
-run: Traefik with TLS, a refused client, restart, restore, and each stack's own open
-items. Needs a host; nothing in the 26 new stacks has one. Until then they stay
-`scaffolded`.
-
-- [ ] `apps/litellm`, `apps/ciso-assistant` and `monitoring/langfuse` were verified on a
-      host at the previous pin and moved on 2026-10-04 (`v1.101.4`, `v4.0.9`, `4.50.0`).
-      They are `scaffolded` until the run is repeated at the new pin.
+120 of 121 stacks carry a test date at their pin (`../LIFECYCLE.md`); `apps/vllm`
+states what it needs, an NVIDIA GPU (`Last verified: not yet — reason`). Evidence:
+`../docs/labs/stack-refresh/2026-11-08-results.md`. A pin that moves past the tested version gets the App Chain again.
 
 ### 3. Personal data on the public site (audit W7 / D3)
 
@@ -168,16 +142,12 @@ products and are added as a second deliberate exception (`decisions.md`,
       questions need a host that can be flooded without consequence, so it
       waits. Both in `decisions.md`, 2026-09-24.
       Which of them landed is in [`../CHANGELOG.md`](../CHANGELOG.md).
-      Each stack ships `scaffolded` — verified on its image, not yet behind
-      Traefik. Moving them to `baseline-aligned` is S1, above.
-- [ ] Replace MinIO in `business/plane` and `monitoring/langfuse`. Both stacks
-      stop at it: MinIO withdrew every public image on 2026-09-24 and archived
-      its source repository, so the pinned tag cannot be pulled and the services
-      that depend on it never start. Each README says so. `cgr.dev/chainguard/minio`
-      is public and is what Langfuse's own compose uses, but it ships `latest`
-      only, so it runs an installation without being pinnable. A versioned
-      S3-compatible store — SeaweedFS or Garage — is the fix, and it needs a run
-      against each stack rather than a tag change.
+      Each stack was verified on its image, not yet behind Traefik; a host run
+      is §2, above.
+- [x] Replace MinIO in `business/plane` and `monitoring/langfuse` — done on the
+      stack-refresh lab branch: `pgsty/silo` (a maintained MinIO fork with release
+      tags), both stacks run behind Traefik with an upload and a trace stored in
+      it. Open: a data directory written by the old MinIO image is untested.
 - [ ] Build candidates — Live Helper Chat, DayOtter, Bareos: ask upstream to
       publish an image first; otherwise a fork and an image built here under
       `../docs/standards/custom-application.md`.
@@ -203,17 +173,18 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
 - [x] Decided 2026-10-03 (`decisions.md`): the stack publishes its mail ports
       through an opt-in overlay, each stack states where its certificate comes
       from, Stalwart runs upstream's image, mail servers sit in `apps/`.
-- [x] Batch W, Stalwart — `../apps/stalwart`, `scaffolded`, verified on the
+- [x] Batch W, Stalwart — `../apps/stalwart`, checked on the
       image. What a host still has to establish is in its `UPSTREAM.md`.
-- [x] Batch X, docker-mailserver — `../apps/docker-mailserver`, `scaffolded`,
-      verified on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
+- [x] Batch X, docker-mailserver — `../apps/docker-mailserver`,
+      checked on the image. Fail2ban is on and needs `NET_ADMIN`, recorded in
       `CAP_ADD_EXCEPTIONS`.
 - [x] Batch Y, jeboehm/docker-mailserver — `../apps/mailserver-jeboehm`,
-      `scaffolded`, verified on the images. It has no automatic ban; its README
+      checked on the images. It has no automatic ban; its README
       says so.
-- [ ] `apps/mailserver-jeboehm` on a host: sign-in to the administration
-      interface behind Traefik, a DKIM signature against a published record,
-      and delivery to and from another mail system.
+- [ ] `apps/mailserver-jeboehm` on a host: a DKIM signature against a published
+      record, and delivery to and from another mail system. The administration
+      interface behind Traefik and local delivery are checked (2026-11-08,
+      `UPSTREAM.md`).
 - [ ] `apps/docker-mailserver` on a host: which client address the container
       sees on a published port — Fail2ban bans that address — and delivery to
       and from another mail system.
@@ -225,7 +196,7 @@ Three mail servers are added as a third deliberate exception (`decisions.md`,
 
 ### 9. Milestone v0.10.0 — measured resource limits
 
-Every `✅` stack's limits from a measurement on a real install
+The limits of every stack with a test date from a measurement under load on a real install
 ([`../docs/resource-measurement.md`](../docs/resource-measurement.md)). Needs a host.
 Whether it stays a release is D4 of the stabilization audit; `state.md` carries the
 milestone.
@@ -237,8 +208,7 @@ milestone.
   Done: `VIKUNJA_MAILER_HOST` is empty, and the Brevo host stands only in a comment
   as an example.
 - The five AI stacks and Dify/Langfuse have no restore procedure performed; the READMEs
-  document one. The Restore docs column in `LIFECYCLE.md` records what each README
-  has; `ops-proven` records a rehearsal.
+  document one. A rehearsal shows as `with restore` in `LIFECYCLE.md`.
 - The Trivy scan does not cover images built locally (Cal.diY, the vikunja layer);
   recorded in `decisions.md`, 2026-09-18, the custom-application path.
 - `core/traefik/ops/scripts/validate.sh` searched the whole of `config/` for
@@ -343,30 +313,28 @@ v0.8.0 closed on 2026-09-08 — the record is
 session left open is in
 [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md)
 
-- Verify the Priority 1 stacks behind Traefik with TLS and restore each —
-      [`../docs/host-session-priority-1.md`](../docs/host-session-priority-1.md).
-      Until then they stay `scaffolded`. Not done; the same item is §2 above, which
-      carries it, so it has no box here.
+- The Priority 1 stacks behind Traefik with TLS — closed with §2 above.
 
 - [x] Borgmatic: install, initialise repository, first backup, export the key off-host
       — evidence: `../backup/borgmatic/RESTORE.md` records the rehearsal of 2026-07-29
-- [x] **Restore rehearsal — closed v0.7.0** and produced the first `ops-proven` stack
-      — evidence: `../LIFECYCLE.md` lists one `ops-proven` stack
+- [x] **Restore rehearsal — closed v0.7.0** — evidence: `../LIFECYCLE.md` marks the
+      stacks `with restore`
 - [ ] Exercise append-only over a remote repository — the one Borgmatic mechanism
       a local rehearsal cannot establish. Not about owning an off-site target;
       about whether the documented protection behaves as written
-- [ ] UrBackup: verify against the gate list in `backup/urbackup/README.md`
-- [ ] Verify the nine pending major versions — the list is `../ROADMAP.md` →
-      *Verified before the standards moved*; `LIFECYCLE.md` carries each pin beside
-      the version last verified
-- [ ] Decide the legacy verification stamps, per app — `LIFECYCLE.md` marks them ⚠️
+- [x] UrBackup against the gate list in `backup/urbackup/README.md` — file backup and
+      download with a Linux client, 2026-11-09 (`../docs/labs/stack-refresh/2026-11-08-results.md`). Open: a restore to the client
+- [x] The nine pending major versions — each stack carries a test date at its pin
+      (`../LIFECYCLE.md`)
+- [x] The legacy verification stamps — no stack carries `Last checked:` any more
+      (`apps/_reference` is the template)
 - [x] Verify `monitoring/healthchecks` and `monitoring/uptime-kuma` — done 2026-09-08,
       closed circuit and down/up both on a phone. Evidence: `Last verified` 2026-09-08
       (v4.4) in `../monitoring/healthchecks/UPSTREAM.md`; Uptime Kuma re-verified
       2026-09-13 (2.5.4)
-- [ ] Point borgmatic's run monitoring at a real Healthchecks check — the receiver
-      exists now; this is what turns the backup timer's silence into an alert.
-      `state.md` → *Immediate next steps* lists it first
+- [ ] Point borgmatic's run monitoring at a real Healthchecks check, pinged at
+      `127.0.0.1:8001` (`backup/borgmatic/config.yaml.example`) — this is what turns
+      the backup timer's silence into an alert. `state.md` → *Immediate next steps*
 - [x] Point `monitoring/beszel` and `monitoring/beszel-agent` at a socket proxy —
       done 2026-09-16: `tecnativa/docker-socket-proxy` with `CONTAINERS=1` only
       (`POST=0`, everything else 0), matching what the agent's Docker client
@@ -537,8 +505,9 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       auth), `apps/librephotos` (tag scheme), and the other 36 pins. Evidence:
       `Last verified` 2026-09-13 in the six stacks' `UPSTREAM.md`; Cal.diY's database
       move is recorded in its `UPSTREAM.md`, the application pin is not re-verified
-- [ ] **Verify the 2026-09-13 sweep on a host.** 46 pins moved and nothing was
-      deployed, so every bumped stack's `Last verified` line still names the version
+- [x] **The 2026-09-13 sweep on a host** — superseded: every stack carries a test
+      date at its current pin (`../LIFECYCLE.md`). The original item:
+      46 pins moved, and every bumped stack's `Last verified` line named the version
       before the bump. Four need more than a restart: `core/dnsmasq` changed publisher
       (`dockurr/dnsmasq` — confirm it answers a wildcard lookup and caches),
       `core/traefik` moved to 3.7 (the migration table in its `UPSTREAM.md` lists what
@@ -550,16 +519,13 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       (`core/acme-certs` 3.1.2 vs 0.2.1, `apps/it-tools` a tag absent from the
       registry, `apps/monicahq` `5-apache` vs `4.1.2-apache`). Corrected on
       2026-09-13 (v0.8.1); all three match their pins
-- [ ] **`Last verified` missing from `UPSTREAM.md` files** — 27 when this was
-      written, 43 on 2026-10-15 after the stacks added since. The sweep reads the
-      field first, so a missing one costs a stack its check. The count is the `—`
-      entries in `LIFECYCLE.md`'s Last verified column; each closes through S1
-      (§2). Candidate for `check-coverage.py`
+- [x] **`Last verified` in every `UPSTREAM.md`** — 120 of 121 carry a date;
+      `apps/vllm` carries its reason (§2)
 - [ ] **`apps/vaultwarden` → Docker Secrets.** The blocker recorded in `UPSTREAM.md`
       was wrong: Vaultwarden does support `_FILE`. The real obstacle is that the
       password sits inside `DATABASE_URL`, so the secret must carry the whole URL
       (`DATABASE_URL_FILE`) or an entrypoint must assemble it. Needs a host test —
-      it changes how a ✅ stack starts
+      it changes how a stack with a test date starts
 - [x] `business/invoiceninja` → Docker Secrets via entrypoint wrapper (Phase 2).
       Genuinely upstream-limited: Laravel has no `_FILE` for `APP_KEY`/`DB_PASSWORD`.
       Done — `business/invoiceninja/ops/entrypoint.sh` reads the secrets and exports
@@ -657,10 +623,8 @@ The core audit of 2026-10-15 proposes an answer to each as its decision D9.
       concurrent-connection and document limit, but the upstream page that would state it is
       behind bot protection and the product page does not mention one. Nothing was recorded
       rather than record it from memory.
-- [ ] Keep the Tailscale range out of `access-lan`. `fd7a:115c:a1e0::/48` lies inside
-      `fc00::/7`, so on a dual-stack install `access-lan` admits a tailnet client over
-      IPv6 — recorded as a known limitation in
-      [`../docs/standards/traefik-security.md`](../docs/standards/traefik-security.md),
-      "Access Policies". `ipAllowList` has no exclusion; the ULA range would have to be
-      listed in parts around the Tailscale range, which `TAILSCALE_CIDR_V6` can change.
-      Decide the shape, then a test that `access-lan` refuses a tailnet address
+- [x] Keep the Tailscale range out of `access-lan` — superseded by DEC-076:
+      `access-lan` is retired, and `access-trusted` admits only the declared
+      `TRUSTED_RANGES`, which `validate.sh` refuses to overlap the VPN range
+      ([`../docs/standards/traefik-security.md`](../docs/standards/traefik-security.md),
+      "Access Policies")

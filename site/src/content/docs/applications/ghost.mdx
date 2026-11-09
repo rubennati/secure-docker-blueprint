@@ -10,8 +10,7 @@ Ghost is a publishing platform: posts, newsletters sent to subscribers, and paid
 memberships. Two containers — the application and its MySQL database. Fediverse
 federation is available as an optional overlay.
 
-<StackEvidence stack="apps/ghost"
-  gap="a restore. The database and the content directory have to come back from the same point in time, and that has not been performed here." />
+<StackEvidence stack="apps/ghost" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -22,7 +21,16 @@ federation is available as an optional overlay.
 On your own machine, with no proxy, domain or certificate. From `apps/ghost/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "DB_PASSWORD=$(openssl rand -hex 32)"
+  echo "DB_ROOT_PASSWORD=$(openssl rand -hex 32)"
+} >> .env.local
+
+mkdir -p volumes/local/content
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -67,9 +75,16 @@ From `apps/ghost/`:
    healthcheck allows for it; on slow storage the container may show `unhealthy`
    briefly before recovering.
 
-4. Open `https://<APP_TRAEFIK_HOST>/ghost/` and complete the setup wizard. Ghost
-   mails a verification code for every login from a new device, including this
-   one, so mail has to work before the wizard can be finished.
+4. Over the VPN, open `https://<APP_TRAEFIK_HOST>/ghost/` and complete the setup
+   wizard. Ghost mails a verification code for every login from a new device,
+   including this one, so mail has to work before the wizard can be finished.
+
+5. Open the blog to the internet once the owner exists:
+
+   ```bash
+   sed -i 's/^APP_TRAEFIK_ACCESS=.*/APP_TRAEFIK_ACCESS=access-public/' .env
+   docker compose up -d
+   ```
 
 </Steps>
 
@@ -87,13 +102,12 @@ broken, so a working site tells you nothing about it.
 
 ## Going further
 
-### Public by default
+### Who can reach it
 
-Ghost ships `access-public` with `limit-standard` and `headers-standard` — a blog
-nobody can read is not a blog.
-It is the one application in this section reachable from the open internet by
-default; the others ship VPN-only, so the settings differ for that reason rather
-than by oversight.
+The setup page answers until the owner exists, and there is no setup secret —
+whoever reaches it first becomes the owner. The stack therefore ships
+`access-vpn`, and the blog becomes public in step 5, by your decision. A public
+blog then runs `access-public` with `limit-standard` and `headers-standard`.
 
 ### Mail that arrives rather than mail that sends
 
@@ -118,7 +132,7 @@ Then `docker compose up -d`. Check the migration ran and exited cleanly:
 
 ```bash
 docker compose logs activitypub-migrate
-docker compose logs activitypub --tail 30
+docker compose logs ghost-activitypub --tail 30
 ```
 
 ## Backup
@@ -129,6 +143,9 @@ docker compose logs activitypub --tail 30
 | **Password** | `.secrets/db_pwd.txt` |
 | **State** | `volumes/mysql` (database) · `volumes/content` (themes, images, member data) |
 | **Quiescing** | Not needed — the dump is consistent on its own. |
+
+Posts reference images in `volumes/content` by path, so the database and the
+content directory come back from the same backup run.
 
 For [borgmatic](/operations/backup/):
 

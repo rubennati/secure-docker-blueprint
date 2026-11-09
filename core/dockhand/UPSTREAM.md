@@ -13,8 +13,7 @@
 - **Origin:** Finsys · **no country or legal entity stated** — no imprint on fnsys.pro or dockhand.pro
 - **Domain:** Infrastructure
 - **Role:** Docker management with Git-based stacks: deploy and update by pushing to Git
-- **Based on version:** `v1.0.57`
-- **Last checked:** 2026-04-16
+- **Last verified:** 2026-11-08 (v1.0.57) — over IPv4, with Postgres 16 under cap_drop: the local host through the socket proxy and a remote host through Hawser (edge) — containers listed, a log read, one stopped and started — before and after `down`/`up`, the refused client answered `403`; authentication is off on a new instance; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -39,13 +38,12 @@
 ## Version notes
 
 - Moved to `v1.0.56` on 2026-10-31 (released 2026-10-30), together with Hawser
-  0.2.53, not run at this tag. No breaking change or migration labelled; v1.0.55
+  0.2.53. No breaking change or migration labelled; v1.0.55
   adds `EXPORT_METRICS_PUBLIC` (off by default, keeps `/metrics` private) and
   raises docker-compose to 5.6.0-r2 for CVE fixes and Node.js to 24.22.1; v1.0.52's
   PUID change was reverted in v1.0.53. The releases live at
   https://github.com/finsys/dockhand/releases; Docker Hub shows no notes.
-- Moved to `v1.0.57` on 2026-11-05 (released 2026-11-04), not run on a host at
-  this tag. No breaking change, new variable or migration in the notes. The
+- Moved to `v1.0.57` on 2026-11-05 (released 2026-11-04). No breaking change, new variable or migration in the notes. The
   release is a security hardening one: path-write guards, filtering of the
   environment passed to deployments, origin checks on requests and framing
   headers, with no advisory ID given; the notes do not say what the origin check

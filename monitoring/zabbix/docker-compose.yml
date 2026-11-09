@@ -32,11 +32,11 @@ services:
     # 52 MiB anonymous with the schema created and nothing monitored, measured
     # 2026-09-24. Zabbix writes history continuously, so this grows with the
     # number of monitored items rather than with the number of hosts.
-    memswap_limit: 1g            # == memory: no swap
+    memswap_limit: 1536m            # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 1536m   # 2x the measured peak (592 MiB)
           # cpus: derived starting value, not measured — v0.10.0
           cpus: "1.00"
           pids: 200

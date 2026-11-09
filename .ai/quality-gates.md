@@ -69,8 +69,8 @@ docker compose config --quiet          # in the stack directory
 | Required files | a stack without `README.md` or `.env.example` |
 | Sentinel value check | `__REPLACE_ME__` in a committed `.env` |
 | Security baseline | missing `no-new-privileges`, `privileged: true`, socket-proxy violations; `core/traefik` rendered with the shipped `.env.example` yielding a CrowdSec plugin or a `crowdsec-*` middleware, or rendered with `CROWDSEC_BOUNCER_ENABLED=true` yielding anything less than the plugin plus both middlewares keyed |
-| Canonical structure | `:latest` or major-only tags, plaintext secrets, unprotected `.secrets/`, a datastore on the public network, a service without a memory/PID ceiling or a swap policy, an opt-in overlay patching a service its stack does not define |
-| Status model | owner and mirror disagreeing on a status, ✅ without a verification date, stale `LIFECYCLE.md`; a stack with no licence, origin, domain or role, or a stale `sovereignty.json` / `catalogue.json`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
+| Canonical structure | `:latest` or major-only tags, plaintext or `__REPLACE_ME__` secrets (`placeholder-secret`), an `access-public` default without a public posture or reason (`public-default`), a missing or mismatched auth posture, a port on internal-only networks (`internal-port`), unprotected `.secrets/`, a datastore on the public network, a service without a memory/PID ceiling or a swap policy, an opt-in overlay patching a service its stack does not define |
+| Status model | a stale `LIFECYCLE.md`, `lifecycle.json` or README findings block, a stack named in the rehearsal log, `.trivy-baseline.json` or `upstream-status.json` that does not exist; a stack with no licence, origin, domain or role, or a stale `sovereignty.json` / `catalogue.json`; warns when `UPSTREAM.md` duplicates the README's backup procedure |
 | Checker coverage | a content directory no checker enumerates, a top-level directory declared nowhere |
 | Docs QA | markdown style drift, a link to a missing file, a link to a missing heading, a prose-register phrase anywhere in a reader-facing file |
 | Workflow supply chain | an action pinned to a mutable tag, a SHA without a version comment, a workflow without `permissions:` |
@@ -81,8 +81,9 @@ protection leaves every pull request waiting on a check that can never report.
 
 All ten jobs above are required on a pull request into **either** protected
 branch, `Checker coverage`, `Docs QA` and `Workflow supply chain` included; `main`
-requires two more, the IaC config scan and the image CVE scan of `trivy.yml` —
-twelve in all ([`decisions.md`](decisions.md#dec-070)). Both rulesets also require
+requires one more, the IaC config scan of `trivy.yml` — eleven in all
+([`decisions.md`](decisions.md#dec-079)). The image CVE scan runs on a pull request
+into `main` and reports; a finding in an upstream image does not block. Both rulesets also require
 the branch to be up to date before merging, so the run that
 gates a merge is the run against the integration that lands. Neither has a
 standing bypass actor.
@@ -138,12 +139,15 @@ What neither mode covers:
 
 ## Not blocking, deliberately
 
-- **Trivy** is not a check on `dev`. It runs weekly and on pull requests into
-  `main`, where both scan jobs are required ([`decisions.md`](decisions.md#dec-070)),
-  and fails on a CRITICAL finding not recorded in `.trivy-baseline.json`.
+- **Trivy** is not a check on `dev`. It runs weekly, on pushes to `main` and on pull
+  requests into `main`, where the IaC config scan is required. The image CVE scan
+  reports: a CRITICAL finding not recorded in `.trivy-baseline.json` is named in the
+  summary and blocks nothing ([`decisions.md`](decisions.md#dec-079)); the job fails
+  only on the repository's own errors.
 - **Structure warnings.** A missing memory, PID or swap ceiling is a FAIL
   (`no-resources`, `no-swap-policy`); what stays a warning is a missing healthcheck
-  without a waiver. The ceilings' values are derived by rule, not measured — v0.10.0.
+  without a waiver. Most ceilings are derived by rule; a measured basis under load is
+  v0.10.0.
 - **`legacy-stamp`** — a stack carrying the pre-v0.5.1 `Last checked:` field.
   Converting it asserts the evidence is real, which is a judgement per app.
 

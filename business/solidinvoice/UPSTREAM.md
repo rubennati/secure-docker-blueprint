@@ -10,8 +10,7 @@
 - **Origin:** SolidInvoice · no country stated in its published terms · no country
 - **Domain:** Business operations
 - **Role:** Invoicing: clients, quotes, invoices, recurring invoices and payments
-- **Based on version:** `3.1.2`
-- **Last verified:** 2026-09-22 (3.0.1) — behind Traefik with TLS: the web installer to the end, the onboarding with a client and an invoice, a restart, and the README's restore
+- **Last verified:** 2026-11-08 (3.1.2) — over IPv4: the stack healthy and `/` redirecting a new instance to the web installer at `/install` before and after `down`/`up`, the refused client answered `403`; the installer was not driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -82,7 +81,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   login, client and invoice back
 - Peak 2.2 GiB (limit 3 GiB), as the README states
 
-**Not yet exercised:** payments and payment gateways; recurring invoices; email;
+**Outside this verification:** payments and payment gateways; recurring invoices; email;
 the MySQL and PostgreSQL alternatives.
 
 ## Verification performed (2026-09-21)
@@ -99,14 +98,14 @@ without Traefik:
 - Hardening from `docker inspect`: uid 1000, `read_only`, `cap_drop: ALL`,
   `no-new-privileges`, no published port
 
-**Not yet exercised:** completing the web installer, and therefore everything after
+**Outside this verification:** completing the web installer, and therefore everything after
 it — login, clients, invoices, payments, the background worker; Traefik routing and
 TLS; email; backup and restore. This is the least-verified stack in its batch.
 
 ## Version notes
 
 - Moved `solidinvoice/solidinvoice` to `3.1.2` on 2026-11-05 (released 2026-10-21),
-  across 3.1.0 and 3.1.1, not run on a host at this tag. Not stopped at 3.1.0 or
+  across 3.1.0 and 3.1.1. Not stopped at 3.1.0 or
   3.1.1: their in-app upgrade aborted on MySQL, MariaDB and PostgreSQL, and they
   ignored `SOLIDINVOICE_APP_SECRET`, so the app secret changed whenever the cache was
   rebuilt. 3.1.2 runs the real database migrations once at startup, under a lock,
@@ -139,5 +138,5 @@ TLS; email; backup and restore. This is the least-verified stack in its batch.
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`
 6. Log in and open an invoice
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

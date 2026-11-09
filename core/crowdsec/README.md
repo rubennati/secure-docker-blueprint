@@ -8,6 +8,8 @@ serves those decisions. Where they are enforced is a separate choice.
 whatever asks. Without a remediation component attached, CrowdSec is a detector: you get
 visibility, and nothing is refused.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Choose your task
 
 | Task | Read |
@@ -181,6 +183,37 @@ takes to the LAPI on `crowdsec:8080` and to AppSec on `crowdsec:7422`. The engin
 not join `proxy-public`: no application has a reason to reach it. Keep
 `CROWDSEC_SECURITY_NETWORK` identical in both `.env` files.
 
+### LAPI port on the host
+
+`docker-compose.yml` publishes no host port. The `firewall-bouncer.yml` overlay adds the
+LAPI as `127.0.0.1:${CROWDSEC_LAPI_PORT}`, **8081** by default — enable it with
+`COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in `.env` when you set up the
+[nftables bouncer](#host-firewall-remediation--nftables-bouncer). What that port is, and
+what it is not:
+
+- **Loopback only.** It is bound to `127.0.0.1`, so only the host itself reaches it —
+  never the LAN, never the internet.
+- **Only for the optional host-firewall bouncer.** The [nftables
+  bouncer](#host-firewall-remediation--nftables-bouncer) runs as a package on the host,
+  outside Docker: it cannot resolve the Docker name `crowdsec`, and the container has no
+  fixed address it could use instead. The loopback port is how it reaches the LAPI.
+- **Traefik does not use it.** The reverse-proxy remediation talks to `crowdsec:8080`
+  over `crowdsec-security`, as above.
+- **Without the firewall bouncer nothing needs it**, so the base file leaves it out and a
+  host without the bouncer holds no CrowdSec port at all.
+- **8081, not 8080.** `apps/unifi` publishes 8080 for its devices' inform requests, and
+  both stacks have to start on one host. Inside the container the LAPI stays on 8080.
+  Verified on 2026-11-09: CrowdSec on `127.0.0.1:8081` and UniFi on
+  `0.0.0.0:8080` side by side, a bouncer key answered `200` on `/v1/decisions/stream`
+  through the loopback port, and the Traefik bouncer kept pulling over the Docker network.
+
+**An existing install** with the firewall bouncer sets
+`COMPOSE_FILE=docker-compose.yml:firewall-bouncer.yml` in `.env`, keeps or sets
+`CROWDSEC_LAPI_PORT` (8081 to make room for UniFi), runs `docker compose up -d`, points
+`api_url` in the bouncer's `crowdsec-firewall-bouncer.yaml.local` at that port and runs
+`sudo systemctl restart crowdsec-firewall-bouncer`. Without the bouncer, `docker compose up
+-d` alone drops the old loopback port.
+
 A deployment where the engine already runs on `proxy-public` follows
 [Migrating an existing installation](#migrating-an-existing-installation) instead of
 the setup below.
@@ -249,11 +282,12 @@ docker exec crowdsec cscli metrics show acquisition   # the device's requests ar
                                                         # the engine sees it; it only serves no decision against it
 ```
 
-What a host test still has to establish, and this repository has not: that a manual
-decision against an exempted address (`cscli decisions add --ip …`) is not served, that
-one added with `--bypass-allowlist` is, and that the host-firewall bouncer follows both.
-Until then the exemption is a documented mechanism with one measurement behind it —
-`firewall-bouncer.md`, "A parser whitelist is not a universal exclusion".
+Measured on 2026-11-08 with the Traefik bouncer: a manual
+decision against an exempted address (`cscli decisions add --ip …`) is refused by
+`cscli` and never served; one added with `--bypass-allowlist` is served, and the
+device received `403` until the decision was deleted. Whether the host-firewall
+bouncer follows both is not measured — `firewall-bouncer.md`, "A parser whitelist
+is not a universal exclusion".
 
 If the engine ever bans the device anyway, the way back is in
 [`docs/runbook.md`](docs/runbook.md#locked-out-over-the-vpn), and it does not need the VPN.
@@ -399,7 +433,7 @@ force and open-proxy abuse; `crowdsecurity/http-cve` adds probing for known CVEs
 The engine registers with CrowdSec's Central API on first start and both pulls and
 pushes. It is on by default, and it is a trade rather than a subscription.
 
-**What arrives.** Measured on a host running this blueprint: **15,880 active
+**What arrives.** On a host running this blueprint: **15,880 active
 decisions**, essentially all of them `Source: CAPI`. Addresses other installations
 detected attacking them.
 
@@ -606,7 +640,7 @@ docker exec crowdsec cscli bouncers add traefik-bouncer
 The command prints the key once — save it immediately.
 
 When Traefik's container comes back with another address on `crowdsec-security` —
-after a restart of the Docker daemon, measured on the step 8 lab host — the local API
+after a restart of the Docker daemon, for one — the local API
 lists the same key a second time as `traefik-bouncer@<address>`, and the first entry
 stops pulling. Both are the one bouncer; the stale line can be removed with
 `cscli bouncers delete`, and nothing has to change in `core/traefik`.
@@ -695,7 +729,7 @@ Do not ban the IP you administer the server from (Tailscale, LAN admin subnet) u
 Host-level enforcement via nftables. Installed as a system package (`apt`) on the host
 — not inside any container — because it manipulates host kernel firewall rules directly.
 
-The bouncer polls the CrowdSec LAPI on `127.0.0.1:8080` and translates active decisions
+The bouncer polls the CrowdSec LAPI on `127.0.0.1:8081` (`CROWDSEC_LAPI_PORT`) and translates active decisions
 into nftables drop rules. Traffic from banned IPs is dropped before any service sees it
 — the reverse proxy, a host-terminating service, or otherwise. This is the only enforcement point that covers ports
 Traefik does not terminate.
@@ -710,8 +744,9 @@ Host enforcement covers **individual source-IP decisions**, IPv4 and IPv6. Crowd
 `range` decisions are not enforced correctly at this layer in the packaged bouncer
 version — a documented capability limit, not a fault to work around.
 
-**Its lifecycle and readiness gate are runtime-verified; scoped enforcement is not
-yet accepted.** Read [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md) before
+**Host-firewall blocking is experimental.** The bouncer's lifecycle and its readiness
+gate are checked at runtime; scoped enforcement is yours to prove on your own host
+before you rely on it. Read [`docs/firewall-bouncer.md`](docs/firewall-bouncer.md) before
 enabling anything: it owns the architecture, the setup, the safe change procedure, the
 bounded rollback, the known limitations and the verification status.
 
@@ -776,12 +811,24 @@ configuration, and neither is what you intended.
 Losing the decision list itself is survivable: bans rebuild from live traffic.
 Losing the credentials means re-enrolling every bouncer by hand.
 
-Rehearsed on the step 8 lab host (2026-11-03, v1.7.8): the container stopped, the stack
+Rehearsed on 2026-11-03 (v1.7.8): the container stopped, the stack
 directory archived, the container started; restored into a throwaway instance on its own
 network with `DISABLE_ONLINE_API=true`, so the copy did not speak to the central API as the
 same machine. The decisions, all 100 alerts, the eight collections, the machine and the
 bouncer came back; the bouncer key from `core/traefik/.env` authenticated against the
 restored local API (a wrong key 403), and the restored AppSec answered `/.env` with 403.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `v1.8.2` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `crowdsecurity/crowdsec:v1.8.2` | 0 · 1 | — | 0 · 9 |
+
+<!-- findings:end -->
 
 ## Details
 

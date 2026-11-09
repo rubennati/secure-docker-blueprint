@@ -10,8 +10,7 @@ Dashy is a start page for the services on your server: sections, links, and
 optional live status for each one. One container, no database — a single YAML
 file describes the whole dashboard.
 
-<StackEvidence stack="apps/dashy"
-  gap="nothing on this stack has been restored, though there is nothing to restore — the configuration file is the only state and it lives in git." />
+<StackEvidence stack="apps/dashy" />
 
 **To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
 
@@ -73,7 +72,8 @@ From `apps/dashy/`:
 
 ```bash
 docker compose ps                       # one service, healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/  # 200
+curl -sSI https://<APP_TRAEFIK_HOST>/                         # 401 — the gate asks
+curl -fsSI -u ops https://<APP_TRAEFIK_HOST>/  # asks for the password; 200 with it
 ```
 
 ## Going further

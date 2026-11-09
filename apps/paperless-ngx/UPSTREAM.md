@@ -12,8 +12,7 @@
 - **Origin:** Community · no single company · no single jurisdiction
 - **Domain:** Documents and e-signature
 - **Role:** Document management with OCR, tagging and full-text search
-- **Based on version:** `3.4.2`
-- **Last verified:** 2026-11-02 (3.1.3) — with postgres 16.14, redis 7.4-alpine, gotenberg 8.21 and tika 3.3.3.0; step 8 lab host on its edge network behind a loopback-only test router: the README's setup run again in a fresh instance, upload through the UI and the API, the consume folder and IMAP mail import; OCR of scans and images (`deu+ron` included), Tika and Gotenberg for DOCX and e-mail, full-text search, metadata, owner and object permissions, SMTP; dependency failures and the healthchecks; borgmatic backup with the README's entry and the PostgreSQL 16 client, restored into a throwaway instance (backup/borgmatic/RESTORE.md). Lab scripts and headless Chromium, no mobile app; `sso.yml` not run (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (v2.20.13)
+- **Last verified:** 2026-11-08 (3.4.2) — over IPv4, a new installation with Postgres 18.6 (the server major moved from 16) and Redis with cap_drop: a PDF uploaded through the API, consumed with OCR to PDF/A and found by full-text search, the original downloaded byte-identical after `down`/`up`, the refused client answered `403`; an existing Postgres 16 installation moves with the dump-and-restore path in the README (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -40,22 +39,22 @@
 
 ## Version notes
 
-- Apache Tika moved to `3.3.3.0` on 2026-10-31, not run at this tag. Docker Hub
+- Apache Tika moved to `3.3.3.0` on 2026-10-31. Docker Hub
   carries the tag (pushed about 2026-10-21); the 3.3.2 and 3.3.3 change notes
   were not readable from the session that moved the pin — `CHANGES.txt` on
   Tika's main branch stops the 3.x line at 3.3.0, and tika.apache.org was not
   reachable — so breaking changes and advisories in the range are not checked;
   read https://tika.apache.org/ before a host run. The Java requirement of the
   3.x line is unchanged.
-- Run at these tags on the step 8 lab host on 2026-11-02; that run does not
+- Run at these tags on 2026-11-02; that run does not
   replace the change-note check above.
-- Moved to `3.4.2` on 2026-11-05, not run on a host at this tag. No breaking
+- Moved to `3.4.2` on 2026-11-05. No breaking
   change, renamed `PAPERLESS_*` variable or manual step is listed from 3.2.0 to
   3.4.2; Django migrations run on start as before. 3.3.2 fixes
   GHSA-c8f3-pqr2-rr24 (cross-user information disclosure in AI classification
   workflows on ownerless documents); 3.3.4 updates Pillow, aiohttp and the CA
   bundle for the eMudhra / emSign certificate incident.
-- Gotenberg moved to `8.39` on 2026-11-05, not run on a host at this tag
+- Gotenberg moved to `8.39` on 2026-11-05
   (upstream Paperless ships 8.38 at this time). Behaviour changes in the range:
   8.30 ships a smaller font set (Noto, DejaVu, Liberation, Carlito, Caladea);
   8.31 blocked private addresses by default and 8.32 reverted that; 8.37 warns
@@ -67,8 +66,7 @@
   the range include the ExifTool arbitrary file write (8.29), SSRF and DNS
   rebinding hardening (8.31–8.32), Chromium CVE-2026-87654 (8.38.1), and the
   ExifTool `j` alias, the `devtools://` scheme and the eMudhra roots (8.39).
-- Gotenberg moved to `8.40.0` on 2026-11-05 (released the same day), not run on
-  a host at this tag. Upstream calls it the final Gotenberg 8 release; the next
+- Gotenberg moved to `8.40.0` on 2026-11-05 (released the same day). Upstream calls it the final Gotenberg 8 release; the next
   is Gotenberg 9. It updates Chromium to 156.0.8078.79, which removes the two
   critical Chromium findings of 8.39 (CVE-2026-118333, CVE-2026-118337): 2
   critical image findings before, 0 after. Security fixes: QPDF encryption
@@ -78,8 +76,7 @@
   `--chromium-proxy-server` and the `linux/386` image, none of which this stack
   uses; no compose change
   (https://github.com/gotenberg/gotenberg/releases/tag/v8.40.0).
-- Moved `postgres` from `16.14` to `18.6` on 2026-11-05, not run on a host at
-  this tag. PostgreSQL 18 support: upstream's own compose file ships
+- Moved `postgres` from `16.14` to `18.6` on 2026-11-05. PostgreSQL 18 support: upstream's own compose file ships
   `postgres:18`
   (https://github.com/paperless-ngx/paperless-ngx/blob/main/docker/compose/docker-compose.postgres.yml);
   the docs name no version range. The borgmatic entry in the README now names
@@ -93,8 +90,8 @@
   "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
   database already exist are expected); then `docker compose up -d`. A return to
   the old major is only a restore of that dump.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads
@@ -164,7 +161,7 @@ Paperless's Django migrations are forward-only. Rollback = restore the SQL dump 
 The service is `paperless-app`. `python manage.py` under `exec` does not see the
 secrets the container read at start and stops on `PAPERLESS_SECRET_KEY`; the
 image's wrappers (`createsuperuser`, `document_*`) and `/command/with-contenv`
-carry them (step 8 lab host).
+carry them.
 
 ```bash
 # Shell

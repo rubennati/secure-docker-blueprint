@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (2.1.1) — over IPv4: a paste stored through the JSON API (the data directory writable) before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/privatebin/nginx-fpm-alpine
@@ -14,10 +16,8 @@
 - **Origin:** Community project, no single company, maintained collectively on GitHub · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Zero-knowledge paste service for text and secrets
-- **Based on version:** `2.1.1`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
-  exercised (see README.md's Preview → Ready gate); not yet run behind a
-  real Traefik host
+  exercised
 
 ## What we use
 
@@ -77,7 +77,7 @@ cause.
 ## Version notes
 
 - Moved `privatebin/nginx-fpm-alpine` to `2.1.1` on 2026-11-05 (released
-  2026-11-04), across 2.1.0, not run on a host at this tag. Security: 2.1.1 fixes
+  2026-11-04), across 2.1.0. Security: 2.1.1 fixes
   GHSA-6vvp-q86m-cp8q (SVG attachment previews ran script in the instance's origin;
   previews now use a data URL), GHSA-9rmv-j9gp-6vc5 (`sizelimit` checked only the
   cipher text, so the unbounded `adata` array could fill the disk; the limit now
@@ -105,10 +105,7 @@ cause.
 
 ## Known limitations
 
-- **Not yet run behind a real Traefik host or TLS.**
-- **The data-directory ownership requirement (`65534:82`) has only been
-  confirmed on a local Docker Desktop volume**, not on a production host's
-  filesystem — permissions handling can differ (e.g. on a filesystem
-  without POSIX ownership semantics, or across a bind mount from a
-  different host).
+- **The data directory needs POSIX ownership (`65534:82`)** — a filesystem
+  without POSIX ownership semantics, or a bind mount from another host that
+  maps owners differently, leaves it unwritable.
 - **Filesystem backend only** — no database or S3/GCS backend configured.

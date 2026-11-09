@@ -73,7 +73,7 @@ not depend on ingress (the hoster's console, a second interface) exists for the 
 first is gone. No automatically filled rule reaches the management plane. What the
 internet reaches is measured from another machine with `scripts/exposure-test.sh`, and
 `validate.sh --strict` requires that measurement's marker for a public binding
-([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), DEC-078).
+([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), [DEC-078](../../.ai/decisions.md#dec-078)).
 
 **Not yet standardised here:** unattended upgrades, the account the stacks run under,
 and kernel or `sysctl` expectations. A deployment works without them being written
@@ -151,10 +151,12 @@ Which releases exist: `git tag --sort=-v:refname`. What changed between two of t
 
 ## 3 — Configure a stack
 
-`cp .env.example .env`, then set every `__REPLACE_ME__` the file carries. Each stack's
+`cp .env.example .env`, then set every value the file leaves for you: each empty secret
+(`docker compose` names any required one still missing) and every `__REPLACE_ME__`. Each stack's
 `README.md` documents its variables, and `.env.example` names every value that has to be
-set. Secrets do not belong in `.env` — see [`secrets.md`](secrets.md) for what goes in
-`.secrets/` and how it is generated.
+set. File-based secrets go in `.secrets/`; the secrets a container reads from the
+environment are set in `.env` — [`secrets.md`](secrets.md) covers which is which and how
+each is generated.
 
 ## 4 — Deploy in order
 

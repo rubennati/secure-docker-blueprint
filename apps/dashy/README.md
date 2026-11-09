@@ -2,13 +2,15 @@
 
 Self-hosted homelab dashboard. Config-driven via a single YAML file; the UI re-builds when the config changes.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `dashy-app` | `lissy93/dashy:4.9.15` | Vue-based SPA + embedded build server |
+| `dashy-app` | `lissy93/dashy:4.9.17` | Vue-based SPA + embedded build server |
 
 No database. Config lives in `config/conf.yml`.
 
@@ -43,14 +45,15 @@ docker compose up -d
 
 ```bash
 docker compose ps                              # healthy
-curl -fsSI https://<APP_TRAEFIK_HOST>/         # 200 OK
+curl -sSI https://<APP_TRAEFIK_HOST>/          # 401 — the basicAuth gate
+curl -fsSI -u ops:<password> https://<APP_TRAEFIK_HOST>/   # 200 OK
 ```
 
 ## Security Model
 
 - `no-new-privileges:true`
 - Default access `access-vpn` — personal dashboard, VPN-only
-- A basicAuth gate in front of the route (`APP_BASIC_AUTH_USERS`, DEC-077) — Dashy's built-in auth runs in the browser and guards nothing on the server; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash
+- A basicAuth gate in front of the route (`APP_BASIC_AUTH_USERS`, [DEC-077](../../.ai/decisions.md#dec-077)) — Dashy's built-in auth runs in the browser and guards nothing on the server; whoever the access policy admits is asked for a password. `.env.example` has the command for the hash
 - `limit-standard` and `headers-standard`
 - No data persistence beyond config file — container can be recreated freely
 

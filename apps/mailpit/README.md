@@ -7,6 +7,8 @@ either drops every message silently or refuses to start, and with a sink in
 place the confirmation, the password reset and the reminder become readable
 instead of vanishing.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Architecture
 
 Single service:
@@ -41,8 +43,10 @@ mkdir -p volumes/data
 
 # 3. The UI and API login — a bcrypt htpasswd, one user per line (MP_UI_AUTH_FILE)
 mkdir -p .secrets && chmod 700 .secrets
-docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$(openssl rand -base64 24)" > .secrets/mailpit_htpasswd.txt
-chmod 600 .secrets/mailpit_htpasswd.txt     # keep the password from that line in your password manager
+MP_PW="$(openssl rand -base64 24)"; echo "$MP_PW"   # the password for user ops — store it now, it is not shown again
+docker run --rm httpd:2.4-alpine htpasswd -Bbn ops "$MP_PW" > .secrets/mailpit_htpasswd.txt
+unset MP_PW
+chmod 600 .secrets/mailpit_htpasswd.txt
 
 # 4. Start
 docker compose up -d
@@ -92,7 +96,7 @@ Restart the stack, trigger a password reset, and read it in the UI.
   resets, verification links, invitations. The router ships `access-vpn`, and
   Mailpit's own `MP_UI_AUTH_FILE` — the htpasswd in `.secrets/mailpit_htpasswd.txt`,
   bcrypt, one user per line — asks for a user on the UI and the API, which also
-  holds against a container that reaches port 8025 directly (DEC-077).
+  holds against a container that reaches port 8025 directly ([DEC-077](../../.ai/decisions.md#dec-077)).
 - **Every container on `proxy-public` reaches port 1025 — and only those.** A
   stack that sends here sets `TRAEFIK_NETWORK=proxy-public` in its `.env`, the
   shared choice ([`core/traefik/docs/edge-networks.md`](../../core/traefik/docs/edge-networks.md));

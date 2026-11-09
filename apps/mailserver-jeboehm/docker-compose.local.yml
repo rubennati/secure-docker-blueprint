@@ -2,6 +2,11 @@
 #
 #   cp .env.local.example .env.local
 #   ops/init.sh --local
+#   sudo chown -R 1000:1000 volumes/local/mail
+#   sudo chown -R root:1000 volumes/local/certs && sudo chmod 640 volumes/local/certs/tls.key
+#   sudo chown root:root volumes/local/spool && sudo chmod 755 volumes/local/spool
+#   sudo chown -R 11333:11333 volumes/local/filter
+#   sudo chown -R 999:999 volumes/local/redis
 #   ops/setup.sh --local
 #   http://localhost:8080 — user and password are printed by setup.sh
 #   SMTP localhost:1025 · submission localhost:1587 · IMAP localhost:1993
@@ -48,7 +53,7 @@ services:
       DB_PORT: 3306
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       WAITSTART_TIMEOUT: 2m
       TZ: ${TZ}
 
@@ -103,7 +108,7 @@ services:
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
-      DOVEADM_API_KEY: ${DOVEADM_API_KEY}
+      DOVEADM_API_KEY: ${DOVEADM_API_KEY:?Set DOVEADM_API_KEY in .env.local}
       TZ: ${TZ}
 
     # --- Storage ---
@@ -152,8 +157,8 @@ services:
     environment:
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.local}
+      CONTROLLER_PASSWORD: ${CONTROLLER_PASSWORD:?Set CONTROLLER_PASSWORD in .env.local}
       TZ: ${TZ}
 
     # --- Storage ---
@@ -300,7 +305,7 @@ services:
       MYSQL_DATABASE: ${DB_NAME}
       MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
       TZ: ${TZ}
 
     # --- Storage ---

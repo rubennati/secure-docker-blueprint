@@ -81,9 +81,9 @@ services:
         # where 38 services all answered to `app`.
         aliases:
           - crowdsec
-    ports:
-      # LAPI on localhost only — for the host-firewall remediation bouncer
-      - "127.0.0.1:${CROWDSEC_LAPI_PORT}:8080"
+    # No host port: Traefik reaches the LAPI over crowdsec-security. The optional
+    # host-firewall bouncer gets 127.0.0.1:${CROWDSEC_LAPI_PORT} from the
+    # firewall-bouncer.yml overlay (README, "LAPI port on the host").
 
     # --- Health & Observability ---
     healthcheck:

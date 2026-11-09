@@ -63,8 +63,8 @@ services:
     # No _FILE support — see .env.example's Secrets section for why these
     # two stay as plain environment variables rather than Docker Secrets.
     environment:
-      SECRET_KEY: ${SECRET_KEY}
-      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN}
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      BOOTSTRAP_TOKEN: ${BOOTSTRAP_TOKEN:?Set BOOTSTRAP_TOKEN in .env}
       TZ: ${TZ}
 
     # --- Storage ---

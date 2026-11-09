@@ -4,6 +4,8 @@
 
 Self-hosted file sync, calendar, contacts, and collaboration suite. This setup runs Nextcloud as **PHP-FPM behind nginx**, with MariaDB as database and Redis for file locking and session storage.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## Choose your task
 
 | Task | Read |
@@ -17,12 +19,6 @@ Self-hosted file sync, calendar, contacts, and collaboration suite. This setup r
 Before production setup, [prepare Traefik](../../core/traefik/README.md#setup)
 and include this stack's `TRAEFIK_NETWORK` in its `EDGE_NETWORKS`. The setup below
 needs that network to exist. Office integration is optional.
-
-## Open findings
-
-The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Architecture
 
@@ -47,7 +43,15 @@ The Alpine FPM image is lighter and gives nginx full control over static asset s
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'DB_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 24 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/html
+sudo chown 999:999 volumes/local/mysql   # the mariadb image's mysql user — the db service has no CHOWN
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -296,7 +300,7 @@ calls itself through the proxy and the access policy denies it, which is the
 policy working.
 
 The shipped default `access-trusted-vpn` behaves the same way: no closed policy
-admits a Docker network (DEC-076), so these checks pass only once the route is
+admits a Docker network ([DEC-076](../../.ai/decisions.md#dec-076)), so these checks pass only once the route is
 `access-public`. Until then they are the policy working, not a defect — nothing
 of the instance's function depends on them; an office server reaches Nextcloud
 by its internal address (above, "Office servers behind a closed route", `office.yml`).
@@ -343,7 +347,7 @@ Working configuration and the run it produced:
 
 ## Restore
 
-This is this repository's `ops-proven` reference restore — see the rehearsal
+This is this repository's reference restore — see the rehearsal
 log in [`backup/borgmatic/RESTORE.md`](../../backup/borgmatic/RESTORE.md#rehearsal-log).
 For the general MariaDB restore procedure and verification checklist this
 follows, see [Restore](../../docs/standards/restore.md).
@@ -667,8 +671,8 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 
 > **Office servers behind a closed route.** OnlyOffice, Euro-Office and Collabora
 > call Nextcloud back; a closed access policy refuses a call from a container
-> (DEC-076). The call goes over a Docker network the two stacks share. On edge
-> networks (DEC-075) they share none, so `office.yml` joins Nextcloud's nginx —
+> ([DEC-076](../../.ai/decisions.md#dec-076)). The call goes over a Docker network the two stacks share. On edge
+> networks ([DEC-075](../../.ai/decisions.md#dec-075)) they share none, so `office.yml` joins Nextcloud's nginx —
 > and only nginx — to the office stack's edge network: the office server reaches
 > it by container name, and no other stack gains a path to Nextcloud. Nextcloud
 > calls the office server at its public name, as the browser does; the office
@@ -696,14 +700,23 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > # "Invalid token"; the connector reads no secret file (the path is the office stack's)
 > docker compose exec -u www-data app php occ config:app:set onlyoffice jwt_secret --value="$(cat ../onlyoffice/.secrets/jwt_secret.txt)"
 > # (Euro-Office: ../euro-office/.secrets/jwt_secret.txt)
-> # Collabora (the richdocuments app, 12.x on Nextcloud 35): the server Nextcloud and
-> # the browser call, and the callback it hands out, both through activate-config — a
-> # callback set with config:app:set is reset to "autodetected" when activate-config
-> # runs afterwards
-> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="https://office.example.com" --callback-url="http://<nginx>"
+> # Collabora (the richdocuments app, 12.x on Nextcloud 35), with office-collabora.yml
+> # in COMPOSE_FILE: Nextcloud calls Collabora at nginx's port 9980, which passes
+> # discovery, capabilities and /cool/convert-to to Collabora — its public route closes
+> # convert-to, and previews need it; the browser's address comes from Collabora's
+> # discovery. The callback is nginx as well. Both through activate-config — a callback
+> # set with config:app:set is reset to "autodetected" when activate-config runs afterwards
+> docker compose exec -u www-data app php occ richdocuments:activate-config --wopi-url="http://<nginx>:9980" --callback-url="http://<nginx>"
 > # COLLABORA_ALIASGROUP in the Collabora stack admits the callback host as an alias of
 > # Nextcloud's group: https://cloud\.example\.com:443,http://nextcloud-nginx:80
 > ```
+>
+> Collabora also fetches template presets at the URLs Nextcloud writes into its settings
+> response. With `OVERWRITEHOST` applied to every request those point at the closed
+> public name, and the document does not open. `NC_OVERWRITECONDADDR` in `.env` limits
+> the overwrites to requests from Traefik — the regex of the subnet in
+> `NC_TRUSTED_PROXIES`, `'^172\.19\.'` for `172.19.0.0/16` — so a call that arrives
+> over nginx gets URLs at nginx.
 >
 > The route stays closed; the office traffic never passes it. OnlyOffice refuses
 > requests to private addresses by default (`request-filtering-agent`,
@@ -713,12 +726,14 @@ Disabling unused apps reduces background job load, reduces cron execution time, 
 > file: both stacks set `TRAEFIK_NETWORK=proxy-public` and reach each other there,
 > with the consequence `core/traefik/docs/edge-networks.md` names. An office server
 > on another host reaches a closed instance only by its address in
-> `TRUSTED_RANGES`. **Measured on the step 8 lab host** (`docs/labs/ingress/2026-11-01-results.md`,
+> `TRUSTED_RANGES`. **Verified** (`docs/labs/ingress/2026-11-01-results.md`,
 > "Office servers"): with OnlyOffice and Euro-Office, `office.yml` and these settings, DOCX,
 > XLSX and PPTX opened, saved and reopened behind the closed route, without
-> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora does not work behind the closed route:** the
-> WOPI calls take nginx, but Collabora then fetches a template preset at Nextcloud's
-> public name, the closed route refuses it, and the document does not open — open.
+> `ALLOW_PRIVATE_IP_ADDRESS`. **Collabora** (2026-11-08): with
+> `office.yml`, `office-collabora.yml`, `NC_OVERWRITECONDADDR` and these settings, a
+> `.docx` opened, was edited, saved and reopened behind the closed route, its preview
+> was rendered through the internal address, and `/cool/convert-to` answered `403` on
+> Collabora's public route — also after `down`/`up` of both stacks.
 
 ## OnlyOffice integration notes
 
@@ -898,6 +913,25 @@ If this appears, OnlyOffice is the bottleneck. Disabling OnlyOffice previews res
 - **`AppAPI deploy daemon` is unset by design** — it is needed only for external apps, which this stack does not deploy.
 - **First install is slow** — the healthcheck has `start_period: 120s` because the Nextcloud installer can take over a minute to run all migrations on first boot.
 - **Large file uploads need matching limits on both sides**: `PHP_UPLOAD_LIMIT` and nginx's `client_max_body_size` in `nginx/nginx.conf`.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `35.0.2-fpm-alpine` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `mariadb:12.3.3` | 0 · 1 | — | 1 · 25 |
+| `nextcloud:35.0.2-fpm-alpine` | 0 · 1 | 0 · 1 | — |
+| `nginx:1.31.8-alpine-slim` | — | — | — |
+| `redis:8.10.3-alpine` | — | — | — |
+
+<!-- findings:end -->
+
+The MariaDB image, `mariadb`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

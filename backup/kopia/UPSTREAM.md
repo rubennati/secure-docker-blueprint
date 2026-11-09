@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (0.23.1) — over IPv4: the certificate and repository created, a client user added through the entrypoint, a Kopia client on another host connected to the server through the route (with `:443`, as the README shows) and took a snapshot that the server still listed after `down`/`up`, the web UI behind its login, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/kopia/kopia
@@ -11,7 +13,6 @@
 - **Origin:** No country stated · Kopia community project · no country
 - **Domain:** Backup
 - **Role:** Repository server for Kopia clients — deduplicated, encrypted snapshots from other machines, without handing them the repository password
-- **Based on version:** `0.23.1`
 
 ## Origin, stated precisely
 

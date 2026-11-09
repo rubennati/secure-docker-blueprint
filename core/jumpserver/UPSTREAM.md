@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v5.1.1) — over IPv4: the web UI served before and after `down`/`up`, the default `admin`/`ChangeMe` demanding a new password (upstream answers the API with a 500 for it), the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/jumpserver/jumpserver
@@ -16,7 +18,6 @@
 - **Origin:** China · FIT2CLOUD · non-EU
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access management: stored target credentials, session recording, approval workflows
-- **Based on version:** `v5.1.1`
 - **Verification snapshot:** 2026-09-19 — clean start only (see below), not a full
   operational verification
 
@@ -101,12 +102,11 @@ same version.
   evaluated together with this one.
 - **Default admin credentials** — first login is `admin` / `ChangeMe`, per
   vendor documentation. Change it immediately; see README.md.
-- **Not yet run on a live host beyond a clean start.**
 
 ## Version notes
 
 - Moved to `v5.1.1` on 2026-11-05 (released 2026-10-20), across v5.0.0 and
-  v5.1.0, not run on a host at this tag. The scan of 2026-11-05 found 22
+  v5.1.0. The scan of 2026-11-05 found 22
   CRITICAL pairs in `v4.10.19`; that is the newest `jms_all` image of the v4
   line — JumpServer released v4.10.20 on 2026-10-23, but no `jms_all` image
   of it exists on Docker Hub — so the pin leaves the v4 line. The v5 image

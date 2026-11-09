@@ -13,7 +13,7 @@
 - **Origin:** United States and United Kingdom · Stalwart Labs LLC · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail and collaboration server — SMTP, IMAP, JMAP, calendars, contacts and files in one binary
-- **Based on version:** `v1.0.3`
+- **Last verified:** 2026-11-08 (v1.0.3) — over IPv4: the readiness check and the web admin served through the route before and after `down`/`up`, the refused client answered `403`; inbound mail impossible on this host and the management API not driven (docs/labs/stack-refresh/2026-11-08-results.md)
 
 Part of the development was funded through NLnet's NGI0 funds.
 
@@ -96,7 +96,7 @@ Read from the start log of v0.16.24:
 ## Version notes
 
 - Moved to `v1.0.3` on 2026-11-05 (released 2026-11-04), across v1.0.0 to
-  v1.0.2, not run on a host at this tag. The v0.16.24 image carries
+  v1.0.2. The v0.16.24 image carries
   CVE-2026-111497 (CRITICAL, an out-of-bounds write in the Brotli decoder,
   `libbrotli1` from Debian, fixed in `1.1.0-2+deb13u1` by DSA-6582-1 of
   2026-10-23). The newest 0.16 release, v0.16.27, was built on 2026-10-18,

@@ -15,6 +15,8 @@ either today; `docker inspect --format '{{.State.OOMKilled}} {{.RestartCount}}'`
 from [`docs/resource-measurement.md`](../../docs/resource-measurement.md) is a
 manual command, not an automated response.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What this is not
 
 - **Not a general auto-heal mechanism.** `business/openproject` already
@@ -32,11 +34,24 @@ manual command, not an automated response.
   trying and reports failure on every subsequent run until the service
   recovers on its own or a person intervenes. It will not restart the same
   thing every two minutes forever.
-- **Not verified on a live host.** Both scripts are new and documented, not
-  rehearsed. Prove each one on a host you can afford to break before trusting
-  it in production — stop the watched service, or block its healthcheck, and
-  confirm the ping sequence, the one restart, and the escalation all behave as
-  documented below.
+- **Rehearsed once (2026-11-09).** `dockerd` frozen with
+  `SIGSTOP` (process alive, API hanging): the watchdog pinged "streak 1/3" and
+  "2/3", restarted Docker on the third run and reported "daemon now
+  responding"; all ten containers were running again 58 s after the first run.
+  Traefik frozen the same way: `unhealthy` after 40 s, one restart on the third
+  unhealthy check, healthy again, "restarted after 3 unhealthy checks, now
+  healthy". The escalation — the restarted service frozen again at once: one
+  restart, then `escalated`, and the following runs reported failure without
+  restarting again; after the service resumed, the next run reported it
+  healthy. That rehearsal found three faults, now fixed: the Traefik watchdog
+  took `starting` after the restart for success and would have restarted
+  again on every confirmation; the Docker watchdog waited without limit in
+  `systemctl restart docker` for a daemon that hung while starting; and its
+  unit, ordered after `docker.service`, queued every later run behind that
+  hanging start job. In one of the three double faults Traefik alone stayed
+  exited (137) after the daemon came back and needed a manual `up -d`; the
+  watchdog checks the daemon, not the containers. Prove both on your own host
+  before trusting them.
 
 ## The model, both scripts
 
@@ -65,6 +80,18 @@ at all, Healthchecks' own grace-time alarm fires, independent of whatever the
 watchdog was watching. No new alerting channel is needed — Healthchecks
 already reaches ntfy, email or a webhook per
 [`monitoring/README.md`](../../monitoring/README.md#alerting).
+
+**A Healthchecks on the same host.** Ping its loopback port,
+`http://127.0.0.1:8001/ping/<uuid>` (`HC_LOCAL_PORT` in `monitoring/healthchecks`),
+not its public name. Through Traefik a request from the Docker host itself arrives
+as the gateway address of the edge network, not as the host's own address; behind
+a closed access policy it is refused, and `core/traefik/ops/scripts/validate.sh`
+rejects that gateway in `TRUSTED_RANGES`, because every container on the network
+would pass with it. The loopback port needs neither Traefik nor a public route —
+verified on 2026-11-09 with both watchdogs started from their
+shipped units. It also keeps the Traefik watchdog's failure pings arriving while
+Traefik itself is down. A Healthchecks on another host, or hosted, is pinged by its
+public URL as before.
 
 ## Docker daemon watchdog
 
@@ -104,7 +131,8 @@ is compared by its settings, not its values.
 **Configuration** (`docker-daemon-watchdog.env.example`): `HEALTHCHECKS_PING_URL`
 (required), `CONFIRM_AFTER` (consecutive failed checks before acting, default
 3), `SETTLE_SECONDS` (wait after `systemctl restart docker` before
-re-checking, default 10).
+re-checking, default 10), `RESTART_TIMEOUT` (longest wait for the restart
+itself, default 180 — Docker's unit has no start timeout).
 
 ## Traefik watchdog
 

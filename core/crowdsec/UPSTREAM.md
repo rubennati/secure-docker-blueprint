@@ -11,8 +11,7 @@
 - **Origin:** France · CrowdSec SAS · EU
 - **Domain:** Security operations
 - **Role:** Threat detection from logs, with a choice of where decisions are enforced
-- **Based on version:** v1.8.2
-- **Last verified:** 2026-11-01 (v1.7.8) — step 8 lab host: engine on `crowdsec-security` only, the Traefik access log acquired, the Traefik bouncer plugin v1.7.1 pulling, a `cscli` ban enforced and lifted per address family, the AppSec virtual-patching rule answering 403, fail-open with the engine stopped; no firewall bouncer (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-09 (v1.8.2) — over IPv4: the Traefik bouncer pulling decisions, the AllowList applied from `ops/allowlist.sh`, a manual decision against an allowlisted address measured, the same after `down`/`up` and a reboot
 
 ## Architecture
 
@@ -27,7 +26,7 @@
 | Change | Reason |
 |--------|--------|
 | Relative Traefik log path | `../traefik/volumes/logs` — works when both are in `core/` |
-| LAPI on localhost only | `127.0.0.1:8080` — not exposed to network |
+| LAPI on localhost only, and only for the firewall bouncer | `127.0.0.1:8081` through the `firewall-bouncer.yml` overlay, no host port without it — not exposed to network; 8081 on the host because `apps/unifi` publishes 8080 (device inform). Inside the container the LAPI stays on 8080 |
 | `no-new-privileges` | Security hardening |
 | Custom acquis.yaml + appsec.yaml | Mounted read-only for reproducibility |
 | AppSec on `0.0.0.0:7422` | Upstream defaults to `127.0.0.1:7422`, which assumes the web server shares the host. Traefik is a separate container here, so a loopback bind is unreachable. Membership of `crowdsec-security` takes over the boundary the loopback bind provides upstream. |
@@ -45,7 +44,7 @@ the DROP rule rather than delegating it.
   `table` and `chain`. Set-only makes the bouncer maintain the blacklist sets and install
   no chain, which is what allows an interface-scoped rule to be owned elsewhere.
 - **`safe_range` is not a configuration key.** Neither is `deny_mode`; the real option is
-  `deny_action`. Both were previously documented here as working safeguards.
+  `deny_action`. Neither is a safeguard this stack can rely on.
 - **Unknown YAML keys pass `-t` validation**, which reports `config is valid`. A passing
   configuration test proves the file parses, not that an option in it has any effect.
 - **Hook and priority are not configurable** in this version, so scoping enforcement to an
@@ -86,9 +85,7 @@ Full architecture and the current verification status:
 
 ## Version / tag notes
 
-- **Moved to `v1.8.2` on 2026-11-05** (released 2026-10-26), across 1.8.0 and 1.8.1,
-  not run on a host at this tag; the ingress lab checks behind **Last verified**
-  were run at v1.7.8 and have not been repeated. The move was made because the
+- **Moved to `v1.8.2` on 2026-11-05** (released 2026-10-26), across 1.8.0 and 1.8.1. The move was made because the
   v1.7.8 image carries CRITICAL findings in the image scan that are fixed in
   the v1.8.2 image, rebuilt on Go 1.27 and Alpine 3.24. It ends the hold recorded on
   2026-09-13, which waited for the bot-detection behaviour to be checked.
@@ -147,8 +144,8 @@ docker exec crowdsec cscli decisions add --ip 1.2.3.4 --duration 1h --reason "te
 # Remove a ban
 docker exec crowdsec cscli decisions delete --ip 1.2.3.4
 
-# Generate bouncer API key (for either remediation component)
-docker exec crowdsec cscli bouncers add traefik-bouncer
+# Generate a bouncer API key: README.md, "Generate the bouncer key" (Traefik)
+# and docs/firewall-bouncer.md (host firewall)
 
 # Update hub (parsers, scenarios, collections)
 docker exec crowdsec cscli hub update

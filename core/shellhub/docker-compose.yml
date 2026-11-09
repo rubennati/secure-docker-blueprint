@@ -166,7 +166,7 @@ services:
       POSTGRES_HOST: db
       POSTGRES_PORT: 5432
       POSTGRES_USERNAME: ${DB_USER}
-      POSTGRES_PASSWORD: ${SHELLHUB_POSTGRES_PASSWORD}
+      POSTGRES_PASSWORD: ${SHELLHUB_POSTGRES_PASSWORD:?Set SHELLHUB_POSTGRES_PASSWORD in .env}
       POSTGRES_DATABASE: ${DB_NAME}
       SHELLHUB_LOG_LEVEL: ${SHELLHUB_LOG_LEVEL}
       SHELLHUB_LOG_FORMAT: ${SHELLHUB_LOG_FORMAT}
@@ -185,6 +185,7 @@ services:
     # SSH port below is this service's own direct host publish.
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     ports:
       # Where agents dial in, and where `ssh <device>@<host>` connects out.
@@ -324,6 +325,12 @@ networks:
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (Docker 29 binds nothing on the host). Only
+  # server joins it, for its port; the other services stay on app-internal.
+  published:
+    name: ${COMPOSE_PROJECT_NAME}-published
 
 # --------------------------------------------------------
 # SECRETS

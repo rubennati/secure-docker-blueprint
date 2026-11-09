@@ -16,8 +16,8 @@ x-op-app: &op-app
     OPENPROJECT_HSTS: "false"
     OPENPROJECT_RAILS__CACHE__STORE: "memcache"
     OPENPROJECT_CACHE__MEMCACHE__SERVER: "cache:11211"
-    SECRET_KEY_BASE: ${SECRET_KEY_BASE}
-    DATABASE_URL: "postgres://${DB_USER}:${DB_PASSWORD}@db/${DB_NAME}?pool=20&encoding=unicode&reconnect=true"
+    SECRET_KEY_BASE: ${SECRET_KEY_BASE:?Set SECRET_KEY_BASE in .env.local}
+    DATABASE_URL: "postgres://${DB_USER}:${DB_PASSWORD:?Set DB_PASSWORD in .env.local}@db/${DB_NAME}?pool=20&encoding=unicode&reconnect=true"
     OPENPROJECT_DEFAULT__LANGUAGE: "${OPENPROJECT_DEFAULT_LANGUAGE:-en}"
     IMAP_ENABLED: "false"
     TZ: ${TZ}
@@ -76,6 +76,8 @@ services:
     container_name: openproject-local-cache
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # no cap_add: the image runs as its own user and needs none (measured)
     networks: [openproject-local]
     healthcheck:
       test: ["CMD-SHELL", "nc -z 127.0.0.1 11211"]

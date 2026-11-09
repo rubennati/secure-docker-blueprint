@@ -26,7 +26,7 @@ decision follows from it alone, and the next request with a different payload pa
 **Repeated blocks are**: every in-band block is also an event for the scenario
 `crowdsecurity/appsec-native` (installed with the rule collections), which bans the source
 address after its fourth block within the bucket's leak (capacity 3, leak 30 s).
-Measured on the step 8 lab host (v1.7.8): four false-positive blocks from one address
+Measured (v1.7.8): four false-positive blocks from one address
 produced the ban decision (in simulation mode for the test). A user who trips a false
 positive and retries a few times is then locked out of every router, not just the one
 request. Addresses in `crowdsecurity/whitelists` (loopback and the RFC 1918 ranges) never
@@ -67,8 +67,8 @@ Two collections install AppSec rule sets via `CROWDSEC_COLLECTIONS` in `.env`:
 
 ### `crowdsecurity/appsec-generic-rules`
 
-General-purpose WAF signatures. The table is the collection's stated scope; measured on
-the step 8 lab host (v1.7.8, collection 1.1), **none of these test requests was blocked**:
+General-purpose WAF signatures. The table is the collection's stated scope; measured
+(v1.7.8, collection 1.1), **none of these test requests was blocked**:
 `' OR '1'='1` and `UNION SELECT` in the query, SQL in form and JSON bodies, `<script>`,
 `onerror=` and `javascript:` in query, form and JSON, `../../etc/passwd` plain and encoded,
 and `;cat /etc/passwd`. Only the virtual-patching rule for `/.env` answered 403. The
@@ -129,7 +129,7 @@ from every router after six of them. To watch without that consequence, put the 
 in simulation first: `docker exec crowdsec cscli simulation enable
 crowdsecurity/crowdsec-appsec-outofband` (and `crowdsecurity/appsec-native` for in band).
 
-Measured on the step 8 lab host (2026-11-03, CrowdSec v1.7.8; the engine is
+Measured (2026-11-03, CrowdSec v1.7.8; the engine is
 `github.com/crowdsecurity/coraza/v3 v3.3.3-crowdsec.20251113`, CrowdSec's fork in place of
 `corazawaf/coraza v3.7.0`; the rules `OWASP_CRS/4.0.0-rc1`, paranoia level 1, inbound
 threshold 5), through Traefik from a loopback probe:
@@ -260,13 +260,13 @@ crowdsecAppsecUnreachableBlock: false    # fail-open if AppSec unreachable
 No template is edited, and no stack's label changes: the switch moves the entrypoint
 from `threat-crowdsec` to `threat-crowdsec-appsec`, which is static configuration — a
 plain `docker compose up -d` does not recreate Traefik for it, `--force-recreate` does.
-Measured on a host (2026-11-01): the shipped rule sets answered a virtual-patching match
+Measured (2026-11-01): the shipped rule sets answered a virtual-patching match
 (`/.env`) with 403 on both address families; with the engine stopped the same request
 passed — the fail-open flags at work.
 
 The AppSec flags cover AppSec only. The decision stream has its own: the plugin's
 `updateMaxFailure`, whose default 0 blocks **every** request from the first failed decision
-pull until the next good one. Measured on the step 8 lab host (2026-11-03): with the engine
+pull until the next good one. Measured (2026-11-03): with the engine
 stopped for 70 s every router answered 403 from 12 s after the stop to 46 s after the
 engine was healthy again — two minutes; a restart shorter than one pull interval (60 s)
 passed unnoticed, which is what the 2026-11-01 test saw. The template now sets

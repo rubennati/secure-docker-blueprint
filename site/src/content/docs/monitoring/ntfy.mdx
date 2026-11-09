@@ -1,0 +1,227 @@
+---
+title: ntfy
+description: Push notifications over plain HTTP — the receiving end for every alert, with deny-all access, a read-only public router for phones, and the operator side on the VPN.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+ntfy is a push notification server. Monitoring services publish a message to a
+topic over HTTP; phones, desktops and scripts subscribe to that topic and
+receive it. No account with a third party, and nothing between the alert and the
+device. One container; users and grants live in a SQLite file.
+
+<StackEvidence stack="monitoring/ntfy" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running and a domain —
+on a different host than the services it receives from (see [Where it runs](#where-it-runs)).
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `monitoring/ntfy/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+curl -d "hello from the shell" http://localhost:8080/mytopic
+```
+
+Then open `http://localhost:8080/mytopic` — the message is there. The local
+stack accepts anonymous reads and writes; the server installation below denies
+everything until accounts exist. Stop it again with the same command and `down`.
+
+## Where it runs
+
+**Not next to the services it receives from.** When the monitored host stops, its
+monitoring stops — and a receiver on the same host stops with it, so the outage
+that most needs an alert produces none.
+
+The stack stands alone: one Traefik, one compose file, no dependency on anything
+else in the repository. Put it on a second host or a small VPS. The ntfy project
+also runs a free public instance, which is an off-host receiver without a second
+machine.
+
+## Installation
+
+From `monitoring/ntfy/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the hostname phones and publishers use |
+   | `NTFY_PUBLIC_TOPICS` | the topics subscribers may read from the internet — `alerts` by default |
+   | `APP_UID` / `APP_GID` | the host user that owns `config/` and `volumes/` — the server runs as that user |
+
+2. List `ntfy-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render and
+   restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Create the directories as that user and copy the server configuration. Set
+   `base-url` in it to `https://<APP_TRAEFIK_HOST>`:
+
+   ```bash
+   mkdir -p config volumes/cache volumes/lib
+   cp server.example.yml config/server.yml
+   ```
+
+   The container drops every capability, so a directory Docker creates as root
+   is one it cannot write to.
+
+4. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs -f ntfy-app
+   ```
+
+   Wait for `Listening on :80`.
+
+5. Create the accounts. The server denies everything until they exist:
+
+   ```bash
+   docker compose exec ntfy-app ntfy user add --role=admin admin
+   docker compose exec ntfy-app ntfy user add monitoring
+   docker compose exec ntfy-app ntfy access monitoring alerts rw
+   docker compose exec ntfy-app ntfy token add --label publishers monitoring
+   ```
+
+   The token (`tk_…`) is what monitoring services publish with, as
+   `Authorization: Bearer tk_…`. The password stays for the phone app, so a
+   passphrase of a few words a phone keyboard can take is the practical choice.
+
+6. Install the ntfy app on your phone, add your server and subscribe to `alerts`
+   with the `monitoring` account.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps    # one service, healthy
+```
+
+Publish from the operator's network — publishing is not on the public router:
+
+```bash
+curl -u monitoring -d "test" https://<APP_TRAEFIK_HOST>/alerts
+```
+
+The message has to arrive on the subscribed phone, not only return HTTP 200.
+Then check that the server refuses what it should — from outside the VPN, an
+anonymous subscribe and any publish answer 403.
+
+## Going further
+
+### Two routers on one server
+
+Phones have to reach the receiver over mobile data, including when the VPN is
+down. The stack therefore splits the server:
+
+| Router | Serves | Policy |
+|---|---|---|
+| `ntfy` | `GET` on the topics in `NTFY_PUBLIC_TOPICS`, and `/v1/account` — subscribing, polling, the WebSocket | `APP_TRAEFIK_ACCESS`, `access-public` |
+| `ntfy-ui` | everything else — the web app, login, account management, publishing | `APP_TRAEFIK_UI_ACCESS`, `access-vpn` |
+
+Both carry `limit-strict` and `headers-standard`.
+
+Traefik takes the longer rule first, so a `POST`, an unlisted topic or any other
+path from the internet lands on the operator router and is refused there.
+
+What holds the public router is `auth-default-access: deny-all` in
+`config/server.yml`: nothing on it answers without credentials. At the upstream
+default, every topic on a public server is readable and writable by anyone who
+guesses its name. Keep `deny-all` and `behind-proxy: true` when you edit the file.
+
+Where every receiving device is on the VPN anyway, set `APP_TRAEFIK_ACCESS` to
+`access-vpn` as well. Then nothing is public.
+
+### iPhones
+
+iOS restricts background processing, so a self-hosted server cannot wake the iOS
+app on its own. Uncomment `upstream-base-url: "https://ntfy.sh"` in
+`config/server.yml`. Publishing then sends a poll request through the public
+instance, carrying the message ID and a checksum of the topic URL — not the
+message — and the phone fetches the message from your server. Android and
+desktop clients need none of this.
+
+### Who publishes to it
+
+| Source | How |
+|---|---|
+| [Uptime Kuma](/monitoring/uptime-kuma/), [Gatus](/monitoring/gatus/), [Beszel](/monitoring/beszel/) | native ntfy notification, or a Shoutrrr / Apprise URL |
+| [Healthchecks](/monitoring/healthchecks/) | native ntfy integration per check |
+| [borgmatic](/operations/backup/) | a monitoring hook posting to the topic |
+| anything else | `curl -d "message" -H "Authorization: Bearer tk_…" https://<APP_TRAEFIK_HOST>/<topic>` |
+
+One topic per concern: a grant is per topic, so a publisher that reports backups
+cannot read the rest.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None — SQLite files, no dump hook needed |
+| **State** | `volumes/lib/user.db` (users, tokens, grants) · `config/server.yml` |
+| **Rebuildable** | `volumes/cache` — the message cache and attachments |
+| **Quiescing** | `user.db` changes only when accounts change; back it up after such a change |
+
+Losing `user.db` costs the accounts and grants: publishers have to be created and
+granted again. Losing `config/server.yml` costs `base-url`, which subscribed
+devices are pinned to. See [backup and restore](/operations/backup/).
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/binwiederhier/ntfy/releases),
+   in particular for `server.yml` key changes.
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Check `/v1/health`, that an existing subscription still receives, and that a
+   publish with an existing token still authenticates.
+
+</Steps>
+
+## Troubleshooting
+
+**`unable to open database file` at start.** The directories under `volumes/`
+belong to root, or to another user than `APP_UID:APP_GID`. Create them as that
+user, or `chown` them to it, and start again.
+
+**Notifications go missing during an incident.** Both routers run
+`limit-strict` (`APP_TRAEFIK_LIMIT`), 20 requests per second with a burst of 40.
+A subscription is one long-lived request, so the phone side has headroom; a
+publisher bursting during an incident is what hits the limit. Count the requests
+in the Traefik access log before raising it.
+
+**The iOS app receives nothing in the background.** `upstream-base-url` is not
+set — see [iPhones](#iphones).
+
+**An anonymous subscribe answers 403.** By design: `deny-all` requires credentials
+for every topic.
+
+## Repository files
+
+- [`monitoring/ntfy/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/ntfy/README.md) — setup, access policy, integration patterns
+- [`monitoring/ntfy/server.example.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/ntfy/server.example.yml) — the server configuration, including `upstream-base-url`
+- [`monitoring/ntfy/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/ntfy/.env.example)
+- [`monitoring/ntfy/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/ntfy/UPSTREAM.md) — upgrade checklist and the settings to re-check
+
+## Official sources
+
+- [ntfy documentation](https://docs.ntfy.sh/)
+- [ntfy on GitHub](https://github.com/binwiederhier/ntfy)

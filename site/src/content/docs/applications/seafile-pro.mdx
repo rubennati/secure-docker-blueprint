@@ -8,8 +8,7 @@ import StackEvidence from '../../../components/StackEvidence.astro';
 
 Seafile Pro is private cloud storage with browser-based Office editing (OnlyOffice), collaborative document editing (SeaDoc), full-text search (SeaSearch) and antivirus scanning (ClamAV). Its services are split over Compose files that `COMPOSE_FILE` combines — the example enables seven — and it needs a commercial license. OnlyOffice is a separate server and is enabled only when `ONLYOFFICE_JWT_SECRET` is set; the example ships it empty.
 
-<StackEvidence stack="apps/seafile-pro"
-  gap="the official clients and SeaDrive, e-mail, WebDAV (off in the example) and the search reindex after a restore." />
+<StackEvidence stack="apps/seafile-pro" />
 
 **To try it:** Docker, and a Seafile Pro commercial licence, which the image requires either way. See [Try it locally](#try-it-locally).
 
@@ -20,7 +19,20 @@ Seafile Pro is private cloud storage with browser-based Office editing (OnlyOffi
 On your own machine, with no proxy, domain or certificate. From `apps/seafile-pro/`:
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+cp .env.local.example .env.local
+
+# The secrets ship empty; generate the ones this stack needs
+{
+  echo "SEAFILE_MYSQL_DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "INIT_SEAFILE_MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "REDIS_PASSWORD=$(openssl rand -hex 32)"
+  echo "INIT_SEAFILE_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')"
+  echo "JWT_PRIVATE_KEY=$(openssl rand -base64 48 | tr -d '\n')"
+} >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+sudo chown 999:999 volumes/local/mysql
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 ```
 
@@ -138,7 +150,7 @@ Then in the browser, confirm each service works:
 
 OnlyOffice embeds a browser-based Office editor into Seafile. It runs as a separate server — either another Blueprint stack or a different machine — and both sides share the same JWT secret.
 
-**Server-to-server path:** OnlyOffice fetches the document from Seafile and saves it back through a callback. Seafile's route ships closed, and a closed route refuses every container, so on the same host these two paths have their own opt-in routes in `onlyoffice-callback.yml` (the stack README, "Access policy"); an OnlyOffice server on another host reaches a closed Seafile only by its address in `TRUSTED_RANGES`. Measured on a host: DOCX, XLSX and PPTX opened, saved and reopened through `onlyoffice-callback.yml`.
+**Server-to-server path:** OnlyOffice fetches the document from Seafile and saves it back through a callback. Seafile's route ships closed, and a closed route refuses every container, so on the same host these two paths have their own opt-in routes in `onlyoffice-callback.yml` (the same mechanism as [Seafile CE](/applications/seafile/#document-editing)); an OnlyOffice server on another host reaches a closed Seafile only by its address in `TRUSTED_RANGES`. DOCX, XLSX and PPTX open, save and reopen through `onlyoffice-callback.yml`.
 
 **Allowed origins:** On the OnlyOffice server, add the Seafile origin to `ONLYOFFICE_ALLOWED_ORIGINS` in its `.env` so browsers are permitted to embed the editor in an iframe. In the Blueprint's `apps/onlyoffice` stack this value is embedded in a Traefik label — changing it takes effect only after recreating the container, not after a plain restart:
 
@@ -171,15 +183,15 @@ docker compose up -d --force-recreate
     docker compose up -d seafile-pro-app
     ```
 
-    Send a test email from the Seafile admin panel before relying on this for password resets. Mail delivery has not been exercised for this stack.
+    Send a test email from the Seafile admin panel before relying on this for password resets.
   </TabItem>
 
   <TabItem label="Access">
-    The stack ships `APP_TRAEFIK_ACCESS=access-trusted-vpn` — the ranges declared in `core/traefik/.env` and the VPN; no closed policy admits a Docker container; SeaDoc calls Seafile over the internal network, and the two paths OnlyOffice uses — the document fetch and the save callback — have their own routes in `onlyoffice-callback.yml` (the stack README, "Access policy"). `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
+    The stack ships `APP_TRAEFIK_ACCESS=access-trusted-vpn` — the ranges declared in `core/traefik/.env` and the VPN; no closed policy admits a Docker container; SeaDoc calls Seafile over the internal network, and the two paths OnlyOffice uses — the document fetch and the save callback — have their own routes in `onlyoffice-callback.yml`. `access-public` removes Traefik's source-IP allowlist. Whether the service is actually reachable from the public internet depends on your DNS records, routing, and upstream firewall — the `access-public` middleware setting does not control any of that.
 
     Setting `APP_TRAEFIK_ACCESS=access-vpn` admits VPN clients only; the declared ranges no longer.
 
-    With the shipped published ports Traefik sees a client's own address on IPv4 and IPv6 — measured from a client off the host; a tailnet client has not been measured yet. If it sees a Docker gateway address instead, see [Troubleshooting](#troubleshooting); widening the policy would admit every caller that arrives through that gateway.
+    With the shipped published ports Traefik sees a client's own address on IPv4 and IPv6, from a tailnet client as from one off the host. If it sees a Docker gateway address instead, see [Troubleshooting](#troubleshooting); widening the policy would admit every caller that arrives through that gateway.
   </TabItem>
 
   <TabItem label="Antivirus">
@@ -226,10 +238,53 @@ The databases and the file volumes have to come back from the same point in time
 and all three databases together. A restore that recovers one side without the
 other leaves the installation inconsistent rather than merely incomplete.
 
+The database password lives in `.env`, and borgmatic reads credentials from a
+file, so write one for it first:
+
+```bash
+mkdir -p .secrets
+grep '^SEAFILE_MYSQL_DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\n' > .secrets/seafile_db_pwd.txt
+chmod 600 .secrets/seafile_db_pwd.txt
+```
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+mariadb_databases:
+    - name: ccnet_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+    - name: seafile_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+    - name: seahub_db
+      container: seafile-pro-db
+      username: seafile
+      password: "{credential file /srv/docker/apps/seafile-pro/.secrets/seafile_db_pwd.txt}"
+```
+
+Restore order: databases, then the block store, then the application, then the
+search reindex. A dump holds the databases, not the account Seafile connects with
+— restored into a fresh `db` container, every request fails with `Access denied
+for user 'seafile'`. Create the account before starting the app:
+
+```bash
+docker compose up -d db
+# restore the three dumps, then:
+docker compose exec -T db sh -c 'mariadb -uroot -p"$MYSQL_ROOT_PASSWORD"' <<SQL
+CREATE USER IF NOT EXISTS 'seafile'@'%' IDENTIFIED BY '$(grep '^SEAFILE_MYSQL_DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\n')';
+GRANT ALL PRIVILEGES ON ccnet_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seafile_db.* TO 'seafile'@'%';
+GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
+SQL
+docker compose up -d
+```
+
 ## Updates
 
-This sequence follows the upstream Docker upgrade guide. Neither an upgrade nor
-a restore has been exercised for this stack.
+This sequence follows the upstream Docker upgrade guide.
 
 <Steps>
 
@@ -270,3 +325,10 @@ a restore has been exercised for this stack.
 - [`apps/seafile-pro/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/README.md) — full setup, config injection details, and verification commands
 - [`apps/seafile-pro/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/UPSTREAM.md) — upstream notes, known limitations, troubleshooting table, and upgrade checklist
 - [`apps/seafile-pro/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/seafile-pro/.env.example) — all configurable variables with inline comments
+
+## Official sources
+
+- [Seafile Pro with Docker](https://manual.seafile.com/13.0/docker/pro/deploy_seafile_pro_with_docker/)
+- [Server changelog](https://manual.seafile.com/changelog/server-changelog/)
+- [Docker upgrade guide](https://manual.seafile.com/upgrade/upgrade_docker/)
+- [Pro edition licence](https://manual.seafile.com/latest/introduction/seafile_professional_edition_software_license_agreement/)

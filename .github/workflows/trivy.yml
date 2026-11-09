@@ -6,9 +6,15 @@ name: Trivy
 #   2. CVEs in container images — every image the checkers discover (scripts/ci/list-images.sh)
 #      Full per-image findings go to a workflow artifact (trivy-image-scan-results);
 #      the job's own summary page carries the concise index. Trivy's own exit code
-#      stays 0; the gate step fails the job on a CRITICAL absent from
-#      .trivy-baseline.json — see docs/security-verification.md for the current
-#      control description.
+#      stays 0, and so does the report step for a CRITICAL absent from
+#      .trivy-baseline.json: a finding in an upstream image is reported, never
+#      blocking (DEC-079) — see docs/standards/ci.md.
+#   3. Stack status — on the weekly, push and manual runs on main: per stack the
+#      pinned tag, the newest upstream tag in the same shape, both release dates,
+#      whether upstream is archived or quiet, and the findings of this scan
+#      (scripts/ci/upstream-status.py), written to the pinned issue labelled
+#      `stack-status`. The same data, as upstream-status.json, is the artifact
+#      the maintainer commits at a pin move and before a release (DEC-080).
 #
 # Triggers: PR to main, push to main, weekly Monday 04:00 UTC, manual
 # dispatch. The push, the weekly and the manual run scan in full. A pull
@@ -17,8 +23,8 @@ name: Trivy
 # the summary or this workflow; any other pull request (a lock file, a
 # document) ends the image job green in seconds, saying so, because a
 # 200-image scan of an unchanged tree would only repeat the weekly run's
-# work. The pull request to main is where this decides something: both jobs
-# are required checks there, so the merge cannot land while one is red. The
+# work. On a pull request to main the scan shows what the change brings; a
+# finding does not turn it red (DEC-079). The
 # push that follows the merge scans the tree that landed, so the workflow's
 # latest run on main — what the README badge shows — is a run of that tree
 # rather than the weekly run against the tree before it; the weekly run
@@ -31,10 +37,12 @@ name: Trivy
 #   - --ignore-unfixed: a CVE with no published fix is excluded from every count
 #     this job produces. That is not a claim it is safe to ignore — only that no
 #     fix exists yet for a pin change to apply.
-#   - Trivy's own exit code stays 0 on every image. The gate is a separate step:
-#     trivy-gate.py fails the job on a CRITICAL that is not listed under an
-#     image exception in .trivy-baseline.json, each with its stacks, reason and
-#     risk. A finding with a fixed upstream release is fixed by the pin instead.
+#   - Trivy's own exit code stays 0 on every image. trivy-gate.py then names
+#     every CRITICAL that is not listed under an image exception in
+#     .trivy-baseline.json, each with its stacks, reason and risk, and exits 0
+#     for it. It fails only on the repository's own errors: an exception
+#     without its reason, an unreadable report, an image that left no trace.
+#     A finding with a fixed upstream release is fixed by the pin instead.
 
 on:
   pull_request:
@@ -100,8 +108,8 @@ jobs:
   # 2. IMAGE CVE SCAN
   # ─────────────────────────────────────────────────────────────────────────
   # Scans every image list-images.sh resolves. Trivy's exit code stays 0 so the
-  # scan reports rather than judges; the gate that follows it blocks a CRITICAL
-  # that is not recorded in .trivy-baseline.json.
+  # scan reports rather than judges; the step that follows it names a CRITICAL
+  # that is not recorded in .trivy-baseline.json and blocks nothing (DEC-079).
   #
   # Each image is scanned individually to its own JSON report rather than one
   # combined run, so one image's scan failure (see the loop below) never loses
@@ -262,19 +270,15 @@ jobs:
             --images-total "$(wc -l < /tmp/images.txt)" \
             --out "$GITHUB_STEP_SUMMARY"
 
-      - name: Gate on unrecorded CRITICAL findings
-        # The scan itself stays non-blocking. What blocks is a CRITICAL that the
-        # repository has not accounted for: `.trivy-baseline.json` records the
-        # ones that exist today, and anything outside it fails here. Making the
-        # scan itself blocking would fail every pull request on the first day,
-        # because the blueprint does not build these images and the findings sit
-        # in layers upstream ships — see .ai/decisions.md, 2026-09-20.
-        #
-        # Coverage can only shrink deliberately. An image that stops scanning
-        # contributes no findings, so it can never fail the CVE half; it fails
-        # here unless it is acknowledged in the baseline with a reason. The same
-        # goes for an image discovery resolved that left neither a report nor a
-        # recorded failure — hence --images-total.
+      - name: Report CRITICAL findings against the recorded exceptions
+        # A CRITICAL in an upstream image is information for whoever uses or
+        # updates the stack, not a defect in this repository: the blueprint does
+        # not build these images. So a finding outside `.trivy-baseline.json`,
+        # and an image that stopped scanning, are named here and the step stays
+        # green (DEC-079). It fails only on the repository's own errors: an
+        # exception without its stacks, reason, risk or findings, a report that
+        # could not be read, and an image discovery resolved that left neither
+        # a report nor a recorded failure — hence --images-total.
         if: steps.decide.outputs.scan == 'true'
         run: |
           python3 scripts/ci/trivy-gate.py \
@@ -291,4 +295,81 @@ jobs:
           path: |
             /tmp/trivy-results/
             /tmp/trivy-failures.tsv
+          if-no-files-found: warn
+
+  # ─────────────────────────────────────────────────────────────────────────
+  # 3. STACK STATUS
+  # ─────────────────────────────────────────────────────────────────────────
+  # Per stack: the pinned tag of the primary image and when upstream released
+  # it, the newest upstream tag in the same shape and its release date, whether
+  # the upstream repository is archived or has not released for a year, and
+  # the CRITICAL and HIGH findings of this run's scan in every image of the
+  # stack. Information, not a gate: scripts/ci/upstream-status.py exits 0
+  # whatever it finds (DEC-079). The token reads the upstream repositories'
+  # releases, which the anonymous API limit would not cover.
+  #
+  # Not on pull requests — their scan may be partial or skipped. On main the
+  # table overwrites the body of the one open issue labelled `stack-status`,
+  # created and pinned on the first run; a manual run from another branch
+  # writes the table to its summary only. Nothing is committed by the job: both
+  # branches reject a direct push. The maintainer commits upstream-status.json
+  # from the artifact with the pull request that moves a pin or cuts a release.
+  stack-status:
+    name: Stack status
+    needs: image-scan
+    if: always() && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write   # overwrite the stack-status issue
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Fetch this run's scan results
+        # Missing when the scan failed before uploading; the table then shows
+        # no findings rather than zero.
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: trivy-image-scan-results
+          path: /tmp/scan
+
+      - name: Look up upstream versions
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          python3 scripts/ci/upstream-status.py \
+            --results-dir /tmp/scan/trivy-results \
+            --json /tmp/upstream-status.json \
+            --markdown /tmp/stack-status.md
+          cat /tmp/stack-status.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Overwrite the stack-status issue
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh label create stack-status --force --color 0E8A16 \
+            --description "Weekly per-stack versions and findings, overwritten by trivy.yml"
+          number=$(gh issue list --label stack-status --state open --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            url=$(gh issue create --title "Stack status" --label stack-status --body-file /tmp/stack-status.md)
+            number="${url##*/}"
+            gh issue pin "$number" || echo "::notice::issue #$number created; pinning was refused — pin it once by hand"
+          else
+            gh issue edit "$number" --body-file /tmp/stack-status.md
+          fi
+          echo "stack status written to issue #$number"
+
+      - name: Upload the stack status data
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: stack-status
+          path: |
+            /tmp/upstream-status.json
+            /tmp/stack-status.md
           if-no-files-found: warn

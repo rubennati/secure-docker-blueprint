@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (1.4.0) — over IPv4: the app wrote its SSH host key and served `/health` through the route before and after `down`/`up`, the refused client answered `403`; no session recorded (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/orion-belt-dev/orion-belt
@@ -13,7 +15,6 @@
 - **Origin:** Individual maintainer · Mohamed Zrouga · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Privileged access gateway for SSH sessions, from a young single-maintainer project
-- **Based on version:** `1.4.0`
 - **Verification snapshot:** 2026-09-19 — clean start and hardening only, see below
 
 ## EXPERIMENTAL — project maturity, verified directly
@@ -101,7 +102,7 @@ open source.
 
 ## Version notes
 
-- Moved to `1.4.0` on 2026-11-05, not run on a host at this tag; the agent
+- Moved to `1.4.0` on 2026-11-05; the agent
   example (`.env.agent.example`) moved with it. 1.4.0 adds RDP, VNC and
   just-in-time Kubernetes access through the agents and migrates the database
   schema on start (`permission_history`, risk signals, `risk_policy`). A
@@ -140,4 +141,3 @@ open source.
   above.
 - **Audit-log plugin writes to ephemeral storage** under this stack's
   `read_only` hardening — see the `tmpfs` comment in `docker-compose.yml`.
-- **Not yet run on a live host beyond a clean start.**

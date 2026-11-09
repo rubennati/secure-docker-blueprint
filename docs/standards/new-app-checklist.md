@@ -19,13 +19,18 @@ a host can establish.
 | | `memory`, `pids` and `memswap_limit` on every service | `check-structure.py` |
 | | `License`, `Origin`, `Domain`, `Role` in `UPSTREAM.md` | `sovereignty-report.py --check`, `site-catalogue.py --check` |
 | | A row in the category `README.md` linking the directory | `check-coverage.py` (`unlisted-stack`) |
-| | A `## Backup` section, or `n/a` with the reason | `lifecycle-report.py --check` |
+| | The router ships closed (`access-vpn`); `access-public` only with the posture `public` or a `# public by design:` reason | `check-structure.py` (`public-default`) |
+| | A `# auth posture:` line above every `*_TRAEFIK_AUTH` that fits its value | `check-structure.py` (`auth-posture`) |
+| | Environment secrets ship empty and are required with `${VAR:?…}` in compose; never `__REPLACE_ME__` | `check-structure.py` (`placeholder-secret`) |
+| | A `## Backup` section, or `n/a` with the reason | review |
+| | The README opens with what the application is and a pointer to `UPSTREAM.md` (project, source, licence, origin); assessments such as `## Open findings` come after the operating sections, before a closing `## Details` | review |
 | **Conditional** | Ships `docker-compose.local.yml` → the README needs a `## Try it locally` section with the command, the URL and any credential step | review |
 | | Ships an opt-in overlay → it must merge and stay inside the baseline | `check-overlays.py` |
 | | Reachable over the network → Traefik labels, an access policy and a security chain | `traefik-security.md` |
 | | Holds persistent state → the backup section names every volume and database a restore needs | review |
-| **Generated — never edited** | `LIFECYCLE.md`, `site/src/data/lifecycle.json`, `sovereignty.json`, `catalogue.json` | the three `--check` runs fail when stale |
-| **Runtime evidence only** | `Last verified: DATE (vX.Y.Z)`, and any lifecycle state above `scaffolded` | a host, not a checker |
+| **Generated — never edited** | `LIFECYCLE.md`, `site/src/data/lifecycle.json`, `sovereignty.json`, `catalogue.json`, the findings block under `## Open findings` | the three `--check` runs fail when stale |
+| **Upstream data** | the stack's row in `upstream-status.json`, written by `upstream-status.py` from the image scan | `lifecycle-report.py --check` warns `not-checked` until it exists |
+| **Runtime evidence only** | `Last verified: DATE (vX.Y.Z)`, or `Last verified: not yet — reason` until a host run | a host, not a checker |
 
 A stack reaches the operator site by existing: the catalogue is generated from
 `UPSTREAM.md`, so `Domain` and `Role` are what put it there. Nothing else has to be
@@ -135,9 +140,10 @@ Before writing any YAML, answer these questions:
   ```
 
 - [ ] **Does the app need to be embedded in iframes?** (OnlyOffice, collaborative
-  editors). If yes, you cannot use standard `sec-*` middlewares (they set
-  `frameDeny: true`). Create a custom Docker-level middleware with
-  `frame-ancestors` CSP instead.
+  editors). The `headers-standard` profile sends `X-Frame-Options: DENY`. An app
+  that frames its own pages takes the `frame-self` block before the profile; one
+  embedded by another host gets a stack-owned `frame-ancestors` CSP, as
+  `apps/onlyoffice/docker-compose.yml` shows.
 
 - [ ] **Does the app generate URLs?** If it sits behind a TLS-terminating proxy,
   it may generate `http://` URLs. Check if it respects `X-Forwarded-Proto` and
@@ -169,21 +175,28 @@ python3 scripts/ci/check-structure.py
 
 ## 3. Write `.env.example`
 
-Follow [Env Structure](env-structure.md) for section order:
+Follow [Env Structure](env-structure.md) for the section order — Project, Domain &
+Traefik, Images, Containers, Network, Database, App Configuration, SMTP, Timezone,
+Secrets — and keep the sections of [`apps/_reference/.env.example`](../../apps/_reference/.env.example)
+your app needs:
 
 - [ ] Header comment with app name and instructions
-- [ ] `# --- Images ---` with pinned version (never `:latest`)
-- [ ] `# --- Container ---` with `CONTAINER_NAME_*` variables
-- [ ] `# --- General ---` with `TIMEZONE` and `COMPOSE_PROJECT_NAME`
-- [ ] `# --- Database ---` if applicable
-- [ ] `# --- App Configuration ---` for app-specific values
-- [ ] `# --- Traefik Routing ---` with all standard Traefik vars
-- [ ] `# --- Secrets ---` with generation commands
+- [ ] `COMPOSE_PROJECT_NAME` first
+- [ ] Pinned image versions (never `:latest` or a bare major)
+- [ ] The router ships closed: `APP_TRAEFIK_ACCESS=access-vpn`; `access-public` only
+      with the auth posture `public` or a `# public by design: <reason>` line above it
+      (`public-default`)
+- [ ] A `# auth posture: <posture> — <reason>` line above every `*_TRAEFIK_AUTH`
+      (`auth-posture`)
+- [ ] A secret the container reads from the environment ships empty, its generating
+      command above it, and the compose file requires it with
+      `${VAR:?Set VAR in .env}` — never `__REPLACE_ME__` (`placeholder-secret`)
+- [ ] `# --- Secrets ---` with the commands that create the files in `.secrets/`
 
 **Secret generation — always strip newlines:**
 
 ```bash
-openssl rand -base64 32 | tr -d '\n' > secrets/db_pwd.txt
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_pwd.txt
 ```
 
 Never `openssl rand ... > file` without `| tr -d '\n'` — trailing newlines cause
@@ -211,7 +224,7 @@ Follow [Compose Structure](compose-structure.md) for block order per service:
 | `_FILE` env vars ignored | Check if image supports them; if not, use entrypoint wrapper |
 | `tls.options` without `@file` | Always append `@file` for file-provider resources |
 | Healthcheck with missing tools | Verify `curl`/`wget` exists in the image first |
-| `frameDeny` blocking iframes | Use custom Docker middleware with `frame-ancestors` CSP |
+| `X-Frame-Options: DENY` blocking iframes | `frame-self` block, or a stack-owned `frame-ancestors` CSP |
 | HTTP URLs behind TLS proxy | Add `X-Forwarded-Proto=https` middleware |
 | Image tag doesn't exist | Verify on Docker Hub before adding |
 | Secret with trailing newline | Always `\| tr -d '\n'` in generation command |
@@ -267,7 +280,8 @@ volumes:
 
 ## 7. Fill in `UPSTREAM.md`
 
-It already came with the reference app — replace every `__REPLACE_ME__`. It tracks
+It already came with the reference app — replace every `__REPLACE_ME__` field in it
+(secrets never use that placeholder). It tracks
 where the setup comes from and how to upgrade:
 
 - [ ] **Source** — Upstream repo URL, branch, version the setup is based on
@@ -277,7 +291,7 @@ where the setup comes from and how to upgrade:
 - [ ] **Diff commands** — How to compare our config against upstream
 
 The `Last verified: YYYY-MM-DD (vX.Y.Z)` line is what `scripts/ci/lifecycle-report.py`
-reads and what the ✅ in the README rests on — set it only once the app was actually
+reads and what the Last tested column of `LIFECYCLE.md` shows — set it only once the app was actually
 verified on a clean install. A filled-in example: `apps/dashy/UPSTREAM.md`.
 
 Two fields are read by a second checker and cannot be left blank:

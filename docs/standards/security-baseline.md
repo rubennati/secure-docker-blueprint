@@ -63,15 +63,46 @@ docker run --rm --cap-drop ALL <image>     # read the first denial in the log
 Add back what the log names, one capability at a time, and record the result beside
 the `cap_add` block. A set copied from another stack is a guess.
 
-**Six capabilities need no exception.** `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`
+#### Per image family
+
+One question decides the set: **does the container start as root and drop to its
+own user, or start as that user?** Started as root, the entrypoint needs the
+capabilities to fix ownership and switch user. Started as its own user (`user:`),
+it needs none, but the data directory has to belong to that user before the first
+start, because nothing inside the container can change it any more.
+
+| Family | Started as root: `cap_add` | Started as its own user | `read_only` | Established |
+|---|---|---|---|---|
+| `postgres` (official, Alpine and Debian) | `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`, `SETUID` | not used here | works with tmpfs on `/tmp`, `/run`, `/var/run`; not applied yet | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| `redis`, `valkey` (official) | the same five | `user: "999:1000"` on Alpine, `"999:999"` on Debian; no capability | yes, tmpfs on `/tmp` | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40); IDs from the upstream Dockerfiles |
+| `nginx` (official) | `CHOWN`, `SETGID`, `SETUID` | — | with tmpfs on the cache, run and tmp paths | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| `nginxinc/nginx-unprivileged` | — | already; no capability | yes | measured, [#40](https://github.com/rubennati/secure-docker-blueprint/issues/40) |
+| `mariadb` | `SETGID`, `SETUID`; `DAC_OVERRIDE` as well where the entrypoint reads the operator's mode-600 password files (`apps/nextcloud`) | — | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): the image's own volume and `apps/nextcloud`'s named volume, first start and `down`/`up`; a bind-mounted data directory owned by another user is not covered |
+| `mysql` (official) | `DAC_OVERRIDE`, `SETGID`, `SETUID` | — | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): the image's own volume and `business/invoiceninja`, first start and `down`/`up` |
+| `mongo` (official) | `CHOWN`, `DAC_READ_SEARCH`, `SETGID`, `SETUID` with a bind-mounted data directory — `CHOWN` takes it over on the first start, `DAC_READ_SEARCH` lets the entrypoint search it on every later one; `SETGID`, `SETUID` alone in the image's own volume | — | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): `apps/unifi`, `business/opensign`, first start and two `down`/`up` |
+| `memcached` (official) | none — the image starts as its own user | already | not established | measured, [stack refresh](../labs/stack-refresh/2026-11-08-results.md#capabilities): `business/openproject`, `business/zammad` |
+| linuxserver.io and other s6-overlay images | not established | never `user:`, see below | — | — |
+
+A Redis that reads its password from a secret through `sh` before handing over to
+the entrypoint starts as root, so it takes the root column: the secret file belongs
+to the host user, and only root with `DAC_OVERRIDE` reads it. `apps/nextcloud` and
+`business/invoiceninja` are built that way.
+
+An image outside this table is not covered by it, even when it is built on one of
+these: `ghcr.io/immich-app/postgres` is a PostgreSQL image with its own build and
+needs its own measurement.
+
+**Seven capabilities need no exception.** `CHOWN`, `DAC_OVERRIDE`, `FOWNER`, `SETGID`
 and `SETUID` are the set above — an entrypoint taking ownership of its data
-directory and then dropping to its own user. They reach no further than the
-container's own filesystem and namespaces. `NET_BIND_SERVICE` is there for a
+directory and then dropping to its own user. `DAC_READ_SEARCH` belongs to it too and
+is narrower than `DAC_OVERRIDE`: it reads and lists files root does not own, and
+writes nothing (the official mongo entrypoint searches its mode-700 data directory
+with it). They reach no further than the container's own filesystem and namespaces. `NET_BIND_SERVICE` is there for a
 different reason: it permits binding a port below 1024 and nothing else, which is
 narrower than running the process as root to achieve the same thing.
 
 **Anything else is a decision, and `check-baseline.py` asks for it in writing.** A
-capability outside those six warns until the service has an entry in
+capability outside those seven warns until the service has an entry in
 `CAP_ADD_EXCEPTIONS` carrying reason, alternatives and risk — the same three fields
 every other exception table uses. `SYS_ADMIN`, `NET_ADMIN`, `SYS_PTRACE` and
 `SYS_RAWIO` each hand out a class of access that the drop was there to remove, and
@@ -210,7 +241,10 @@ Some stacks still pass a secret through Compose environment interpolation, for
 example credentials embedded in a JSON object or connection string where no
 file-based delivery or assembly wrapper is implemented. Keep the value in the
 stack's gitignored `.env`, never in `.env.example` or a committed Compose file,
-and record the reason in `UPSTREAM.md`. Gitignore prevents accidental commits;
+and record the reason in `UPSTREAM.md`. `.env.example` ships the variable empty,
+and the compose file requires it with `${VAR:?Set VAR in .env}`, so a forgotten
+value stops `docker compose` instead of starting the application with a
+placeholder; `__REPLACE_ME__` fails `check-structure.py` (`placeholder-secret`). Gitignore prevents accidental commits;
 it does not hide the resolved value from Docker container inspection. This is an
 accepted limitation, not the same isolation as Patterns 1 and 2.
 
@@ -229,7 +263,7 @@ volumes:
 ```yaml
 # CORRECT
 socket-proxy:
-  image: tecnativa/docker-socket-proxy:v0.4.2
+  image: tecnativa/docker-socket-proxy:v0.5.0
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
   environment:

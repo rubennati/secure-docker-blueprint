@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (16.1.0) — over IPv4: an OpenPGP-encrypted secret stored through `/create/secret`, read once and `404` on the second read, before and after `down`/`up`; the route is public by design (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/jhaals/yopass
@@ -10,12 +12,12 @@
 - **Origin:** Sweden · Jonas Haals (individual maintainer, corporate-adjacent — Spotify, Doddle and Gumtree Australia are named as users, not owners) · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Self-destructing links for handing someone a credential once
-- **Based on version:** `16.0.1`
-- **Verification snapshot:** 2026-09-19 — local Compose stack booted and exercised (see README.md's Preview → Ready gate); not yet run behind a real Traefik host
+- **Verification snapshot:** 2026-09-19 — local Compose stack booted and
+  exercised
 
 ## What we use
 
-- `jhaals/yopass:16.0.1`, distroless build, runs as a fixed non-root UID
+- `jhaals/yopass:16.1.0`, distroless build, runs as a fixed non-root UID
 - `memcached:1.6.45-alpine` as the ephemeral store — the upstream-documented
   default backend, matching every value Yopass stores: TTL-based, no
   durability required or wanted
@@ -58,8 +60,11 @@ Secret Requests on; it requires a different, licensed product from upstream.
 
 ## Version notes
 
-- Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors, not
-  run on a host at this tag; the checks under "What was actually verified" ran
+- Moved to `16.1.0` on 2026-11-08. Upstream calls
+  16.1.0 a drop-in replacement with the same frontend, flags and environment
+  variables; the API path is `/create/secret`.
+- Moved to `16.0.1` on 2026-11-05 (released 2026-10-23), across two majors
+  ; the checks under "What was actually verified" ran
   on 14.10.0. Nothing this stack sets changes: `MEMCACHED`, `PORT` and the
   `--health-check` subcommand keep their names
   (https://yopass.se/docs/server-options), and with no `FILE_STORE` set, files
@@ -107,4 +112,3 @@ Secret Requests on; it requires a different, licensed product from upstream.
 - **Memcached backend only** — Yopass also supports Redis and file/S3
   storage; this stack does not use them, since Memcached already matches
   every value stored here (TTL-based, no durability needed).
-- **Not yet run behind a real Traefik host or TLS.**

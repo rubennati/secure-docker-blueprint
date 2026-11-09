@@ -12,9 +12,9 @@
 - **Origin:** Germany · Zammad GmbH · EU
 - **Domain:** Business operations
 - **Role:** Helpdesk and ticket system across mail, chat and phone
-- **Based on version:** `7.2.2-0038` (Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the
-  highest build of the target release, not the first)
-- **Last checked:** 2026-08-16
+- **Pinning:** Zammad publishes no clean semver — only `X.Y.Z-NNNN`; pin the highest
+  build of the target release, not the first
+- **Last verified:** 2026-11-08 (7.2.2-0045) — over IPv4, a new installation on 7.2.2-0038 with Postgres 18.6, Redis, memcached with cap_drop, then moved to 7.2.2-0045: Elasticsearch healthy, an agent created with `rails r` (the wizard was not run through the API), a ticket created through the API and found by the search before and after the move and after `down`/`up`, the refused client answered `403`; a restore through `docker exec` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -60,7 +60,11 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
 
 ## Version notes
 
-- memcached moved to `1.6.45` on 2026-10-31, not run at this tag. 1.6.42
+- Moved to `7.2.2-0045` on 2026-11-08, a rebuild of the same 7.2.2 release
+  (the suffix is the package build); the upgrade works: started over
+  an installation created on `7.2.2-0038` with a ticket in it, which was present
+  and found by the Elasticsearch search afterwards.
+- memcached moved to `1.6.45` on 2026-10-31. 1.6.42
   (2026-05-18) is upstream's security release — a timing side channel in SASL
   password authentication and a crash on an oversized auth token, no CVEs
   assigned; 1.6.43 tags three more fixes as security (binary-protocol refcount
@@ -68,7 +72,7 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
   with `OK`, which touches tooling only; 1.6.44 and 1.6.45 fix crashes and
   overflows. No changed default.
 
-- Moved to `7.2.2-0038` on 2026-11-05, not run on a host at this tag — the
+- Moved to `7.2.2-0038` on 2026-11-05 — the
   highest 7.2.2 build in the registry that day (built 2026-11-05); 7.2.2 is the
   newest stable release, the only 7.3 tag is `7.3.0-alpha`. Breaking changes
   added to the 7.2 section since 7.2.0 (`BREAKING_CHANGES.md`): verifying a
@@ -82,8 +86,7 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
   7.2.2 commit logs carry authorization hardening (knowledge base, GraphQL
   attribute assignment, ActionCable sessions, link and activity-stream
   access).
-- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05, not run on a
-  host at this tag. PostgreSQL 18 support: the docs require PostgreSQL 15 or
+- Moved `postgres` from `16-alpine` to `18.6-alpine` on 2026-11-05. PostgreSQL 18 support: the docs require PostgreSQL 15 or
   newer (https://docs.zammad.org/en/latest/prerequisites/software.html) and
   upstream's CI runs against `postgres:18`. The 18 image keeps its cluster under
   `/var/lib/postgresql/18/docker`; `PGDATA: /var/lib/postgresql/data` in both
@@ -95,8 +98,7 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
   "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
   database already exist are expected); then `docker compose up -d`. A return to
   the old major is only a restore of that dump.
-- Moved Elasticsearch from `8.17.4` to `9.5.6` on 2026-11-05, not run on a host
-  at this tag. Zammad 7.2 and later support Elasticsearch ">= 8.15, < 10"
+- Moved Elasticsearch from `8.17.4` to `9.5.6` on 2026-11-05. Zammad 7.2 and later support Elasticsearch ">= 8.15, < 10"
   (https://docs.zammad.org/en/latest/prerequisites/software.html); upstream's
   zammad-docker-compose ships 9.5.5. Elasticsearch upgrades in place to 9 only
   from 8.19, and the index here is derived data that the backup leaves out, so
@@ -105,8 +107,8 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
   the searchindex rebuild (Useful commands). Search returns nothing until the
   rebuild finishes. `vm.max_map_count` and `xpack.security.enabled: "false"`
   carry over unchanged.
-- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major, not
-  run on a host at this tag; the tag follows the 8.10 patch releases (8.10.3,
+- Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
+  ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's
   choice (7.4: RSALv2 or SSPLv1). The image bundles the Query Engine, JSON, time
   series and probabilistic data types as modules, which the image's entrypoint loads

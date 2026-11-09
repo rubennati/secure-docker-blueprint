@@ -12,8 +12,7 @@
 - **Origin:** Germany · Kevin Papst · EU
 - **Domain:** Business operations
 - **Role:** Time tracking with reports and invoicing hooks
-- **Based on version:** `2.71.0` (see Version / tag notes — the `apache-` prefix is gone)
-- **Last verified:** 2026-11-03 (2.66.0) — step 8 lab host behind Traefik 3.7.17 on its edge network: login, customer, project, activity and a timesheet through the API, a `ROLE_USER` refused the admin's data, and the README's borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-05-03 (Last checked)
+- **Last verified:** 2026-11-08 (2.71.0) — over IPv4: the administrator created from `ADMIN_EMAIL`/`ADMIN_PASSWORD` on the first start, a login through the form before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -38,7 +37,7 @@
   newest prefixed tag is `apache-2.57.0` (2026-05-21); everything after that is published
   as a bare semver tag. `2.66.0` and `apache` carry the same digest, so the bare tag is
   the Apache variant this stack expects. Corrected on 2026-09-13.
-- Moved to `2.71.0` on 2026-11-05, not run on a host at this tag. 2.71.0 deactivates
+- Moved to `2.71.0` on 2026-11-05. 2.71.0 deactivates
   the long-deprecated API passwords (breaking, #6267): API clients must use API tokens,
   the `X-AUTH-USER` / `X-AUTH-TOKEN` password pair no longer authenticates. It also
   converts user roles from `Types::ARRAY` to JSON, a migration the entrypoint applies at

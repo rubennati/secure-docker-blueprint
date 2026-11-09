@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v2.6.2) — over IPv4: the application served through the route before and after `down`/`up`, the refused client answered `403`; no threat model saved (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://hub.docker.com/r/owasp/threat-dragon
@@ -10,10 +12,8 @@
 - **Origin:** United States · OWASP Foundation (nonprofit) · non-EU
 - **Domain:** Security operations
 - **Role:** Threat modelling: data-flow diagrams, trust boundaries, threats and mitigations
-- **Based on version:** `v2.6.2`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted and
-  exercised with real Docker Secrets (see README.md's Preview → Ready gate);
-  not yet run behind a real Traefik host
+  exercised with real Docker Secrets
 
 ## What we use
 
@@ -98,4 +98,3 @@ all — it uses a plain HTTP probe against the app's own port (the same
   container were ever reachable a different way.
 - **Git-provider OAuth (GitHub/GitLab/Bitbucket/Google) is not configured or
   exercised** — see README.md.
-- **Not yet run behind a real Traefik host or TLS.**

@@ -10,8 +10,7 @@
 - **Origin:** Community · Marcel May · Germany · EU
 - **Domain:** Developer tools
 - **Role:** SMTP, IMAP and POP3 test server with a mailbox per recipient, for automated tests
-- **Based on version:** `2.1.15`
-- **Last verified:** 2026-11-03 (2.1.15) — step 8 lab host behind Traefik 3.7.17: SMTP, SMTPS, IMAP, IMAPS, POP3 and POP3S from a container on `proxy-public`, the REST API through the route, no published port, not reachable from an edge network, a restart (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-09-22 (2.1.13)
+- **Last verified:** 2026-11-09 (2.1.15) — over IPv4: a message sent over SMTP from a container on `proxy-public` was read back over IMAP, the recipient listed by the REST API through Traefik; mailboxes are in memory and empty again after `down`/`up`, as designed
 
 ## What we use
 
@@ -64,8 +63,8 @@ Behind Traefik with TLS, with the shipped `acc-private` and `sec-2`:
 
 ## Verification performed (2026-11-03)
 
-Step 8 lab host, the production `docker-compose.yml` at 2.1.15 behind Traefik
-3.7.17, its router admitting the lab's loopback probe only:
+The production `docker-compose.yml` at 2.1.15 behind Traefik 3.7.17, its router
+admitting a loopback probe only:
 
 - Healthy 8 s after the start; no published port; the container runs as
   `greenmail` (uid 999), read-only, all capabilities dropped; 102 MiB, 22 PIDs
@@ -114,7 +113,7 @@ were not exercised.
 ## Version notes
 
 - Moved to `2.1.15` on 2026-10-31 (released 2026-10-25) and run at this tag on
-  2026-11-03 (step 8 lab host, below). 2.1.14 and 2.1.15 are dependency bumps — Bouncy Castle to
+  2026-11-03 (below). 2.1.14 and 2.1.15 are dependency bumps — Bouncy Castle to
   1.86.2, Jackson to 2.22.4, the Zulu JDK 21 image — with no breaking change,
   property change or advisory.
 
@@ -125,7 +124,7 @@ were not exercised.
 3. Bump `APP_TAG` in `.env.example` and `.env.local.example`
 4. `docker compose pull && docker compose up -d`
 5. Re-run the SMTP send / IMAP fetch verification above
-6. Update **Based on version** above — and **Last verified** only if the
+6. Update **Last verified** only if the
    upgrade was actually exercised
 
 ## Useful commands

@@ -1,0 +1,199 @@
+---
+title: Ollama
+description: Language models on your own hardware, pulled by name and served over an OpenAI-compatible API — on CPU out of the box, behind a password because Ollama has no login.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Ollama runs language models on your own machine. It pulls models from the
+Ollama registry by name, keeps them on disk, loads them on demand and serves
+them over HTTP — its own `/api/*` endpoints and an OpenAI-compatible `/v1`, which
+chat interfaces such as [Open WebUI](/applications/open-webui/) use. It runs on
+CPU with no GPU at all; an overlay adds an NVIDIA GPU. One container, no
+database.
+
+<StackEvidence stack="apps/ollama" />
+
+**To try it:** Docker, and memory for the model you pull. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and
+`htpasswd` for the password gate.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/ollama/`:
+
+```bash
+cp .env.local.example .env.local
+mkdir -p volumes/local/data
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local exec ollama ollama pull smollm2:135m
+curl http://localhost:11434/api/generate \
+  -d '{"model":"smollm2:135m","prompt":"The capital of France is","stream":false}'
+```
+
+`smollm2:135m` is a very small model that answers immediately on CPU. Stop it
+again with the same command and `down`.
+
+## Installation
+
+From `apps/ollama/`:
+
+<Steps>
+
+1. Copy the environment file and set `APP_TRAEFIK_HOST`:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Create the password gate. Ollama authenticates no one, so the route asks for
+   a password itself. The command doubles every `$` for Compose — paste the whole
+   output into `APP_BASIC_AUTH_USERS`:
+
+   ```bash
+   htpasswd -nbB ops 'the-password' | sed -e 's/\$/\$\$/g'
+   ```
+
+3. Size the container in `.env`:
+
+   | Variable | What it is |
+   |---|---|
+   | `OLLAMA_MEMORY` | memory ceiling, `8g` by default — the largest model you run plus 1–2 GB, more for long contexts |
+   | `OLLAMA_CPUS` | CPU ceiling — CPU inference uses every core it is given |
+   | `OLLAMA_KEEP_ALIVE` | how long an idle model stays loaded |
+
+4. List `ollama-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render and
+   restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+5. Create the model directory for the user the container runs as, start, and
+   pull a model:
+
+   ```bash
+   mkdir -p volumes/data
+   sudo chown 1000:1000 volumes/data
+   docker compose up -d
+   docker compose exec ollama ollama pull smollm2:135m
+   ```
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                     # one service, healthy
+docker compose exec ollama ollama list
+curl -u ops https://<APP_TRAEFIK_HOST>/api/generate \
+  -d '{"model":"smollm2:135m","prompt":"The capital of France is","stream":false}'
+```
+
+The same request without `-u` answers 401. Any OpenAI client works against
+`https://<APP_TRAEFIK_HOST>/v1`, with the basic-auth credentials and any
+non-empty API key — Ollama ignores the key.
+
+## Going further
+
+### Who can reach it
+
+Ollama has no authentication. Whoever reaches the API can run inference on your
+hardware, pull arbitrary models onto your disk and delete the ones you have.
+Two gates stand in front of it, and both stay:
+
+- `APP_TRAEFIK_ACCESS` ships `access-trusted-vpn` — your declared ranges and the
+  VPN. Never `access-public`.
+- The basic-auth middleware from `APP_BASIC_AUTH_USERS` asks everyone the policy
+  admits for a password.
+
+**Containers on Ollama's network reach the API directly, past both.** On its own
+edge network, the default, that is Traefik alone. On the shared `proxy-public` —
+which a chat interface on the same host needs to call `http://ollama:11434` —
+every member can, a `DELETE` included. Run only stacks you trust on that network.
+For per-user access, replace the basic-auth gate with
+[Authentik](/infrastructure/authentik/) forward-auth (`auth-authentik@file` in
+`APP_TRAEFIK_AUTH`) rather than widening the policy.
+
+### CPU and GPU
+
+On CPU the server logs `inference compute id=cpu`. Speed follows the model's
+size: a 135M-parameter model answers at once, a model of several billion
+parameters takes noticeably longer per answer. Requests to a model are served
+one at a time (`OLLAMA_NUM_PARALLEL` is 1).
+
+For an NVIDIA GPU, set in `.env`:
+
+```ini
+COMPOSE_FILE=docker-compose.yml:docker-compose.gpu.yml
+```
+
+The overlay reserves the GPU and needs an NVIDIA driver and the NVIDIA Container
+Toolkit on the host. Without a GPU, `docker compose up` fails rather than falling
+back to CPU. The image already carries the CUDA libraries.
+
+### Memory
+
+A loaded model, its context window and the runtime all count against
+`OLLAMA_MEMORY`. A model that does not fit gets the process killed mid-request.
+
+### What leaves the host
+
+Model pulls from the registry, which is why the container has outbound access.
+`OLLAMA_NO_CLOUD=1` switches off Ollama's cloud features — remote inference and
+web search.
+
+## Backup
+
+| | |
+|---|---|
+| **Database** | None |
+| **State** | `volumes/data/models` — the downloaded models |
+| **Rebuildable** | models from the registry, by name — record `ollama list` instead of backing them up |
+| **Also needed** | custom models built with `ollama create`, which exist only in `volumes/data/models` |
+
+The server's key, `volumes/data/.ollama/id_ed25519`, is regenerated when missing
+and matters only for pushing models to the registry. Restore order: the
+directory, then the container.
+
+## Updates
+
+<Steps>
+
+1. Read the [release notes](https://github.com/ollama/ollama/releases) and the
+   project's security advisories.
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Check that `ollama list` still shows the models, then run one request.
+
+</Steps>
+
+## Troubleshooting
+
+**A request breaks off mid-answer.** The model, with its context, exceeded
+`OLLAMA_MEMORY` and the process was killed. Raise the limit or use a
+smaller model.
+
+**A second request waits.** Requests to one model are served one at a time.
+
+**`docker compose up` fails with a device error.** The GPU overlay is in
+`COMPOSE_FILE` and the host has no usable NVIDIA GPU or Container Toolkit.
+
+**401 from the route.** The basic-auth credentials are missing, or a `$` in
+`APP_BASIC_AUTH_USERS` was not doubled.
+
+## Repository files
+
+- [`apps/ollama/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ollama/README.md) — access model, CPU and GPU, memory
+- [`apps/ollama/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ollama/.env.example)
+- [`apps/ollama/docker-compose.gpu.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ollama/docker-compose.gpu.yml) — the NVIDIA overlay
+- [`apps/ollama/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/ollama/UPSTREAM.md) — upgrade checklist
+
+## Official sources
+
+- [Ollama documentation](https://docs.ollama.com/)
+- [Ollama on GitHub](https://github.com/ollama/ollama)

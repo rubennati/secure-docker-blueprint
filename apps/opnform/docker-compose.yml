@@ -12,6 +12,17 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Re-added deliberately: the official entrypoint starts as root, fixes
+    # ownership on the data directory, then drops to the service user.
+    # Set per image family: docs/standards/security-baseline.md.
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
 
     # --- Resources ---
     # Ceiling above the buffer pool, connections and temporary tables.
@@ -61,6 +72,12 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The image's entrypoint drops to its own user only when it starts as root;
+    # started as that user it needs no capability. The data directory has to
+    # belong to it (README, setup).
+    user: "999:1000"
     read_only: true
     tmpfs:
       - /tmp
@@ -106,11 +123,11 @@ services:
     # --- Resources ---
     # Generous ceiling: a limit the normal workload reaches is a limit that
     # kills imports and background jobs. Retune from docker stats, not down to it.
-    memswap_limit: 2G          # == memory: no swap
+    memswap_limit: 3g          # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 3g   # 2x the measured peak (1265 MiB)
           pids: 200
         reservations:
           memory: 128M
@@ -136,11 +153,11 @@ services:
       APP_DEBUG: "false"
       APP_URL: https://${APP_TRAEFIK_HOST}
       FRONT_URL: https://${APP_TRAEFIK_HOST}
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
       APP_TRUSTED_PROXIES: "*"
       # Secrets shared with Nuxt UI (SSR authentication)
-      JWT_SECRET: ${JWT_SECRET}
-      FRONT_API_SECRET: ${FRONT_API_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
+      FRONT_API_SECRET: ${FRONT_API_SECRET:?Set FRONT_API_SECRET in .env}
       # Database
       DB_CONNECTION: pgsql
       DB_HOST: db
@@ -149,7 +166,7 @@ services:
       DB_USERNAME: ${DB_USER}
       # Laravel reads DB_PASSWORD from env only (no _FILE support).
       # Value must match .secrets/db_pwd.txt.
-      DB_PASSWORD: ${DB_PWD_INLINE}
+      DB_PASSWORD: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
       # Cache + queue + sessions via Redis
       CACHE_DRIVER: redis
       QUEUE_CONNECTION: redis
@@ -431,6 +448,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The master chowns its cache directories and the workers switch to uid 101.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
     # --- Configuration ---
     environment:

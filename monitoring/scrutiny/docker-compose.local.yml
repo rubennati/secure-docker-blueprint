@@ -159,6 +159,7 @@ services:
       - "127.0.0.1:8080:8080"
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     # --- Health & Observability ---
     # curl, not wget: the image carries curl and no wget, and no busybox to
@@ -177,6 +178,12 @@ networks:
   app-internal:
     name: scrutiny-local-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (Docker 29 binds nothing on the host). Only
+  # scrutiny-web joins it, for its port; the other services stay on app-internal.
+  published:
+    name: scrutiny-local-published
 
 # --------------------------------------------------------
 # SECRETS

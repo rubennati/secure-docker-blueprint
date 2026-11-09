@@ -10,8 +10,7 @@
 - **Origin:** UK · Simon Kelley · non-EU
 - **Domain:** Infrastructure
 - **Role:** DNS forwarder with wildcard zones for split-DNS setups
-- **Based on version:** `2.93` (image changed — see Version / tag notes)
-- **Last checked:** 2026-04-14
+- **Last verified:** 2026-11-08 (2.93) — over IPv4, host networking: answered queries on the loopback listener and forwarded to the upstream resolvers; the tailnet listener was absent (no Tailscale on this host) (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we changed and why
 

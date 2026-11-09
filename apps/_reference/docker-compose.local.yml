@@ -21,7 +21,7 @@ services:
       PGDATA: /var/lib/postgresql/data
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       TZ: ${TZ}
     volumes:
       - ./volumes/local/postgres:/var/lib/postgresql/data
@@ -46,7 +46,7 @@ services:
     environment:
       TZ: ${TZ}
       DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env.local}
       APP_LOG_LEVEL: ${APP_LOG_LEVEL}
       APP_DISABLE_SIGNUP: "false"
     ports:

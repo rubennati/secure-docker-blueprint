@@ -12,8 +12,7 @@
 - **Origin:** Open WebUI · no country stated in its published terms · no country
 - **Domain:** AI and local AI
 - **Role:** Chat interface for any OpenAI-compatible endpoint, with accounts, history and document upload
-- **Based on version:** `v0.13.0`
-- **Last verified:** 2026-09-21 (v0.11.3) — behind Traefik with TLS: sign-in and an answer from an attached document in a browser, LiteLLM as a second backend, offline mode, a restart, and a restore
+- **Last verified:** 2026-11-08 (0.13.0) — over IPv4: the administrator from `ADMIN_EMAIL` and the secret file signed in through the API before and after `down`/`up`, sign-up refused (`ENABLE_SIGNUP=false`), a document uploaded, the embedding model downloaded on the first start as the README says, the refused client answered `403`; no chat with a backend (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -80,7 +79,7 @@ the first backend:
   says so
 - Peak 1.3 GiB of memory, 87 PIDs
 
-**Not yet exercised:** web search.
+**Outside this verification:** web search.
 
 ## Verification performed (2026-09-19)
 
@@ -102,8 +101,7 @@ container (`smollm2:135m`) as the OpenAI-compatible backend at `/v1`:
 
 ## Version notes
 
-- Moved to `v0.13.0` on 2026-11-05, not run on a host at this tag; `Last verified`
-  stays at `v0.11.3`. Back up `volumes/data` first: `v0.12.1` and `v0.13.0` change
+- Moved to `v0.13.0` on 2026-11-05. Back up `volumes/data` first: `v0.12.1` and `v0.13.0` change
   the database schema. `v0.12.4` moves the image to Python 3.12 on Debian 13, so
   tools and functions installed with pip need versions that support 3.12; with
   Direct Integrations off, the default, tool and terminal connections saved in
@@ -123,5 +121,5 @@ container (`smollm2:135m`) as the OpenAI-compatible backend at `/v1`:
 4. Bump `APP_TAG` in `.env.example`
 5. `docker compose pull && docker compose up -d`; database migrations run at start
 6. Log in and send a message
-7. Update **Based on version** above — and add **Last verified** only if the
+7. Add **Last verified** only if the
    upgrade was exercised on a real install

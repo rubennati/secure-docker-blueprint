@@ -238,18 +238,21 @@ services:
 
     # --- Resources ---
     # Starting values, not measured.
-    memswap_limit: 512m
+    memswap_limit: 1g
     deploy:
       resources:
         limits:
-          memory: 512m
+          memory: 1g   # 2x the measured peak (503 MiB)
           cpus: "0.50"
           pids: 100
         reservations:
           memory: 128m
 
     # --- Configuration ---
-    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "/bin/bash", "/entrypoint.sh"]
+    # Beat keeps its schedule file in the working directory, which read_only
+    # makes unwritable ("Read-only file system: 'celerybeat-schedule'", a restart
+    # loop); the image's entrypoint for MODE=beat, with the file on the tmpfs.
+    entrypoint: ["/bin/sh", "/secrets-entrypoint.sh", "celery", "-A", "app.celery", "beat", "--loglevel", "INFO", "--schedule", "/tmp/celerybeat-schedule"]
     environment:
       <<: *dify-env
       MODE: beat

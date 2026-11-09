@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (0.30.4) — over IPv4: the admin from the secret file logged in through the API (`201`, `401` for a wrong password) before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Upstream GitHub:** https://github.com/warp-tech/warpgate
@@ -11,7 +13,6 @@
 - **Origin:** Germany · Eugen Pankov Softwareentwicklung · EU
 - **Domain:** Identity, access and secrets
 - **Role:** Lightweight access proxy for SSH, HTTPS, databases, Kubernetes, RDP and VNC
-- **Based on version:** `0.30.4`
 - **Verification snapshot:** 2026-09-19 — hardening only (see below), not a full clean-install run
 
 ## What we use
@@ -54,8 +55,7 @@ stack, not assumed from the README:
 
 ## Version notes
 
-- Moved to `0.30.4` on 2026-11-05, not run on a host at this tag; the
-  verification below was against `0.29.0`. Since 0.30.0 the runtime image is
+- Moved to `0.30.4` on 2026-11-05. Since 0.30.0 the runtime image is
   distroless (`gcr.io/distroless/cc`): no shell, no package manager, so the
   `bash`/`wget`/`cat` noted below are gone. The `warpgate` user (UID 1000),
   `/data`, the entrypoint `/usr/local/bin/warpgate` and the exec-form image

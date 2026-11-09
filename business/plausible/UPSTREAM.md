@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v3.2.1) — over IPv4: the registration page served, all three services up before and after `down`/`up`, the refused client answered `403`; no site created (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/plausible/community-edition/pkgs/container/community-edition
@@ -14,7 +16,6 @@
 - **Origin:** Estonia · Plausible Insights OÜ · EU
 - **Domain:** Business operations
 - **Role:** Cookie-free, GDPR-oriented web analytics — the measurement side of a company website, without a consent banner
-- **Based on version:** `v3.2.1`
 
 ## Project maturity
 
@@ -105,8 +106,7 @@ password resets, and a restore from the volumes.
 ## Version notes
 
 - Moved `clickhouse/clickhouse-server` from `26.8.10.6-alpine` to
-  `26.10.3.7-alpine` on 2026-11-05 (released 2026-10-26), not run on a host at
-  this tag; the migrations and an ingested event were verified on 26.8 (above),
+  `26.10.3.7-alpine` on 2026-11-05 (released 2026-10-26); the migrations and an ingested event were verified on 26.8 (above),
   not on 26.10. 26.8 is ClickHouse's LTS line, 26.10 the newest stable release.
   Plausible names no upper bound: its compose still pins 24.12 and its CI runs
   25.11.5.8 (https://github.com/plausible/analytics,

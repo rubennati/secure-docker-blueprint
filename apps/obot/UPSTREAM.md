@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (v0.28.0) — over IPv4: the bootstrap token signed in (`302`), a wrong token refused (`401`), before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/obot-platform/obot/pkgs/container/obot
@@ -13,7 +15,6 @@
 - **Origin:** US · Obot AI, Inc · non-EU
 - **Domain:** AI and local AI
 - **Role:** MCP gateway and agent platform — catalogues MCP servers, runs the hosted ones as containers, with an LLM gateway in front
-- **Based on version:** `v0.27.0`
 
 ## Project maturity
 
@@ -24,7 +25,7 @@ a refresh.
 
 ## What we use
 
-- `ghcr.io/obot-platform/obot:v0.27.0`, one container.
+- `ghcr.io/obot-platform/obot:v0.28.0`, one container.
 - `postgres:18.6-alpine`, which **replaces the PostgreSQL the image bundles**.
 - `tecnativa/docker-socket-proxy:v0.5.0` between obot and the Docker daemon.
 
@@ -104,7 +105,14 @@ cannot reach this host's own services unless that is changed.
 
 ## Version notes
 
-- Moved to `v0.27.0` on 2026-11-05, not run on a host at this tag. Crossing
+- Moved to `v0.28.0` on 2026-11-08; a new installation
+  works at this tag. 0.28.0 routes every model through one LLM gateway (`/api/llm-
+  proxy/v1`) and adds Keycloak and OneLogin as authentication providers.
+  Upstream warns that existing installations with model providers should wait:
+  provider credentials, models, aliases and access policies move to the gateway.
+  An existing installation with providers configured reads upstream's migration
+  notes before moving.
+- Moved to `v0.27.0` on 2026-11-05. Crossing
   `v0.26.2` runs a data migration on start that turns MCP servers exposed by
   access rules into virtual MCP servers (vMCPs); `v0.27.0` rejects MCP connections
   that do not go through a vMCP, removes Obot Agent (`OBOT_ENABLE_AGENTS`, the
@@ -133,6 +141,6 @@ cannot reach this host's own services unless that is changed.
 curl -s https://raw.githubusercontent.com/obot-platform/obot/main/README.md | grep -A12 'docker run'
 
 # What the entrypoint does with OBOT_SERVER_DSN, and every server flag
-docker run --rm --entrypoint sh ghcr.io/obot-platform/obot:v0.26.0 -c 'cat "$(command -v run.sh)"'
-docker run --rm --entrypoint obot ghcr.io/obot-platform/obot:v0.26.0 server --help
+docker run --rm --entrypoint sh ghcr.io/obot-platform/obot:v0.28.0 -c 'cat "$(command -v run.sh)"'
+docker run --rm --entrypoint obot ghcr.io/obot-platform/obot:v0.28.0 server --help
 ```

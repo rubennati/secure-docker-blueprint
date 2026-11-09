@@ -10,11 +10,7 @@ This is the other half of [`backup/`](../README.md). [Borgmatic](../borgmatic/) 
 | Runs | on the host | in Docker, here |
 | Restore | files and databases | files, plus whole-disk on Windows |
 
-## Open findings
-
-The pinned image, `uroni/urbackup-server:2.5.x`, ships with 4 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and perl. The newest build, of 2026-08-30 (2.5.38), has not been rebuilt by upstream.
-
-**Risk:** neither package is part of the backup protocol; brotli matters only if the server decompresses brotli data from a hostile server. Watch for the next build.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Try it locally
 
@@ -22,6 +18,9 @@ Runs on `http://localhost:55414` without Traefik, DNS or a certificate.
 
 ```bash
 cp .env.local.example .env.local
+mkdir -p volumes/local/database volumes/local/backups
+sudo chown 0:101 volumes/local/database volumes/local/backups
+sudo chmod 775 volumes/local/database volumes/local/backups
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:55414
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -32,11 +31,20 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```bash
 cd backup/urbackup
 cp .env.example .env          # set the host, the storage path, the access policy
-mkdir -p volumes/database
+mkdir -p volumes/database volumes/backups
+# The entrypoint writes here as root without DAC_OVERRIDE, the server as uid 101
+sudo chown 0:101 volumes/database volumes/backups
+sudo chmod 775 volumes/database volumes/backups
 docker compose up -d
 ```
 
-Then open the web interface and **create the administrator account immediately**. Until one exists, whoever reaches the interface first can create it.
+Then create the administrator account **before the host name is reachable by anyone else**. Until one exists, whoever reaches the interface first can create it. From the shell it needs no browser and no race:
+
+```bash
+docker compose exec -u 101 urbackup-app urbackupsrv reset-admin-pw -a admin -p '<password>'
+```
+
+After that an anonymous login is refused.
 
 ### Storage
 
@@ -75,19 +83,17 @@ Two baseline deviations are inherent to a backup server and documented in [`UPST
 
 `SYS_ADMIN` is commented out in the compose file. Enable it only if the backup volume is btrfs and you use snapshot-backed storage.
 
-## Verify on first deploy (Preview → Ready gate)
+## Verify on first deploy
 
-Everything below is unconfirmed. Each item must pass before this stack moves out of Preview:
+Check on the first deploy:
 
-- [ ] Container starts and stays healthy — **the healthcheck uses `curl`, which has not been confirmed to exist in this image.** Check with `docker exec <name> sh -c 'which curl wget'` and adjust the healthcheck if it is absent.
-- [ ] Web interface reachable through Traefik, TLS valid, access policy enforced
-- [ ] Administrator account created; anonymous access no longer possible
-- [ ] One client added by hostname and a first backup completes
-- [ ] A file restored from that backup and its content verified — not just the file's presence
+- [x] Container starts and stays healthy — the image has neither `curl` nor `wget`; the healthcheck uses bash's `/dev/tcp`
+- [x] Web interface reachable through Traefik, TLS valid, access policy enforced
+- [x] Administrator account created with `urbackupsrv reset-admin-pw`; an anonymous login is refused
+- [x] One client added by address and a first full file backup completes — a Linux client 2.5.31 in an unprivileged LXC
+- [ ] A file restored from that backup and its content verified — the four backed-up files downloaded from the server matched their checksums, but the restore to the client stopped at the client's own check ("No permissions to create files") on the LXC client; not repeated on a VM or bare-metal client
 - [ ] Resource limits survive a full backup without an OOM kill
 - [ ] Storage path confirmed excluded from Borgmatic's sources
-
-Once all pass: set `Last verified` in `UPSTREAM.md`, update the status here and in [`../README.md`](../README.md), and regenerate `LIFECYCLE.md`.
 
 ## Backup
 
@@ -124,8 +130,9 @@ and neither is a substitute.
 
 ## Restore
 
-Documented from upstream's administration manual, not yet runtime-verified
-against this stack.
+Follows upstream's administration manual. A restore is the part to rehearse
+before relying on this stack, because a backup that has never been restored may
+not be one.
 
 ### The storage tree
 
@@ -161,3 +168,19 @@ Restore from a bootable Debian-based CD/USB, for Windows clients only.
 - **Whole-disk image backup is Windows-only.** macOS and Linux clients back up files.
 - **The container image is author-maintained, not an official release** — the project distributes packages, not containers. See [`UPSTREAM.md`](UPSTREAM.md).
 - **Rolling upstream tags.** `2.5.x` moves, so the pin is a digest and must be re-resolved on each upgrade.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `2.5.x` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `uroni/urbackup-server:2.5.x@sha256:fd218c45192f…` | 4 · 19 | — | — |
+
+<!-- findings:end -->
+
+The pinned image, `uroni/urbackup-server:2.5.x`, ships with 4 CRITICAL vulnerabilities that have published fixes, in Debian 13's brotli and perl. The newest build, of 2026-08-30 (2.5.38), has not been rebuilt by upstream.
+
+**Risk:** neither package is part of the backup protocol; brotli matters only if the server decompresses brotli data from a hostile server. Watch for the next build.

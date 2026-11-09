@@ -2,15 +2,7 @@
 
 Self-hosted identity provider. Acts as a central SSO endpoint for other apps in the stack via **Forward-Auth** (Traefik middleware) or **OAuth2 / OIDC / SAML** (app-native clients).
 
-## Open findings
-
-The server image, `ghcr.io/goauthentik/server:2026.8.5`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497, fixed in 1.1.0-2+deb13u1). It is the newest release.
-
-**Risk:** nothing in the image links the library, and upstream has confirmed it is not reachable. The fix is announced for 2026.8.6; move to it when it is released.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -18,7 +10,7 @@ Five services (four long-running plus a one-shot init):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `init-perms` | `alpine:3.24.3` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there. Exits in <1s, runs on every `up -d`. |
+| `init-perms` | `alpine:3.24.3` | One-shot: chowns bind-mount directories to UID 1000 so the non-root Authentik image can write there, and `volumes/redis` to 999:1000 for Redis. Exits in <1s, runs on every `up -d`. |
 | `server` | `ghcr.io/goauthentik/server` (cmd `server`) | Web UI + REST API, the only container exposed through Traefik |
 | `worker` | Same image (cmd `worker`) | Background jobs: email, LDAP/directory sync, policy evaluation |
 | `db` | `postgres:18.6-alpine` | Primary data store (users, groups, tokens, events) |
@@ -51,7 +43,11 @@ No entrypoint wrapper needed.
 Runs on `http://localhost:9000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'AUTHENTIK_SECRET_KEY=%s\n' "$(openssl rand -base64 60 | tr -d '\n')" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:9000
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -87,7 +83,7 @@ docker compose logs authentik-server --follow
 # until then. Set up akadmin here.
 ```
 
-Default values are `access-public`, `limit-standard`, `headers-standard`, `auth-none` — publicly reachable (users must be able to log in from anywhere), the standard headers and counter; the `/_static/` router carries `STATIC_TRAEFIK_LIMIT=limit-none`, because a first load of the portal fetches 100+ public chunks.
+Default values are `access-vpn`, `limit-standard`, `headers-standard`, `auth-none` — closed until the setup flow has run over the VPN, then `access-public` (users must be able to log in from anywhere), the standard headers and counter; the `/_static/` router carries `STATIC_TRAEFIK_LIMIT=limit-none`, because a first load of the portal fetches 100+ public chunks.
 
 ## Verify
 
@@ -156,8 +152,7 @@ If it is missing: create it (Type: `Proxy`, leave all defaults, save).
 
 Then edit it and set `authentik_host` in its configuration to `https://<APP_TRAEFIK_HOST>`.
 Left empty, the outpost builds its login redirect on `http://localhost/…`: an
-unauthenticated request is sent to a page no browser reaches (measured on a host,
-2026-11-02).
+unauthenticated request is sent to a page no browser reaches.
 
 ---
 
@@ -312,14 +307,13 @@ Similar pattern — create a `SAML Provider`, download the metadata XML from Aut
 
 The worker sends every e-mail — recovery, invitations, notifications — and runs the
 version check. On `app-internal` alone, which is `internal: true`, the SMTP host does not
-resolve and each `send_mail` task fails (`ak test_email` times out; measured on a host,
-2026-11-02). It therefore also joins `app-egress`, the pattern `apps/nextcloud` uses; the
+resolve and each `send_mail` task fails (`ak test_email` times out). It therefore also joins `app-egress`, the pattern `apps/nextcloud` uses; the
 database and Redis stay on `app-internal`, and the worker does not join `proxy-public`.
 
 What the worker needs outbound: the SMTP relay (`SMTP_HOST:SMTP_PORT`) and, for the version
-check, `version.goauthentik.io` over HTTPS. Measured on a host (2026-11-02): with this file
-applied the worker reached a public submission port and a relay addressed over the internet,
-and `ak test_email` was delivered. A mail sink on `proxy-public`, such as `apps/mailpit`, is
+check, `version.goauthentik.io` over HTTPS. With this file applied the worker reaches a
+public submission port and a relay addressed over the internet, and `ak test_email` is
+delivered. A mail sink on `proxy-public`, such as `apps/mailpit`, is
 not reachable from `app-egress`; Authentik does not send to it.
 
 What it costs: `app-egress` is a plain bridge, so the worker can open any outbound
@@ -349,9 +343,11 @@ relay and HTTPS from this network narrows that; the blueprint does not render su
 ```yaml
 postgresql_databases:
     - name: authentik
-      container: authentik-db
       username: authentik
-      password: "{credential file /srv/docker/core/authentik/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec authentik-db pg_dump
+      pg_restore_command: docker exec -i authentik-db pg_restore
+      psql_command: docker exec -i authentik-db psql
 ```
 
 **This stack is the one whose loss cascades.** Every application behind
@@ -370,11 +366,34 @@ Two files outside the database are required for a working restore:
 
 ## Known Issues
 
-- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`. Complete it immediately after the first boot; if you forget, anyone reaching it first becomes the admin. To close the window, start with `APP_TRAEFIK_ACCESS=access-vpn`, complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
+- **Setup URL is public until an admin exists.** The setup flow lets anyone create `akadmin`; at 2026.8.5 `/` redirects every visitor to it until it has run, and to the login afterwards. The route therefore ships at `access-vpn`: complete the setup from the VPN, then set `access-public` and `docker compose up -d`.
 - **`AUTHENTIK_SECRET_KEY` rotation invalidates all existing sessions and API tokens.** Plan a maintenance window.
 - **Email flows depend on SMTP.** Password reset, invitation, and event notifications silently fail if SMTP is misconfigured. Test with a real account after setup.
 - **Worker volumes are shared with server.** Both mount `./volumes/data` and `./volumes/custom-templates`. Don't change the mount paths without updating both services.
 - **Legacy `/media` mount.** Authentik has migrated from `/media` to `/data`. If you are upgrading a pre-2025 install: stop the stack, move `volumes/media` to `volumes/data`, run `up -d` — the init container will re-chown.
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `2026.8.5` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `alpine:3.24.3` | — | — | — |
+| `ghcr.io/goauthentik/server:2026.8.5` | 1 · 4 | 0 · 18 | — |
+| `postgres:18.6-alpine` | — | — | 1 · 25 |
+| `redis:8.10.3-alpine` | — | — | — |
+
+<!-- findings:end -->
+
+The server image, `ghcr.io/goauthentik/server:2026.8.5`, ships Debian `libbrotli1` 1.1.0-2+b7 with one CRITICAL finding (CVE-2026-111497, fixed in 1.1.0-2+deb13u1). It is the newest release.
+
+**Risk:** nothing in the image links the library, and upstream has confirmed it is not reachable. The fix is announced for 2026.8.6; move to it when it is released.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

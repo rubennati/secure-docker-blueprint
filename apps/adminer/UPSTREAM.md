@@ -10,8 +10,7 @@
 - **Origin:** Czech Republic · Jakub Vrána · EU
 - **Domain:** Developer tools
 - **Role:** Web interface onto a database another stack already runs
-- **Based on version:** `6.3.0` (standalone variant)
-- **Last verified:** 2026-05-02 (v4.8.1-standalone)
+- **Last verified:** 2026-11-08 (6.3.0-standalone) — over IPv4: the login page served through the route before and after `down`/`up`, the refused client answered `403`; no database connected through it (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -44,7 +43,7 @@ No DB migrations, no data to back up — Adminer is stateless.
 ## Version / tag notes
 
 - Moved to `6.3.0-standalone` on 2026-11-05 (released 2026-11-03), from
-  `5.5.1-standalone` across 6.0.0–6.2.0, not run on a host at this tag. The 5.x line
+  `5.5.1-standalone` across 6.0.0–6.2.0. The 5.x line
   ends at `5.5.1`: no newer 5.x image exists, and the current pin carries a CRITICAL
   image finding. The hold of 2026-09-13 ends: 6.0.2 shipped the four fixes of
   2026-09-07 (GHSA-rwxg-xph9-82cj server-name check, a regression from 5.5.1;

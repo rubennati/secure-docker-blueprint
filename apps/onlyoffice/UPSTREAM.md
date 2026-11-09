@@ -11,8 +11,7 @@
 - **Origin:** Latvia · Ascensio System SIA · EU
 - **Domain:** Documents and e-signature
 - **Role:** Document editing server for Nextcloud, Seafile and similar
-- **Based on version:** `10.0.0` (Document Server Community)
-- **Last verified:** 2026-11-02 (9.4.0) — step 8 lab host on its edge network: DOCX, XLSX and PPTX opened, edited, saved and reopened through Nextcloud (`office.yml`) and Seafile CE and Pro (`onlyoffice-callback.yml`), and from a JWT-signed editor page; the command service and conversion refuse a missing or foreign token; resources and timings measured — headless Chromium, no official client (docs/labs/ingress/2026-11-01-results.md). Earlier: `Last checked` 2026-06-14
+- **Last verified:** 2026-11-08 (10.0.0) — over IPv4: `/healthcheck` true before and after `down`/`up`; the route is public by design, so check 3's refusal does not apply, and both the conversion and the command service refused a request without a JWT; no editor session with a consuming app (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -65,8 +64,7 @@ original CSP until the container is recreated.
 ## Version notes
 
 - Moved `onlyoffice/documentserver` to `10.0.0` on 2026-11-05 (released 2026-10-12;
-  `10.0.0.1` is the same release with the build number), a major release, not run on
-  a host at this tag. Security: the release fixes a long list of vulnerabilities,
+  `10.0.0.1` is the same release with the build number), a major release. Security: the release fixes a long list of vulnerabilities,
   among them SSRF in the WOPI endpoints, co-editing session hijacking over WOPI,
   path traversal in the WOPI new-file template handler, arbitrary file write when
   extracting archives during conversion, local file read during EPUB conversion,

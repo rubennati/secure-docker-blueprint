@@ -11,8 +11,7 @@
 - **Origin:** UK · Dan Brown (BookStack) · non-EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Wiki with structure: shelves, books, chapters and pages
-- **Based on version:** `version-v26.09.2` (= BookStack 26.09.2), digest-pinned
-- **Last verified:** 2026-05-03 (v25.02)
+- **Last verified:** 2026-11-08 (version-v26.09.2) — over IPv4: the stack started with an application key from the image's `appkey`, the default administrator logged in and reached the settings (the route now ships closed because of it), the login page served after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -27,17 +26,16 @@
 |--------|--------|
 | **Real IP + real TZ removed** — inbox had a hardcoded RFC1918 address in `APP_URL` and a non-UTC timezone | Prevent leak; `APP_URL` now `https://${APP_TRAEFIK_HOST}`, `TZ` defaults to `UTC` |
 | **Hardcoded passwords removed** — inbox source had placeholder DB user password and root password inline in the compose file | Now Docker Secrets (`.secrets/db_pwd.txt`, `.secrets/db_root_pwd.txt`) + `DB_PWD_INLINE` duplicate for BookStack |
-| **Hardcoded `APP_KEY` removed** | Inbox example would have been a backdoor across copies. Now `__REPLACE_ME__` with generation command documented in Setup. |
+| **Hardcoded `APP_KEY` removed** | Inbox example would have been a backdoor across copies. Now shipped empty and required by compose, with the generation command documented in Setup. |
 | **MariaDB switched from LSIO to official** — inbox used `lscr.io/linuxserver/mariadb` | Blueprint consistency: other apps use `mariadb:<tag>`. BookStack app stays LSIO because that's the canonical deployment path. |
 | **Traefik labels instead of port `:8011:80`** | Blueprint routes via Traefik |
 | **`security_opt: no-new-privileges`** on both services | Baseline |
 | **`cap_drop: ALL` + minimal `cap_add`** on MariaDB | Hardening consistent with Ghost, WordPress MariaDB services |
-| **Access `access-public`, `limit-standard` and `headers-standard` defaults** | Wikis are usually meant to be readable; fine-tune based on whether you want public read or team-only |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first login is the default `admin@admin.com` / `password`; change it over the VPN, then open the route (`access-public`) if the wiki is meant to be read from outside |
 
 ## Version notes
 
-- Moved from `version-v26.05.4` to `version-v26.09.2` on 2026-11-05, not run
-  on a host at this tag. `APP_TAG` now carries the digest
+- Moved from `version-v26.05.4` to `version-v26.09.2` on 2026-11-05. `APP_TAG` now carries the digest
   `sha256:33f61a72d9aaa021f7e687987b9fcb992673d9ca3fc08f63f5ddaddf59e94efc`,
   so a re-pushed LSIO tag cannot change the image. Upgrade notice from v26.09:
   `APP_KEY` is now required, BookStack no longer falls back to a built-in key
@@ -51,8 +49,7 @@
   backup from the checklist first. Sources:
   https://github.com/BookStackApp/BookStack/releases and
   https://www.bookstackapp.com/blog/bookstack-release-v26-09/
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: BookStack requires "MySQL >= 8.0 or
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: BookStack requires "MySQL >= 8.0 or
   MariaDB >= 10.6" with no upper bound
   (https://www.bookstackapp.com/docs/admin/installation/).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs

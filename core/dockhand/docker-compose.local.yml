@@ -48,7 +48,7 @@ services:
     environment:
       POSTGRES_DB: ${DB_NAME}
       POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       POSTGRES_INITDB_ARGS: --data-checksums
       TZ: ${TZ}
     volumes:
@@ -78,7 +78,7 @@ services:
       DB_USER: ${DB_USER}
       DB_NAME: ${DB_NAME}
       DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:?Set ENCRYPTION_KEY in .env.local}
       DATA_DIR: /app/data
       GIT_REPOS_DIR: /app/data/git-repos
       DOCKER_HOST: tcp://socket-proxy:2375

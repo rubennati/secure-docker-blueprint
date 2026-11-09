@@ -36,7 +36,7 @@ services:
       TZ: ${TZ}
       # 64-character hex encryption key (openssl rand -hex 32)
       # See README "Setup" section for generation instructions.
-      SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY}
+      SECRET_ENCRYPTION_KEY: ${HOMARR_SECRET_ENCRYPTION_KEY:?Set HOMARR_SECRET_ENCRYPTION_KEY in .env}
       # Canonical public origin (v2): MCP OAuth metadata and origin checks.
       # Upstream requires an HTTPS origin behind a TLS-terminating proxy.
       BASE_URL: https://${APP_TRAEFIK_HOST}

@@ -10,8 +10,7 @@
 - **Origin:** New Zealand · Ralph Slooten (axllent) · non-EU
 - **Domain:** Developer tools
 - **Role:** SMTP sink that catches every outgoing message and shows it, delivering nothing
-- **Based on version:** `v1.33.0`
-- **Last verified:** 2026-11-02 (v1.31.1) — step 8 lab host: the SMTP sink for `apps/vaultwarden` on `proxy-public` (its verification mail delivered and read back), the API refused without credentials and answering with them only under the host name in `MP_ALLOWED_HOSTS` (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-08 (1.33.1) — over IPv4: moved from v1.33.0, a message sent with `mailpit sendmail` read through the API behind the UI password, kept after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -41,8 +40,9 @@ any stack on proxy-public ────────→ mailpit :1025  (SMTP)
 
 ## Version notes
 
-- Moved to `v1.33.0` on 2026-11-05 (released 2026-10-31), not run on a host at
-  this tag; `Last verified` stays at v1.31.1. No breaking change, removed option
+- Moved to `v1.33.1` on 2026-11-08. A patch
+  release; its notes name no configuration change.
+- Moved to `v1.33.0` on 2026-11-05 (released 2026-10-31). No breaking change, removed option
   or migration in v1.31.2 to v1.33.0. Security: v1.31.2 limits thumbnail
   decoding to one frame (GHSA-2vgv-6hcp-mf43, memory exhaustion through animated
   images); v1.32.0 replaces the EXIF library whose crafted images could hang the

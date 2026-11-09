@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (5.1.8) — over IPv4: a short URL created through the REST API with the initial key and redirecting with `302` before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/shlinkio/shlink/pkgs/container/shlink
@@ -11,11 +13,10 @@
 - **Origin:** Spain · Alejandro Celaya · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** URL shortener on your own domain with visit statistics and a REST API; no user accounts, API keys instead
-- **Based on version:** `5.1.8`
 
 ## What we use
 
-- `ghcr.io/shlinkio/shlink:5.1.7` — the server, RoadRunner with PHP workers.
+- `ghcr.io/shlinkio/shlink:5.1.8` — the server, RoadRunner with PHP workers.
 - `ghcr.io/shlinkio/shlink-web-client:4.9.0` — the browser interface, static
   files behind nginx. Optional; the API works without it.
 - `postgres:18.6-alpine`. Shlink's own default is SQLite, which upstream states
@@ -66,12 +67,11 @@ README.
 
 ## Version notes
 
-- Moved to `5.1.8` on 2026-10-31 (released 2026-10-21), not run at this tag. The
+- Moved to `5.1.8` on 2026-10-31 (released 2026-10-21). The
   one change is the image base, Alpine 3.24, so PHP security updates arrive
   again, among them CVE-2026-109618 and CVE-2026-109619. Changed, added, removed
   and deprecated all read "nothing"; no variable or migration.
-- The web client moved to `4.9.0` on 2026-11-05, not run on a host at this
-  tag. The one addition is forward support for Mercure 1.0, used once the
+- The web client moved to `4.9.0` on 2026-11-05. The one addition is forward support for Mercure 1.0, used once the
   server exposes it, plus dependency updates; deprecated, removed and fixed
   read "nothing". No variable, path or port change, no advisory.
 
@@ -93,6 +93,6 @@ README.
 curl -s https://raw.githubusercontent.com/shlinkio/shlink/main/docker-compose.yml
 
 # The environment variables this version reads, with their defaults
-docker run --rm --entrypoint sh ghcr.io/shlinkio/shlink:5.1.7 -c \
+docker run --rm --entrypoint sh ghcr.io/shlinkio/shlink:5.1.8 -c \
   'grep -rhoE "^ *case [A-Z_]+" $(grep -rl "enum EnvVars" module | head -1)'
 ```

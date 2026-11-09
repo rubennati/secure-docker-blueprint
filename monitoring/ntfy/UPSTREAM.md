@@ -12,10 +12,9 @@
 - **Origin:** Germany · Philipp Heckel · EU
 - **Domain:** Monitoring
 - **Role:** Push notifications over HTTP, the receiving end for every other alert
-- **Based on version:** `v2.37.2` (released 2026-11-04)
 - **Upstream reviewed:** 2026-07-27 — image, tag, configuration surface, channel
   support and licence checked against upstream documentation
-- **Last verified:** 2026-09-08 (v2.28.0) — v0.8.0 host session: clean start,
+- **Last verified:** 2026-11-08 (2.37.2) — over IPv4: a publisher account with read-write on one topic, a message published and polled with it, anonymous reads and publishing from the refused client answered `403`, the message kept after `down`/`up` (docs/labs/stack-refresh/2026-11-08-results.md)
   `read_only` holding, deny-all proven, users and grants from the CLI, an
   iPhone outside the tailnet subscribed through the public router, one message
   delivered to it.
@@ -56,8 +55,7 @@ See the [ntfy config reference](https://docs.ntfy.sh/config/) for the full list.
 
 ## Version notes
 
-- Moved to `v2.37.2` on 2026-11-05 (released 2026-11-04), not run on a host at
-  this tag; `Last verified` stays at v2.28.0. No `server.yml` key is removed or
+- Moved to `v2.37.2` on 2026-11-05 (released 2026-11-04). No `server.yml` key is removed or
   renamed between v2.28.0 and v2.37.2, so `config/server.yml` needs no change.
   What changes underneath it:
   - v2.31.1 migrates the message cache schema from 16 to 17 at first start;

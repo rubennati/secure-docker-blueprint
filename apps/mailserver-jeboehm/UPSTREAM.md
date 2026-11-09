@@ -13,7 +13,7 @@
 - **Origin:** Germany · Jeffrey Boehm (individual maintainer) · EU
 - **Domain:** Files, wiki and collaboration
 - **Role:** Mail server — Postfix, Dovecot and Rspamd as separate containers, with an administration interface and webmail
-- **Based on version:** `8.1.0`
+- **Last verified:** 2026-11-08 (8.1.2) — over IPv4, a new installation: a certificate from core/acme-certs, `ops/setup.sh` created the domain, the administrator and the DKIM key, a message delivered locally through the MTA and found with `doveadm search`, IMAP authentication, the administration interface behind the route, all before and after `down`/`up`, the refused client answered `403`; outbound port 25 is open on this host but there is no public DNS, so neither inbound nor outbound delivery was tested (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## Project maturity
 
@@ -88,12 +88,13 @@ address Postfix and Dovecot see on a published port.
 
 ## Version notes
 
+- Moved to `8.1.2` on 2026-11-08; a new installation
+  works at this tag. Patch releases of the 8.1 line.
 - Moved to `8.0.18` on 2026-10-31 (released the same day), all five images
-  together, not run at this tag. 8.0.9 to 8.0.18 are dependency and bug-fix
+  together. 8.0.9 to 8.0.18 are dependency and bug-fix
   releases with no breaking change, variable change or migration; 8.0.15
   (2026-10-21) fixes CVE-2026-109618 and CVE-2026-109619 in the web image.
-- Moved `mysql` from `8.4.11` to `9.7.4` (the newest LTS line) on 2026-11-05,
-  not run on a host at this tag. Upstream's own compose defaults to
+- Moved `mysql` from `8.4.11` to `9.7.4` (the newest LTS line) on 2026-11-05. Upstream's own compose defaults to
   `DB_IMAGE=mysql:lts` and its CI image list uses the same tag, which is 9.7
   today (https://github.com/jeboehm/docker-mailserver,
   `deploy/compose/db.yaml`). `DB_SERVER_VERSION` stays `"8.4"`, upstream's
@@ -105,7 +106,7 @@ address Postfix and Dovecot see on a published port.
   mysql.user;` confirms before the move. Take the `mysqldump` before the tag
   changes: going back to 8.4 is only a restore of that dump.
 - Moved to `8.1.0` on 2026-11-05 (released 2026-11-04), all five images
-  together, not run on a host at this tag. No breaking change, removed variable
+  together. No breaking change, removed variable
   or database migration in the release
   (https://github.com/jeboehm/docker-mailserver/releases/tag/v8.1.0) or in the
   upgrade changelog (`docs/reference/upgrade-changelog.md`, "v8.0.x to later").
@@ -119,8 +120,7 @@ address Postfix and Dovecot see on a published port.
   here, so existing logins stay valid). The MDA accepts
   short-lived mailbox credentials issued by mailserver-admin. No advisory in
   the release. The other upgrade-changelog entry concerns Kubernetes only.
-- Moved `redis` from `8.2.10-alpine` to `8.10.3-alpine` on 2026-11-05, not run on a
-  host at this tag; across 8.4, 8.6, 8.8 and 8.10, minor releases of the same major
+- Moved `redis` from `8.2.10-alpine` to `8.10.3-alpine` on 2026-11-05; across 8.4, 8.6, 8.8 and 8.10, minor releases of the same major
   with no breaking change listed (they add commands, compact hashes and performance
   work). Redis does not load data files written by a newer version, so a rollback
   needs the backup of the Redis data. Security fixes in the 8.10 line:

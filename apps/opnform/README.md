@@ -4,15 +4,7 @@
 
 Self-hosted form builder — Typeform / Google Forms alternative. Drag-and-drop editor, conditional logic, file uploads, webhooks. Laravel API + Nuxt UI.
 
-## Open findings
-
-The API image, `jhumanj/opnform-api:2.8.4`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1, listed by CISA as exploited). It is the newest release, and upstream has not rebuilt the image.
-
-**Risk:** the library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint could in principle reach it. Limit webhooks to endpoints you trust and move to the next release.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -35,7 +27,15 @@ Traefik routes to **`opnform-nginx` only** (port 80). It handles path-based rout
 Runs on `http://localhost:8080` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'APP_KEY=base64:%s\n' "$(openssl rand -base64 32)" >> .env.local
+printf 'JWT_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'FRONT_API_SECRET=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/redis
+sudo chown 999:1000 volumes/local/redis
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -64,6 +64,8 @@ sed -i "s|^DB_PWD_INLINE=.*|DB_PWD_INLINE=$(cat .secrets/db_pwd.txt)|" .env
 
 # 5. Create volumes directory (entrypoint initialises subdirectories on first start)
 mkdir -p volumes/storage volumes/postgres volumes/redis
+# Redis runs as the image's own user and cannot fix ownership itself
+sudo chown 999:1000 volumes/redis
 
 # 6. Start
 docker compose up -d
@@ -71,7 +73,9 @@ docker compose up -d
 # 7. Follow logs — wait for "ready to handle connections" on api, then "Listening on" on ui
 docker compose logs -f
 
-# 8. Open UI and create the first account — it becomes the admin
+# 8. Over the VPN, open the UI and create the first account — it becomes the admin.
+#    The route ships closed (APP_TRAEFIK_ACCESS=access-vpn); switch it to
+#    access-public afterwards, so the forms reach their respondents.
 # https://<APP_TRAEFIK_HOST>
 # Public registration is disabled after the first account is created (SELF_HOSTED=true).
 ```
@@ -81,12 +85,12 @@ docker compose logs -f
 ```bash
 docker compose ps                                    # all seven services up
 curl -fsSI https://<APP_TRAEFIK_HOST>/               # 200 OK  (UI via opnform-nginx)
-curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via opnform-nginx → php-fpm)
+curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform-nginx → php-fpm)
 ```
 
 ## Security Model
 
-- **First-user-wins admin** — the first registered account becomes the workspace admin. Register immediately after first start. Subsequent signups are blocked by `SELF_HOSTED=true`.
+- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.` at 2.8.4) by `SELF_HOSTED=true`.
 - **`APP_KEY`** encrypts Laravel sessions and tokens. Rotating invalidates all active sessions.
 - **`JWT_SECRET`** signs API tokens. Rotating logs out all users.
 - **`FRONT_API_SECRET` / `NUXT_API_SECRET`** is a shared secret between the Laravel API and the Nuxt SSR layer. Both must have the same value.
@@ -110,9 +114,11 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/health     # 200 OK  (API via opnform-
 ```yaml
 postgresql_databases:
     - name: opnform
-      container: opnform-db
       username: opnform
-      password: "{credential file /srv/docker/apps/opnform/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec opnform-db pg_dump
+      pg_restore_command: docker exec -i opnform-db pg_restore
+      psql_command: docker exec -i opnform-db psql
 ```
 
 Form submissions are database rows; anything a respondent uploaded is in
@@ -145,6 +151,30 @@ with it; a queue restored mid-flight simply retries.
 | `artisan cache:clear` | `docker compose exec api php artisan cache:clear` | Clear application cache |
 | `artisan config:clear` | `docker compose exec api php artisan config:clear` | Clear config cache |
 | `artisan queue:work` | handled by `api-worker` container | Process queued jobs |
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `2.8.4` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `jhumanj/opnform-api:2.8.4` | 1 · 1 | — | — |
+| `jhumanj/opnform-client:2.8.4` | — | 0 · 6 | — |
+| `nginx:1.31.8` | 0 · 2 | — | — |
+| `postgres:16.15-alpine` | — | — | 1 · 25 |
+| `redis:8.10.3-alpine` | — | — | — |
+
+<!-- findings:end -->
+
+The API image, `jhumanj/opnform-api:2.8.4`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1, listed by CISA as exploited). It is the newest release, and upstream has not rebuilt the image.
+
+**Risk:** the library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint could in principle reach it. Limit webhooks to endpoints you trust and move to the next release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
 
 ## Details
 

@@ -2,6 +2,8 @@
 
 Lightweight DNS forwarder and cache for internal and Tailscale-based environments.
 
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
+
 ## What it does
 
 - Resolves wildcard DNS zones (`*.test.lab.example.com` → `100.100.100.10`)
@@ -45,8 +47,7 @@ DNS_WILDCARD_1_IP6=fd7a:115c:a1e0::10
 
 **Split DNS for a VPN needs both `A` and `AAAA`.** With only the `A` answer, a client that
 prefers IPv6 asks the upstream resolver for `AAAA`, receives the host's public address and
-leaves the tunnel — the VPN-only router then refuses it with 403. Measured on the step 8
-lab host; [`core/traefik/docs/host-firewall.md`](../traefik/docs/host-firewall.md)
+leaves the tunnel — the VPN-only router then refuses it with 403. [`core/traefik/docs/host-firewall.md`](../traefik/docs/host-firewall.md)
 describes the path. Set `_IP6` to the host's tailnet IPv6 address whenever the host has
 one. An empty slot renders no line (`address=/zone/` without an address would answer
 NXDOMAIN for the whole zone), and `render.sh` prints a note for a zone without IPv6.

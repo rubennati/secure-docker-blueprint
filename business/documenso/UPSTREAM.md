@@ -13,8 +13,7 @@
 - **Origin:** US · Documenso Inc · non-EU (development largely from Hamburg, Germany)
 - **Domain:** Documents and e-signature
 - **Role:** Document signing with your own certificate
-- **Based on version:** `v2.21.1`
-- **Last verified:** — (config authored 2026-07-26; not yet run on a live server)
+- **Last verified:** 2026-11-08 (v2.21.1) — over IPv4: the sign-up page served at the closed default before and after `down`/`up`, the refused client answered `403`; no account and no document (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
@@ -37,8 +36,7 @@
 
 ## Version notes
 
-- Moved to `v2.21.1` on 2026-11-05 (released 2026-10-22), not run on a host at
-  this tag. No breaking change and no Docker change; one Prisma migration
+- Moved to `v2.21.1` on 2026-11-05 (released 2026-10-22). No breaking change and no Docker change; one Prisma migration
   (`add_embed_signature`), applied by `start.sh` at start. Upstream's
   `.env.example` adds the optional `NEXT_PRIVATE_SHOW_NEW_ACCOUNT_EMAIL_WARNING`
   and empties its S3 placeholder values; the stack uses the database upload

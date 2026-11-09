@@ -28,7 +28,7 @@ services:
       NINJA_ENVIRONMENT: selfhost
       SCOUT_DRIVER: "null"
       FILESYSTEM_DISK: debian_docker
-      APP_KEY: ${APP_KEY}
+      APP_KEY: ${APP_KEY:?Set APP_KEY in .env.local}
       PDF_GENERATOR: snappdf
       PHANTOMJS_PDF_GENERATION: "false"
       DB_CONNECTION: mysql
@@ -36,15 +36,15 @@ services:
       DB_PORT: "3306"
       DB_DATABASE: ${DB_DATABASE}
       DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in .env.local}
       CACHE_DRIVER: redis
       QUEUE_CONNECTION: redis
       SESSION_DRIVER: redis
       REDIS_HOST: redis
       REDIS_PORT: "6379"
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env.local}
       IN_USER_EMAIL: ${IN_USER_EMAIL}
-      IN_PASSWORD: ${IN_PASSWORD}
+      IN_PASSWORD: ${IN_PASSWORD:?Set IN_PASSWORD in .env.local}
       MAIL_MAILER: log
       MAIL_FROM_ADDRESS: invoiceninja@localhost
       MAIL_FROM_NAME: Invoice Ninja
@@ -67,6 +67,8 @@ services:
     depends_on:
       app: {condition: service_healthy}
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]   # the master chowns its cache directories and the workers switch to uid 101 (measured)
     environment:
       TZ: ${TZ}
     volumes:
@@ -88,12 +90,14 @@ services:
     container_name: invoiceninja-local-mysql
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [DAC_OVERRIDE, SETUID, SETGID]   # the entrypoint switches to the mysql user and reads its files as root (measured)
     environment:
       TZ: ${TZ}
       MYSQL_DATABASE: ${DB_DATABASE}
       MYSQL_USER: ${DB_USERNAME}
       MYSQL_PASSWORD: ${DB_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?Set DB_ROOT_PASSWORD in .env.local}
     volumes:
       - mysql_data:/var/lib/mysql
     networks: [invoiceninja-local]

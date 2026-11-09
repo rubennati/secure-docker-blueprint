@@ -1,19 +1,17 @@
 ---
 title: What each application is for
-description: Every application the repository ships — the problem it solves, what it needs beyond the proxy, and a guide for each one.
+description: The applications with a guide here — the problem each one solves and what it needs beyond the proxy.
 ---
 
 These are the services you actually use — the reason for the server rather than
 part of it. Every one of them expects [Traefik](/infrastructure/traefik/) to be
 running first; they publish no ports themselves and are reached through it.
 
-Each one has a guide: installation walked through, a *Verify* section, what to
-back up, how to update it, and the failures that service really produces. Each
-guide also states how much of it has been confirmed on a running host — some
-were brought up and checked, some are written from the repository files and have
-never been started here. Where an application's data has been restored from a
-backup on a live host, its guide and the [catalogue](/catalogue/) say so; for
-the rest, the restore is documented and unrehearsed.
+Each one has a guide: installation, a *Verify* section, what to back up, how to
+update it, and the failures that service really produces. Each guide opens with
+when the stack last ran on a host; where its data has been restored from a
+backup, the guide and the [catalogue](/catalogue/) say so. Every stack the
+repository ships, with or without a guide, is in the [catalogue](/catalogue/).
 
 Most also ship a `docker-compose.local.yml`, which runs the service on your own
 machine with no proxy, DNS or certificate — see [what every server
@@ -27,6 +25,7 @@ to point at rather than one of its own.
 | [Adminer](/applications/adminer/) | a web interface onto a database another stack already runs | a database to point it at |
 | [BookStack](/applications/bookstack/) | a wiki with real structure: shelves, books, chapters, pages | nothing beyond the proxy |
 | [Cal.diY](/applications/caldiy/) | appointment booking pages people can self-serve — the Cal.com community edition | SMTP for confirmation mail; Cloudflare recommended if it faces the internet |
+| [Collabora](/applications/collabora/) | opening office documents in the browser inside Nextcloud, on LibreOffice, in one small container | Nextcloud to embed it |
 | [Dashy](/applications/dashy/) | one page linking everything you run, configured in a single YAML file | nothing beyond the proxy |
 | [Documenso](/applications/documenso/) | document signing you host yourself, with a signing certificate you generate | SMTP, OpenSSL for the certificate |
 | [Easy!Appointments](/applications/easyappointments/) | appointment booking on a PHP stack, with no build step | nothing beyond the proxy |
@@ -42,16 +41,20 @@ to point at rather than one of its own.
 | [n8n](/applications/n8n/) | chaining HTTP calls, webhooks and scheduled jobs into workflows visually | nothing beyond the proxy |
 | [Nextcloud](/applications/nextcloud/) | files, calendars and contacts on your own server, synced to desktops and phones, with sharing on top | SMTP |
 | [NocoDB](/applications/nocodb/) | a spreadsheet interface and an API over a database | nothing beyond the proxy |
+| [Ollama](/applications/ollama/) | language models on your own hardware, pulled by name and served over an OpenAI-compatible API | memory for the models; an NVIDIA GPU is optional |
 | [OnlyOffice](/applications/onlyoffice/) | opening `.docx`, `.xlsx` and `.pptx` in the browser, embedded inside another application | an application to embed it — it is not used on its own |
+| [Open WebUI](/applications/open-webui/) | a chat interface with accounts, history and document upload in front of a model endpoint | an OpenAI-compatible endpoint, such as Ollama |
 | [OpenProject](/applications/openproject/) | work packages, Gantt charts, boards and time tracking | nothing beyond the proxy |
 | [OpnForm](/applications/opnform/) | a form builder with conditional logic, uploads and webhooks | SMTP for notifications |
 | [Paperless-ngx](/applications/paperless-ngx/) | scanned paper becoming a searchable archive, via OCR and a consume folder | the OCR language packs you need; SMTP is optional |
 | [PhotoPrism](/applications/photoprism/) | a photo library that indexes and classifies itself | disk space for the models |
+| [PrivateBin](/applications/privatebin/) | handing someone a password or a token through a link that is encrypted in the browser and can burn after reading | nothing beyond the proxy |
 | [Seafile](/applications/seafile/) | file sync and sharing with desktop and mobile clients | SMTP for invitations |
 | [Seafile Pro](/applications/seafile-pro/) | file sync built for large directory trees, with full-text search and antivirus scanning | a commercial licence; OnlyOffice for in-browser editing |
 | [Tymeslot](/applications/tymeslot/) | booking pages against your own calendar, with the confirmation and reminder mail | SMTP; provider credentials for Google, Outlook or Zoom |
 | [Vaultwarden](/applications/vaultwarden/) | credentials in one vault, synced to browser, phone and desktop, instead of a third party holding everything you log into | SMTP, for email verification |
 | [Vikunja](/applications/vikunja/) | task management — boards, lists, Gantt and table views | a local build step |
+| [Wiki.js](/applications/wikijs/) | a wiki organised by path, with per-page permissions and its own sign-in modules | nothing beyond the proxy |
 | [WordPress](/applications/wordpress/) | the CMS, with PHP and Apache hardened | an SMTP relay via plugin |
 
 Every guide names the version it is written against and what has not been

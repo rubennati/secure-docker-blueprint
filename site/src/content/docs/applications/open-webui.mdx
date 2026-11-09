@@ -1,0 +1,201 @@
+---
+title: Open WebUI
+description: A chat interface with accounts, history and document upload, in front of any OpenAI-compatible endpoint — the administrator created from secrets, signup closed.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Open WebUI is a chat interface for language models: user accounts, chat
+history, document upload and a built-in retrieval store, so answers can draw on
+the files you attach. It talks to one OpenAI-compatible endpoint — Ollama's `/v1`,
+LiteLLM, vLLM or a hosted provider. One container; the database, uploads and
+vector store live in its data directory.
+
+<StackEvidence stack="apps/open-webui" />
+
+**To try it:** Docker, and an OpenAI-compatible endpoint the container can reach. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and a
+model endpoint — [Ollama](/applications/ollama/) is the one that runs on the same host.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/open-webui/`:
+
+```bash
+cp .env.local.example .env.local
+ops/init.sh
+mkdir -p volumes/data
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+```
+
+`ops/init.sh` creates the secrets and prints the administrator password. Open
+`http://localhost:8080` and log in as `admin@example.com` (`ADMIN_EMAIL`). Set
+`BACKEND_URL` in `.env.local` to an endpoint the container can reach before the
+start; without one, the interface opens with no models to choose. The first
+start downloads the embedding model, about 890 MB. Stop it again with the same
+command and `down`.
+
+## Installation
+
+From `apps/open-webui/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the hostname of the interface |
+   | `ADMIN_EMAIL` | the administrator's login, created on the first start |
+   | `BACKEND_URL` | the OpenAI-compatible endpoint, for example `http://ollama:11434/v1` |
+   | `WEBUI_UID` / `WEBUI_GID` | the owner of `volumes/data` — `1000:1000` |
+
+2. Create the secrets. The script refuses to overwrite existing files and prints
+   the administrator password — store it in your password manager:
+
+   ```bash
+   ops/init.sh
+   ```
+
+   If the backend needs an API key, write it to `.secrets/openai_api_key.txt`;
+   the script leaves `none` there, and Open WebUI needs a non-empty value.
+
+3. List `open-webui-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render
+   and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+4. Create the data directory for the user the container runs as, and start:
+
+   ```bash
+   mkdir -p volumes/data && sudo chown 1000:1000 volumes/data
+   docker compose up -d
+   docker compose logs -f
+   ```
+
+   The first start downloads the embedding model's repository from Hugging Face,
+   about 890 MB, into `volumes/data/cache`, and takes a couple of minutes.
+
+5. Log in at `https://<APP_TRAEFIK_HOST>` as `ADMIN_EMAIL` with the printed
+   password.
+
+6. Set `HF_HUB_OFFLINE=1` in `.env` and run `docker compose up -d` again. The
+   model is cached, and no request leaves for Hugging Face from then on.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps    # one service, healthy
+```
+
+In the interface, pick a model from the backend and send a message. Then attach
+a document and ask about its content — the answer has to draw on it, which shows
+that the embedding model loaded.
+
+## Going further
+
+### Reaching Ollama on the same host
+
+`http://ollama:11434/v1` works when both containers share a network. Each stack
+ships on its own edge network, so set `TRAEFIK_NETWORK=proxy-public` in both
+`.env` files. Every other container on `proxy-public` then reaches Ollama's API
+directly as well, and Ollama has no login of its own — see
+[Ollama](/applications/ollama/#who-can-reach-it).
+
+### Who can reach it
+
+The stack ships `access-trusted-vpn`, with `limit-standard` and
+`headers-standard`: your declared ranges and the VPN. Signup is off
+(`ENABLE_SIGNUP=false`); the administrator creates every other account. Without
+the administrator variables, Open WebUI would make whoever registers first the
+administrator — the stack sets them so nobody wins that race.
+
+### What leaves the host
+
+Hugging Face on the first start, and `BACKEND_URL`. The update check and the
+telemetry switches are off. Document upload and web search make further
+outbound requests when you use them.
+
+### Credentials
+
+| Who | Credential | Where it lives |
+|---|---|---|
+| Administrator | email and password | created once from `ADMIN_EMAIL` and the secret on an empty database; changing the secret later does not change the account |
+| Other users | created by the administrator | the database |
+| Sessions | signed with `.secrets/webui_secret_key.txt` | changing it logs everyone out |
+| Backend | `.secrets/openai_api_key.txt` | read at start |
+
+Open WebUI has no `_FILE` variables. `config/entrypoint.sh` exports the values
+from the secret files, so they do not appear in `docker inspect`.
+
+## Backup
+
+| | |
+|---|---|
+| **The data** | `volumes/data` — `webui.db`, `uploads/`, `vector_db/` |
+| **Also needed** | `.secrets/webui_secret_key.txt` |
+| **Rebuildable** | `volumes/data/cache` — the embedding model, downloaded again while `HF_HUB_OFFLINE=0` |
+| **Quiescing** | stop the container for a consistent SQLite copy |
+
+Restore: put both back, then `docker compose up -d`.
+
+**With `HF_HUB_OFFLINE=1`, a restore without `cache/` starts healthy and fails
+quietly.** The log shows `Error loading SentenceTransformer`, answers ignore
+attached documents and new uploads are not processed. Start once with
+`HF_HUB_OFFLINE=0`, then set it back — or keep `cache/embedding` in the backup.
+
+## Updates
+
+Database migrations run at start.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/open-webui/open-webui/releases)
+   and the project's security advisories.
+
+2. Back up `volumes/data`.
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+4. Log in and send a message.
+
+</Steps>
+
+## Troubleshooting
+
+**`Read-only file system: '/app/backend/open_webui/static/…'` in the log.** Open
+WebUI tries to copy branding files it already ships into a directory that is
+root-owned in the image. The files exist and are served; the messages change
+nothing.
+
+**No models in the picker.** `BACKEND_URL` is not reachable from the container,
+or the backend needs a key that `.secrets/openai_api_key.txt` does not hold.
+
+**Answers ignore attached documents.** The embedding model is missing — see the
+note under [Backup](#backup).
+
+**A changed administrator password has no effect.** The secret is only read when
+the database is empty. Change the password in the interface.
+
+## Repository files
+
+- [`apps/open-webui/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/open-webui/README.md) — setup, credentials, security notes
+- [`apps/open-webui/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/open-webui/.env.example)
+- [`apps/open-webui/ops/init.sh`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/open-webui/ops/init.sh) — creates the three secret files
+- [`apps/open-webui/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/open-webui/UPSTREAM.md) — licence, upgrade checklist
+
+## Official sources
+
+- [Open WebUI documentation](https://docs.openwebui.com/)
+- [Open WebUI on GitHub](https://github.com/open-webui/open-webui)

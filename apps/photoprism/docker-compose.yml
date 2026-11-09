@@ -123,7 +123,7 @@ services:
       # Auth
       PHOTOPRISM_AUTH_MODE: "password"
       PHOTOPRISM_ADMIN_USER: ${ADMIN_USER}
-      PHOTOPRISM_ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      PHOTOPRISM_ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
       # Behaviour
       PHOTOPRISM_LOG_LEVEL: "info"
       PHOTOPRISM_READONLY: "false"
@@ -152,7 +152,7 @@ services:
       PHOTOPRISM_DATABASE_USER: ${DB_USER}
       # PhotoPrism reads DATABASE_PASSWORD from env only (no _FILE support).
       # Value must match contents of .secrets/db_pwd.txt.
-      PHOTOPRISM_DATABASE_PASSWORD: ${DB_PWD_INLINE}
+      PHOTOPRISM_DATABASE_PASSWORD: ${DB_PWD_INLINE:?Set DB_PWD_INLINE in .env}
       # First-run init targets: none. The image defaults to `https`, which
       # Traefik makes unnecessary; the `tensorflow` target is gone since 261029
       # (classification runs on ONNX models shipped in the image).

@@ -26,7 +26,7 @@ for a minimal single-container application.
 - **Improvements to existing apps** — security hardening, upstream version bumps, bug fixes
 - **New core services** — only with prior discussion, since these affect every app
 - **Documentation fixes** — typos, clarifications, missing cross-references
-- **Test script improvements** — `ops/scripts/test-security.sh` variants per app
+- **Test script improvements** — security test scripts per app, like `apps/wordpress/ops/scripts/test-security.sh`
 - **Traefik middleware additions** — new access/security/TLS profiles that fill a real gap
 
 ## What's out of scope
@@ -73,8 +73,8 @@ The CI pipeline is the automated test suite for this configuration project. It r
 | Secrets and public content | No credentials in the commits a pull request adds (gitleaks, default rules), no workstation paths or password-manager references in tracked files, no `__REPLACE_ME__` left in a committed `.env` |
 | Compose | Compose files parse and resolve; Compose-based stacks carry a `README.md` and a `.env.example` |
 | Security baseline | `no-new-privileges:true` present, no `privileged: true`, socket proxy pattern enforced |
-| Canonical structure | No `:latest` or major-only image tags, no plaintext secrets, no datastore on the public network |
-| Status model | Generated lifecycle views match their sources; verification names a date and version, and pin drift is reported |
+| Canonical structure | No `:latest` or major-only image tags, no plaintext or `__REPLACE_ME__` secrets, every route closed by default with a stated auth posture, no datastore on the public network |
+| Status model | Generated views — `LIFECYCLE.md`, the README findings blocks, the site catalogue, the security coverage, the decision register — match their sources |
 | Checker coverage | No content directory that no checker looks at |
 | Documentation | Markdown style, internal links and anchors, and the prose register across the repository |
 | Workflow supply chain | Actions pinned by SHA, every workflow declares `permissions:` |

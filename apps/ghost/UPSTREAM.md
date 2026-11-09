@@ -11,19 +11,16 @@
 - **Origin:** Ireland · Ghost Foundation · EU
 - **Domain:** Publishing, forms and scheduling
 - **Role:** Publishing platform for blogs and newsletters, with optional Fediverse publishing
-- **Based on version:** `6.75.0-alpine`
-- **Last verified:** 2026-11-03 (6.63.0-alpine) — step 8 lab host behind Traefik 3.7.17 on its edge network: the owner setup, the staff login with the mailed device code, a published post, a member's magic-link mail, and the README's corrected borgmatic entry restored into a throwaway instance (docs/labs/ingress/2026-11-01-results.md). Earlier: 2026-07-26 (v6.54.0-alpine)
+- **Last verified:** 2026-11-08 (6.75.0-alpine) — over IPv4: the owner set up through the admin API, a session login, a post published and rendered on the site before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ### ActivityPub service
 
 - **Image:** https://github.com/orgs/TryGhost/packages/container/package/activitypub
 - **GitHub:** https://github.com/TryGhost/ActivityPub
-- **Based on version:** `1.2.2`
 
 ### ActivityPub migrations
 
 - **Image:** https://github.com/orgs/TryGhost/packages/container/package/activitypub-migrations
-- **Based on version:** `1.2.2`
 
 ## What we use
 
@@ -65,7 +62,7 @@ The official ghost-docker setup uses Caddy as an internal webserver. This bluepr
 
 ## Version notes
 
-- Moved to `6.75.0-alpine` on 2026-11-05, not run on a host at this tag. No
+- Moved to `6.75.0-alpine` on 2026-11-05. No
   breaking change, variable or manual step is listed from 6.64.0 to 6.75.0;
   migrations run on start. 6.66.0 was not published to npm (its content ships
   in 6.67.0); 6.70.0 removes Ember, so Admin is React only; 6.71.0 fixes

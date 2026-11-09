@@ -53,11 +53,11 @@ networks:
 
 **IP family — dual-stack as shipped, IPv4-only and IPv6-only as settings** (IPv6-only is not verified on a host).
 The example `core/traefik/.env` applies the `network-dual-stack.yml` overlay, which
-creates `proxy-public` with an IPv6 subnet (DEC-063, refined by DEC-075); without
+creates `proxy-public` with an IPv6 subnet ([DEC-063](../../.ai/decisions.md#dec-063), refined by [DEC-075](../../.ai/decisions.md#dec-075)); without
 it the network is IPv4-only. Traefik's published ports are one bind variable per family
 (`TRAEFIK_BIND_V4`, `TRAEFIK_BIND_V6`), rendered into `config/published-ports.yml`;
 an empty variable publishes nothing for its family, neither has a default, and an
-IPv6 binding needs the overlay (DEC-075.3). Every other published port in the catalogue names its host
+IPv6 binding needs the overlay ([DEC-075.3](../../.ai/decisions.md#dec-075)). Every other published port in the catalogue names its host
 address through a required `*_BIND` variable, IPv4 as shipped — a port without an
 address also listens on `[::]`, where Docker relays IPv6 from the bridge gateway. Dual-stack matters specifically for Tailscale ingress:
 Tailscale always hands a client an IPv6 address, and that address only
@@ -108,8 +108,9 @@ container.
   what bounds reachability here.
 - IPv4-only, for the same reason as `app-internal` — nothing outside the Docker host
   connects, so there is no client source IP to preserve.
-- Host port publication is a separate mechanism and is unaffected: the engine still
-  publishes its LAPI on `127.0.0.1` for the host-installed firewall bouncer.
+- Host port publication is a separate mechanism: the base compose publishes no port.
+  With the host-installed firewall bouncer, the `firewall-bouncer.yml` overlay publishes
+  the LAPI on `127.0.0.1:${CROWDSEC_LAPI_PORT:-8081}`.
 
 Add another one when two core services need a private channel and the alternative is
 placing one of them on `proxy-public`.
@@ -205,10 +206,14 @@ ports:
 ```
 
 **Avoid.** Only when the service cannot be routed through Traefik, and always with a
-host address from a required `*_BIND` variable (`port-no-host-address`). The
-catalogue publishes this way in `apps/unifi`, `apps/opencanary` and the access
-gateways under `core/` (Teleport, ShellHub, Warpgate, JumpServer, Orion Belt,
-step-ca, and Headscale with its opt-in `derp.yml`); their examples ship `0.0.0.0`. dnsmasq runs with `network_mode: host`.
+host address (`port-no-host-address`): from a required `*_BIND` variable, or a fixed
+`127.0.0.1` for a port only jobs on the same host use. The catalogue publishes
+through a `*_BIND` variable in `apps/unifi`, `apps/opencanary`, `apps/velociraptor`
+and the access gateways under `core/` (Teleport, ShellHub, Warpgate, JumpServer,
+Orion Belt, step-ca, and Headscale with its opt-in `derp.yml`); their examples ship
+`0.0.0.0`. On loopback only: `monitoring/healthchecks` (`HC_LOCAL_PORT`, for the
+watchdogs and borgmatic) and `core/crowdsec` with its `firewall-bouncer.yml` overlay
+(`CROWDSEC_LAPI_PORT`). dnsmasq runs with `network_mode: host`.
 
 Database ports **never** exposed on host.
 

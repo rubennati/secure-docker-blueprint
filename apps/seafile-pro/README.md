@@ -2,18 +2,7 @@
 
 Cloud file storage with collaboration, search, and antivirus scanning.
 
-## Open findings
-
-The findings of the community edition apply here too: PyJWT CVE-2026-102268 and
-`proxy-addr` CVE-2026-90711 in SeaDoc 2.0.11, PyJWT in the thumbnail server
-13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The optional
-Seafile AI image 13.0.10 carries 21 CRITICAL vulnerabilities, among them LiteLLM
-authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13
-build of it exists, and Seafile 14 is not yet stable.
-
-**Risk:** as in `apps/seafile` for the core images. Seafile AI is off by default
-and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave
-it off unless you need it, and watch for a stable Seafile 14.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Services
 
@@ -34,7 +23,16 @@ it off unless you need it, and watch for a stable Seafile 14.
 Runs on `http://127.0.0.1:8001` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'INIT_SEAFILE_MYSQL_ROOT_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'SEAFILE_MYSQL_DB_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'REDIS_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+printf 'INIT_SEAFILE_ADMIN_PASSWORD=%s\n' "$(openssl rand -base64 32 | tr -d '\n')" >> .env.local
+printf 'JWT_PRIVATE_KEY=%s\n' "$(openssl rand -base64 48 | tr -d '\n')" >> .env.local
+
+mkdir -p volumes/local/mysql volumes/local/redis volumes/local/seafile-data
+sudo chown 999:999 volumes/local/mysql   # the mariadb image's mysql user — the db service has no CHOWN
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://127.0.0.1:8001
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -82,13 +80,16 @@ docker compose ps                                          # All services up
 docker exec seafile-pro-app grep "SEASEARCH" /shared/seafile/conf/seafevents.conf  # Search configured
 docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf    # Antivirus configured
 curl -s https://your-domain/notification/ping              # {"ret": "pong"}
+docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py   # settings injected
+docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY     # key reaches the app
+docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"  # FOUND
 ```
 
 ## OnlyOffice
 
 OnlyOffice needs a server-to-server network path to Seafile's configured hostname (`APP_TRAEFIK_HOST`). This path can be public internet, Tailscale, or any direct route. If DNS for `APP_TRAEFIK_HOST` resolves to a Tailscale address on the OnlyOffice server, traffic routes via Tailscale automatically — no public internet exposure required.
 
-**The integrations call back past a closed policy, each by its own mechanism.** No closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — admits a request from a Docker container (DEC-076). SeaDoc calls Seafile over the internal network (`SEAHUB_SERVICE_URL` in `seadoc.yml`) and needs nothing. OnlyOffice fetches the document from `/seafhttp/files/<token>/…` and saves by calling `/onlyoffice/editor-callback/`, both at Seafile's public name, the only address Seafile hands it; the token is a fileserver access token valid for one hour, and the callback is acted on only for a document key Seafile issued — seahub verifies no JWT on it. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`; a Document Server on another host reaches a closed instance instead when its address is in `TRUSTED_RANGES` or on the VPN. Add the file to `COMPOSE_FILE` when you run OnlyOffice; the rest of the instance stays closed (`apps/seafile/README.md`, "Access policy", has the detail).
+**The integrations call back past a closed policy, each by its own mechanism.** No closed policy — `access-vpn`, `access-trusted`, `access-trusted-vpn` — admits a request from a Docker container ([DEC-076](../../.ai/decisions.md#dec-076)). SeaDoc calls Seafile over the internal network (`SEAHUB_SERVICE_URL` in `seadoc.yml`) and needs nothing. OnlyOffice fetches the document from `/seafhttp/files/<token>/…` and saves by calling `/onlyoffice/editor-callback/`, both at Seafile's public name, the only address Seafile hands it; the token is a fileserver access token valid for one hour, and the callback is acted on only for a document key Seafile issued — seahub verifies no JWT on it. `onlyoffice-callback.yml` opens exactly those two paths with `access-public`; a Document Server on another host reaches a closed instance instead when its address is in `TRUSTED_RANGES` or on the VPN. Add the file to `COMPOSE_FILE` when you run OnlyOffice; the rest of the instance stays closed (`apps/seafile/README.md`, "Access policy", has the detail).
 
 **`APP_TRAEFIK_ACCESS` is a Traefik middleware setting, not a network exposure setting.** `access-public` removes Traefik's source-IP allowlist; it does not bypass upstream firewalls. `access-vpn` enforces a source-IP allowlist but may reject Tailscale-routed traffic if Docker bridge masquerades the source IP before Traefik sees it — see `UPSTREAM.md` and `TROUBLESHOOTING.md §4.4` for the known caveat and investigation steps.
 
@@ -105,6 +106,8 @@ Passwords are stored in `.env` (gitignored). Docker Secrets are not used because
 Settings that use `os.environ.get()` (OnlyOffice URL, SMTP host, etc.) are evaluated at Django startup on every restart, so changing those values in `.env` takes effect after `docker compose restart seafile-pro-app` — no re-injection needed.
 
 Adding a brand-new setting that was absent from `seahub_custom.py` at injection time requires either editing `seahub_settings.py` directly in the volume, or removing the marker line (`# --- Blueprint custom settings ---`) and everything after it, updating `config/seahub_custom.py`, then restarting.
+
+`seafevents.conf` (SeaSearch) and `seafile.conf` (ClamAV) are injected the same way, once, each behind its own marker.
 
 ## Backup
 
@@ -158,6 +161,39 @@ GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
 SQL
 docker compose up -d
 ```
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `13.0.29` — upstream has released `14.0.9` since. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `clamav/clamav:1.5.4` | — | — | — |
+| `elasticsearch:8.19.23` | 0 · 1 | 0 · 3 | — |
+| `mariadb:10.11.19` | 0 · 1 | — | 1 · 25 |
+| `redis:8.10.3-alpine` | — | — | — |
+| `seafileltd/notification-server:13.0.29` | 0 · 1 | — | — |
+| `seafileltd/sdoc-server:2.0.11` | 0 · 1 | 2 · 40 | — |
+| `seafileltd/seafile-ai:13.0.10` | 10 · 616 | 11 · 71 | — |
+| `seafileltd/seafile-md-server:13.0.28` | 0 · 2 | — | 0 · 25 |
+| `seafileltd/seafile-pro-mc:13.0.29` | 0 · 1 | 0 · 16 | 0 · 1 |
+| `seafileltd/seasearch:1.0.8` | 0 · 2 | — | 0 · 13 |
+| `seafileltd/thumbnail-server:13.0.29` | 0 · 1 | 1 · 14 | — |
+
+<!-- findings:end -->
+
+The findings of the community edition apply here too: PyJWT CVE-2026-102268 and
+`proxy-addr` CVE-2026-90711 in SeaDoc 2.0.11, PyJWT in the thumbnail server
+13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The optional
+Seafile AI image 13.0.10 carries 21 CRITICAL vulnerabilities, among them LiteLLM
+authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13
+build of it exists, and Seafile 14 is not yet stable.
+
+**Risk:** as in `apps/seafile` for the core images. Seafile AI is off by default
+and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave
+it off unless you need it, and watch for a stable Seafile 14.
 
 ## Details
 

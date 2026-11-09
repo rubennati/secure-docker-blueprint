@@ -96,11 +96,11 @@ services:
     # RoadRunner keeps PHP workers resident: 455 MiB idle, measured 2026-09-23
     # right after the first start. The ceiling leaves room above that; a
     # measurement under real traffic is still v0.10.0's job.
-    memswap_limit: 1g            # == memory: no swap
+    memswap_limit: 1536m            # == memory: no swap
     deploy:
       resources:
         limits:
-          memory: 1g
+          memory: 1536m   # 2x the measured peak (552 MiB)
           # cpus: derived starting value, not measured — v0.10.0
           cpus: "1.00"
           pids: 200

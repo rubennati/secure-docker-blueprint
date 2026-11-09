@@ -115,7 +115,7 @@ services:
       - /tmp
       # Grafana 13 registers its core data source plugins through this
       # directory. Without it the container starts, logs nothing unusual, and
-      # every query fails with "Plugin not registered" — measured on 13.2.2,
+      # every query fails with "Plugin not registered" — as of 13.2.2,
       # isolated to this one path.
       - /usr/share/grafana/data
     # The image already runs as uid 472.
@@ -175,6 +175,7 @@ services:
       - "127.0.0.1:3000:3000"
     networks:
       - app-internal
+      - published   # for the published port: an internal-only network publishes none
 
     # --- Health & Observability ---
     # /api/health answers without a session. The image carries no curl; busybox
@@ -193,6 +194,12 @@ networks:
   app-internal:
     name: grafana-local-internal
     internal: true
+
+  # Not internal: Docker publishes no port of a container that is attached only
+  # to internal networks (Docker 29 binds nothing on the host). Only
+  # grafana joins it, for its port; the other services stay on app-internal.
+  published:
+    name: grafana-local-published
 
 # --------------------------------------------------------
 # SECRETS

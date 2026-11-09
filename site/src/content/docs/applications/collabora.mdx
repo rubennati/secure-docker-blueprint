@@ -1,0 +1,201 @@
+---
+title: Collabora
+description: Office documents edited in the browser, embedded in Nextcloud — LibreOffice underneath, one stateless container, the conversion endpoint closed on the public route.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Collabora Online opens `.docx`, `.xlsx`, `.pptx` and the OpenDocument formats in
+the browser, inside the application that holds the files. It is LibreOffice
+underneath, and it is not used on its own: Nextcloud embeds it through WOPI.
+One stateless container, about 400 MiB idle — against roughly 1.5 to 2 GB for
+[OnlyOffice](/applications/onlyoffice/), which renders Microsoft formats more
+faithfully.
+
+<StackEvidence stack="apps/collabora" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and
+[Nextcloud](/applications/nextcloud/) to embed it.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `apps/collabora/`:
+
+```bash
+cp .env.local.example .env.local
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+curl http://localhost:9980/
+```
+
+The server answers `OK`. Editing a document needs an application that embeds
+it, so the local stack shows that the server runs. Stop it again with the same
+command and `down`.
+
+## Installation
+
+From `apps/collabora/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the office server's hostname, e.g. `office.example.com` |
+   | `COLLABORA_ALIASGROUP` | a regex of the hosts allowed to embed it — dots escaped, port included: `https://cloud\.example\.com:443` |
+   | `COLLABORA_ALLOWED_ORIGINS` | the same hosts in plain form, for the `frame-ancestors` policy: `https://cloud.example.com` |
+
+2. List `collabora-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then render
+   and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+3. Start it:
+
+   ```bash
+   docker compose up -d
+   ```
+
+4. Connect Nextcloud — next section.
+
+</Steps>
+
+## Connecting Nextcloud
+
+Nextcloud ships behind a closed access policy, and Collabora calls it back. The
+call goes over a Docker network the two share: Nextcloud's `office.yml` joins its
+nginx — and only nginx — to Collabora's edge network, and `office-collabora.yml`
+lets Nextcloud reach Collabora through nginx on port 9980, for discovery and the
+previews.
+
+In `apps/nextcloud/`:
+
+<Steps>
+
+1. In `.env`:
+
+   ```ini
+   OFFICE_NETWORK=collabora-edge
+   COMPOSE_FILE=docker-compose.yml:office.yml:office-collabora.yml
+   NC_OVERWRITECONDADDR='^172\.19\.'
+   ```
+
+   `NC_OVERWRITECONDADDR` is the subnet in `NC_TRUSTED_PROXIES` as a regex —
+   `'^172\.19\.'` for `172.19.0.0/16`. It keeps the URLs Nextcloud hands to
+   Collabora at nginx, so the template presets load.
+
+2. `docker compose up -d`, install the **Nextcloud Office** app
+   (`richdocuments`), then:
+
+   ```bash
+   docker compose exec -u www-data app php occ config:system:set trusted_domains 2 --value="nextcloud-nginx"
+   docker compose exec -u www-data app php occ richdocuments:activate-config \
+     --wopi-url="http://nextcloud-nginx:9980" --callback-url="http://nextcloud-nginx"
+   ```
+
+   Set both addresses through `activate-config`: a callback set with
+   `config:app:set` is reset when `activate-config` runs afterwards.
+
+3. Back in `apps/collabora/.env`, admit the callback host into Nextcloud's group,
+   then `docker compose up -d` there:
+
+   ```ini
+   COLLABORA_ALIASGROUP=https://cloud\.example\.com:443,http://nextcloud-nginx:80
+   ```
+
+</Steps>
+
+The full background is in the Nextcloud README, "Office servers behind a closed
+route".
+
+## Verify
+
+```bash
+docker compose ps    # one service, healthy
+```
+
+In Nextcloud, open a `.docx`, edit it, save, close and open it again — the
+change is there. A `.docx` in the file list shows a preview.
+
+## Going further
+
+### The public route
+
+The route ships `access-public`, because the browser loads the editor from it.
+`/cool/convert-to` is the exception: it converts any uploaded file without a
+WOPI token, and Collabora admits it from private addresses, which includes
+Traefik. A second router of higher priority answers that path with
+`access-blocked`. The editor does not use it; Nextcloud's previews do, through
+the internal address.
+
+The headers are `headers-application-owned` with the stack's own
+`frame-ancestors` policy, because `headers-standard` sets
+`X-Frame-Options: DENY` and an embedded editor needs a frame. The admin console
+is off.
+
+### Sandbox
+
+Under the stack's hardening — every capability dropped except `MKNOD`, and
+`no-new-privileges` — Collabora builds no chroot jail. It runs each document in a
+Landlock jail instead, and editing works. It finds no proof key, so its WOPI
+requests carry no proof signature.
+
+### Seafile
+
+Seafile supports Collabora as well, with settings this stack does not ship. The
+[Seafile guide](/applications/seafile/) uses OnlyOffice.
+
+## Backup
+
+Nothing to back up. The container is disposable: configuration comes from `.env`,
+and documents live in Nextcloud, never here. A restore is a start with the same
+`.env`.
+
+## Updates
+
+<Steps>
+
+1. Check the [current tags](https://hub.docker.com/r/collabora/code/tags).
+
+2. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   ```
+
+3. Open and save a document in Nextcloud.
+
+</Steps>
+
+## Troubleshooting
+
+**The document frame stays empty or refuses to load.** The embedding host is
+missing from `COLLABORA_ALLOWED_ORIGINS`, or does not match
+`COLLABORA_ALIASGROUP` exactly — escaped dots and `:443` included.
+
+**The editor opens but the document does not.** The callback host
+`http://nextcloud-nginx:80` is not in `COLLABORA_ALIASGROUP`, or
+`NC_OVERWRITECONDADDR` is empty and the template URLs point at the closed public
+name.
+
+**Previews of office files are missing.** `office-collabora.yml` is not in
+Nextcloud's `COMPOSE_FILE`, so previews try the public route, where
+`/cool/convert-to` is closed.
+
+## Repository files
+
+- [`apps/collabora/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/collabora/README.md) — architecture, sandbox, the closed conversion path
+- [`apps/collabora/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/collabora/.env.example)
+- [`apps/nextcloud/office-collabora.yml`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/nextcloud/office-collabora.yml) — Collabora's internal address on the Nextcloud side
+- [`apps/collabora/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/apps/collabora/UPSTREAM.md) — upgrade checklist
+
+## Official sources
+
+- [CODE Docker image](https://sdk.collaboraonline.com/docs/installation/CODE_Docker_image.html)
+- [Collabora Online on GitHub](https://github.com/CollaboraOnline/online)

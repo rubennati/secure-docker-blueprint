@@ -1,0 +1,237 @@
+---
+title: Healthchecks
+description: A dead-man's switch for cron jobs and backups — alerts when an expected ping does not arrive, with a loopback port for jobs on the same host.
+---
+
+import { Steps } from '@astrojs/starlight/components';
+import StackEvidence from '../../../components/StackEvidence.astro';
+
+Healthchecks watches for silence. Each job gets a unique URL and pings it when it
+runs; when an expected ping does not arrive within its period and grace time,
+Healthchecks alerts you. It catches what the other monitors cannot: a backup
+that stopped running, a timer disabled weeks ago, a host or a monitor that died.
+One container, with a SQLite database.
+
+<StackEvidence stack="monitoring/healthchecks" />
+
+**To try it:** Docker, nothing else. See [Try it locally](#try-it-locally).
+
+**To deploy it behind the proxy:** [Traefik](/infrastructure/traefik/) running, a domain, and SMTP
+credentials if alerts should go out by email.
+
+## Try it locally
+
+On your own machine, with no proxy, domain or certificate. From `monitoring/healthchecks/`:
+
+```bash
+cp .env.local.example .env.local
+echo "HC_SECRET_KEY=$(openssl rand -hex 32)" >> .env.local
+mkdir -p volumes/local/data
+sudo chown -R 999:999 volumes/local/data
+docker compose -f docker-compose.local.yml --env-file .env.local up -d
+docker compose -f docker-compose.local.yml --env-file .env.local \
+  exec app python /opt/healthchecks/manage.py createsuperuser
+```
+
+The last command asks for an email address and a password. Then open
+`http://localhost:8000` and log in. Stop it again with the same command and
+`down`.
+
+## Installation
+
+From `monitoring/healthchecks/`:
+
+<Steps>
+
+1. Copy the environment file:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   | Variable | What it is |
+   |---|---|
+   | `APP_TRAEFIK_HOST` | the hostname of the interface and the ping URLs |
+   | `HC_SITE_NAME` | the name in the interface and in email subjects |
+   | `HC_EMAIL_FROM`, `HC_SMTP_*` | the relay alerts are sent through |
+   | `HC_LOCAL_PORT` | the loopback port for jobs on this host — `8001` by default |
+
+2. Generate the Django secret key and put it into `HC_SECRET_KEY`:
+
+   ```bash
+   openssl rand -base64 60 | tr -d '\n='
+   ```
+
+   Healthchecks has no `_FILE` form for this value, so it lives in `.env`.
+   Changing it later ends every session.
+
+3. List `healthchecks-edge` in `EDGE_NETWORKS` in `core/traefik/.env`, then
+   render and restart Traefik — see [edge
+   networks](/infrastructure/traefik/#edge-networks-one-per-stack).
+
+4. Create the data directory for the user the application runs as:
+
+   ```bash
+   mkdir -p volumes/data
+   sudo chown -R 999:999 volumes/data
+   ```
+
+5. Start it:
+
+   ```bash
+   docker compose up -d
+   docker compose logs healthchecks-app --follow
+   ```
+
+   Wait for `spawned uWSGI worker`.
+
+6. Create the first account. Registration is closed, so this account invites
+   everyone else:
+
+   ```bash
+   docker compose exec healthchecks-app /opt/healthchecks/manage.py \
+     createsuperuser --email admin@example.com --password '<passphrase>'
+   ```
+
+7. Open `https://<APP_TRAEFIK_HOST>` and log in.
+
+</Steps>
+
+## Verify
+
+```bash
+docker compose ps                                   # one service, healthy
+curl -fsSI https://<APP_TRAEFIK_HOST>/              # 200
+curl -fsSI https://<APP_TRAEFIK_HOST>/projects/     # 302 to the login
+```
+
+Add a check in the interface, copy its ping URL and call it:
+
+```bash
+curl <ping-url>
+```
+
+The check turns green with a timestamp. That proves the ping path, not the
+alarm: attach a notification channel, give the check a short period and grace,
+stop pinging, and wait for the down notification to arrive. The next ping brings
+the up notification.
+
+## Pings from the same host
+
+Jobs on the host that runs this stack — [borgmatic](/operations/backup/), the
+watchdogs — ping the loopback port instead of the public name:
+
+```text
+http://127.0.0.1:8001/ping/<uuid>
+```
+
+Through Traefik, such a ping arrives from the gateway address of the edge
+network, and a closed access policy refuses it. Adding that gateway to
+`TRUSTED_RANGES` would admit every container on the network. The loopback port
+avoids the proxy: it is published on `127.0.0.1` only, nothing off the host
+reaches it, and the route keeps its closed policy. The interface shows ping URLs
+under `https://<APP_TRAEFIK_HOST>`; replace that part with
+`http://127.0.0.1:8001`, the UUID stays the same.
+
+## Going further
+
+### Who can reach it
+
+The stack ships `access-vpn`, with `limit-standard` and `headers-standard`, for
+jobs on hosts in your VPN. Switching the whole route to `access-public` opens the
+login page and the check list as well, because one service serves both. For jobs
+on public servers, keep `access-vpn` and give the ping path its own router at a
+higher priority:
+
+```yaml
+- "traefik.http.routers.hc-ping.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/ping/`)"
+- "traefik.http.routers.hc-ping.priority=100"
+- "traefik.http.routers.hc-ping.middlewares=${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
+- "traefik.http.routers.hc-ping.service=${COMPOSE_PROJECT_NAME}"
+```
+
+A ping URL needs no authentication; its UUID is what keeps it private. Signed
+ping URLs, per check in the interface, tighten that.
+
+### Alerts
+
+Email needs working SMTP. Without it, alerts go through the integrations you set
+per check: webhooks, ntfy, Slack, Discord and others. Delivering to a private
+address — [ntfy](/monitoring/ntfy/) on the same Docker network, for example —
+needs `HC_ALLOW_PRIVATE_IPS=True`, which the stack ships. Set it to `False` if
+every receiver is public.
+
+## Backup
+
+| | |
+|---|---|
+| **State** | `volumes/data` — SQLite at `/data/hc.sqlite`: checks, ping URLs, channels, history |
+| **Critical** | The ping URLs. Every job holds one; new ones mean reconfiguring every job, borgmatic included |
+| **Quiescing** | Dump rather than copy |
+
+For [borgmatic](/operations/backup/):
+
+```yaml
+sqlite_databases:
+    - name: healthchecks
+      path: /srv/docker/monitoring/healthchecks/volumes/data/hc.sqlite
+```
+
+Restore order: stop, restore, start, then confirm that an existing job's ping
+still registers — the URL must be unchanged.
+
+## Updates
+
+Database migrations run when the container starts.
+
+<Steps>
+
+1. Read the [release notes](https://github.com/healthchecks/healthchecks/releases),
+   especially the database schema and configuration changes.
+
+2. Stop the stack and copy the database — the image ships no `sqlite3` client:
+
+   ```bash
+   docker compose stop
+   sudo cp volumes/data/hc.sqlite hc-$(date +%Y%m%d).sqlite
+   ```
+
+3. Raise `APP_TAG` in `.env`, then:
+
+   ```bash
+   docker compose pull && docker compose up -d
+   docker compose logs healthchecks-app --tail 100 --follow
+   ```
+
+4. Check that the interface loads and the existing checks are listed.
+
+</Steps>
+
+To roll back, stop the stack, copy the saved file back to
+`volumes/data/hc.sqlite` and set the previous `APP_TAG`.
+
+## Troubleshooting
+
+**The container stays unhealthy with `unable to open database file`.**
+`volumes/data` is not owned by uid 999. `sudo chown -R 999:999 volumes/data`,
+then start again.
+
+**Traefik answers 404.** `APP_TRAEFIK_HOST` does not match the DNS name exactly,
+or `healthchecks-edge` is missing from `EDGE_NETWORKS`.
+
+**A check shows down although the job runs.** The job cannot reach this
+instance — a host behind NAT outside the VPN, or a same-host job pinging the
+public name instead of the loopback port. Look at the job's own log first.
+
+**No alert reaches ntfy on the same host.** `HC_ALLOW_PRIVATE_IPS` is `False`.
+
+## Repository files
+
+- [`monitoring/healthchecks/README.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/healthchecks/README.md) — setup, same-host pings, security model
+- [`monitoring/healthchecks/.env.example`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/healthchecks/.env.example)
+- [`monitoring/healthchecks/UPSTREAM.md`](https://github.com/rubennati/secure-docker-blueprint/blob/main/monitoring/healthchecks/UPSTREAM.md) — upgrade checklist and rollback
+
+## Official sources
+
+- [Self-hosted Healthchecks](https://healthchecks.io/docs/self_hosted/)
+- [Healthchecks on GitHub](https://github.com/healthchecks/healthchecks)

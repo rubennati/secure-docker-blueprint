@@ -2,21 +2,21 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-11-07
+**Last updated:** 2026-11-09
 
-- **Phase:** pre-1.0. Latest tag `v0.9.8` (2026-11-07), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.8..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.9` (2026-11-09), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.9..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Last completed:** the stabilization programme, in two runs. The first was PRs
-  #115, #119, #124, #125, #126. The second closed R14 and R15, built and corrected
-  W8's system, and wrote the production deployment lifecycle
-  ([`../docs/standards/deployment-lifecycle.md`](../docs/standards/deployment-lifecycle.md)).
-  What each changed, what remains and why:
-  [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md) → *What the
-  stabilization programme did* and *Remaining work*. Actionable items are GitHub
-  Issues; [`tasks.md`](tasks.md) holds only what no issue owns.
+- **Last completed:** the stack refresh, released as v0.9.9 — see
+  `CHANGELOG.md`. Actionable items are GitHub Issues; [`tasks.md`](tasks.md) holds
+  only what no issue owns.
+- **Earlier:** the stabilization programme (PRs #115, #119, #124, #125, #126, then
+  R14, R15, W8's system and the production deployment lifecycle,
+  [`../docs/standards/deployment-lifecycle.md`](../docs/standards/deployment-lifecycle.md)).
+  Its findings register is the record
+  [`../docs/v1-readiness-audit.md`](../docs/v1-readiness-audit.md).
 - **Also completed (2026-09-21/22):** the candidate batches A–G (#140, #145, #146,
   #150, #153, #156, #159, #160, #161, #162) —
   twelve stacks added as a recorded exception to the application hold
@@ -29,18 +29,18 @@
 - **Also completed (2026-09-24):** the candidate batches H–V, decided on
   2026-09-22 as a second recorded exception to the hold
   ([`decisions.md`](decisions.md)). Sixteen stacks landed, one per pull request,
-  each `scaffolded`. Batch V added none: Coraza's condition — a maintained Traefik
+  none run on a host yet. Batch V added none: Coraza's condition — a maintained Traefik
   integration — is not met, and the capability is already here because CrowdSec's
   AppSec engine is Coraza, so what was missing was documentation; Suricata's two
   remaining questions need a host that can be flooded without consequence. Both in
   `decisions.md`, 2026-09-24. What was not added and why:
   [`../docs/audits/candidate-evaluation-2026-09-22.md`](../docs/audits/candidate-evaluation-2026-09-22.md).
-  Moving the sixteen from `scaffolded` to `baseline-aligned` is S1, `tasks.md` §2.
+  A host run for the sixteen is S1, `tasks.md` §2.
 - **Decided (2026-10-03):** three mail servers — Stalwart, docker-mailserver and
   jeboehm/docker-mailserver — as a third recorded exception to the hold
   ([`decisions.md`](decisions.md)). Mailu is held until a release carries the fix
   for CVE-2026-86008. `apps/stalwart`, `apps/docker-mailserver` and
-  `apps/mailserver-jeboehm` are in, each `scaffolded`, with the mail ports
+  `apps/mailserver-jeboehm` are in, none run on a host yet, with the mail ports
   published by an opt-in overlay. Evidence:
   [`../docs/audits/candidate-evaluation-2026-10-03.md`](../docs/audits/candidate-evaluation-2026-10-03.md).
   What a host still has to establish for each is `tasks.md` §8.
@@ -94,27 +94,37 @@
 - **Released: v0.9.8** — hosts carry only their stacks: a partial checkout
   with `stacks` and `scripts/stacks.sh`, the VPN described as a recommendation,
   the README headline and reader corrections. No stack or pin changed; no host run.
+- **Released: v0.9.9 (2026-11-09) — every stack current, closed and checked on a host.** 32 pins
+  at the newest upstream release, 62 faults fixed, 120 of 121 stacks verified on a
+  host (`apps/vllm` needs a GPU), each with its date in [`../LIFECYCLE.md`](../LIFECYCLE.md).
+  Secrets ship empty and compose refuses to start without them; CrowdSec's LAPI
+  port comes only with the firewall-bouncer overlay; `DAC_READ_SEARCH` is in the
+  capability baseline (DEC-047 addendum). Docs, stack READMEs and the website
+  agree; the site starts with five stacks and has a Monitoring section.
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.
-- **Definition of done for v0.10.0:** every `✅` stack's limits come from a
-  measurement on a real install rather than from the derivation rule
-  (`docs/resource-measurement.md`).
+- **Definition of done for v0.10.0:** the limits of every stack with a test date
+  come from a measurement under load on a real install rather than from the
+  derivation rule (`docs/resource-measurement.md`).
 - **Prior audit status:** the recorded stabilization findings below describe
   their own audit scope, not a blanket assessment of the current tree. Check the
   implementation and relevant evidence for a new task. C1, the missing Trivy gate,
   is closed: `.trivy-baseline.json` records the CRITICAL findings that
-  exist and `scripts/ci/trivy-gate.py` fails the scan on any that is not recorded.
+  exist and `scripts/ci/trivy-gate.py` reports any that is not recorded; since
+  DEC-079 it no longer blocks.
   **No finding of the stabilization audit is marked FIX BEFORE V1 any more** —
   everything else open there is evidence, a recorded decision, or standing research
   coverage. The core audit of 2026-10-15 opens its own, listed in that file by phase.
 
 ## Snapshot
 
-- Stack inventory, per-stack status, pinned version and verification date:
-  [`../LIFECYCLE.md`](../LIFECYCLE.md). Read it for any current figure — it is
+- Stack inventory and per-stack facts — pin and release date, newest upstream
+  release, findings, last test date: [`../LIFECYCLE.md`](../LIFECYCLE.md). A stack
+  carries no state since DEC-080. Read it for any current figure — it is
   generated from the owners in `docs/standards/status-model.md`, and no count is
-  repeated in this file. After a status change or a pin, regenerate with
+  repeated in this file. After a pin move, copy `upstream-status.json` from the
+  image scan's `stack-status` artifact and regenerate with
   `python3 scripts/ci/lifecycle-report.py --write`.
 - Monitoring verified on a host on 2026-09-08 (v0.8.0): ntfy, Healthchecks,
   Uptime Kuma, Beszel and changedetection.io, each with an alert that reached a
@@ -123,34 +133,38 @@
 - Backup architecture designed (`backup/README.md`): five layers, host-installed
   agent, snapshot/backup/archive kept distinct.
 - `backup/borgmatic/` — configuration, systemd timer, setup and restore playbook.
-  Host-installed, no Compose stack. Backed up from and restored from on
-  2026-07-29; the rehearsal is logged in `backup/borgmatic/RESTORE.md`. Where a
+  Host-installed, no Compose stack. Backup and restore rehearsed; the rehearsals
+  are logged in `backup/borgmatic/RESTORE.md` (`LIFECYCLE.md` marks each stack
+  with a restore). Where a
   repository lives is the adopter's configuration, not this repository's debt —
   append-only enforcement is the one documented mechanism a local rehearsal
   cannot establish.
 - `backup/urbackup/` — client and endpoint backup, bridge networking with the web
-  interface behind Traefik, host-networking overlay opt-in. Never started.
-- Status model unified (`docs/standards/status-model.md`); `LIFECYCLE.md` generated
-  by `scripts/ci/lifecycle-report.py`; both structure and status enforced in CI.
+  interface behind Traefik, host-networking overlay opt-in. Checked 2026-11-09 with
+  a Linux client: file backup and download; a restore to the client is open.
+- Status model: facts, not states (`docs/standards/status-model.md`, DEC-080);
+  `LIFECYCLE.md` and the README findings blocks generated by
+  `scripts/ci/lifecycle-report.py`; freshness enforced in CI.
 - Local test stacks: `docker-compose.local.yml` wherever a stack shows something
   run alone, so an application can be tried before any server exists. Shape in
-  `docs/standards/compose-structure.md`, coverage in the generated Local column.
+  `docs/standards/compose-structure.md`, each stack folder shows whether it has one.
 - Trivy scans every image the checkers discover rather than a hand-kept list, and
-  reports images it could not pull instead of passing over them — currently
-  Langfuse's two images, each acknowledged in `.trivy-baseline.json` for Docker
-  Hub's anonymous pull rate limit, and MinIO, whose images are withdrawn.
+  reports images it could not pull instead of passing over them (none at present;
+  `.trivy-baseline.json` → `unscanned` is empty). Silo replaces MinIO, whose
+  images are withdrawn, in Plane and Langfuse.
   Each image's full findings go to a per-run artifact; the job summary carries
   the count-level index (`scripts/ci/trivy-summarize.py`) instead of a raw
   per-image table in the log. The vulnerability database is cached across runs,
   one entry per UTC day; Trivy's own staleness check still governs refreshes.
   CLI pinned to `v0.74.0`. Trivy's own exit code stays 0; `scripts/ci/trivy-gate.py`
-  fails the job on a CRITICAL finding not recorded in `.trivy-baseline.json`. Both
-  scan jobs are required checks on `main` since 2026-09-25
-  ([`decisions.md`](decisions.md#dec-070)).
+  reports a CRITICAL finding not recorded in `.trivy-baseline.json` and blocks
+  nothing. After the scan, `scripts/ci/upstream-status.py` writes the pinned and
+  newest upstream tag with their dates and the findings per stack to the
+  `stack-status` issue ([`decisions.md`](decisions.md#dec-079)).
 - CI jobs and what each one blocks on: [`quality-gates.md`](quality-gates.md),
   documented per job in `docs/standards/ci.md`. All ten are required on a pull
-  request into `dev` and into `main`, which requires the two image-scan jobs as
-  well — twelve in all; both rulesets require the branch to be up to date before
+  request into `dev` and into `main`, which requires the IaC config scan as
+  well — eleven in all; both rulesets require the branch to be up to date before
   merging. CodeQL reports on the same pull requests and is not
   a required check.
 
@@ -313,23 +327,20 @@ memory PSI — none covered by the thresholds v0.8.0 verified. Tracked in
 
 ## Immediate next steps
 
-The disposable host carried v0.7.0, v0.8.0 and v0.8.1 (2026-09-13), then the
-candidate sessions of 2026-09-21 to 2026-09-23. What runs on it next, in this
-order:
+What a disposable host establishes next, in this order:
 
 0. **Finish CrowdSec host-firewall acceptance** once a controllable second client
    exists — see the blocker above. Nothing else in CrowdSec is waiting.
-1. **Switch borgmatic's run monitoring on** — it points at
-   `monitoring/healthchecks`, which now exists and has been proven in a closed
-   circuit. This is what turns a silent backup timer into an alert.
-2. **What v0.7.0's session left open** —
-   [`../docs/host-session-v0.7.0.md`](../docs/host-session-v0.7.0.md) Blocks 3
-   and 4: UrBackup has never been started, and nine major versions are pinned
-   and never run. Neither gated a tag; both still need the host.
-3. **Feeding v0.10.0** — start the sampler in
-   [`../docs/resource-measurement.md`](../docs/resource-measurement.md). Every
-   container started is a measurement opportunity, and v0.10.0 cannot be
-   prepared any other way. Five monitoring stacks are already running.
+1. **Borgmatic's run monitoring** — a check in `monitoring/healthchecks`, pinged at
+   `127.0.0.1:8001` on the same host (`backup/borgmatic/config.yaml.example`). This
+   is what turns a silent backup timer into an alert.
+2. **The open items of the stack refresh** —
+   [`../docs/labs/stack-refresh/2026-11-08-results.md`](../docs/labs/stack-refresh/2026-11-08-results.md)
+   → *Not verified* and *Open*: a restore to an UrBackup client, upgrades on
+   existing data, and the faults no checker catches yet.
+3. **Feeding v0.10.0** — peaks under load per service, by the sampler in
+   [`../docs/resource-measurement.md`](../docs/resource-measurement.md); the
+   cold-start peaks are recorded in the stack-refresh results.
 4. **The middleware model on a host** — after the migration test that precedes
    v0.9.5, the proofs
    [`../core/traefik/docs/middleware-model-migration.md`](../core/traefik/docs/middleware-model-migration.md)
@@ -404,9 +415,6 @@ office servers' and Nextcloud's own headers, and every host proof.
   domain and real secrets and is gitignored. Committed files use `example.com`
   and documentation IP ranges only. This matters more during a host session than
   at any other time, because that is when real values are at hand.
-- Nine major version bumps are pinned but never started, and the stacks still
-  carrying the pre-v0.5.1 `Last checked:` field are marked ⚠️ in `LIFECYCLE.md`.
-  Both ride along with the host session.
 - Public repository: the rule is
   [`../docs/standards/commit-rules.md`](../docs/standards/commit-rules.md#public-content)
   — no real domains, IPs, hostnames or personal data; no session context or

@@ -22,8 +22,8 @@ Four models describe documentation in this repository, each answering one questi
 
 | Information | Canonical owner | Mirrors / references it |
 |---|---|---|
-| Status definitions (what ✅ / 🚧 / 📋 promise) | `docs/standards/status-model.md` | Category README legends, `LIFECYCLE.md` |
-| App status, and per-stack lifecycle detail | the per-stack sources in [`standards/status-model.md`](standards/status-model.md#who-owns-which-fact) — status, pin, `Last verified`, baseline, backup docs | `LIFECYCLE.md`, *generated* by `scripts/ci/lifecycle-report.py` and never hand-edited; category READMEs carry the status symbol, the root README links to the generated file |
+| What a stack shows, and who owns each fact | `docs/standards/status-model.md` | `LIFECYCLE.md`, the site catalogue |
+| Per-stack facts — pin, upstream releases, findings, last test, restore | the per-stack sources in [`standards/status-model.md`](standards/status-model.md#who-owns-which-fact) — `.env.example`, `upstream-status.json`, `Last verified`, the rehearsal log | `LIFECYCLE.md`, the site data and the findings block in each stack README, *generated* by `scripts/ci/lifecycle-report.py` and never hand-edited; the root README links to `LIFECYCLE.md` |
 | App location (category) | Directory structure | README tables |
 | Shipped work | `CHANGELOG.md` | — |
 | Direction / planned work | `ROADMAP.md` | Category READMEs reference, do not duplicate |
@@ -47,7 +47,7 @@ Four models describe documentation in this repository, each answering one questi
 | AI entry point and rule precedence | `AGENTS.md` | `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/00-project.mdc` — pointers only, never a rule of their own |
 | Working context for AI sessions | `.ai/` | Mirrors the owners above in condensed form; `.ai/domains/*.md` restate `docs/standards/` and lose to them on any disagreement |
 
-**Category README structure rule**: tables list existing stacks and their status. Planned candidates are listed separately. Status definitions and evidence follow [`standards/status-model.md`](standards/status-model.md).
+**Category README structure rule**: tables list existing stacks; planned candidates are listed separately. A category README carries no per-stack status: the facts per stack are in `LIFECYCLE.md`, owned as [`standards/status-model.md`](standards/status-model.md) states.
 
 **The root README is an entry point, not an inventory.** All five categories carry their own README with the stacks in that category; the root links to them and to `LIFECYCLE.md`, and does not reproduce either. A status claim in the root README would be a third copy of a fact the stack already owns and the generator already presents. Everything derived from these owners is regenerated, not retyped:
 
@@ -75,23 +75,21 @@ Who keeps a file current. This is a role, not ownership of the facts inside the 
 
 ---
 
-## Baseline-aligned criteria
+## Stack criteria
 
-A stack reaches `baseline-aligned` when all of the following hold. A stack that
-misses any of them stays at the state below it until the gap is closed.
-
-These ten points are what `baseline-aligned` means in practice. Points 1–4 and
-part of 8–10 are enforced by `check-baseline.py` and `check-structure.py`;
-points 5–7 are what the version-anchored `Last verified` date records. See
-[`standards/status-model.md`](standards/status-model.md) for how each state is
-measured.
+Every stack is held to these ten points. Points 1–4 and part of 8–10 are
+enforced by `check-baseline.py` and `check-structure.py` for every stack, so a
+stack that misses one fails CI. Points 5–7 are what a run on a host checks; its
+date and the version that ran go into `Last verified`. See
+[`standards/status-model.md`](standards/status-model.md) for what a stack
+shows.
 
 **Technical**
 
 1. Image tag pinned — no `latest`, no major-only tags (e.g. `8`, `v2`)
 2. Healthcheck present and verified working
 3. Security baseline met — `no-new-privileges`, network isolation, secrets via Docker Secrets or `_FILE` pattern
-4. No hardcoded values — everything configurable via `.env`
+4. No hardcoded values — everything configurable via `.env`; every route ships closed (`access-vpn`) with a stated auth posture, and an environment secret ships empty and is required in compose (`public-default`, `auth-posture`, `placeholder-secret`)
 
 **Tested**
 5. Clean install on a fresh environment completed
@@ -103,9 +101,9 @@ measured.
 9. `UPSTREAM.md` includes license — name (e.g. MIT, Apache 2.0, AGPL-3.0) and a note if it deviates from standard self-hosting use (see [licence policy](sovereignty/provenance.md#what-this-blueprint-accepts))
 10. `.env.example` complete — all required fields present, no real domains or credentials as defaults
 
-> **Note on rising bar:** Apps verified in earlier versions of the blueprint may not
-> meet all current criteria. When an app is re-verified, it is brought up to the
-> current standard before ✅ is re-confirmed.
+> **Note on rising bar:** Apps tested in earlier versions of the blueprint may not
+> meet all current criteria. When an app runs on a host again, it is brought up to
+> the current standard before the new date is recorded.
 
 ---
 
@@ -138,7 +136,7 @@ is useful for significant evidence or incidents. Routine sessions need no log ro
 | 4 | `<app>/README.md` | Setup + verify steps accurate and tested |
 | 5 | `<app>/UPSTREAM.md` | Image source, license, changelog link current; `Last verified: YYYY-MM-DD (vX.Y.Z)` updated |
 | 6 | `<app>/.gitignore` | Covers `volumes/`, `.secrets/`, `.env` |
-| 7 | Category README | Listing and status follow `docs/standards/status-model.md` |
+| 7 | Category README | The stack is listed in its category |
 | 8 | Root `README.md` | Update the overview only if its scope, examples or navigation change; do not duplicate the category inventory |
 | 9 | `CHANGELOG.md` | Change documented |
 
@@ -156,7 +154,7 @@ is useful for significant evidence or incidents. Routine sessions need no log ro
 | 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
 | 5 | `<app>/UPSTREAM.md` | Update version reference, release notes and migration requirements; preserve `Last verified` unless a new host test establishes it |
 | 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 7 | Image scan | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — with an `## Open findings` section in each stack README. `trivy-gate.py --prune` removes what the scan no longer finds |
+| 7 | Image scan and upstream data | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). Its `stack-status` artifact holds `upstream-status.json`: copy it to the repository root (`gh run download <run> -n stack-status`) and run `python3 scripts/ci/lifecycle-report.py --write`, which updates `LIFECYCLE.md` and the generated findings block under `## Open findings` in each stack README. A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — and the README gets the reason in a sentence below the generated block. `trivy-gate.py --prune` removes what the scan no longer finds |
 | 8 | `docs/bugfixes/` | Record significant incidents, recovery steps or reusable lessons; routine corrections need no incident file |
 | 9 | `CHANGELOG.md` | Version bump documented |
 
@@ -175,10 +173,9 @@ not an evaluation of this repository.
 | Step | File | Action |
 |---|---|---|
 | 1 | `docs/standards/<changed-file>` | Update the standard itself |
-| 2 | All Ready apps (`✅`) | Check compliance with the updated standard |
-| 3 | All Preview apps (`🚧`) | Note any drift — fix before next verification pass |
-| 4 | `CHANGELOG.md` | Standard change documented |
-| 5 | `docs/maintenance-log.md` | which apps were checked, which have open drift |
+| 2 | Every stack | Check compliance with the updated standard; fix the drift, or note it in the stack's README or `UPSTREAM.md` until the next run on a host |
+| 3 | `CHANGELOG.md` | Standard change documented |
+| 4 | `docs/maintenance-log.md` | which apps were checked, which have open drift |
 
 ---
 
@@ -188,7 +185,7 @@ not an evaluation of this repository.
 
 | Step | File | Action |
 |---|---|---|
-| 1 | All category READMEs | Every directory has a row; every `🚧` entry has files on disk |
+| 1 | All category READMEs | Every stack directory has a row; every planned entry is listed apart from the stacks |
 | 2 | Root `README.md` | Overview and links agree with category listings; the root does not duplicate inventories |
 | 3 | All `.env.example` | No real hostnames or vendor values as defaults — `example.com` or empty |
 | 4 | All `docker-compose.yml` + scripts | Unresolved placeholders do not reach deployed configuration; documented template sentinels remain valid |
@@ -207,13 +204,14 @@ Run the full Consistency Chain first, then:
 | Step | File | Action |
 |---|---|---|
 | 1 | `CHANGELOG.md` | Move `[Unreleased]` to `[X.Y.Z]` heading; update comparison links |
-| 2 | `ROADMAP.md` | Move shipped milestone to Shipped section; update "Last updated" date |
+| 2 | `ROADMAP.md` | Remove shipped items from the open lists; shipped work is in `CHANGELOG.md` |
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
-| 4 | All `🚧` entries | Is the preview status still honest? |
-| 5 | All `✅` entries | Were any broken by dependency updates since last test? |
+| 4 | `upstream-status.json` | Run the image scan by `workflow_dispatch` on `dev`, copy `upstream-status.json` from its `stack-status` artifact to the repository root and run `python3 scripts/ci/lifecycle-report.py --write`. The release then carries the pins, upstream releases and findings as of its own date |
+| 5 | `LIFECYCLE.md` | Read the stacks whose pin moved since their last test: is any likely broken by a dependency update? |
 | 6 | Secret scan | Run CI by `workflow_dispatch` on `dev`: gitleaks scans the whole history. A finding is removed, or listed by fingerprint in `.gitleaksignore` with its reason, before the tag |
 | 7 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
-| 8 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
+| 8 | `dev` | After the release pull request into `main` is merged, merge `main` back into `dev` through a pull request. `main` requires a pull request branch to be up to date with it, and without this the next release pull request from `dev` shows as out of date because of the previous release's merge commit |
+| 9 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 
 ---
 

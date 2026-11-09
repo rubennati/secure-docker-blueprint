@@ -2,15 +2,7 @@
 
 Self-hosted newsletter, mailing list manager, and transactional mail. Go single-binary app + Postgres backend. Handles subscriber management, double-opt-in, campaign sending, tracking (open/click), bounce processing, list segmentation.
 
-## Open findings
-
-The pinned image, `listmonk/listmonk:v6.2.0`, ships with 1 CRITICAL vulnerability that has a published fix, in the Echo web framework's proxy middleware. v6.2.0 is the newest stable release.
-
-**Risk:** listmonk does not appear to use that middleware (checked by code search only). Watch for the v7 stable release.
-
-The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
-
-**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.
+Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 ## Architecture
 
@@ -26,7 +18,10 @@ The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, 
 Runs on `http://localhost:9000` without Traefik, DNS or a certificate.
 
 ```bash
-cp .env.local.example .env.local # fill the __REPLACE_ME__ values
+# Local settings; the secrets ship empty, so fill the ones this stack needs
+cp .env.local.example .env.local
+printf 'DB_PASSWORD=%s\n' "$(openssl rand -hex 32)" >> .env.local
+
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:9000
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -56,15 +51,14 @@ docker compose logs smtp-guard   # "smtp placeholder replaced by smtp.invalid" o
 # → the first visit creates the super admin account.
 ```
 
-**The stack ships closed** (`APP_TRAEFIK_ACCESS=access-vpn`), because of what the step 8
-lab host measured (v6.2.0; final audit FA-01, FA-02):
+**The stack ships closed** (`APP_TRAEFIK_ACCESS=access-vpn`), because of how v6.2.0 behaves (final audit FA-01, FA-02):
 
 - **The first visit to `/admin` creates the super admin** — there is no setup secret. With a
   public route that is whoever arrives first. Create the account over the VPN.
 - **The SMTP settings ship with upstream's placeholder `smtp.yoursite.com`**, a real domain
   that resolves to a third party. Before the guard, an opt-in mail for a public subscription
-  — with the subscriber's address — was sent there on port 25 (it timed out on the lab host
-  only because the provider blocks outbound 25). `smtp-guard` now replaces exactly that
+  — with the subscriber's address — was sent there on port 25 (it times out only where the
+  provider blocks outbound 25). `smtp-guard` now replaces exactly that
   value with `smtp.invalid` (RFC 2606, never resolves) before the application loads its
   settings; a server you configured is never changed. Until you set one under
   **Settings → SMTP**, mail fails with `lookup smtp.invalid: no such host` and the
@@ -99,7 +93,7 @@ For "admin VPN-only + subscriber endpoints public", add a second Traefik router:
 
 - **Admin user created via web UI on first visit** — Listmonk v6+ removed `admin_username`/`admin_password` from env/config. The first visit to `/` shows a setup wizard to create the super admin. Do not use the old `ADMIN_USER`/`ADMIN_PASSWORD` env vars — they are ignored and trigger a deprecation warning.
 - **`DB_PWD_INLINE` duplicates the DB password** — Listmonk has no `_FILE` support on `LISTMONK_db__password`.
-- **No root:** `listmonk-app` and `listmonk-install` run as `APP_UID:APP_GID` (1000:1000) with `cap_drop: ALL`; `smtp-guard` as the image's `postgres` user (70) with `cap_drop: ALL`. Measured on the lab host: setup, login, API, subscription with the opt-in mail, campaign test send, a media upload (final audit FA-06). An existing installation needs `sudo chown -R 1000:1000 volumes/uploads` once before the upgrade.
+- **No root:** `listmonk-app` and `listmonk-install` run as `APP_UID:APP_GID` (1000:1000) with `cap_drop: ALL`; `smtp-guard` as the image's `postgres` user (70) with `cap_drop: ALL`. Setup, login, API, subscription with the opt-in mail, campaign test send and a media upload work so (final audit FA-06). An existing installation needs `sudo chown -R 1000:1000 volumes/uploads` once before the upgrade.
 - **`no-new-privileges:true`** on every service.
 - **Postgres on `app-internal` (`internal: true`)** — not reachable from outside.
 - **SMTP credentials** live in the admin UI (Settings → SMTP) after setup — not in `.env`. They're stored encrypted in the DB.
@@ -126,9 +120,11 @@ setting lives in the database.
 ```yaml
 postgresql_databases:
     - name: listmonk
-      container: listmonk-db
       username: listmonk
-      password: "{credential file /srv/docker/business/listmonk/.secrets/db_pwd.txt}"
+      # The server's own client, inside its container (FA-03)
+      pg_dump_command: docker exec listmonk-db pg_dump
+      pg_restore_command: docker exec -i listmonk-db pg_restore
+      psql_command: docker exec -i listmonk-db psql
 ```
 
 Subscriber lists and their opt-in state are database rows. Restoring an **older**
@@ -150,3 +146,24 @@ against the unsubscribe log before the first send following a restore.
 For event-driven flows (new subscriber → CRM row, unsubscribe → alert):
 
 - Admin UI → Settings → Webhook events → point at `https://n8n.example.com/webhook/<path>`
+
+## Open findings
+
+<!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
+
+**Findings in the upstream images** at the pin `v6.2.0` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+
+| Image | Base system | Libraries | Programs |
+|---|---|---|---|
+| `listmonk/listmonk:v6.2.0` | 0 · 3 | — | 1 · 47 |
+| `postgres:18.6-alpine` | — | — | 1 · 25 |
+
+<!-- findings:end -->
+
+The pinned image, `listmonk/listmonk:v6.2.0`, ships with 1 CRITICAL vulnerability that has a published fix, in the Echo web framework's proxy middleware. v6.2.0 is the newest stable release.
+
+**Risk:** listmonk does not appear to use that middleware (checked by code search only). Watch for the v7 stable release.
+
+The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
+
+**Risk:** the flaw is in TLS session resumption, and gosu opens no network connection, so it is not reached. The finding clears when upstream ships a rebuilt gosu.

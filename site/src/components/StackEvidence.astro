@@ -1,29 +1,25 @@
 ---
 /**
- * What has been established about this stack, and what has not.
+ * What has been established about this stack.
  *
- * The repository's lifecycle state is a maintainer's answer to "what should I
- * work on". It is not rendered here. A visitor asks something else — what was
- * actually exercised, against which version, and what is still untested — so
- * this shows the evidence and leaves the weighing to them.
+ * A stack carries no state (DEC-080). This shows the facts — when the stack last
+ * ran on a host and which version ran, whether its data came back from a backup,
+ * the pin and what upstream has released since, what the pinned images carry —
+ * and leaves the weighing to the reader.
  *
  * Facts come from `src/data/lifecycle.json`, generated from the repository and
- * checked in CI. Nothing here is retyped.
+ * checked in CI. Nothing here is retyped. Requirements and scope belong in the
+ * page itself, as properties of the stack, not in this block.
  *
- * `gap` is the authored part: one sentence naming what specifically has not
- * been exercised. A generic disclaimer is noise; a named gap is usable — so a
- * stack with no verification date must supply one, or the build fails.
- *
- * Usage:  <StackEvidence stack="apps/nextcloud" gap="Client sync is untested." />
+ * Usage:  <StackEvidence stack="apps/nextcloud" />
  */
 import lifecycle from '../data/lifecycle.json';
 
 interface Props {
 	stack: string;
-	gap?: string;
 }
 
-const { stack, gap } = Astro.props;
+const { stack } = Astro.props;
 const entry = (lifecycle as Record<string, any>)[stack];
 
 if (!entry) {
@@ -33,96 +29,69 @@ if (!entry) {
 	);
 }
 
-const version = String(entry.pinned).split('=').pop();
+const version = String(entry.pinned).split('=').pop()?.split('@')[0];
 const hostInstalled = version === 'host-installed';
 
-// The date refers to the version that was exercised, which is not always the one
-// pinned today — a later bump moves the pin without re-running anything. Naming
-// the pin next to the date would credit it with a check it never had.
-const verifiedVersion = entry.verified_version || '';
+const day = (d: string) =>
+	new Date(d).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 
-// Compare what the two actually name, not how they are written: UPSTREAM.md
-// tends to carry a leading `v`, a pin may repeat the image name or append a
-// digest, and none of that makes it a different version.
-const sameVersion = (a, b) => {
-	const norm = (s) =>
-		String(s)
-			.split('@')[0]
-			.replace(/^[a-z0-9._/-]+:(?=[\dv])/i, '')
-			.replace(/^v/i, '');
-	return norm(a) === norm(b);
-};
-const pinMoved =
-	Boolean(verifiedVersion) && !hostInstalled && !sameVersion(verifiedVersion, version);
+// A host run tests the setup. Its date stays when the pin moves; the version
+// that ran is named beside it, so the pin is never credited with a run it did
+// not have.
+const tested = entry.tested_anchored && entry.tested ? day(entry.tested) : null;
+const testedVersion = entry.tested_differs ? entry.tested_version : '';
 
-const checked =
-	entry.verified_anchored && entry.verified !== '—'
-		? new Date(entry.verified).toLocaleDateString('en-GB', {
-				day: 'numeric',
-				month: 'short',
-				year: 'numeric',
-			})
-		: null;
+const upstream =
+	entry.upstream === 'current'
+		? 'the newest upstream release'
+		: entry.upstream === 'behind'
+			? `upstream has released ${entry.newest}${entry.newest_date ? ` on ${day(entry.newest_date)}` : ''}`
+			: entry.upstream === 'undetermined'
+				? 'a newer upstream release is not determinable'
+				: 'upstream not checked at this pin';
+const upstreamNote = entry.archived
+	? 'the upstream repository is archived'
+	: entry.quiet
+		? `no upstream release since ${entry.last_release ? day(entry.last_release) : 'over a year'}`
+		: '';
 
-// `ops-proven` means this stack's data was restored from a backup on a live
-// host. That is evidence a reader can weigh, so it is stated as the fact it is
-// rather than as the tier's name.
-const restored = entry.state === 'ops-proven';
-
-// CRITICAL vulnerabilities the pinned images still carry, because no upstream
-// release removes them yet. Each is recorded with its reason and risk, and the
-// stack README says what that means for an installation — so the page links
-// there instead of repeating it.
-const openFindings = Number(entry.open_findings || 0);
+// Findings with a published fix in the images as upstream publishes them. The
+// README splits them per image and says why any is left in place.
+const critical = entry.critical;
+const high = entry.high;
 const readme = `https://github.com/rubennati/secure-docker-blueprint/blob/main/${stack}/README.md#open-findings`;
 
-// Where nothing has been verified, the version alone is not enough to leave a
-// reader with — but a generic hedge ("may well work") is worse than nothing: it
-// warns without saying what to check. So the gap becomes mandatory here, and
-// the build stops rather than shipping a page that gestures at doubt.
-if (!checked && !gap) {
-	throw new Error(
-		`StackEvidence: "${stack}" has no anchored verification date, so it needs ` +
-			`a gap="…" naming what specifically has not been established. A page ` +
-			`without one would carry a warning the reader cannot act on.`,
-	);
-}
 ---
 
-<div class={`evidence evidence--${checked ? (restored ? 'proven' : 'checked') : 'unverified'}`}>
+<div class={`evidence${tested ? ' evidence--checked' : ''}`}>
 	{
-		checked ? (
+		tested && (
 			<p class="evidence__line">
-				<strong>Verified {checked}</strong>
-				{!hostInstalled && (
+				<strong>Last run on a host {tested}</strong>
+				{testedVersion && (
 					<>
 						{' '}
-						against <code>{verifiedVersion || version}</code>
+						with <code>{testedVersion}</code>
 					</>
 				)}
-				{restored && <> · data restored from a backup on a live host</>}
-				{pinMoved && (
-					<>
-						{' '}
-						· pinned at <code>{version}</code> since, which has not been run here
-					</>
-				)}
-			</p>
-		) : (
-			<p class="evidence__line">
-				<strong>Written against <code>{version}</code></strong> · no verification
-				recorded against that version
+				{entry.restored && <> · data restored from a backup</>}
 			</p>
 		)
 	}
-	{gap && <p class="evidence__gap">Not exercised: {gap}</p>}
 	{
-		openFindings > 0 && (
+		!hostInstalled && (
+			<p class="evidence__line">
+				Pinned at <code>{version}</code>
+				{entry.pinned_date && <> (released {day(entry.pinned_date)})</>} · {upstream}
+				{upstreamNote && <> · {upstreamNote}</>}
+			</p>
+		)
+	}
+	{
+		critical !== null && high !== null && (critical > 0 || high > 0) && (
 			<p class="evidence__findings">
-				<strong>
-					Ships with {openFindings} open CRITICAL finding{openFindings === 1 ? '' : 's'}
-				</strong>{' '}
-				that no upstream release fixes yet — <a href={readme}>reason and risk</a>
+				In the upstream images: {critical} CRITICAL · {high} HIGH with a published fix —{' '}
+				<a href={readme}>per image</a>
 			</p>
 		)
 	}
@@ -134,32 +103,20 @@ if (!checked && !gap) {
 		padding: 0.35rem 0 0.35rem 0.75rem;
 		margin-block: 1.25rem;
 	}
-	.evidence--proven {
-		border-left-color: var(--sl-color-green);
-	}
 	.evidence--checked {
 		border-left-color: var(--sl-color-blue);
 	}
-	/* Grey, not orange: an absent verification is a missing fact, not a hazard.
-	   The named gap underneath is what the reader acts on. */
-	.evidence--unverified {
-		border-left-color: var(--sl-color-gray-4);
-	}
 	.evidence__line {
-		margin: 0;
+		margin: 0 0 0.15rem;
 		font-size: 0.85rem;
 	}
 	.evidence__line code {
 		font-size: 0.8rem;
 	}
+	/* Plain text colour: the findings come with the upstream images, they are
+	   information about them, not an alarm about this stack. */
 	.evidence__findings {
 		margin: 0.25rem 0 0;
 		font-size: 0.85rem;
-		color: var(--sl-color-orange);
-	}
-	.evidence__gap {
-		margin: 0.25rem 0 0;
-		font-size: 0.85rem;
-		color: var(--sl-color-gray-2);
 	}
 </style>

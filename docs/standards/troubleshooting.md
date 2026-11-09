@@ -371,11 +371,13 @@ the client connected via HTTP and generates HTTP URLs.
 Refused to display 'https://...' in a frame because it set 'X-Frame-Options' to 'deny'
 ```
 
-**Cause:** All `sec-*` security middleware levels include `frameDeny: true`.
+**Cause:** The `headers-standard` profile sends `X-Frame-Options: DENY`
+(`header-frame-deny` in `model.yml`).
 
-**Fix:** Don't use `sec-*` for iframe-embedded services. Create a custom
-Docker-level middleware with `frame-ancestors` CSP instead of `frameDeny`.
-See OnlyOffice in `apps/onlyoffice/docker-compose.yml` for the pattern.
+**Fix:** An application that frames its own pages puts the `frame-self` block
+before the profile (`business/listmonk`). One embedded by another host takes
+`headers-application-owned` or a stack-owned `frame-ancestors` CSP instead — see
+OnlyOffice in `apps/onlyoffice/docker-compose.yml` for the pattern.
 
 ---
 

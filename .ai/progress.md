@@ -28,15 +28,16 @@ session-level detail is in
 | v0.9.6 | 2026-10-31 | Current pins, a recorded baseline, the update programme — npm advisories closed, seven pins at the newest patch release (111 recorded CRITICAL pairs removed), the inventory of all 201 pins with seven batches; no host run |
 | v0.9.7 | 2026-11-05 | The ingress programme, verified on a host — bindings per address family, an edge network per stack, declared trusted ranges, the auth posture of every stack and the rendered host ruleset, measured on a dual-stack lab host; fourteen stacks `ops-proven` |
 | v0.9.8 | 2026-11-07 | Hosts carry only their stacks — a partial checkout with a stack list and `scripts/stacks.sh`, the VPN as a recommendation, a plain README headline; no stack or pin changed, no host run |
+| v0.9.9 | 2026-11-09 | Every stack current, closed and checked on a host — 32 pins moved, 62 faults fixed, 120 of 121 stacks with a test date, secrets required, closed defaults, PostgreSQL dumps through `docker exec`, a consistent website |
 
 **The through line:** every release since v0.2.0 is defined by something *proven on a
 fresh install*, not by something written. That is why status carries verification
-dates, why ✅ has ten criteria, and why v0.7.0 did not end with a working
+dates, why a test date rests on ten criteria, and why v0.7.0 did not end with a working
 configuration.
 
 ## Since v0.6.0, outside the plan
 
-Recorded in `ROADMAP.md` under "Since v0.6.0 — work outside the plan": a repo-wide
+Recorded in `CHANGELOG.md`: a repo-wide
 dependency sweep, the reference app and structure checker, four new previews, the
 Cal.diY fork and hardening track, supply-chain hardening, and the unified status
 model with a generated lifecycle view. None of it changed the milestone order.

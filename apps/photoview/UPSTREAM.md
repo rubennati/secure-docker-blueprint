@@ -10,13 +10,12 @@
 - **Origin:** Denmark · community · EU
 - **Domain:** Photos
 - **Role:** Photo gallery that reads your existing folders, with RAW support and face recognition
-- **Based on version:** `2` (tracks 2.x line)
-- **Last checked:** 2026-04-17
+- **Last verified:** 2026-11-08 (2.4.0) — over IPv4, at the closed default: the initial setup wizard run through the GraphQL API, a second run refused (`not initial setup`), the administrator authorized before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 ## What we use
 
-- Upstream `photoview/photoview:2`
-- Official `mariadb:lts`
+- Upstream `photoview/photoview:2.4.0`
+- Official `mariadb:12.3.3`
 - Docker Secrets for MariaDB password + root password
 - Bind-mount `./volumes/media-cache`, `./volumes/mariadb`
 - Configurable `MEDIA_ROOT` (read-only bind into `/photos`)
@@ -37,12 +36,11 @@
 | **Container / hostnames standardized** | `photoview-app / photoview-db` instead of bare `photoview / photoview-mariadb` |
 | **DSN-safe password requirement documented** | Photoview's `PHOTOVIEW_MYSQL_URL` parses special characters (`@`, `:`, `/`, `?`, `#`). Inbox called this out in a comment; setup script now uses `openssl rand -hex` which is safe |
 | **`HOST_PHOTOVIEW_LOCATION` / `HOST_PHOTOVIEW_MEDIA_ROOT` / `HOST_PHOTOVIEW_BACKUP` renamed** to `MEDIA_ROOT` and `./volumes/` bind paths | Blueprint convention + drops unused backup variable |
-| **`access-public`, `limit-standard` and `headers-standard` as shipped** | Typical for public galleries |
+| **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The setup wizard makes the first visitor the admin; open the route (`access-public`) after it for a public gallery |
 
 ## Version notes
 
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: Photoview's example compose and its CI
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: Photoview's example compose and its CI
   use the floating `mariadb:lts` tag, which is 12.3
   (https://github.com/photoview/photoview, `docker-compose example/` and
   `.github/workflows/tests.yml`); the docs name no version.

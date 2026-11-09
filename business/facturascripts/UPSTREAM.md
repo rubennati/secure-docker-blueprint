@@ -12,18 +12,16 @@
 - **Decision facts checked:** 2026-09-21
 - **Domain:** Business operations
 - **Role:** Invoicing, accounting and inventory for small businesses, extended through plugins
-- **Based on version:** `2026.7`
-- **Last verified:** 2026-09-22 (2026.5) — behind Traefik with TLS: the unattended install, the login and wizard, a customer, the in-app updater across a restart, and the README's restore
+- **Last verified:** 2026-11-08 (2026.72) — over IPv4: moved from 2026.7, `ops/install.sh` ran the unattended installer and closed the web installer, the administrator logged in and reached the first-use wizard before and after `down`/`up`, the refused client answered `403` (docs/labs/stack-refresh/2026-11-08-results.md)
 
 The origin comes from the terms on facturascripts.com, which name the site's owner
 and apply Spanish law.
 
 ## What we use
 
-- `facturascripts/facturascripts:2026.7` — the image publisher's stable channel;
-  `latest` is the same image. Newer tags such as `2026.72` are published as
-  `beta`, although the GitHub release list does not mark them as pre-releases. PHP 8.4 and Apache on
-  Debian 13.
+- `facturascripts/facturascripts:2026.72` — the image the publisher's `beta`
+  channel points at; `latest` points at the older `2026.7` build. The GitHub
+  release list marks neither as a pre-release. PHP 8.4 and Apache on Debian 13.
 - `mariadb:11.4.13` — the repository's MariaDB LTS. Upstream's compose uses
   `mysql:8.2`.
 - **The image seeds the webroot; the in-app updater owns it afterwards.**
@@ -41,7 +39,7 @@ and apply Spanish law.
 | `facturascripts-cron` service | Upstream's compose has none. It runs `php index.php -cron`, upstream's command-line entry point, every five minutes as uid 33. Page requests already run the work queue; the scheduled clean-up and plugin jobs need the cron. Its healthcheck only confirms the loop is running: the command exits 0 even with the database unreachable — measured |
 | `cap_add: SETUID, SETGID` | Measured with Apache alone: with both, the master is uid 0 and its workers uid 33; with `SETUID` alone every Apache process stays root and `/` answers 403; with `SETGID` alone Apache exits. The entrypoint's `setpriv` needs both as well |
 | tmpfs on `/tmp` and `/var/run/apache2` only | Apache exits on a read-only root without `/var/run/apache2` (its PID file) — measured. `/var/lock/apache2` is not needed. `/var/log/apache2` keeps the image's links to stdout and stderr, so the logs reach `docker logs` |
-| `ops/install.sh` instead of the web wizard | Upstream's installer in its unattended mode (`unattended=1`), run as `www-data`, with both passwords read from the secrets inside the container. It sends `mysql_socket` empty, as the web form does: without the field the 2026.5 installer stops with a `TypeError` halfway through `config.php` — measured. Fixed upstream in [NeoRazorX/facturascripts#2041](https://github.com/NeoRazorX/facturascripts/pull/2041), merged 2026-09-25; the `2026.7` release contains the fix. The empty field stays, as the web form also sends it; not yet run against `2026.7` |
+| `ops/install.sh` instead of the web wizard | Upstream's installer in its unattended mode (`unattended=1`), run as `www-data`, with both passwords read from the secrets inside the container. It sends `mysql_socket` empty, as the web form does: without the field the 2026.5 installer stops with a `TypeError` halfway through `config.php` — measured. Fixed upstream in [NeoRazorX/facturascripts#2041](https://github.com/NeoRazorX/facturascripts/pull/2041), merged 2026-09-25; the `2026.7` release contains the fix. The empty field stays, as the web form also sends it |
 | `FS_DB_PASS` reads the Docker Secret | The installer writes the password into `config.php` in plain text; `ops/install.sh` replaces the line with `file_get_contents('/run/secrets/DB_PWD')` |
 | `FS_INITIAL_USER` and `FS_INITIAL_PASS` removed after the install | The installer writes the administrator's password into `config.php`. It is read once, when the `users` table is created |
 | `APP_TRAEFIK_ACCESS=access-vpn` | The web installer is open until the install has run |
@@ -69,7 +67,7 @@ Behind Traefik with TLS, with the shipped `acc-tailscale` and `sec-2`:
   archive unpacked, ownership restored — login and customer back
 - Peaks: application 113 MiB, MariaDB 130 MiB, cron 10 MiB
 
-**Not yet exercised:** invoices and accounting entries; plugins; email; the
+**Outside this verification:** invoices and accounting entries; plugins; email; the
 installation's registration, which starts the weekly telemetry.
 
 ## Verification performed (2026-09-21)
@@ -104,15 +102,17 @@ owned by uid 33 with mode 700, as `ops/init.sh` and the `chown` leave it:
 - `docker-compose.local.yml` started and served the installer on
   `127.0.0.1:8080`, with `/cron` refused
 
-**Not yet exercised:** Traefik routing and TLS; the browser interface beyond
+**Outside this verification:** Traefik routing and TLS; the browser interface beyond
 login, dashboard and the customer form; invoices, accounting and reports; email;
 the in-app updater and plugin installation; the web installer path used by the
 local file; an upgrade to a newer image; backup and restore.
 
 ## Version notes
 
-- Moved to `2026.7` on 2026-11-05 (image published 2026-10-21), not run on a
-  host at this tag. `2026.7` is the image behind `latest`; the automatic pick
+- Moved to `2026.72` on 2026-11-08. The image
+  repository publishes no release notes; the unattended install and the login
+  ran unchanged.
+- Moved to `2026.7` on 2026-11-05 (image published 2026-10-21). `2026.7` is the image behind `latest`; the automatic pick
   `2026.72` is the `beta` tag and was not used. The image tag changes PHP,
   Apache and the operating system and seeds the webroot of a new install; an
   existing install keeps the version in its webroot until the in-app updater
@@ -140,5 +140,5 @@ Apache and the operating system.
    `docker compose pull && docker compose up -d`. This does not change the
    installed FacturaScripts version
 4. Log in and open the dashboard
-5. Update **Based on version** above — and add **Last verified** only if the
+5. Add **Last verified** only if the
    upgrade was exercised on a real install

@@ -9,15 +9,14 @@
 - **Origin:** Community · unofficial Bitwarden reimplementation · no single jurisdiction
 - **Domain:** Identity, access and secrets
 - **Role:** Password manager: logins, TOTP and shared collections
-- **Based on version:** `1.37.5`
-- **Last verified:** 2026-11-02 (1.37.4) — step 8 lab host behind Traefik 3.7.17 with MariaDB 11.4: registration through the e-mail token flow with `apps/mailpit` as the SMTP sink, password-grant login, sync and a created item through the client API (a lab script; no official client run), WebSocket notifications (101 with a token, 401 without), the admin panel's Argon2 token (401 wrong, session on right), signups off refusing a new registration, Vaultwarden's own `X-Frame-Options` passed through; restored from a borgmatic archive into a throwaway instance (docs/labs/ingress/2026-11-01-results.md)
+- **Last verified:** 2026-11-09 (1.37.5) — over IPv4: `/alive` and a database-backed API request answered through Traefik, the admin panel off with the empty token, the same after `down`/`up`
 
 ## What we changed and why
 
 | Change | Reason |
 |--------|--------|
 | MariaDB instead of SQLite | More robust for concurrent access, better backup tooling |
-| Passwords in .env (not Secrets) | Phase 2 open. **Vaultwarden does support `_FILE`** — confirmed against the upstream configuration wiki on 2026-07-27; this entry previously claimed it does not, and whether that was wrong when written or went stale could not be established from the release notes. The genuine obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
+| Passwords in .env (not Secrets) | Open: moving them to Docker Secrets. **Vaultwarden does support `_FILE`** (upstream configuration wiki, checked 2026-07-27). The obstacle is narrower: the password sits inside `DATABASE_URL`, a connection string, so the secret has to carry the whole URL (`DATABASE_URL_FILE`) or an entrypoint has to assemble it — the pattern this repository already uses elsewhere. A real option, not a blocked path |
 | ADMIN_TOKEN as Argon2 hash | Official recommendation — never store plain text |
 | `read_only: true` + `no-new-privileges` | Security hardening |
 | `tls-strict` (TLS 1.3 only) | Password manager deserves strictest TLS — named by the router's `tls.options` label as a documented exception |
@@ -46,43 +45,10 @@ Owned by [`README.md`](README.md#backup) — engine, container, which volumes
 hold state, and the borgmatic block. Kept there because that is where the
 per-app backup pattern lives and what `lifecycle-report.py` reads.
 
-## First-time setup
+## Setup and verification
 
-```bash
-# 1. Copy and configure
-cp .env.example .env
-nano .env  # Set APP_TRAEFIK_HOST, SMTP settings
-
-# 2. Generate DB passwords
-# hex only — base64 chars +/= break DATABASE_URL
-sed -i "s|^DB_PASSWORD=.*|DB_PASSWORD=$(openssl rand -hex 32)|" .env
-sed -i "s|^DB_ROOT_PASSWORD=.*|DB_ROOT_PASSWORD=$(openssl rand -hex 32)|" .env
-
-# 3. Generate Argon2 admin token
-docker run --rm -it vaultwarden/server:1.37.5 /vaultwarden hash
-# Enter a strong password, copy the $argon2id$... output
-# In .env: replace every $ with $$ then paste as VW_ADMIN_TOKEN
-
-# 4. Start
-docker compose up -d
-
-# 5. Create your account (SIGNUPS_ALLOWED must be true for this)
-# Visit https://vault.example.com and register
-
-# 6. Disable signups
-# Set VW_SIGNUPS_ALLOWED=false in .env, then recreate — restart alone does not
-# pick up an .env change
-docker compose up -d --force-recreate vaultwarden-app
-```
-
-## Verify
-
-```bash
-docker compose ps                                    # All healthy
-curl -sI https://your-domain/alive                   # 200 OK
-curl -sI https://your-domain/admin                   # Admin panel loads
-docker exec vaultwarden-app curl -s http://127.0.0.1:80/alive  # Internal check
-```
+Owned by [`README.md`](README.md#first-time-setup) — the setup steps, the admin
+token and the checks after startup.
 
 ## Push Notifications
 
@@ -122,7 +88,7 @@ Upstream reference:
 
 ## Version notes
 
-- Moved to `1.37.4` on 2026-10-31 (released 2026-10-05), not run at this tag. A
+- Moved to `1.37.4` on 2026-10-31 (released 2026-10-05). A
   security release: GHSA-69q9-v8p6-xvx3 (high, 8.1), GHSA-7jg8-8m5x-6j9r,
   GHSA-v576-3wvq-xh3c, GHSA-q5x6-grh5-fqgc, GHSA-64mc-4p6f-r7x9,
   GHSA-7ccc-c43j-4p36 and GHSA-qwx4-wcv4-mpcv; upstream advises rotating an
@@ -133,8 +99,7 @@ Upstream reference:
   `POST /api/accounts/prelogin` are removed; the feature flags are removed and
   `EXPERIMENTAL_CLIENT_FEATURE_FLAGS` only warns (not set here); `DUO_USE_IFRAME`
   is ignored (not set here); `MARIADB_TLS_DISABLE_PEER_VERIFICATION` is new.
-- Moved to `1.37.5` on 2026-11-05 (released 2026-11-01), not run on a host at
-  this tag. A security release: GHSA-x9cq-f669-vrr4 (website icons, medium) and
+- Moved to `1.37.5` on 2026-11-05 (released 2026-11-01). A security release: GHSA-x9cq-f669-vrr4 (website icons, medium) and
   GHSA-9pjj-f9g5-3x4c (emergency access, medium), both still private upstream.
   The bundled web vault is v2026.10.1. Invalid configuration values now stop
   the start with an error: numeric options have tighter ranges, and the rate
@@ -143,8 +108,7 @@ Upstream reference:
   ranges. Not checked: whether the empty strings the compose file passes for
   unset options (`PUSH_RELAY_URI`, `PUSH_IDENTITY_URI`, `SMTP_HOST`) pass the
   new validation; watch the first start.
-- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05,
-  not run on a host at this tag. Support: the MariaDB backend page names no
+- Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: the MariaDB backend page names no
   version range, and its examples use the untagged `mariadb` image
   (https://github.com/dani-garcia/vaultwarden/wiki/Using-the-MariaDB-(MySQL)-Backend).
   `MARIADB_AUTO_UPGRADE: "1"`, already set in both compose files, runs

@@ -209,12 +209,18 @@ NO_NEW_PRIVILEGES_EXCEPTIONS: dict[str, dict[str, Exception]] = {
 # directory and then drops to its own user. They grant nothing that reaches past
 # the container's own filesystem and namespaces.
 #
+# DAC_READ_SEARCH belongs to the same pattern and is narrower than DAC_OVERRIDE:
+# it lets root read and list files it does not own, never write them. The
+# official mongo entrypoint needs it to search its own mode-700 data directory
+# on every start after the first (stack-refresh lab host, 2026-11-08).
+#
 # NET_BIND_SERVICE is here for a different reason — it permits binding a port
 # below 1024 and nothing else, which is narrower than running the process as
 # root to achieve the same thing.
 CAP_BASELINE: frozenset[str] = frozenset({
     "CHOWN",
     "DAC_OVERRIDE",
+    "DAC_READ_SEARCH",
     "FOWNER",
     "SETGID",
     "SETUID",

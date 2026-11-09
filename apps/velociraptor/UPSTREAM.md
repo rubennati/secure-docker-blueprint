@@ -1,5 +1,7 @@
 # Upstream Reference
 
+- **Last verified:** 2026-11-08 (0.77.3) — over IPv4: the server wrote its config, the GUI answered the admin (`401` for a wrong password) and the client frontend served its certificate, before and after `down`/`up`; the ports are published directly, no route (docs/labs/stack-refresh/2026-11-08-results.md)
+
 ## Source
 
 - **Image:** https://github.com/Velocidex/velociraptor/pkgs/container/velociraptor-server
@@ -10,16 +12,15 @@
 - **Origin:** Originally Velocidex (Australia), acquired by Rapid7 (United States) in 2021, which maintains it today · non-EU
 - **Domain:** Security operations
 - **Role:** Endpoint forensics and threat hunting across a fleet, driven by queries
-- **Based on version:** `0.77.3`
 - **Verification snapshot:** 2026-09-19 — local Compose stack booted,
   hardening and secret injection exercised against a live container; no
   endpoint agent has been enrolled
 
 ## What we use
 
-- `ghcr.io/velocidex/velociraptor-server:0.77.2` — the image tag omits the
-  `v` prefix the Git release tag (`v0.77.2`) carries; verified directly,
-  `v0.77.2` does not exist as an image tag
+- `ghcr.io/velocidex/velociraptor-server:0.77.3` — the image tag omits the
+  `v` prefix the Git release tag (`v0.77.3`) carries; a `v`-prefixed image
+  tag does not exist
 
 ## Docker-based server support since 0.77 — verified, not assumed from the prompt
 
@@ -74,7 +75,7 @@ corrected in this stack (a specific version tag, and a generated secret).
 
 ## Version notes
 
-- Moved to `0.77.3` on 2026-10-31 (released 2026-10-05), not run at this tag.
+- Moved to `0.77.3` on 2026-10-31 (released 2026-10-05).
   Upstream says the release addresses the CVEs of the 0.77.3 cycle without naming
   them on the release page; the advisory is
   https://docs.velociraptor.app/announcements/advisories/v0-77-3/, not reachable

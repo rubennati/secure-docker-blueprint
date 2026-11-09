@@ -18,7 +18,7 @@ services:
     tmpfs: [/tmp]
     environment:
       TZ: ${TZ}
-      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY:?Set QDRANT_API_KEY in .env.local}
       QDRANT__TELEMETRY_DISABLED: "true"
       QDRANT_INIT_FILE_PATH: /qdrant/storage/.qdrant-initialized
     volumes:

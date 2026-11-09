@@ -12,6 +12,14 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The entrypoint reads the password files
+    # as root — mode 600, owned by the operator — then switches to the mysql user.
+    cap_add:
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
 
     # --- Resources ---
     # The buffer pool alone is configured at 1G below; connections, sort buffers
@@ -72,6 +80,20 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Starts as root: sh reads the password secret, then the entrypoint fixes
+    # ownership of /data and drops to its redis user. That sequence needs the
+    # set below (docs/standards/security-baseline.md, per image family).
+    cap_add:
+      - CHOWN
+      - DAC_OVERRIDE
+      - FOWNER
+      - SETGID
+      - SETUID
+    read_only: true
+    tmpfs:
+      - /tmp
 
     # --- Resources ---
     # maxmemory is 512mb; the rest covers allocator fragmentation and overhead.
@@ -177,6 +199,12 @@ services:
       OVERWRITEPROTOCOL: https
       OVERWRITEHOST: ${APP_TRAEFIK_HOST}
       OVERWRITECLIURL: https://${APP_TRAEFIK_HOST}
+      # Apply the two overwrites above only to requests that came through
+      # Traefik — the regex of this stack's edge subnet (.env). A call from an
+      # office server over office.yml then gets URLs at the address it used
+      # (nginx), not at the closed public name (README, "Office servers behind a
+      # closed route"). Empty: the overwrites apply to every request.
+      OVERWRITECONDADDR: ${NC_OVERWRITECONDADDR:-}
       # PHP
       PHP_MEMORY_LIMIT: ${PHP_MEMORY_LIMIT}
       PHP_UPLOAD_LIMIT: ${PHP_UPLOAD_LIMIT}
@@ -225,6 +253,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # The master chowns its cache directories and the workers switch to uid 101.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
     # --- Resources ---
     memswap_limit: 128M          # == memory: no swap
