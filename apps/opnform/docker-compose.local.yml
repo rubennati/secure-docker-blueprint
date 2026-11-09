@@ -197,6 +197,8 @@ services:
       api: {condition: service_started}
       ui: {condition: service_started}
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, SETUID, SETGID]   # the master chowns its cache directories and the workers switch to uid 101 (measured)
     environment:
       NGINX_MAX_BODY_SIZE: ${NGINX_MAX_BODY_SIZE:-64m}
     volumes:

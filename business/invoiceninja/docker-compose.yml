@@ -133,6 +133,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the master chowns its cache directories and the workers switch to uid 101.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
     # --- Configuration ---
     environment:
@@ -206,6 +213,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the entrypoint switches to the mysql user and reads its files as root.
+    cap_add:
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
 
     # --- Configuration ---
     # DEVIATION: MySQL rather than MariaDB — upstream targets MySQL 8 and ships

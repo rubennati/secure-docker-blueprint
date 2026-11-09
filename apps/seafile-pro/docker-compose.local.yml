@@ -16,6 +16,12 @@ services:
 
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the entrypoint switches to the mysql user.
+    cap_add:
+      - SETUID
+      - SETGID
 
     deploy:
       resources:

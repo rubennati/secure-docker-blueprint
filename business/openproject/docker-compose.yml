@@ -195,6 +195,9 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the image runs as its own user and needs none.
     # --- Health & Observability ---
     # Not an HTTP service — this confirms the port accepts a connection.
     healthcheck:

@@ -448,6 +448,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the master chowns its cache directories and the workers switch to uid 101.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
     # --- Configuration ---
     environment:

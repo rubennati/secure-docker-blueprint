@@ -13,6 +13,8 @@ services:
     container_name: opensign-local-db
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_READ_SEARCH, SETUID, SETGID]   # chowns and later searches the data directory, then switches to mongodb (measured)
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DB_ROOT_USER}
       MONGO_INITDB_ROOT_PASSWORD: ${DB_ROOT_PWD}

@@ -131,6 +131,8 @@ services:
     container_name: ${CONTAINER_NAME_MEMCACHED}
     restart: unless-stopped
     security_opt: [no-new-privileges:true]
+    cap_drop: [ALL]
+    # no cap_add: the image runs as its own user and needs none (measured)
 
     # --- Resources ---
     # `-m 256M` is configured below; the rest is process overhead.

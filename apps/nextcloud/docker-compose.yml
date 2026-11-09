@@ -12,6 +12,14 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the entrypoint reads the password files
+    # as root — mode 600, owned by the operator — then switches to the mysql user.
+    cap_add:
+      - DAC_OVERRIDE
+      - SETUID
+      - SETGID
 
     # --- Resources ---
     # The buffer pool alone is configured at 1G below; connections, sort buffers
@@ -245,6 +253,13 @@ services:
     # --- Security ---
     security_opt:
       - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # Measured on the stack-refresh lab host: the master chowns its cache directories and the workers switch to uid 101.
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
 
     # --- Resources ---
     memswap_limit: 128M          # == memory: no swap
