@@ -20,7 +20,7 @@ deployment patterns: a **static site** and a **web API**, following the same
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/rubennati/secure-docker-blueprint/badge)](https://scorecard.dev/viewer/?uri=github.com/rubennati/secure-docker-blueprint)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/13091/badge)](https://www.bestpractices.dev/projects/13091)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-v0.9.8-blue)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-v0.9.9-blue)](CHANGELOG.md)
 
 **[Architecture](docs/architecture.md) · [Standards](docs/standards/) · [Stacks at a glance](LIFECYCLE.md) · [SecDockBlue](https://secdockblue.rubennati.at)**
 

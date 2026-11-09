@@ -8,13 +8,21 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-Every stack is at the newest upstream release or names why not, starts with the files it
-ships, and ships closed. 120 of the 121 stacks are verified on a host: each starts
+## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
+
+Every stack was at the newest upstream release on 2026-11-08 or names why not, starts
+with the files it ships, and ships closed. Eight upstreams released again on 2026-11-09;
+`LIFECYCLE.md` shows which. 120 of the 121 stacks are verified on a host: each starts
 healthy, answers through Traefik with a certificate, refuses an unauthorised request,
 passes its README's smoke test and comes back after `down`/`up`. `apps/vllm` needs a
 host with an NVIDIA GPU. 109 of the 114 local files run. A forgotten secret stops
 `docker compose` instead of becoming the password. Each stack shows its last verified
 date in `LIFECYCLE.md` and in its README.
+
+An existing host keeps its `.env` and its secrets. Four changes ask for a step, each
+marked **Migration** below: the routes a stack now ships closed, CrowdSec's host port
+with the firewall bouncer, `HC_LOCAL_PORT` for Healthchecks, and the PostgreSQL entries
+of the host's borgmatic configuration.
 
 ### Security
 
@@ -82,8 +90,8 @@ date in `LIFECYCLE.md` and in its README.
 - **Silo replaces MinIO in Plane and Langfuse.** MinIO withdrew its images, so the old
   pin no longer pulled. Silo is a MinIO fork (`pgsty/silo`) with the same API and `mc`
   on board; it runs as uid 1000, read-only and without capabilities. Both stacks passed
-  the five checks with uploads stored and read back. An existing MinIO data directory
-  was not tried.
+  the five checks with uploads stored and read back. Silo starts on a fresh data
+  directory.
 - **Capabilities follow measurements.** The database and cache containers hardened by
   image family start cleanly. Measured sets for MariaDB,
   MySQL, MongoDB and nginx now drop everything else in nine services
@@ -99,7 +107,9 @@ date in `LIFECYCLE.md` and in its README.
   No limit was lowered: a cold-start peak is not a measurement under load.
 - **PostgreSQL dumps and restores run with the server's own client** through
   `docker exec` (FA-03), in 25 READMEs and `backup/borgmatic`. Measured on PostgreSQL 14,
-  16 and 18; the host's client failed against an older server.
+  16 and 18; the host's client failed against an older server. **Migration:** replace the
+  `postgresql_databases` entries in the host's borgmatic configuration with the form in
+  `backup/borgmatic/config.yaml.example`.
 - **CrowdSec publishes no host port unless the host-firewall bouncer needs one.**
   `core/crowdsec` published `127.0.0.1:8080` on every host, for the optional firewall
   bouncer alone, and `apps/unifi` needs 8080 for its devices' inform requests, so the two
@@ -1229,7 +1239,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.8...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.9...HEAD
+[0.9.9]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.8...v0.9.9
 [0.9.8]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.6...v0.9.7
 [0.9.6]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.5...v0.9.6

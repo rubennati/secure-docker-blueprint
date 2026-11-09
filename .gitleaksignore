@@ -29,3 +29,9 @@ a128ff027b5efa9171d9e0bc96993b131d6a3cf8:business/plane/UPSTREAM.md:generic-api-
 2abdaa3f6404367ed1d76089a7c4063f2b1d4cdb:docs/research/egress-apps-business-2026-07-31.json:generic-api-key:50
 # The invented bouncer key of a test fixture, replaced in the next commit by the placeholder every other test uses (PR 306).
 afad4f5aaabade564fbdb83aa6371b9b2e52118b:scripts/ci/test_traefik_exposure.py:generic-api-key:136
+# The placeholder password `the-password` in the basic-auth curl examples of four
+# site pages; the examples now let curl ask for the password instead.
+fae68406be96ffbc0e3a66a6670dd8b217447235:site/src/content/docs/applications/dashy.mdx:curl-auth-user:75
+fae68406be96ffbc0e3a66a6670dd8b217447235:site/src/content/docs/applications/heimdall.mdx:curl-auth-user:76
+fae68406be96ffbc0e3a66a6670dd8b217447235:site/src/content/docs/applications/homepage.mdx:curl-auth-user:78
+ac330103ba0b51f07f121d37d051a45d44544a29:site/src/content/docs/applications/ollama.mdx:curl-auth-user:88

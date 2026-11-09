@@ -628,10 +628,10 @@
     "findings_section": true,
     "gap": "",
     "high": 33,
-    "last_release": "2026-10-31",
+    "last_release": "2026-11-09",
     "local_stack": true,
-    "newest": "1.5.1",
-    "newest_date": "2026-10-31",
+    "newest": "1.6.0",
+    "newest_date": "2026-11-09",
     "pinned": "APP_TAG=1.5.1",
     "pinned_date": "2026-10-31",
     "quiet": false,
@@ -641,7 +641,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "1.5.1",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "apps/litellm": {
     "archived": false,
@@ -1180,10 +1180,10 @@
     "findings_section": true,
     "gap": "",
     "high": 3,
-    "last_release": "2026-11-04",
+    "last_release": "2026-11-09",
     "local_stack": true,
-    "newest": "v1.0.3",
-    "newest_date": "2026-11-04",
+    "newest": "v1.1.0",
+    "newest_date": "2026-11-09",
     "pinned": "APP_TAG=v1.0.3",
     "pinned_date": "2026-11-04",
     "quiet": false,
@@ -1193,7 +1193,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "v1.0.3",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "apps/threat-dragon": {
     "archived": false,
@@ -1364,10 +1364,10 @@
     "findings_section": true,
     "gap": "",
     "high": 49,
-    "last_release": "2026-11-08",
+    "last_release": "2026-11-09",
     "local_stack": true,
-    "newest": "3.2.0",
-    "newest_date": "2026-11-08",
+    "newest": "3.3.0",
+    "newest_date": "2026-11-09",
     "pinned": "APP_TAG=3.2.0",
     "pinned_date": "2026-11-08",
     "quiet": false,
@@ -1377,7 +1377,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "3.2.0",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "apps/windmill": {
     "archived": false,
@@ -1918,8 +1918,8 @@
     "high": 35,
     "last_release": "2026-11-05",
     "local_stack": true,
-    "newest": "v2.56.1",
-    "newest_date": "2026-11-05",
+    "newest": "v2.57.0",
+    "newest_date": "2026-11-09",
     "pinned": "APP_TAG=v2.56.1",
     "pinned_date": "2026-11-05",
     "quiet": false,
@@ -1929,7 +1929,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "2.56.1",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "business/vikunja": {
     "archived": false,
@@ -1964,8 +1964,8 @@
     "high": 33,
     "last_release": null,
     "local_stack": true,
-    "newest": "7.2.2-0045",
-    "newest_date": "2026-11-06",
+    "newest": "7.2.2-0047",
+    "newest_date": "2026-11-09",
     "pinned": "APP_TAG=7.2.2-0045",
     "pinned_date": "2026-11-06",
     "quiet": false,
@@ -1975,7 +1975,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "7.2.2-0045",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "core/acme-certs": {
     "archived": false,
@@ -2330,10 +2330,10 @@
     "findings_section": true,
     "gap": "",
     "high": 28,
-    "last_release": "2026-11-05",
+    "last_release": "2026-11-09",
     "local_stack": true,
-    "newest": "v0.29.3",
-    "newest_date": "2026-11-05",
+    "newest": "v0.30.0",
+    "newest_date": "2026-11-09",
     "pinned": "SHELLHUB_VERSION=v0.29.3",
     "pinned_date": "2026-11-05",
     "quiet": false,
@@ -2343,7 +2343,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "v0.29.3",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "core/step-ca": {
     "archived": false,
@@ -2675,10 +2675,10 @@
     "findings_section": true,
     "gap": "",
     "high": 30,
-    "last_release": "2026-11-05",
+    "last_release": "2026-11-09",
     "local_stack": true,
-    "newest": "4.76.0",
-    "newest_date": "2026-11-05",
+    "newest": "4.77.0",
+    "newest_date": "2026-11-09",
     "pinned": "APP_TAG=4.76.0",
     "pinned_date": "2026-11-05",
     "quiet": false,
@@ -2688,7 +2688,7 @@
     "tested_anchored": true,
     "tested_differs": false,
     "tested_version": "4.76.0",
-    "upstream": "current"
+    "upstream": "behind"
   },
   "monitoring/ntfy": {
     "archived": false,
