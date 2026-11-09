@@ -293,7 +293,9 @@ until each binds its port.
 `local-pin-drift` fails when a stack's local file pins a different version of an
 image its production file also pins. It joins on the image repository, so a
 local stack that deliberately runs a *different* image is never compared. The
-rule is in [`compose-structure.md`](compose-structure.md). A missing healthcheck
+rule is in [`compose-structure.md`](compose-structure.md); it needs a checker
+because a local file's pin drifts behind production unnoticed when nothing
+compares the two. A missing healthcheck
 and `env_file:` are reported as warnings. That every service states its limits is
 enforced; the values follow
 [`compose-structure.md`](compose-structure.md#block-rules).
