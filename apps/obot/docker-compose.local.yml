@@ -4,7 +4,8 @@
 #   ops/init.sh
 #   sudo chown -R 1000:1000 volumes/data
 #   docker compose -f docker-compose.local.yml --env-file .env.local up -d
-#   cat .secrets/obot_bootstrap_token.txt     # the first sign-in
+#   http://localhost:8080 — sign in with the bootstrap token:
+#   cat .secrets/obot_bootstrap_token.txt
 #   docker compose -f docker-compose.local.yml --env-file .env.local down
 #
 # Not routed — but the socket proxy and what it allows are identical to the
