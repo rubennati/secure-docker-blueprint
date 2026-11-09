@@ -8,23 +8,20 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-Every stack ran on a lab host, and the repository now states facts about each one instead of
-a state. A Debian 13 VM ran 119 of the 121 stacks through five checks: a healthy start,
-the certificate and a refusal through Traefik, the README's own smoke test, and `down`/`up`
-with the smoke test again. Each of those stacks carries a `Last verified` line from that
-run. An unprivileged LXC container ran 109 of the 114 local files. 32 pins moved to the
-newest release, 62 faults found on the way are corrected, and capabilities and memory
-limits now come from measurements on that host. A secret can no longer ship as a
-placeholder that works as the password, and every stack ships closed. The run, its
-measurements and what it left out are in `docs/labs/stack-refresh/2026-11-08-results.md`
-and `2026-11-08-local-stacks.md`.
+Every stack is at the newest upstream release or names why not, starts with the files it
+ships, and ships closed. 120 of the 121 stacks are verified on a host: each starts
+healthy, answers through Traefik with a certificate, refuses an unauthorised request,
+passes its README's smoke test and comes back after `down`/`up`. `apps/vllm` needs a
+GPU and is not verified. 109 of the 114 local files run. A forgotten secret stops
+`docker compose` instead of becoming the password. Each stack shows its last verified
+date in `LIFECYCLE.md` and in its README.
 
 ### Security
 
 - **A forgotten secret no longer becomes the password.** Every secret a container
   reads from the environment shipped as `__REPLACE_ME__` in `.env.example` or
   `.env.local.example`; left in place, the application took the placeholder itself as
-  the password or key (on a lab host it opened Vaultwarden's admin panel). Those
+  the password or key; Vaultwarden's opened its admin panel. Those
   secrets now ship empty in 52 stacks, and the compose file requires each with
   `${VAR:?Set VAR in .env}`: `docker compose` stops before the start and names the
   variable. Optional ones stay empty without the guard (`CF_DNS_API_TOKEN` for hosts
@@ -35,7 +32,7 @@ and `2026-11-08-local-stacks.md`.
 - **Every stack ships closed.** Fifteen stacks shipped `access-public` although
   their first visitor became the admin or a default login was active: Photoview,
   WordPress, Documenso, Matomo and OpenSign (setup wizard or first sign-up),
-  OpnForm, Immich, Lychee, Zammad and authentik (found on the lab host), BookStack
+  OpnForm, Immich, Lychee, Zammad and authentik, BookStack
   (`admin@admin.com` / `password`), and LibrePhotos, PhotoPrism, authelia and the
   reference stack by the same rule. They ship `access-vpn` now; each README says
   to finish the setup over the VPN and then open the route. `check-structure.py`
@@ -63,10 +60,10 @@ and `2026-11-08-local-stacks.md`.
   passed on a host.
 - **Stack status.** A weekly job writes the same upstream data to the pinned issue
   labelled `stack-status` and to a workflow artifact, and decides nothing.
-- **Lab results.** The stack-refresh reports: the five checks per stack, pins moved,
-  corrections, resource peaks per service, 13 restore rehearsals with identical row
-  counts per table, a reboot test, and the way from an empty Debian 13 machine to a
-  running host.
+- **Evidence per stack** in `docs/labs/stack-refresh/`: what was checked, the
+  resource peak per service, 13 restores with identical row counts per table, all
+  containers back within 58 s after a reboot, and the setup of a host from an empty
+  Debian 13 machine.
 
 ### Changed
 
@@ -82,7 +79,7 @@ and `2026-11-08-local-stacks.md`.
   the five checks with uploads stored and read back. An existing MinIO data directory
   was not tried.
 - **Capabilities follow measurements.** The database and cache containers hardened by
-  image family were run on the host and start cleanly. Measured sets for MariaDB,
+  image family start cleanly. Measured sets for MariaDB,
   MySQL, MongoDB and nginx now drop everything else in nine services
   (`security-baseline.md`).
 - **`DAC_READ_SEARCH` needs no exception any more** (`scripts/ci/check-baseline.py`,
@@ -91,7 +88,7 @@ and `2026-11-08-local-stacks.md`.
   nothing, so it is narrower than `DAC_OVERRIDE`, which was already in the baseline.
   `CAP_BASELINE` holds seven capabilities, and the exception entries of `apps/unifi` and
   `business/opensign` are gone.
-- **Memory limits that the lab peaks reached are raised** to twice the measured peak in
+- **Memory limits that a measured peak reached are raised** to twice the measured peak in
   21 services, each with a comment naming the peak. `core/traefik` defaults to `512m`.
   No limit was lowered: a cold-start peak is not a measurement under load.
 - **PostgreSQL dumps and restores run with the server's own client** through
@@ -129,7 +126,7 @@ and `2026-11-08-local-stacks.md`.
 
 ### Fixed
 
-- **What the host run found, corrected.** Among the 62 corrections:
+- **62 faults that stopped a stack or a step are fixed.** Among them:
   - UrBackup starts and reports health without `curl`.
   - The host watchdogs no longer restart without end on `starting`, no longer hang on
     a hung Docker daemon, and no longer wait on `docker.service`'s start job.
@@ -144,7 +141,7 @@ and `2026-11-08-local-stacks.md`.
   - The reference stack gets its host setup.
   - The `web-api` fixture builds with TypeScript 7.
 
-  Each correction is listed with its commit in the lab report.
+  The full list is in `docs/labs/stack-refresh/2026-11-08-results.md`.
 - **Upstream data no longer offers a pre-release or another release line as the
   newest version.** `scripts/ci/upstream-status.py` reported n8n 3.1.0, a GitHub
   pre-release, and the Portainer agent's 3.0.1 image tag, which has no release, as
