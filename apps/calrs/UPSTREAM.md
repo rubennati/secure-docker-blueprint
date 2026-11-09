@@ -94,6 +94,12 @@ login; the public booking page as a guest sees it; backup and restore.
 
 ## Version notes
 
+- Moved to `1.23.2` on 2026-11-09, run on the lab host. 1.23.1 is a security
+  release (a new user could be attached to an existing user's scheduling
+  account; the private-address check now also covers 64:ff9b:1::/48 and
+  198.18.0.0/15, so a resource feed on such an address stops until its host is
+  allowlisted); 1.23.2 refuses a booking whose availability cannot be read. No
+  migrations, no configuration change.
 - Moved to `1.23.0` on 2026-11-08 and run on the lab host (VM). A minor release
   (booking directory, first day of the week, calendar selection per source,
   `X-Robots-Tag: noindex`); no configuration change.
