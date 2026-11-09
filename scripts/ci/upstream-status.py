@@ -467,7 +467,9 @@ def release_filter(releases: list, pinned: str):
     """Which registry versions may be offered as newer: a test on a version tuple.
 
     A GitHub pre-release (n8n's next line) is not offered unless upstream also
-    published that version as a stable release. Next to a pin upstream names
+    published that version as a stable release, and neither is a registry tag of
+    a minor line upstream has released only as pre-releases so far: n8n pushes
+    the image of the next 2.47.x before its pre-release appears. Next to a pin upstream names
     LTS (Portainer), only versions upstream released as LTS are offered."""
     stable, pre, lts, pinned_lts = set(), set(), set(), False
     want = release_version(pinned)
@@ -481,9 +483,13 @@ def release_filter(releases: list, pinned: str):
             lts.add(v)
             pinned_lts = pinned_lts or v == want
     skip = pre - stable
+    pre_lines = {v[:2] for v in skip} - {v[:2] for v in stable}
+
+    def admits(v):
+        return v not in skip and not (v not in stable and v[:2] in pre_lines)
     if pinned_lts:
-        return lambda v: v in lts and v not in skip
-    return lambda v: v not in skip
+        return lambda v: v in lts and admits(v)
+    return admits
 
 
 def step_down(row: dict, allowed) -> None:

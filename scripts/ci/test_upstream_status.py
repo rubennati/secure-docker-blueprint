@@ -241,6 +241,19 @@ class Channels(unittest.TestCase):
         status.step_down(row, status.release_filter(releases, "2.46.6"))
         self.assertEqual((row["newest"], row["status"]), ("2.46.6", "current"))
 
+    def test_a_tag_of_a_prerelease_line_is_skipped(self):
+        # 2.47.3 is on the registry before upstream publishes its pre-release.
+        releases = [("n8n@2.47.2", self.T, True, ""), ("n8n@2.46.6", self.T, False, "")]
+        row = self.row("2.46.6", ["2.46.6", "2.47.2", "2.47.3"])
+        status.step_down(row, status.release_filter(releases, "2.46.6"))
+        self.assertEqual((row["newest"], row["status"]), ("2.46.6", "current"))
+
+    def test_a_line_with_a_stable_release_admits_its_new_tags(self):
+        releases = [("2.47.0", self.T, False, ""), ("2.47.1", self.T, True, "")]
+        row = self.row("2.46.6", ["2.46.6", "2.47.0", "2.47.1", "2.47.2"])
+        status.step_down(row, status.release_filter(releases, "2.46.6"))
+        self.assertEqual((row["newest"], row["status"]), ("2.47.2", "behind"))
+
     def test_a_stable_release_above_the_pin_still_counts(self):
         releases = [("3.1.0", self.T, True, ""), ("2.47.0", self.T, False, "")]
         row = self.row("2.46.6", ["2.46.6", "2.47.0", "3.1.0"])
