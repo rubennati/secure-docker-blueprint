@@ -28,11 +28,20 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 ```bash
 cd backup/urbackup
 cp .env.example .env          # set the host, the storage path, the access policy
-mkdir -p volumes/database
+mkdir -p volumes/database volumes/backups
+# The entrypoint writes here as root without DAC_OVERRIDE, the server as uid 101
+sudo chown 0:101 volumes/database volumes/backups
+sudo chmod 775 volumes/database volumes/backups
 docker compose up -d
 ```
 
-Then open the web interface and **create the administrator account immediately**. Until one exists, whoever reaches the interface first can create it.
+Then create the administrator account **before the host name is reachable by anyone else**. Until one exists, whoever reaches the interface first can create it. From the shell it needs no browser and no race:
+
+```bash
+docker compose exec -u 101 urbackup-app urbackupsrv reset-admin-pw -a admin -p '<password>'
+```
+
+After that an anonymous login is refused (lab host).
 
 ### Storage
 
@@ -75,11 +84,11 @@ Two baseline deviations are inherent to a backup server and documented in [`UPST
 
 Everything below is unconfirmed. Each item must pass before this stack moves out of Preview:
 
-- [ ] Container starts and stays healthy — **the healthcheck uses `curl`, which has not been confirmed to exist in this image.** Check with `docker exec <name> sh -c 'which curl wget'` and adjust the healthcheck if it is absent.
-- [ ] Web interface reachable through Traefik, TLS valid, access policy enforced
-- [ ] Administrator account created; anonymous access no longer possible
-- [ ] One client added by hostname and a first backup completes
-- [ ] A file restored from that backup and its content verified — not just the file's presence
+- [x] Container starts and stays healthy — the image has neither `curl` nor `wget`; the healthcheck uses bash's `/dev/tcp` (lab host)
+- [x] Web interface reachable through Traefik, TLS valid, access policy enforced (lab host)
+- [x] Administrator account created with `urbackupsrv reset-admin-pw`; an anonymous login is refused (lab host)
+- [x] One client added by address and a first full file backup completes — a Linux client 2.5.31 in an unprivileged LXC (lab host)
+- [ ] A file restored from that backup and its content verified — the four backed-up files downloaded from the server matched their checksums, but the restore to the client stopped at the client's own check ("No permissions to create files") on the LXC client; not repeated on a VM or bare-metal client
 - [ ] Resource limits survive a full backup without an OOM kill
 - [ ] Storage path confirmed excluded from Borgmatic's sources
 

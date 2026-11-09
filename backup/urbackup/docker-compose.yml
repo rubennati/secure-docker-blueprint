@@ -38,9 +38,17 @@ services:
       - no-new-privileges:true
     cap_drop:
       - ALL
+    # The entrypoint runs as root: it writes /var/urbackup/backupfolder, then
+    # checks the two directories as the `urbackup` user (uid 101) through `su`,
+    # and urbackupsrv drops to that user. `su` and the drop need SETUID and
+    # SETGID; without them `su` fails ("cannot set groups") and the container
+    # restarts. Nothing else is added: root writes only because the setup makes
+    # the directories root-owned and group-writable for gid 101 (README, Setup).
+    cap_add:
+      - SETUID
+      - SETGID
     # SYS_ADMIN is required ONLY for btrfs snapshot-backed storage. Leave it off
     # unless ./volumes/backups sits on btrfs and you enabled that mode.
-    #cap_add:
     #  - SYS_ADMIN
 
     # --- Resources ---
@@ -98,12 +106,10 @@ services:
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=55414"
 
     # --- Health & Observability ---
-    # 🚧 Unverified: the tool available inside this image has not been confirmed
-    # on a running container. If `curl` is absent the container will report
-    # unhealthy — check with `docker exec <name> sh -c 'which curl wget'` on
-    # first deploy and adjust before promoting this stack out of Preview.
+    # The image has neither curl nor wget: bash's /dev/tcp sends the request
+    # and the status line is checked for 200 (lab host).
     healthcheck:
-      test: ["CMD-SHELL", "curl -fso /dev/null http://127.0.0.1:55414/ || exit 1"]
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/55414 && printf 'GET / HTTP/1.0\\r\\n\\r\\n' >&3 && timeout 5 head -c 12 <&3 | grep -q ' 200'"]
       interval: 30s
       timeout: 10s
       retries: 3
