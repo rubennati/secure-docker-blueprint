@@ -3803,31 +3803,26 @@
     },
     "core/acme-certs": {
       "archived": false,
-      "checked": "2026-11-09",
+      "checked": "2026-11-11",
       "findings": {
-        "critical": 3,
-        "high": 46,
+        "critical": 0,
+        "high": 0,
         "images": {
-          "ghcr.io/rubennati/cert-ops-tool:0.2.1": {
-            "system": [
-              3,
-              46
-            ]
-          }
+          "ghcr.io/rubennati/cert-ops-tool:0.3.0": {}
         },
         "unscanned": []
       },
-      "image": "ghcr.io/rubennati/cert-ops-tool:0.2.1",
+      "image": "ghcr.io/rubennati/cert-ops-tool:0.3.0",
       "images": [
-        "ghcr.io/rubennati/cert-ops-tool:0.2.1"
+        "ghcr.io/rubennati/cert-ops-tool:0.3.0"
       ],
-      "last_release": "2026-04-16",
-      "newest": "0.2.1",
-      "newest_date": "2026-05-04",
-      "newest_date_source": "image",
-      "pinned": "0.2.1",
-      "pinned_date": "2026-05-04",
-      "pinned_date_source": "image",
+      "last_release": "2026-11-11",
+      "newest": "0.3.0",
+      "newest_date": "2026-11-11",
+      "newest_date_source": "release",
+      "pinned": "0.3.0",
+      "pinned_date": "2026-11-11",
+      "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "rubennati/cert-ops-tool",
