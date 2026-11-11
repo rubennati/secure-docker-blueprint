@@ -340,18 +340,6 @@
         "GHSA-vcvr-r3jv-pc5j"
       ]
     },
-    "ghcr.io/rubennati/cert-ops-tool": {
-      "stacks": [
-        "core/acme-certs"
-      ],
-      "reason": "This project's own build on Alpine; the fixes need a rebuild on a current Alpine base, which is planned and not done.",
-      "risk": "No published port and no inbound connections; the container only connects out to the ACME CA and the Cloudflare API. openssl is on that path; whether the scripts use socat or bind-tools has not been checked.",
-      "cves": [
-        "CVE-2026-31789",
-        "CVE-2026-3593",
-        "CVE-2026-56123"
-      ]
-    },
     "ghcr.io/shlinkio/shlink": {
       "stacks": [
         "apps/shlink"

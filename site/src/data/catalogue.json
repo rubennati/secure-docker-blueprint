@@ -3186,8 +3186,8 @@
   },
   "core/acme-certs": {
     "archived": false,
-    "checked": "2026-11-09",
-    "critical": 3,
+    "checked": "2026-11-11",
+    "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Infrastructure",
@@ -3199,21 +3199,21 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 46,
-    "last_release": "2026-04-16",
+    "high": 0,
+    "last_release": "2026-11-11",
     "name": "acme-certs",
     "newest": null,
     "newest_date": null,
     "path": "core/acme-certs",
-    "pinned_date": "2026-05-04",
+    "pinned_date": "2026-11-11",
     "quiet": false,
     "restored": false,
     "role": "Certificates for devices that never pass through the reverse proxy: NAS, routers, mail servers",
     "tested": "2026-11-08",
-    "tested_version": null,
+    "tested_version": "0.2.1",
     "upstream": "https://github.com/rubennati/cert-ops-tool",
     "upstream_status": "current",
-    "version": "0.2.1"
+    "version": "0.3.0"
   },
   "core/authelia": {
     "archived": false,

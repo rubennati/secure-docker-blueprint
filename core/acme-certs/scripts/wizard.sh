@@ -12,7 +12,7 @@
 # =========================================================
 set -eu
 
-ROOT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+ROOT_DIR="$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 ENV_FILE="${ROOT_DIR}/.env"
 
 if [ ! -f "${ENV_FILE}" ]; then
@@ -43,16 +43,21 @@ if [ -n "${ARG_DOMAIN}" ]; then
   echo "Domain: ${DOMAIN}"
 else
   printf "Domain: "
-  read DOMAIN
+  read -r DOMAIN
   if [ -z "${DOMAIN}" ]; then
     echo "Error: Domain is required."
     exit 1
   fi
 fi
 
-# Validate domain (basic check)
+# Validate domain: host-name characters only, at least one dot,
+# no leading dot and no empty labels.
 case "${DOMAIN}" in
-  *..* | *.* ) ;; # has at least one dot, OK
+  .* | *..* | *[!A-Za-z0-9.-]*)
+    echo "Error: '${DOMAIN}' doesn't look like a valid domain."
+    exit 1
+    ;;
+  *.*) ;;
   *)
     echo "Error: '${DOMAIN}' doesn't look like a valid domain."
     exit 1
@@ -65,7 +70,7 @@ if [ -n "${ARG_WILDCARD}" ]; then
   echo "Wildcard: ${SAN}"
 else
   printf "Type: [1] Single domain  [2] Wildcard (*.%s)  [1]: " "${DOMAIN}"
-  read CERT_TYPE
+  read -r CERT_TYPE
   case "${CERT_TYPE}" in
     2)
       SAN="*.${DOMAIN}"
@@ -78,7 +83,7 @@ fi
 
 # Key type
 printf "Key type [ec-256|ec-384|2048|3072|4096] [%s]: " "${DEFAULT_KEYLENGTH}"
-read KEYLENGTH
+read -r KEYLENGTH
 KEYLENGTH="${KEYLENGTH:-${DEFAULT_KEYLENGTH}}"
 
 # Validate key type
@@ -92,7 +97,7 @@ esac
 
 # ACME server
 printf "ACME server [letsencrypt|zerossl|buypass] [%s]: " "${DEFAULT_SERVER}"
-read SERVER
+read -r SERVER
 SERVER="${SERVER:-${DEFAULT_SERVER}}"
 
 # Validate ACME server
@@ -117,7 +122,7 @@ echo "  ACME:       ${SERVER}"
 echo ""
 
 printf "Issue certificate now? [y/N]: "
-read CONFIRM
+read -r CONFIRM
 case "${CONFIRM}" in
   y|Y|yes|YES)
     docker compose exec \
