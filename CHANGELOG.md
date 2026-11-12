@@ -20,6 +20,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **The development patterns lead to `custom/`** (`development/static-site`, `development/web-api`, `development/README.md`, `docs/standards/custom-application.md`, `docs/architecture.md`). They said to copy them into `apps/` or `business/`, which on a host is the Blueprint's checkout. An own application now goes into its own repository, which the host checks out under `custom/<name>`. The adoption steps add the stack's edge network to `EDGE_NETWORKS` and the README line `**Blueprint:** vX.Y.Z`, and an update takes a tag of that repository. The compose comments describe the Traefik network as the stack's own edge network by default, not `proxy-public`. `cpus` is gone from both: neither pattern pins a core, the case `compose-structure.md` sets it for.
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
