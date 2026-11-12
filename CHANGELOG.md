@@ -20,6 +20,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **`stacks.sh` keeps Git from deleting data on a path it does not check out** (`scripts/stacks.sh`, `docs/standards/deployment-lifecycle.md` §2). Git counts a release directory outside a partial checkout as its own: once only ignored files are left in it — `.env`, `.secrets/`, `volumes/` — `git sparse-checkout` deletes them, and it follows a symbolic link to delete in the directory the link points to. A stack directory copied onto such a path, or a link from it to data kept elsewhere, was lost at the next `apply`, while `status` reported that file and checkout match. `apply` and `update` now refuse while a path outside the checkout holds a file or a link, and name it; `status` lists it.
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
