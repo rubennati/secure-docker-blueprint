@@ -232,6 +232,9 @@ networks:
     name: ${TRAEFIK_NETWORK}
     external: true
 
+  # Not internal: ClamAV fetches its signatures and Seafile AI reaches its LLM
+  # provider over this network, the only one they join. Every file of this stack
+  # defines it the same way.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
 
