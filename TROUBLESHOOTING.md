@@ -216,6 +216,15 @@ sudo chown -R 999:999 volumes/data
 
 4. **Router name collision** — two services with same `COMPOSE_PROJECT_NAME` → same router name → one wins, one loses.
 
+5. **Every router answers 404 at once, with the CrowdSec bouncer on** — the plugin did not load, so the entrypoint names a middleware that does not exist. The usual cause is a key file Traefik cannot read: it runs as root without `CAP_DAC_OVERRIDE`, and a `.secrets/crowdsec_bouncer_key.txt` with mode 600 that belongs to your user is closed to it. `bash ops/scripts/validate.sh` in `core/traefik` checks it inside the running container.
+
+   ```bash
+   docker exec traefik-core grep -i "crowdsec" /var/log/traefik/traefik.log | tail -3
+   # "read file path failed open /run/secrets/crowdsec_bouncer_key: permission denied"
+   sudo chown "$USER":0 .secrets/crowdsec_bouncer_key.txt && chmod 640 .secrets/crowdsec_bouncer_key.txt
+   docker compose up -d --force-recreate traefik
+   ```
+
 **Fix for typo:** Correct `.env`, then `docker compose up -d --force-recreate <service>`.
 
 ---
@@ -436,7 +445,9 @@ grep -nE 'crowdsecLapiKey' config/dynamic/*.yml   # key in use
 # then in .env:
 #   CROWDSEC_BOUNCER_ENABLED=true
 #   CROWDSEC_BOUNCER_PLUGIN_VERSION=<that version>
-#   CROWDSEC_BOUNCER_KEY=<that key>
+#   COMPOSE_FILE=<as before>:crowdsec-bouncer.yml
+# and that key in .secrets/crowdsec_bouncer_key.txt, group 0, mode 640
+# (core/traefik/README.md, "How to enable")
 ./ops/scripts/render.sh && ./ops/scripts/validate.sh
 ```
 

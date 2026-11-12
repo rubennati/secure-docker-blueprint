@@ -763,8 +763,9 @@ docker compose logs crowdsec | grep -i "database\|db\|sqlite" | tail -20
 > **Recovery:** Stopping the engine and deleting `volumes/data/` forces a clean start.
 > **This permanently loses all decision history and alert history.**
 > All registered bouncers will lose their API keys — regenerate
-> with `cscli bouncers add` and update the keys in `core/traefik/.env`
-> (`CROWDSEC_BOUNCER_KEY`, then `render.sh`) and in
+> with `cscli bouncers add` and update the keys in
+> `core/traefik/.secrets/crowdsec_bouncer_key.txt` (written in place, then
+> recreate Traefik) and in
 > `/etc/crowdsec/bouncers/crowdsec-firewall-bouncer.yaml.local` before restarting those services.
 
 ---
@@ -782,8 +783,11 @@ docker compose -f ../traefik/docker-compose.yml logs traefik 2>&1 \
 # 2. Is the bouncer API key valid?
 docker exec crowdsec cscli bouncers list
 # If traefik-bouncer is not listed, the key was never registered or was deleted
-# Regenerate: docker exec crowdsec cscli bouncers add traefik-bouncer
-# Then update CROWDSEC_BOUNCER_KEY in core/traefik/.env and re-render templates
+# Regenerate it into Traefik's key file, written in place so its owner and mode stay:
+#   docker exec crowdsec cscli bouncers add traefik-bouncer -o raw > ../traefik/.secrets/crowdsec_bouncer_key.txt
+# then recreate Traefik: docker compose -f ../traefik/docker-compose.yml up -d --force-recreate traefik
+# A plugin log line "read file path failed ... permission denied" means Traefik
+# cannot read that file: core/traefik/README.md, "How to enable"
 
 # 3. Can Traefik reach CrowdSec?
 # Both containers must be on the same Docker network (crowdsec-security)
