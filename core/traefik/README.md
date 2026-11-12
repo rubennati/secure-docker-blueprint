@@ -320,9 +320,11 @@ CrowdSec section below has the switches and what each covers.
 `TLS_DEFAULT_OPTION` in `.env` names the profile the file provider's reserved
 `default` option is built from; every router with `tls=true` takes it, so the
 standard label pattern names no option. A stack overrides with
-`tls.options=${APP_TRAEFIK_TLS_OPTION}@file` only as a documented exception; the
-dashboard names `TRAEFIK_DASHBOARD_TLS_OPTION`. A change of the default takes
-effect on a recreate of the container.
+`tls.options=${APP_TRAEFIK_TLS_OPTION}@file` only as a documented exception. The
+dashboard's `TRAEFIK_DASHBOARD_TLS_OPTION` is `default` as shipped, the option
+every stack takes; a profile name there holds only where the dashboard has a
+certificate of its own (see `421 Misdirected Request` under Troubleshooting). A
+change of the default takes effect on a recreate of the container.
 
 ## ACME Resolvers
 
@@ -680,7 +682,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 | WAF blocking valid requests | Set `CROWDSEC_APPSEC_ENABLED=false` in `.env`, run `render.sh` and recreate Traefik (`--force-recreate`). Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
-| `421 Misdirected Request` for one host while another works | Both hosts share a certificate (the wildcard) and an address, so the browser reuses the HTTP/2 connection of one for the other. When their routers take different TLS options, one stack naming `tls-strict` or `tls-compatible` and the other `default`, Traefik refuses the reused connection with 421; the access log shows it per request. Closing the other tabs of the domain gives a new connection. The lasting fix is one option for both: drop a stack's `tls.options` label where its reason does not hold ([TLS options](../../docs/standards/traefik-security.md#tls-profiles-tls-profilesyml)) |
+| `421 Misdirected Request` for one host while another works | Both hosts share a certificate (the wildcard) and an address, so the browser reuses the HTTP/2 connection of one for the other. When their routers take different TLS options, one stack naming `tls-strict` or `tls-compatible` and the other `default`, Traefik refuses the reused connection with 421; the access log shows it per request. Traefik compares the options by name: a router naming `tls-strict` differs from `default` even when `TLS_DEFAULT_OPTION=tls-strict` builds `default` from the same profile. Closing the other tabs of the domain gives a new connection. The lasting fix is one option for both: drop a stack's `tls.options` label where its reason does not hold ([TLS options](../../docs/standards/traefik-security.md#tls-profiles-tls-profilesyml)), and keep `TRAEFIK_DASHBOARD_TLS_OPTION=default`; `validate.sh` warns when the dashboard names another option under the wildcard |
 
 ## Authentik forward-auth (optional)
 

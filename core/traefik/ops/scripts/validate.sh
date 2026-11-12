@@ -475,6 +475,17 @@ case "${TLS_DEFAULT_OPTION:-}" in
     exit 1 ;;
   *) echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."; exit 1 ;;
 esac
+# The dashboard's option: `default`, the one every stack takes, or a profile by
+# name. Any other name is an option the file provider does not define, and
+# Traefik disables the dashboard router for it.
+case "${TRAEFIK_DASHBOARD_TLS_OPTION:-}" in
+  default|tls-compatible|tls-standard|tls-strict) ;;
+  tls-basic|tls-aplus|tls-modern)
+    echo "ERROR: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} is a name from before the middleware model."
+    echo "       Set TRAEFIK_DASHBOARD_TLS_OPTION=default, the option every stack takes."
+    exit 1 ;;
+  *) echo "ERROR: TRAEFIK_DASHBOARD_TLS_OPTION must be default, tls-compatible, tls-standard or tls-strict (got '${TRAEFIK_DASHBOARD_TLS_OPTION:-}')."; exit 1 ;;
+esac
 TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
 case "${TRAEFIK_FORWARDED_PROXY}" in
   none|cloudflare) ;;
@@ -556,6 +567,16 @@ if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DO
     echo "WARNING: *.${ACME_WILDCARD_DOMAIN} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
     echo "         Traefik will request a second certificate for that hostname, publishing it in Certificate Transparency logs."
     echo "         Leave the variable empty to serve the wildcard instead."
+  fi
+  # Under the wildcard a browser reuses the connection of any other host of the
+  # domain for the dashboard. Traefik's SNI check compares TLS option names, not
+  # their content: a dashboard naming tls-strict answers that browser 421, even
+  # when TLS_DEFAULT_OPTION builds `default` from tls-strict as well.
+  if [ "${TRAEFIK_DASHBOARD_TLS_OPTION}" != default ]; then
+    echo "WARNING: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} under *.${ACME_WILDCARD_DOMAIN}, where every stack"
+    echo "         without an exception takes \`default\`. A browser that comes from such a host reuses its"
+    echo "         connection, and Traefik answers 421 Misdirected Request on ${TRAEFIK_DASHBOARD_HOST}: it compares"
+    echo "         option names. Set TRAEFIK_DASHBOARD_TLS_OPTION=default and render (no restart needed)."
   fi
 elif [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
   echo "SELECT A CERTIFICATE STRATEGY — neither is configured for ${TRAEFIK_DASHBOARD_HOST}."

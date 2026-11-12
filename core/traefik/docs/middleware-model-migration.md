@@ -164,6 +164,13 @@ exception; the reason stands above the variable in the stack's `.env.example`.
 | `apps/nextcloud`, `apps/whoami`, `apps/wordpress`, `business/openproject`, `business/vikunja` | `tls-compatible` | no reason recorded before the cut; kept as it was, to verify on a host and then drop |
 | `core/traefik` dashboard | `TRAEFIK_DASHBOARD_TLS_OPTION`, `tls-strict` | a system route may be stricter than the deployment standard |
 
+The rows without a recorded reason and the dashboard take `default` now:
+under the wildcard, another option name answers a browser `421 Misdirected
+Request`, and `tls-standard` refuses only Internet Explorer 11 on Windows 7 and
+8.1 among the clients `tls-compatible` admits. An existing `core/traefik/.env`
+sets `TRAEFIK_DASHBOARD_TLS_OPTION=default` itself; `validate.sh` warns until
+it does.
+
 Two routers of one stack that name different options for one host name are a
 conflict Traefik resolves by serving `default` to both; CI refuses it
 (`tls-conflict`) and `overview.sh --host` repeats the check across stacks with
@@ -424,8 +431,6 @@ tunnel and a CrowdSec decision behaved as before. It does not cover section 5.
 - The `429` count on a first load per public stack under the bucket of 500 —
   no interface has been measured against 500 in this repository's networks
   except through the former `rl-spa`.
-- The six TLS exceptions without a recorded reason, and whether the deployment
-  standard serves their clients.
 - The window between render and recreate when the bouncer is switched off,
   and the entrypoint list on a running Traefik.
 - The thirteen host checks of Phase 3 (`core/traefik/README.md`, "Behind

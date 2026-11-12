@@ -39,8 +39,8 @@ Open in this repository:
   names and the structure are settled by the middleware model of v0.9.5: four
   positions on every router, defined once. What is not established is how the
   applications behave under it — the headers the office servers and Nextcloud
-  set themselves, the `429` count of a first load under the bucket of 500, the
-  TLS exceptions without a recorded reason. The list is section 5 of
+  set themselves, the `429` count of a first load under the bucket of 500. The
+  list is section 5 of
   [`core/traefik/docs/middleware-model-migration.md`](core/traefik/docs/middleware-model-migration.md#5-not-verified-on-a-host);
   each is a measurement on a host.
 - **Trusted proxies narrowed to the Traefik hop.** An application behind its own

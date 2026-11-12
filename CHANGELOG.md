@@ -20,6 +20,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **A browser moves between the stacks of one domain without `421 Misdirected Request`** (nine stacks, `core/traefik`, `docs/standards/traefik-security.md`). Under the wildcard certificate a browser reuses one connection for every host, and Traefik answers 421 when the next host's router names another TLS option — compared by name, so `tls-strict` differs even from a `default` built from `tls-strict`. Nine stacks named an option with no reason recorded and now take `default`, the deployment standard: `apps/nextcloud`, `apps/whoami`, `apps/wordpress`, `business/openproject` and `business/vikunja` (were `tls-compatible`), `core/dockhand`, `core/orion-belt`, `core/portainer` and `core/shellhub` (were `tls-strict`). Among the clients `tls-compatible` admits, `tls-standard` refuses only Internet Explorer 11 on Windows 7 and 8.1. The dashboard ships `TRAEFIK_DASHBOARD_TLS_OPTION=default`; `validate.sh` warns when it names a profile under the wildcard and refuses a name Traefik does not define. Vaultwarden, JumpServer, Warpgate and Shlink keep their option and its reason. **Migration:** in `core/traefik/.env`, set `TRAEFIK_DASHBOARD_TLS_OPTION=default` and render; the nine stacks take `default` once recreated, and their `APP_TRAEFIK_TLS_OPTION` is no longer read.
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host

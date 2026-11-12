@@ -55,7 +55,7 @@ has the detail. `--no-setup-token` turns the requirement off and this stack does
 it: the token is what keeps whoever reaches the port during those five minutes from
 claiming the instance.
 
-As shipped: `access-vpn`, `limit-strict`, `headers-standard`, and `tls-strict` named on the router as a documented exception (admin tool, VPN-only, hardened).
+As shipped: `access-vpn`, `limit-strict`, `headers-standard`, and the deployment's TLS option (`TLS_DEFAULT_OPTION` in `core/traefik/.env`).
 
 ## Verify
 
