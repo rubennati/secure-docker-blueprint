@@ -24,6 +24,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
+- **A closed OnlyOffice saves again** (`apps/onlyoffice/file-host-paths.yml`, `apps/onlyoffice/README.md`, `apps/seafile/README.md`). After a save the file host fetches the edited file from the Document Server's `/cache/files/` at its public name, and Seafile converts through `/ConvertService.ashx`. Behind a closed `APP_TRAEFIK_ACCESS` both calls were refused: the editor opened documents and every save failed. The opt-in `file-host-paths.yml` opens exactly those two paths with `access-public` — the server accepts the first only with a signed link valid for 900 seconds, the second only with a token signed with the JWT secret — and the editor keeps the stack's policy. The README's check now saves and reopens a document.
+
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts
