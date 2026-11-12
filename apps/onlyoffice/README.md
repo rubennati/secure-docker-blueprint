@@ -106,6 +106,22 @@ takes an internal address for it (`StorageUrl`) and reaches this stack's edge ne
 through its `office.yml` (its README, "Office servers behind a closed route"); Seafile opens the two paths the document server uses — the document fetch and the save
 callback — with `onlyoffice-callback.yml`, or trusts the server's address in `TRUSTED_RANGES`.
 
+The file host calls this server too, at its public name: after a save it fetches the
+edited file from `/cache/files/…`, and Seafile converts a document through
+`/ConvertService.ashx`. As shipped, `access-public` lets both through. Behind a closed
+`APP_TRAEFIK_ACCESS` the editor still opens documents, and saving fails — the file host
+gets 403. `file-host-paths.yml` opens exactly those two paths with `access-public`; the
+editor, its scripts and its websocket keep the stack's policy:
+
+```env
+COMPOSE_FILE=docker-compose.yml:file-host-paths.yml
+```
+
+The server's nginx serves `/cache/files/` only with a valid signed link — an md5 over the
+expiry, the path and the server's secret — and refuses it after 900 seconds
+(`storage.fs.urlExpires`). The conversion API refuses a request without a token signed
+with the JWT secret.
+
 ## Verify
 
 ```bash
@@ -114,7 +130,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/healthcheck
 curl -fsSI https://<APP_TRAEFIK_HOST>/web-apps/apps/api/documents/api.js
 ```
 
-Open an office doc from a connected app and confirm the editor loads in an iframe without `X-Frame-Options` errors in the browser console.
+Open an office doc from a connected app and confirm the editor loads in an iframe without `X-Frame-Options` errors in the browser console. Then change it, close the editor and open the document again: the change is there. Opening alone does not show that saving works — the save is a separate call from the file host to this server.
 
 ## Security Model
 
