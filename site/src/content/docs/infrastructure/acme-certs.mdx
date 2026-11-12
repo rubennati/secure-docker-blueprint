@@ -81,11 +81,12 @@ something else:
 | Nginx Proxy Manager | `fullchain.pem` and `privkey.pem`, `ca.pem` optional |
 | Windows, IIS, .NET | a PFX bundle — see below |
 
-Windows and IIS do not read PEM. Convert with a password you choose — the script
-asks for it — and enter the same one when importing:
+Windows and IIS do not read PEM. Convert with a password you choose, and enter
+the same one when importing:
 
 ```bash
-docker compose exec acme-certs /scripts/convert-to-pfx.sh example.com
+docker compose exec acme-certs \
+  /scripts/convert-to-pfx.sh example.com your-chosen-password
 ```
 
 ## Going further
@@ -151,9 +152,7 @@ docker compose up -d
 docker compose exec acme-certs acme.sh --version
 ```
 
-Changes in the image are listed in the
-[cert-ops-tool releases](https://github.com/rubennati/cert-ops-tool/releases),
-changes in the bundled client in the
+Changes in the bundled client are listed in the
 [acme.sh releases](https://github.com/acmesh-official/acme.sh/releases).
 
 ## Troubleshooting

@@ -22,10 +22,6 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
-### Security
-
-- **`core/acme-certs` runs `cert-ops-tool` 0.3.0** (`core/acme-certs/.env.example`, `.trivy-baseline.json`). The image is rebuilt on acme.sh 3.1.6 and Alpine 3.23 and scans without a fixable CRITICAL or HIGH finding; 0.2.1 carried 3 CRITICAL and 46 HIGH, and its exception leaves the baseline. Renewal follows the window the CA suggests (ACME Renewal Information), checked every six hours. `convert-to-pfx.sh` asks for the password instead of taking it as an argument, and the scripts refuse a domain that is not a host name. The pin moved without a run on a host; `Last verified` stays at 0.2.1. **Migration:** set `APP_TAG=0.3.0` in `.env`, then `docker compose pull && docker compose up -d`.
-
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts
