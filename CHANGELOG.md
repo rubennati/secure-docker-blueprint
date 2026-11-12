@@ -20,6 +20,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **dnsmasq logs DNS queries only when `DNS_LOG_QUERIES=true`** (`core/dnsmasq`). The template carried `log-queries` unconditionally, so every name a device looked up, with its address, reached the container log whatever the variable said. `render.sh` now renders the line for `true` only and prints a note while it is on; an empty or missing value is off, and any other value stops the render. The example ships `false`. **Migration:** an existing `.env` carries the former default `true` and keeps logging; set `DNS_LOG_QUERIES=false`, render and restart.
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host

@@ -59,5 +59,7 @@ ${DNS_WILDCARD_LINES}
 # =========================================================
 # LOGGING
 # =========================================================
-log-queries
+# dnsmasq's own start and error messages go to the container log. Each query,
+# with the address that asked it, only with DNS_LOG_QUERIES=true.
+${DNS_LOG_QUERIES_LINE}
 log-facility=-
