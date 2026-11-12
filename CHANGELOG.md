@@ -20,6 +20,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **The Invoice Ninja preview renders while the editor asks for several at once** (`business/invoiceninja/docker-compose.yml`, `.env.example`, README). Chromium needs about 140 processes per render, and the editor requests a new preview as you type. With room for 200 processes, two overlapping previews failed: Chromium aborted, and the preview answered 500 after 60 seconds while a single PDF still rendered. The application now has 2 GB and 1024 processes, which holds six renders at once, and no CPU limit: with one core, four previews took 11-14 seconds instead of about one. `APP_MEMORY_LIMIT` and `APP_PIDS_LIMIT` in `.env` raise both without editing the compose file. The README names the container counter that shows which limit a failed render hit. The new limits apply once the container is recreated (`docker compose up -d app`).
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host

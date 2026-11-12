@@ -23,10 +23,14 @@ default — not enough. The service sets `shm_size: 512m`; see
 [Troubleshooting](#pdf-and-preview-rendering-times-out).
 
 Those figures describe the application alone. This stack runs four containers,
-and the resource limits in `docker-compose.yml` reserve 1 GB for the application
-and 1 GB for MySQL — so **2 GB is the floor and 4 GB is comfortable**. The
-application limit is not padding: Chromium renders the PDFs and the live design
-previews, and it exceeds 512 MB under concurrent load.
+and the resource limits in `docker-compose.yml` let the application grow to 2 GB
+and MySQL to 1.5 GB — so **2 GB is the floor and 4 GB is comfortable**. The
+application limit is not padding: Chromium renders the PDFs and the live
+preview, the editor asks for a new preview as you type, and two overlapping
+renders already reach 1 GB. The limit sits at twice that, with room for 1024
+processes; `APP_MEMORY_LIMIT` and `APP_PIDS_LIMIT` in `.env` raise both. The
+application has no CPU limit: with one core, four previews at once took 11-14
+seconds instead of about one, and slow renders overlap and pile up.
 
 The pinned images clear every line above — PHP 8.x in the application image,
 MySQL 8.4, nginx.
@@ -150,6 +154,10 @@ docker compose ps                         # All 4 services healthy/running
 docker compose logs app --tail=20         # No errors; supervisor procs listed
 curl -sI https://your-domain/            # 200 or 302
 ```
+
+Then open an invoice in the editor and change two line items in quick
+succession. The preview follows both changes. A single PDF that renders proves
+less: the preview renders several at once, and that is where a limit shows.
 
 ## TODOs After Initial Setup
 
@@ -275,8 +283,9 @@ recreated only the app container, nginx kept the old address and answered
 
 ### PDF and preview rendering times out
 
-**Symptom.** The design preview returns 500, `POST /api/v1/live_design` fails,
-and the application log carries a very long Chromium command line ending in:
+**Symptom.** The preview returns 500, `POST /api/v1/live_preview` or
+`/api/v1/live_design` fails, and the application log carries a very long
+Chromium command line ending in:
 
 ```text
 exceeded the timeout of 60 seconds
@@ -286,17 +295,42 @@ Invoices still arrive by mail, which makes it look like an interface bug rather
 than a rendering one: those PDFs are produced by the queue worker, which has no
 60-second HTTP request behind it.
 
-**Cause.** Docker's default `/dev/shm` is 64 MB. Chromium uses shared memory
-heavily and does not fail on it — it stalls, and the request dies on the timeout.
+**Cause 1: a container limit.** The container's own counters say which one:
 
-**Fix.** Already in `docker-compose.yml` as `shm_size: 512m`. Confirm and
+```bash
+docker compose exec app sh -c 'cd /sys/fs/cgroup &&
+  grep -H . pids.max pids.peak pids.events memory.max memory.peak memory.events cpu.max'
+```
+
+| Counter | Means | Fix |
+|---|---|---|
+| `pids.events:max` above 0 | the process limit refused that many process starts | raise `APP_PIDS_LIMIT` |
+| `memory.events:oom_kill` above 0 | the kernel ended a process at the memory limit | raise `APP_MEMORY_LIMIT` |
+| `cpu.max` other than `max 100000` | a CPU limit slows every render, and slow renders overlap | remove it |
+
+The process limit fails first. With room for 200 processes, two previews at
+once already failed: Chromium cannot start its processes, the log adds
+`The process has been signaled with signal "6"`, and supervisor reports
+`terminated by SIGTRAP (core dumped)`. A single PDF still renders, so a check
+that renders one does not find it.
+
+A new limit applies once the container is recreated, not on a restart:
+
+```bash
+docker compose up -d app
+docker compose restart invoiceninja-nginx   # nginx keeps the old address otherwise
+```
+
+**Cause 2: `/dev/shm` is too small.** Docker's default is 64 MB. Chromium uses
+shared memory heavily and does not fail on it — it stalls, and the request dies
+on the timeout. Already in `docker-compose.yml` as `shm_size: 512m`. Confirm and
 measure:
 
 ```bash
 docker compose exec app df -h /dev/shm
-docker compose exec -u www-data app sh -c '
+docker compose exec -u www-data app bash -c '
   printf "<html><body><h1>x</h1></body></html>" > /tmp/t.html
-  time /usr/bin/google-chrome-stable --headless --disable-gpu --no-sandbox \
+  time /usr/bin/chromium --headless --disable-gpu --no-sandbox \
     --print-to-pdf=/tmp/t.pdf /tmp/t.html'
 ```
 
@@ -352,18 +386,19 @@ Invoice Ninja uses Snappdf (Chromium) for PDF rendering. If `/api/v1/live_design
 
    The nginx FastCGI timeouts are set to 300s in `nginx/laravel.conf`. If renders still time out, Chromium may be crashing — check app logs.
 
-2. **500 from the app** — Chromium likely ran out of memory or crashed. Check:
+2. **500 from the app** — Chromium hit a container limit or crashed. Check:
 
    ```bash
    docker compose logs app --tail=50 | grep -iE "snappdf|chromium|chrome|error|fatal"
    ```
 
-   The app container memory limit is 1G. If Chromium crashes repeatedly, increase `memory:` in `docker-compose.yml`.
+   The container's counters name the limit; see
+   [PDF and preview rendering times out](#pdf-and-preview-rendering-times-out).
 
 3. **Check Chromium path**:
 
    ```bash
-   docker compose exec app ls -la /usr/bin/google-chrome-stable
+   docker compose exec app ls -la /usr/bin/chromium
    ```
 
 ### Browser console warnings (non-critical)
