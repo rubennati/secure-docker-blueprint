@@ -131,6 +131,74 @@ class StacksTest(unittest.TestCase):
         self.assertIn("apps/vaultwarden", self.s.checked_out())
         self.assertTrue((self.s.host / "apps/vaultwarden/volumes/data/db").is_file())
 
+    def data_elsewhere(self, name):
+        """A stack's files outside the checkout: .env, a secret and its data."""
+        d = self.s.root / "data" / name
+        write(d / ".env", "X=1\n")
+        write(d / ".secrets/token.txt", "secret\n")
+        write(d / "volumes/state", "data\n")
+        return d
+
+    def assertIntact(self, d):
+        for f in (".env", ".secrets/token.txt", "volumes/state"):
+            self.assertTrue((d / f).is_file(), f)
+
+    def test_apply_refuses_a_symbolic_link_on_a_path_not_checked_out(self):
+        # Git would delete .env, .secrets/ and volumes/ in the link's target:
+        # the directory is outside the checkout and holds only ignored files.
+        self.s.stacks("core/traefik")
+        self.assertEqual(self.s.run("apply").returncode, 0)
+        data = self.data_elsewhere("crowdsec")
+        (self.s.host / "core/crowdsec").symlink_to(data)
+        self.s.stacks("core/traefik", "apps/whoami")
+        r = self.s.run("apply")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nothing applied", r.stderr)
+        self.assertRegex(r.stdout, r"core/crowdsec\s+symbolic link to ")
+        self.assertIntact(data)
+        self.assertNotIn("apps/whoami", self.s.checked_out())
+
+    def test_apply_refuses_files_on_a_path_not_checked_out(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        data = self.data_elsewhere("vaultwarden")
+        shutil.copytree(data, self.s.host / "apps/vaultwarden")
+        r = self.s.run("apply")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertRegex(r.stdout, r"apps/vaultwarden\s+directory with files")
+        self.assertNotRegex(r.stdout, r"\n   apps\s")
+        self.assertIntact(self.s.host / "apps/vaultwarden")
+
+    def test_apply_leaves_an_empty_directory_alone(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        (self.s.host / "apps/vaultwarden").mkdir(parents=True)
+        r = self.s.run("apply")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_update_refuses_a_link_on_a_path_the_target_adds(self):
+        # apps/nextcloud exists in v2 only; the check reads the target too.
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        data = self.data_elsewhere("nextcloud")
+        (self.s.host / "apps").mkdir(exist_ok=True)
+        (self.s.host / "apps/nextcloud").symlink_to(data)
+        r = self.s.run("update", "v2", "--yes")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nothing changed", r.stderr)
+        self.assertRegex(r.stdout, r"apps/nextcloud\s+symbolic link to ")
+        self.assertEqual(git(self.s.host, "describe", "--tags", "--exact-match").strip(), "v1")
+        self.assertIntact(data)
+
+    def test_status_names_what_sits_on_a_path_not_checked_out(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        (self.s.host / "core/crowdsec").symlink_to(self.data_elsewhere("crowdsec"))
+        r = self.s.run("status")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Not checked out, yet something is there", r.stdout)
+        self.assertRegex(r.stdout, r"core/crowdsec\s+symbolic link to ")
+
     def test_apply_drops_a_stack_without_local_files(self):
         self.s.stacks("core/traefik", "apps/whoami")
         self.s.run("apply")
