@@ -50,4 +50,4 @@ image property, established by running it rather than by counting.
 | `cap_drop: ALL` | 211 / 301 services |
 | Non-root `user:` | 57 / 301 services |
 | Resource limits — `memory` and `pids` | 301 / 301 services |
-| Docker Secrets — a `secrets:` block | 179 / 301 services |
+| Docker Secrets — a `secrets:` block | 188 / 301 services |

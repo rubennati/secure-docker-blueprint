@@ -20,6 +20,9 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **Seafile Pro keeps no password in `.env`** (`apps/seafile-pro`). The database root and user passwords, the admin password, the JWT key, the Redis password, the OnlyOffice JWT secret and the SMTP password stood as variables in `.env` and in every container's configuration, readable with `docker inspect`. They are Docker Secrets in `.secrets/` now, as in Seafile CE, and so is the LLM key of the optional `seafile-ai.yml`. Seafile reads them from the environment only, so `config/secrets-env.sh` exports them in front of each service. The former reason, that `my_init` drops exported variables, does not hold: it had been checked with `docker exec … env`, which never shows them. A fresh stack under the new files initialises its databases, creates the administrator and serves login, upload, SeaDoc, notifications, thumbnails and the SeaSearch token behind Traefik, and no container's configuration carries a credential.
+  **Migration:** write the values your `.env` holds today into the files, unchanged — `db_root_pwd.txt` from `INIT_SEAFILE_MYSQL_ROOT_PASSWORD`, `seafile_db_pwd.txt` from `SEAFILE_MYSQL_DB_PASSWORD`, `seafile_admin_pwd.txt` from `INIT_SEAFILE_ADMIN_PASSWORD`, `jwt_key.txt` from `JWT_PRIVATE_KEY`, `redis_pwd.txt` from `REDIS_PASSWORD`, `onlyoffice_jwt_secret.txt` from `ONLYOFFICE_JWT_SECRET`, `smtp_pwd.txt` from `SEAFILE_SMTP_PASSWORD` — without a trailing newline, then `docker compose up -d` and remove the seven lines from `.env`. New values would no longer match the accounts MariaDB and Seahub created on the first start.
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host

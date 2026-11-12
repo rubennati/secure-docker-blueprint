@@ -36,7 +36,7 @@
 | Traefik priority=1 on main router, priority=100 on sub-services | Prevents main router from catching /thumbnail, /notification, /sdoc-server paths |
 | `APP_TRAEFIK_LIMIT=limit-sync` | The sync client runs three upload and three download threads and issues one request per block, through the main router. Above the 125 requests per second of `limit-standard` a sync of many small files is answered `429` and fails; `limit-sync` allows 1000 |
 | `seafile-net` → `app-internal` + `proxy-public` | Blueprint network schema |
-| Passwords in .env (not Docker Secrets) | Phusion's my_init clears exported env vars; Secrets wrapper failed |
+| Passwords and keys as Docker Secrets, exported by `config/secrets-env.sh` | Seafile reads them from the environment only, without a `_FILE` variant; the wrapper exports them in front of each service, and `my_init` passes them on |
 | Container names → variables | Blueprint standard |
 | Image names hardcoded, tags as variables | Blueprint standard |
 | `security_opt: no-new-privileges` | Blueprint security baseline |
@@ -47,13 +47,12 @@
 | SeaSearch instead of Elasticsearch | Recommended by Seafile, lightweight |
 | `seahub_custom.py` Pattern | For OnlyOffice + Metadata + Thumbnail Config |
 | `clamd-remote.conf` mounted as `/etc/clamav/clamd.conf` | ClamAV runs in separate container, needs TCP connection |
-| Entrypoint wrapper reduced to seahub_custom.py only | Secrets via my_init didn't work, passwords now in .env |
+| `config/entrypoint.sh` injects configuration only | Secrets are `config/secrets-env.sh`'s job, which writes no file and so runs in every container |
 | `seafile-ai` pinned to `13.0.10` instead of upstream's `13.0-latest` | A moving tag changes the image under an unchanged file. `13.0.10` is the newest 13.0 release — still so on 2026-11-05, there is no newer 13 image; `13.0-latest` pointed to the same digest on 2026-09-22 |
 | `SEAFILE_SERVER_HOSTNAME: 127.0.0.1:8001` in `docker-compose.local.yml` | First-boot setup (`setup-seafile-mysql.py`, 13.0.21) accepts only a host name that contains a dot. On `localhost:8001` it exits with status 255 before it writes a file or opens the database, Seahub never starts, and the stack answers `502`. Seahub builds `SERVICE_URL` and `FILE_SERVER_ROOT` from this value, so the local stack is opened at the same address |
 
 ## Known limitations
 
-- **Passwords in .env**: Docker Secrets via entrypoint wrapper didn't work with Phusion's `my_init` init system. Passwords are stored in `.env` (gitignored). TODO: revisit when Seafile adds native `_FILE` support. The same limitation applies to the SMTP password — `SEAFILE_SMTP_PASSWORD` is in `.env`, not a Docker Secret.
 - **One restart needed after first start**: `docker compose restart seafile-pro-app` triggers automatic config injection for seahub_settings.py, seafevents.conf, and seafile.conf. No manual editing needed.
 - **SeaDoc/Thumbnail Nginx check**: These containers check for Nginx/Caddy on startup. With Traefik, they need to be in `proxy-public` network with Traefik labels to pass this check.
 - **SEAHUB_DB_NAME is permanent**: Database names are chosen on first init. Changing `SEAHUB_DB_NAME` in `.env` after first start does not rename the database — it causes a mismatch. Migration requires manual database work.
@@ -239,11 +238,12 @@ docker compose ps
 ### Verify environment variables reach containers
 
 ```bash
-# JWT key in app container (must not be empty)
-docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY
+# JWT key in Seahub's process — `docker exec … env` shows the configured
+# environment only, never what secrets-env.sh exported (prints 1)
+docker exec seafile-pro-app sh -c 'tr "\0" "\n" < /proc/$(pgrep -f "gunicorn.*seahub" | head -1)/environ | grep -c ^JWT_PRIVATE_KEY='
 
-# Passwords in any container
-docker exec seafile-pro-app env | grep -i "password\|secret"
+# No credential in any container's configuration (prints nothing)
+docker inspect $(docker compose ps -q) --format '{{range .Config.Env}}{{println .}}{{end}}' | grep -i "password=.\|_key=.\|secret=."
 
 # SeaSearch admin credentials
 docker exec seafile-pro-seasearch env | grep SS_FIRST
@@ -338,7 +338,7 @@ docker inspect --format='{{json .Config.Entrypoint}} {{json .Config.Cmd}}' <imag
 | "Waiting Nginx" loop | Missing Traefik labels + proxy-public | Add labels like CE reference |
 | Thumbnail 403 | Router priority or missing JWT | Set priority=100, check env vars |
 | Search "No results" | SeaSearch not configured in seafevents.conf | `docker compose restart seafile-pro-app` (auto-injects), or check manually with `grep SEASEARCH seafevents.conf` |
-| env vars empty in app | my_init clears exports | Use .env directly, not Docker Secrets |
+| A service fails to authenticate (database, Redis, JWT) | A file in `.secrets/` missing, empty or ending in a newline, or not listed under that service's `secrets:` | Check the file (`wc -c`), recreate the container (`up -d --force-recreate`) |
 | ClamAV connection refused | Missing clamd-remote.conf mount | Mount config with TCPAddr clamav |
 | OnlyOffice not loading | seahub_custom.py not injected | `docker compose restart seafile-pro-app` (auto-injects) |
 | ClamAV not scanning | virus_scan not in seafile.conf | `docker compose restart seafile-pro-app` (auto-injects), or check manually with `grep virus_scan seafile.conf` |
