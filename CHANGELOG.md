@@ -20,6 +20,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **`csp-self-only` holds what its name says** (`core/traefik/ops/templates/dynamic/model.yml.tmpl`, `docs/standards/traefik-security.md`). The block allowed `'unsafe-inline'` for scripts and styles, so an injected inline script ran under a policy named self-only. It now admits scripts, styles and every other resource from the page's own origin only, images and fonts also as `data:`, and states `base-uri` and `form-action`, which do not fall back to `default-src`. In a browser under the new policy, an inline script, a `<style>` block and a `style` attribute are refused while the page's own script and stylesheet load; under the former one all three applied. whoami, the one stack with the block, serves plain text and JSON and needs nothing inline. A stack that adds the block now needs every script and style in files of its own.
+
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host

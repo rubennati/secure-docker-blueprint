@@ -208,10 +208,15 @@ ${ACCESS_TRUSTED_RANGES_YAML}
         stsIncludeSubdomains: true
         stsPreload: true
 
-    # An enforcing policy for an application tested against it (whoami).
+    # An enforcing policy for an application tested against it (whoami):
+    # everything from the page's own origin, no inline script or style —
+    # images and fonts may also be data: URIs. base-uri and form-action do not
+    # fall back to default-src, so they are stated. frame-ancestors is not:
+    # where present, browsers ignore X-Frame-Options, and the headers profile's
+    # DENY (or frame-self's SAMEORIGIN) decides framing.
     csp-self-only:
       headers:
-        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:;"
+        contentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; base-uri 'self'; form-action 'self'"
 
     # -------- per-app blocks, placed AFTER the four --------
 
