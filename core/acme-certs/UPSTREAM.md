@@ -19,7 +19,7 @@
 
 | Change | Reason |
 |--------|--------|
-| `crond -f` without `-d` | BusyBox crond in acme.sh 3.1.2+ doesn't support `-d` (debug level) |
+| `crond -f` without `-d` | BusyBox crond in 3.1.2+ doesn't support `-d` (debug level) |
 | Custom entrypoint wrapper | Loads CF_TOKEN from Docker Secret |
 | Scripts in `./scripts/` | Wizard, issue, renew, PFX conversion |
 | Output to `./volumes/output/` | Standard volume path |
@@ -31,20 +31,9 @@
 - **SAN default leak**: Old wizard used .env SAN default when input was empty, causing wrong wildcard domain. Fixed in wizard rewrite.
 - **CF_Token not in exec**: `docker compose exec` bypasses entrypoint. Fixed: `issue.sh` loads secret directly.
 
-## Version notes
-
-- **0.3.0** (pinned since 2026-11-11, not yet run on a host): rebuilt on `acme.sh` 3.1.6 and
-  Alpine 3.23; the image scans without a fixable CRITICAL or HIGH finding. Renewal follows
-  ACME Renewal Information: the cron job runs every six hours and renews inside the window
-  the CA suggests; `NO_ARI=1` in the container environment restores the fixed schedule.
-  `convert-to-pfx.sh` asks for the password or reads `PFX_PASSWORD`; the password as a
-  second argument still works and prints a warning. `issue.sh`, `renew.sh` and
-  `convert-to-pfx.sh` refuse a domain that is not a host name. No migration step:
-  `volumes/acme` and `volumes/output` are used as they are.
-
 ## Upgrade checklist
 
-1. Check the [cert-ops-tool releases](https://github.com/rubennati/cert-ops-tool/releases) and, for the bundled client, the [acme.sh releases](https://github.com/acmesh-official/acme.sh/releases)
+1. Check [acme.sh releases](https://github.com/acmesh-official/acme.sh/releases)
 2. Bump `APP_TAG` in `.env`
 3. `docker compose pull` → `docker compose up -d`
 4. Test: `docker compose exec acme-certs acme.sh --version`
