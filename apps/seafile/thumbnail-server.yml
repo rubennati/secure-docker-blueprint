@@ -30,23 +30,17 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
-    # NOTE: thumbnail-server does not use the shared entrypoint.sh wrapper,
-    # so Docker Secrets _FILE paths are never resolved inside this container.
-    # JWT_PRIVATE_KEY and SEAFILE_MYSQL_DB_PASSWORD must be passed as direct
-    # environment variables (sourced from .env). The _FILE vars below are kept
-    # only as a reference; they have no effect at runtime.
+    # The shared entrypoint reads the secrets below and exports them as env
+    # vars, then starts the image's own init.
+    entrypoint: ["/bin/sh", "/config/entrypoint.sh", "/sbin/my_init", "--", "/scripts/enterpoint.sh"]
     environment:
       TIME_ZONE: ${TIMEZONE}
       SEAFILE_MYSQL_DB_HOST: db
       SEAFILE_MYSQL_DB_PORT: "3306"
       SEAFILE_MYSQL_DB_USER: ${SEAFILE_DB_USER}
-      SEAFILE_MYSQL_DB_PASSWORD: ${SEAFILE_MYSQL_DB_PASSWORD:?Set SEAFILE_MYSQL_DB_PASSWORD in .env}
-      SEAFILE_MYSQL_DB_PASSWORD_FILE: /run/secrets/SEAFILE_DB_PWD
       SEAFILE_MYSQL_DB_CCNET_DB_NAME: ccnet_db
       SEAFILE_MYSQL_DB_SEAFILE_DB_NAME: seafile_db
       NON_ROOT: "false"
-      JWT_PRIVATE_KEY: ${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in .env}
-      JWT_PRIVATE_KEY_FILE: /run/secrets/JWT_KEY
       SEAFILE_LOG_TO_STDOUT: "false"
       SITE_ROOT: /
       INNER_SEAHUB_SERVICE_URL: http://seafile
@@ -57,6 +51,7 @@ services:
 
     # --- Storage ---
     volumes:
+      - ./config/entrypoint.sh:/config/entrypoint.sh:ro
       - ./volumes/seafile-data:/shared
 
     # --- Health & Observability ---

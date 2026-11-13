@@ -20,23 +20,30 @@ services:
           memory: 256M
 
     volumes:
+      - ./config/secrets-env.sh:/config/secrets-env.sh:ro
       - ./volumes/seafile-data:/shared
     # ports:
     #   - 8888:8888
+    # secrets-env.sh exports the Docker Secrets below, then starts the image's
+    # own entrypoint. SEAFILE_AI_LLM_KEY is the LLM provider's API key: an
+    # empty file where the provider needs none.
+    entrypoint: ["/bin/sh", "/config/secrets-env.sh", "/scripts/entrypoint.sh"]
+    secrets:
+      - JWT_KEY
+      - REDIS_PWD
+      - SEAFILE_AI_LLM_KEY
     environment:
       - SEAFILE_AI_LLM_TYPE=${SEAFILE_AI_LLM_TYPE:-openai}
       - SEAFILE_AI_LLM_URL=${SEAFILE_AI_LLM_URL:-}
-      - SEAFILE_AI_LLM_KEY=${SEAFILE_AI_LLM_KEY:-}
       - SEAFILE_AI_LLM_MODEL=${SEAFILE_AI_LLM_MODEL:-gpt-4o-mini}
       - FACE_EMBEDDING_SERVICE_URL=${FACE_EMBEDDING_SERVICE_URL:-http://face-embedding:8886}
-      - FACE_EMBEDDING_SERVICE_KEY=${FACE_EMBEDDING_SERVICE_KEY:-${JWT_PRIVATE_KEY:?Variable is not set or empty}}
+      # Empty: secrets-env.sh uses the JWT key.
+      - FACE_EMBEDDING_SERVICE_KEY=${FACE_EMBEDDING_SERVICE_KEY:-}
       - SEAFILE_SERVER_URL=${INNER_SEAHUB_SERVICE_URL:-http://seafile-pro-app}
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:?Variable is not set or empty}
       - SEAFILE_AI_LOG_LEVEL=${SEAFILE_AI_LOG_LEVEL:-info}
       - CACHE_PROVIDER=${CACHE_PROVIDER:-redis}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
     depends_on:
       seafile-pro-app:
         condition: service_healthy
@@ -50,6 +57,11 @@ services:
       - app-internal
 
 networks:
+  # Same definition as seafile-server.yml: Compose merges the files, and two
+  # definitions of one network make it recreate the network of a running stack.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
+
+secrets:
+  SEAFILE_AI_LLM_KEY:
+    file: ./.secrets/seafile_ai_llm_key.txt

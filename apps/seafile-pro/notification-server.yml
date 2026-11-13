@@ -30,25 +30,30 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # secrets-env.sh exports the Docker Secrets below, then starts the image's own command.
+    entrypoint: ["/bin/sh", "/config/secrets-env.sh"]
+    command: ["/opt/seafile/notification-server", "-c", "/opt/seafile", "-l", "/shared/seafile/logs/notification-server.log"]
+    secrets:
+      - SEAFILE_DB_PWD
+      - JWT_KEY
     environment:
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
-      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD:?Set SEAFILE_MYSQL_DB_PASSWORD in .env}
       - SEAFILE_MYSQL_DB_CCNET_DB_NAME=ccnet_db
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in .env}
       - SEAFILE_LOG_TO_STDOUT=false
       - NOTIFICATION_SERVER_LOG_LEVEL=${NOTIFICATION_LOG_LEVEL:-info}
 
     # --- Storage ---
     volumes:
+      - ./config/secrets-env.sh:/config/secrets-env.sh:ro
       - ./volumes/seafile-data/seafile/logs:/shared/seafile/logs
 
     # --- Health & Observability ---
-    # healthcheck: none — the image has no shell, so there is nothing for
-    # healthcheck.test to run. Confirmed with
-    # `docker run --rm --entrypoint sh <image>`.
+    # healthcheck: none yet. The image has a shell (secrets-env.sh runs in
+    # it), but no endpoint or command has been established that tells a
+    # working server from a running process.
 
     # --- Networking ---
     networks:
