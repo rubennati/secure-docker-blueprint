@@ -20,9 +20,13 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **`stacks.sh` keeps Git from deleting data on a path it does not check out** (`scripts/stacks.sh`, `docs/standards/deployment-lifecycle.md` §2). Git counts a release directory outside a partial checkout as its own: once only ignored files are left in it — `.env`, `.secrets/`, `volumes/` — `git sparse-checkout` deletes them, and it follows a symbolic link to delete in the directory the link points to. A stack directory copied onto such a path, or a link from it to data kept elsewhere, was lost at the next `apply`, while `status` reported that file and checkout match. `apply` and `update` now refuse while a path outside the checkout holds a file or a link, and name it; `status` lists it.
+
 - **`csp-self-only` holds what its name says** (`core/traefik/ops/templates/dynamic/model.yml.tmpl`, `docs/standards/traefik-security.md`). The block allowed `'unsafe-inline'` for scripts and styles, so an injected inline script ran under a policy named self-only. It now admits scripts, styles and every other resource from the page's own origin only, images and fonts also as `data:`, and states `base-uri` and `form-action`, which do not fall back to `default-src`. In a browser under the new policy, an inline script, a `<style>` block and a `style` attribute are refused while the page's own script and stylesheet load; under the former one all three applied. whoami, the one stack with the block, serves plain text and JSON and needs nothing inline. A stack that adds the block now needs every script and style in files of its own.
 
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
+
+- **A closed OnlyOffice saves again** (`apps/onlyoffice/file-host-paths.yml`, `apps/onlyoffice/README.md`, `apps/seafile/README.md`). After a save the file host fetches the edited file from the Document Server's `/cache/files/` at its public name, and Seafile converts through `/ConvertService.ashx`. Behind a closed `APP_TRAEFIK_ACCESS` both calls were refused: the editor opened documents and every save failed. The opt-in `file-host-paths.yml` opens exactly those two paths with `access-public` — the server accepts the first only with a signed link valid for 900 seconds, the second only with a token signed with the JWT secret — and the editor keeps the stack's policy. The README's check now saves and reopens a document.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
