@@ -143,6 +143,15 @@ stack, back up or move its data, delete it, then apply again. A stack that is me
 unused can stay in the list. Plain Git offers no such check: `git sparse-checkout set`
 or `add` with a shorter list deletes without asking.
 
+**A release path the host does not check out stays empty.** Git counts such a path as
+its own, whatever is there: once only ignored files are left in it, `git sparse-checkout`
+deletes them — `set`, `add`, and `reapply`, which Git's own warnings suggest — and it
+follows a symbolic link to delete in the directory the link points to. A stack directory
+copied onto that path, or a link from it to data kept elsewhere, is lost this way.
+`stacks.sh apply` and `update` refuse while such a path holds a file or a link and name
+it; `status` lists it. Keep the data of a stack that is not checked out outside the
+checkout, and reach it by its own path.
+
 Deploy from a tag, not from the default branch. The default branch is where work lands
 between releases: it is checked by CI on every change, but the combination of stacks on it
 at any given moment is not one anybody has operated.
