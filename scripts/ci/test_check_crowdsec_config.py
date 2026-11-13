@@ -214,7 +214,7 @@ class DefaultOffGate(unittest.TestCase):
             'crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"'))
         code, out = run(cc.check_templates, self.root)
         self.assertEqual(code, 1)
-        self.assertIn("with key file (none)", out)
+        self.assertIn(f"without the key file {cc.KEY_TARGET}", out)
 
     def test_an_overlay_that_mounts_another_secret_fails(self):
         """The path the middlewares name and the secret the overlay mounts belong together."""

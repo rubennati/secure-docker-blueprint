@@ -131,7 +131,7 @@ def overlay_mounts(root: Path) -> str:
         return f"{KEY_OVERLAY} does not give the traefik service the secret {KEY_SECRET}"
     source = ((doc.get("secrets") or {}).get(KEY_SECRET) or {}).get("file")
     if source not in (str(KEY_FILE), f"./{KEY_FILE}"):
-        return f"{KEY_OVERLAY} reads {KEY_SECRET} from {source!r}, expected ./{KEY_FILE}"
+        return f"{KEY_OVERLAY} reads {KEY_SECRET} from another file than ./{KEY_FILE}"
     return KEY_TARGET
 
 
@@ -225,7 +225,7 @@ def check_templates(root: Path) -> int:
             if inline:
                 failures.append(f"{SWITCH}=true renders '{name}' with the key in the file — crowdsecLapiKey")
             if path != KEY_TARGET:
-                failures.append(f"{SWITCH}=true renders '{name}' with key file {path or '(none)'}, expected {KEY_TARGET}")
+                failures.append(f"{SWITCH}=true renders '{name}' without the key file {KEY_TARGET}")
 
         # 3. Switch off again over the enabled render: both halves removed.
         plugins, middlewares = rendered_state(render_into(scratch, root, {SWITCH: "false"}))
