@@ -26,6 +26,9 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **A closed OnlyOffice saves again** (`apps/onlyoffice/file-host-paths.yml`, `apps/onlyoffice/README.md`, `apps/seafile/README.md`). After a save the file host fetches the edited file from the Document Server's `/cache/files/` at its public name, and Seafile converts through `/ConvertService.ashx`. Behind a closed `APP_TRAEFIK_ACCESS` both calls were refused: the editor opened documents and every save failed. The opt-in `file-host-paths.yml` opens exactly those two paths with `access-public` — the server accepts the first only with a signed link valid for 900 seconds, the second only with a token signed with the JWT secret — and the editor keeps the stack's policy. The README's check now saves and reopens a document.
 
+- **Paperless-ngx names its database engine and its path from 2.x** (`apps/paperless-ngx`). Both compose files set `PAPERLESS_DBENGINE: postgresql`, which 3.x documents as required for PostgreSQL; 3.4.2 still infers it from `PAPERLESS_DBHOST`. `UPSTREAM.md` says that 3.x upgrades only from 2.20.15 and lists what the move changes for this stack: archive files only for documents without text by default, removed consumer and OCR settings, duplicates consumed, consume scripts without positional arguments, a rebuilt search index. `CONFIG.md` describes the 3.x settings in place of the removed 2.x ones.
+  **Migration:** none for an installation on 3.x. One on 2.x moves to 2.20.15 first, then follows `UPSTREAM.md` → "From 2.x to 3.x".
+
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts
