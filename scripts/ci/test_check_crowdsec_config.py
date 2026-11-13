@@ -8,8 +8,9 @@ carry the plugin and the middlewares as live YAML — so what is judged is what
 `render.sh` produces, not what a template contains.
 
 The key requirement is conditional on purpose: the shipped blueprint has no
-CrowdSec middleware and must validate without a bouncer key, while an operator
-who enables one must not get a silently empty key from `envsubst`.
+CrowdSec middleware and must validate without a bouncer key. A middleware that
+is rendered names the key file `crowdsec-bouncer.yml` mounts and carries no key
+itself — `config/dynamic` is readable by every account on the host.
 
 Run:
     python3 scripts/ci/test_check_crowdsec_config.py
@@ -18,6 +19,7 @@ Run:
 
 import importlib.util
 import io
+import re
 import contextlib
 import shutil
 import tempfile
@@ -43,7 +45,10 @@ COMMENTED = """\
 """
 
 
-def active(name: str, key: str) -> str:
+def active(name: str, key_file: str = "/run/secrets/crowdsec_bouncer_key", key: str = "") -> str:
+    lines = [f"          crowdsecLapiKeyFile: \"{key_file}\""] if key_file is not None else []
+    if key:
+        lines.append(f"          crowdsecLapiKey: \"{key}\"")
     return f"""\
 http:
   middlewares:
@@ -53,8 +58,7 @@ http:
           enabled: true
           crowdsecMode: stream
           crowdsecLapiHost: crowdsec:8080
-          crowdsecLapiKey: "{key}"
-"""
+""" + "\n".join(lines) + "\n"
 
 
 def run(fn, *args) -> tuple:
@@ -84,24 +88,33 @@ class ConditionalKeyRequirement(unittest.TestCase):
         self.assertEqual(code, 0)
         self.assertNotIn("ERROR", out)
 
-    def test_active_basic_with_empty_key_fails(self):
-        self._write(active("crowdsec-basic", ""))
+    def test_active_middleware_without_key_file_fails(self):
+        self._write(active("threat-crowdsec", key_file=None))
         code, out = run(cc.check_rendered, self.config)
         self.assertEqual(code, 1)
-        self.assertIn("crowdsec-basic", out)
-        self.assertIn("CROWDSEC_BOUNCER_KEY", out)
+        self.assertIn("threat-crowdsec", out)
+        self.assertIn("crowdsecLapiKeyFile", out)
 
-    def test_active_appsec_with_empty_key_fails(self):
+    def test_active_appsec_without_key_file_fails(self):
         """AppSec is a separate middleware and must be caught independently."""
-        self._write(active("crowdsec-appsec", ""))
+        self._write(active("threat-crowdsec-appsec", key_file=None))
         code, out = run(cc.check_rendered, self.config)
         self.assertEqual(code, 1)
-        self.assertIn("crowdsec-appsec", out)
+        self.assertIn("threat-crowdsec-appsec", out)
 
-    def test_active_middleware_with_key_passes(self):
-        self._write(active("crowdsec-basic", "s3cret-bouncer-key"))
+    def test_active_middleware_with_key_file_passes(self):
+        self._write(active("threat-crowdsec"))
         code, out = run(cc.check_rendered, self.config)
-        self.assertEqual(code, 0)
+        self.assertEqual(code, 0, out)
+        self.assertIn("keyed by a file", out)
+
+    def test_a_key_in_the_rendered_file_fails_even_next_to_a_key_file(self):
+        """The state of a configuration rendered before the key moved to .secrets/."""
+        self._write(active("crowdsec-basic", key="bouncer-key-in-config"))
+        code, out = run(cc.check_rendered, self.config)
+        self.assertEqual(code, 1)
+        self.assertIn("carries the bouncer key itself", out)
+        self.assertIn(".secrets/crowdsec_bouncer_key.txt", out)
 
     def test_key_value_is_never_printed(self):
         """Output goes to operator terminals and CI logs; the key stays out of it.
@@ -112,16 +125,13 @@ class ConditionalKeyRequirement(unittest.TestCase):
         there is no reason to write something credential-looking to disk.
         """
         sentinel = "NON-SENSITIVE-TEST-SENTINEL"
-        self._write(active("crowdsec-appsec", sentinel))
-        _, passing = run(cc.check_rendered, self.config)
-        self._write(active("crowdsec-appsec", "").replace(
-            'crowdsecLapiKey: ""', f'crowdsecLapiKey: ""  # was {sentinel}'))
-        _, failing = run(cc.check_rendered, self.config)
-        self.assertNotIn(sentinel, passing)
+        self._write(active("crowdsec-appsec", key=sentinel))
+        code, failing = run(cc.check_rendered, self.config)
+        self.assertEqual(code, 1)
         self.assertNotIn(sentinel, failing)
 
-    def test_whitespace_only_key_counts_as_empty(self):
-        self._write(active("crowdsec-basic", "   "))
+    def test_whitespace_only_key_file_counts_as_missing(self):
+        self._write(active("crowdsec-basic", key_file="   "))
         self.assertEqual(run(cc.check_rendered, self.config)[0], 1)
 
     def test_missing_rendered_config_is_not_a_failure(self):
@@ -151,6 +161,7 @@ class DefaultOffGate(unittest.TestCase):
             self.skipTest("core/traefik not present")
         shutil.copytree(src / "ops", self.root / cc.TRAEFIK / "ops")
         shutil.copy(src / ".env.example", self.root / cc.TRAEFIK / ".env.example")
+        shutil.copy(src / cc.KEY_OVERLAY, self.root / cc.TRAEFIK / cc.KEY_OVERLAY)
 
     def tearDown(self):
         self._tmp.cleanup()
@@ -170,7 +181,7 @@ class DefaultOffGate(unittest.TestCase):
         """Shipping the example with the switch on would enable it for everyone."""
         text = self._env_example().read_text()
         text = text.replace("CROWDSEC_BOUNCER_ENABLED=false", "CROWDSEC_BOUNCER_ENABLED=true")
-        text = text.replace("CROWDSEC_BOUNCER_KEY=\n", "CROWDSEC_BOUNCER_KEY=example-key\n")
+        text = re.sub(r"(?m)^(COMPOSE_FILE=.*)$", rf"\1:{cc.KEY_OVERLAY}", text)
         self._env_example().write_text(text)
         code, out = run(cc.check_templates, self.root)
         self.assertEqual(code, 1)
@@ -190,10 +201,28 @@ class DefaultOffGate(unittest.TestCase):
     def test_middleware_left_in_integrations_fails(self):
         """The dropped-stash shape: an active crowdsec-basic in integrations.yml.tmpl."""
         t = self._template("dynamic/integrations.yml.tmpl")
-        t.write_text(t.read_text() + "\n" + active("crowdsec-basic", "${CROWDSEC_BOUNCER_KEY}"))
+        t.write_text(t.read_text() + "\n" + active("crowdsec-basic"))
         code, out = run(cc.check_templates, self.root)
         self.assertEqual(code, 1)
         self.assertIn("nothing may be enabled by default", out)
+
+    def test_middlewares_that_hold_the_key_fail(self):
+        """A template that writes the key into config/dynamic again."""
+        t = self._template("dynamic/crowdsec.yml.tmpl")
+        t.write_text(t.read_text().replace(
+            "crowdsecLapiKeyFile: /run/secrets/crowdsec_bouncer_key",
+            'crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"'))
+        code, out = run(cc.check_templates, self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("with key file (none)", out)
+
+    def test_an_overlay_that_mounts_another_secret_fails(self):
+        """The path the middlewares name and the secret the overlay mounts belong together."""
+        o = self.root / cc.TRAEFIK / cc.KEY_OVERLAY
+        o.write_text(o.read_text().replace("crowdsec_bouncer_key", "bouncer"))
+        code, out = run(cc.check_templates, self.root)
+        self.assertEqual(code, 1)
+        self.assertIn("does not give the traefik service the secret crowdsec_bouncer_key", out)
 
     def test_crowdsec_template_removed_fails(self):
         """Without crowdsec.yml.tmpl the switch renders a plugin with nothing to use it."""

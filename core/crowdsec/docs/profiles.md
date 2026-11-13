@@ -172,18 +172,21 @@ list.
 **All steps are operator-local. Rendered `config/` and `.env` are gitignored —
 nothing here is committed.**
 
-1. **Switch the integration on** (steps 3–4 of "How to enable" in
-   [`core/traefik/README.md`](../../traefik/README.md)): in `core/traefik/.env` set
-   `CROWDSEC_BOUNCER_ENABLED=true`, `CROWDSEC_BOUNCER_PLUGIN_VERSION` and
-   `CROWDSEC_BOUNCER_KEY`, then `./ops/scripts/render.sh && ./ops/scripts/validate.sh
+1. **Switch the integration on** (steps 2–4 of "How to enable" in
+   [`core/traefik/README.md`](../../traefik/README.md)): issue the key into
+   `core/traefik/.secrets/crowdsec_bouncer_key.txt` with group 0 and mode 640; in
+   `core/traefik/.env` set `CROWDSEC_BOUNCER_ENABLED=true` and
+   `CROWDSEC_BOUNCER_PLUGIN_VERSION`, and append `:crowdsec-bouncer.yml` to
+   `COMPOSE_FILE`; then `./ops/scripts/render.sh && ./ops/scripts/validate.sh
    && docker compose up -d --force-recreate traefik`. The plugin block, the
    entrypoint list and the `threat-crowdsec` / `threat-crowdsec-appsec`
    middlewares are rendered from
    [`crowdsec.yml.tmpl`](../../traefik/ops/templates/dynamic/crowdsec.yml.tmpl) and
    `traefik.yml.tmpl`; no template is edited.
 
-   > `render.sh` runs `envsubst`. An unset `CROWDSEC_BOUNCER_KEY` renders an **empty**
-   > key and the bouncer cannot authenticate. Set the key before rendering.
+   > The middlewares read the key from the file `crowdsec-bouncer.yml` mounts.
+   > `render.sh` refuses the switch while that file is missing, empty, or
+   > unreadable for Traefik, which runs as root without capabilities.
 
 2. **Keep AppSec disabled** for first validation (`CROWDSEC_APPSEC_ENABLED=false`,
    the default — `threat-crowdsec` is what the entrypoint carries).
