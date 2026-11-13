@@ -105,16 +105,29 @@ services:
       retries: 5
       start_period: 120s
 
-    memswap_limit: 1536m          # == memory: no swap
+    # Chromium renders every PDF and the live preview. The invoice editor asks
+    # for a new preview as you type, while the queue worker renders the PDFs
+    # that go out by mail, so renders overlap. Measured with 5.13.53, one core:
+    #   idle            545 MiB   13 processes
+    #   one render      764 MiB  151 processes
+    #   two at once    1020 MiB  325 processes
+    #   six at once    1638 MiB  731 processes
+    # At pids 200 two overlapping renders already fail: Chromium cannot start
+    # its processes, aborts with SIGTRAP/SIGABRT, and the preview returns 500
+    # after the 60-second timeout.
+    #
+    # No cpus limit. At one core four previews took 11-14 s instead of about
+    # 1 s, and slow renders overlap longer, which multiplies processes and
+    # memory instead of bounding them.
+    #
+    # APP_MEMORY_LIMIT and APP_PIDS_LIMIT in .env raise both for more users;
+    # the defaults keep an .env without them working.
+    memswap_limit: ${APP_MEMORY_LIMIT:-2g}   # == memory: no swap
     deploy:
       resources:
         limits:
-          # Chromium renders the PDFs and the live design previews; it exceeds
-          # 512M under concurrent load or with complex templates.
-          memory: 1536m   # 2x the measured peak (605 MiB)
-          # cpus: derived starting value, not measured — v0.9.0
-          cpus: "1.00"
-          pids: 200
+          memory: ${APP_MEMORY_LIMIT:-2g}    # 2x two renders at once (1020 MiB)
+          pids: ${APP_PIDS_LIMIT:-1024}      # holds six renders at once (731)
         reservations:
           memory: 256M
 
