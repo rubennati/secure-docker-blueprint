@@ -444,7 +444,7 @@ The rest of the instance stays closed. The three ways the pieces talk, and what 
 |---|---|
 | Browser → OnlyOffice (editor, scripts, websocket) | the OnlyOffice stack's own route, `access-public` as shipped |
 | OnlyOffice → Seafile (document fetch, save callback) | the two routes above; or, for a Document Server on another host, its address in `TRUSTED_RANGES` or on the VPN, with this file left out |
-| Seafile → OnlyOffice (convert API, fetching the saved file) | the OnlyOffice stack's public route, with the shared JWT secret on the convert API |
+| Seafile → OnlyOffice (convert API, fetching the saved file) | the OnlyOffice stack's public route, with the shared JWT secret on the convert API; behind a closed OnlyOffice route, its `file-host-paths.yml` |
 
 One Document Server serves several Seafile or Nextcloud instances this way, on the same host or on others; each instance decides for itself whether to open the two paths or to trust the server's address. Until v0.9.6 the shipped default admitted every RFC 1918 address, Docker containers included, which is how the callbacks passed a closed route; that admission was the bypass the ingress audit measured (`docs/audits/ingress-architecture-2026-10-31.md`) and is gone.
 
