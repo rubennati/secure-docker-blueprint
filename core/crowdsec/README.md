@@ -633,11 +633,18 @@ HTTP-layer enforcement. Configuration spans two directories: the bouncer API key
 
 ### Generate the bouncer key
 
+The key goes straight into Traefik's key file, which Traefik — root without
+capabilities — reads through group 0:
+
 ```bash
-docker exec crowdsec cscli bouncers add traefik-bouncer
+cd ../traefik
+mkdir -p .secrets && chmod 700 .secrets
+docker exec crowdsec cscli bouncers add traefik-bouncer -o raw > .secrets/crowdsec_bouncer_key.txt
+sudo chown "$USER":0 .secrets/crowdsec_bouncer_key.txt && chmod 640 .secrets/crowdsec_bouncer_key.txt
 ```
 
-The command prints the key once — save it immediately.
+The engine shows the key only this once. `core/traefik/README.md`, "How to
+enable", explains the ownership.
 
 When Traefik's container comes back with another address on `crowdsec-security` —
 after a restart of the Docker daemon, for one — the local API
@@ -647,18 +654,18 @@ stops pulling. Both are the one bouncer; the stale line can be removed with
 
 ### Wire the plugin in core/traefik/
 
-1. In `core/traefik/.env`, set the switch and the key:
+1. In `core/traefik/.env`, set the switch and the overlay that mounts the key:
 
    ```env
    CROWDSEC_BOUNCER_ENABLED=true
    CROWDSEC_BOUNCER_PLUGIN_VERSION=v1.7.1
-   CROWDSEC_BOUNCER_KEY=<key>
+   COMPOSE_FILE=<as before>:crowdsec-bouncer.yml
    ```
 
    Nothing in the templates is edited. `render.sh` reads the switch and emits the
    plugin block and the entrypoint list into `config/traefik.yml` and the
    `threat-crowdsec` and `threat-crowdsec-appsec` middlewares into
-   `config/dynamic/crowdsec.yml`.
+   `config/dynamic/crowdsec.yml`, which name the key file and hold no key.
 2. Render, validate, and recreate Traefik — the plugin block is static configuration:
 
    ```bash
@@ -802,7 +809,7 @@ inside the data directory rather than being declared separately. Back the
 directory up as a source directory and quiesce it.
 
 **The bouncer credentials are the operational part.** The Traefik bouncer's key lives in
-`core/traefik/.env` (`CROWDSEC_BOUNCER_KEY`) and is registered against the local API in
+`core/traefik/.secrets/crowdsec_bouncer_key.txt` and is registered against the local API in
 `volumes/data`; the engine's own machine credentials are in `volumes/config`. Restoring
 one without the other leaves bouncers that authenticate against an API that has
 never heard of them — Traefik then fails open or closed depending on its own

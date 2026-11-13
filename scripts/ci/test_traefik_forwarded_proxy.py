@@ -35,11 +35,11 @@ from pathlib import Path
 import yaml
 
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK
+import bouncer_key
 import no_daemon
 
 REPO = Path(__file__).resolve().parents[2]
-VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com",
-                 CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k")
+VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", CROWDSEC_BOUNCER_ENABLED="true")
 
 spec = importlib.util.spec_from_file_location("cf", REPO / "scripts" / "ci" / "check-cloudflare-ips.py")
 cf = importlib.util.module_from_spec(spec)
@@ -53,6 +53,7 @@ class ForwardedProxySwitch(unittest.TestCase):
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         self.root = tmp / "core" / "traefik"
         shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        bouncer_key.write(self.root)
         (tmp / "scripts" / "ci").mkdir(parents=True)
         shutil.copy(REPO / "scripts" / "ci" / "check-crowdsec-config.py", tmp / "scripts" / "ci" / "check-crowdsec-config.py")
 
@@ -370,7 +371,6 @@ class ForwardedProxySwitch(unittest.TestCase):
 
     def test_switch_off_crowdsec_keeps_the_mode_consistent(self):
         env = dict(VALID_ENV, TRAEFIK_FORWARDED_PROXY="cloudflare", CROWDSEC_BOUNCER_ENABLED="false")
-        env.pop("CROWDSEC_BOUNCER_KEY")
         r = self.render(env)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertFalse((self.root / "config" / "dynamic" / "crowdsec.yml").exists())

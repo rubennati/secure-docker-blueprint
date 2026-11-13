@@ -29,8 +29,16 @@ http:
     #   1. core/crowdsec running + on crowdsec-security (created by core/traefik)
     #   2. CROWDSEC_BOUNCER_ENABLED=true in .env — renders the plugin block in
     #      traefik.yml as well as this file
-    #   3. Bouncer key: docker exec crowdsec cscli bouncers add traefik-bouncer
-    #   4. CROWDSEC_BOUNCER_KEY=<key> in .env
+    #   3. Bouncer key in .secrets/crowdsec_bouncer_key.txt, readable by root
+    #      through owner or group 0, and crowdsec-bouncer.yml in COMPOSE_FILE
+    #      (core/traefik/README.md, "How to enable")
+    #
+    # Key: crowdsecLapiKeyFile names the Docker secret crowdsec-bouncer.yml
+    # mounts. This file carries no key — config/dynamic stays readable for
+    # Traefik as a whole, and a key in it was readable by every account on the
+    # host. The plugin reads the file when it loads and fails without it, which
+    # leaves the entrypoint without its threat middleware: render.sh refuses a
+    # key file Traefik cannot read. AppSec uses the same key.
     #
     # Mode: stream (polls LAPI every 60s, caches decisions). The polling loop
     # starts once the entrypoint names the middleware — on the recreate.
@@ -79,7 +87,7 @@ http:
           updateMaxFailure: -1
           crowdsecLapiScheme: http
           crowdsecLapiHost: crowdsec:8080
-          crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
+          crowdsecLapiKeyFile: /run/secrets/crowdsec_bouncer_key
           crowdsecAppsecEnabled: false
           crowdsecAppsecHost: crowdsec:7422
           crowdsecAppsecFailureBlock: false
@@ -121,7 +129,7 @@ ${CROWDSEC_BOUNCER_FORWARDED_YAML}
           updateMaxFailure: -1
           crowdsecLapiScheme: http
           crowdsecLapiHost: crowdsec:8080
-          crowdsecLapiKey: "${CROWDSEC_BOUNCER_KEY}"
+          crowdsecLapiKeyFile: /run/secrets/crowdsec_bouncer_key
           crowdsecAppsecEnabled: true
           crowdsecAppsecHost: crowdsec:7422
           crowdsecAppsecFailureBlock: false

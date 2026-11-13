@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK  # noqa: E402
+import bouncer_key  # noqa: E402
 
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com")
 STARTED = "2026-11-01T10:00:00.123456789Z"
@@ -36,6 +37,7 @@ class StaticConfiguration(unittest.TestCase):
         self.addCleanup(shutil.rmtree, tmp, ignore_errors=True)
         self.root = tmp / "core" / "traefik"
         shutil.copytree(TRAEFIK / "ops", self.root / "ops")
+        bouncer_key.write(self.root)
         (tmp / "scripts" / "ci").mkdir(parents=True)
         shutil.copy(TRAEFIK.parents[1] / "scripts" / "ci" / "check-crowdsec-config.py",
                     tmp / "scripts" / "ci" / "check-crowdsec-config.py")
@@ -95,7 +97,7 @@ exit 0
     def test_a_plugin_rendered_after_the_start_is_pending_and_fails_strict(self):
         # The host run: the bouncer switched on and rendered, Traefik not recreated.
         self.started_with_the_rendered_file()
-        self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="k" * 32))
+        self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true"))
         self.assertIn("plugin", (self.root / "config" / "traefik.yml").read_text(encoding="utf-8"))
         r = self.validate()
         self.assertEqual(r.returncode, 0, r.stdout)
