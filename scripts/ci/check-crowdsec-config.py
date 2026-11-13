@@ -64,8 +64,9 @@ SWITCH = "CROWDSEC_BOUNCER_ENABLED"
 # middlewares name (ops/scripts/bouncer-key.sh carries the same three).
 KEY_FILE = Path(".secrets/crowdsec_bouncer_key.txt")
 KEY_OVERLAY = "crowdsec-bouncer.yml"
-KEY_SECRET = "crowdsec_bouncer_key"
-KEY_TARGET = f"/run/secrets/{KEY_SECRET}"
+# The name of the Docker secret, not its value: public, and safe to print.
+KEY_MOUNT = "crowdsec_bouncer_key"
+KEY_TARGET = f"/run/secrets/{KEY_MOUNT}"
 
 
 def load(path: Path):
@@ -127,11 +128,11 @@ def overlay_mounts(root: Path) -> str:
         return f"{KEY_OVERLAY} is missing"
     doc = load(path) or {}
     service = (doc.get("services") or {}).get("traefik") or {}
-    if KEY_SECRET not in (service.get("secrets") or []):
-        return f"{KEY_OVERLAY} does not give the traefik service the secret {KEY_SECRET}"
-    source = ((doc.get("secrets") or {}).get(KEY_SECRET) or {}).get("file")
+    if KEY_MOUNT not in (service.get("secrets") or []):
+        return f"{KEY_OVERLAY} does not give the traefik service the secret {KEY_MOUNT}"
+    source = ((doc.get("secrets") or {}).get(KEY_MOUNT) or {}).get("file")
     if source not in (str(KEY_FILE), f"./{KEY_FILE}"):
-        return f"{KEY_OVERLAY} reads {KEY_SECRET} from another file than ./{KEY_FILE}"
+        return f"{KEY_OVERLAY} reads {KEY_MOUNT} from {source!r}, expected ./{KEY_FILE}"
     return KEY_TARGET
 
 
@@ -225,7 +226,7 @@ def check_templates(root: Path) -> int:
             if inline:
                 failures.append(f"{SWITCH}=true renders '{name}' with the key in the file — crowdsecLapiKey")
             if path != KEY_TARGET:
-                failures.append(f"{SWITCH}=true renders '{name}' without the key file {KEY_TARGET}")
+                failures.append(f"{SWITCH}=true renders '{name}' with key file {path or '(none)'}, expected {KEY_TARGET}")
 
         # 3. Switch off again over the enabled render: both halves removed.
         plugins, middlewares = rendered_state(render_into(scratch, root, {SWITCH: "false"}))
