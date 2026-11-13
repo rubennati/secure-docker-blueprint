@@ -279,7 +279,7 @@ changes last), a request header **after** `${APP_TRAEFIK_AUTH}`.
 | Block | Side | Used by |
 |---|---|---|
 | `frame-self` — `X-Frame-Options: SAMEORIGIN`, the application frames its own pages | before | listmonk, Nextcloud |
-| `csp-self-only` — an enforcing CSP for an application tested against it | before | whoami |
+| `csp-self-only` — an enforcing CSP for an application tested against it: everything from its own origin, no inline script or style | before | whoami |
 | `hsts-include-subdomains` — the per-domain HSTS extension | before | no stack by default |
 | `header-nosniff`, `header-permissions`, `header-frame-deny`, `header-referrer` — one header an `application-owned` stack lacks | before | Keycloak, Matomo, the office servers |
 | `forwarded-proto-https` — `X-Forwarded-Proto: https` to the backend | after | Paperless-ngx, Matomo, the office servers, Ghost's ActivityPub |

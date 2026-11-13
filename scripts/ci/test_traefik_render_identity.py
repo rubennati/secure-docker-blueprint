@@ -9,7 +9,8 @@ Position 1 of model.yml is one decided difference (DEC-076, step 3:
 access-trusted and access-trusted-vpn in place of access-lan and access-lan-vpn)
 and the rendered edge-networks.yml and host/ingress.nft the others (DEC-075, step 5;
 DEC-078, step 6), and the dashboard router's middleware order (headers first, FA-13,
-2026-11-04); that region is cut out of both renders before the comparison and checked on its
+2026-11-04), and the policy csp-self-only holds (own origin only, no 'unsafe-inline');
+those regions are cut out of both renders before the comparison and checked on their
 own, and comment-only lines of model.yml are not compared; a step that changes
 anything else, anywhere, fails here. A shallow
 checkout without the tag skips, as the other tag-dependent tests do.
@@ -77,6 +78,17 @@ def _without_position_1(text: str) -> tuple[str, str]:
     return COMMENT_LINE.sub("", rest), m.group(0)
 
 
+CSP_SELF_ONLY = re.compile(r'(    csp-self-only:\n      headers:\n        contentSecurityPolicy: )"([^"]*)"')
+
+
+def _without_csp_self_only(text: str) -> tuple[str, str]:
+    """(the file with csp-self-only's policy value blanked, that value)."""
+    m = CSP_SELF_ONLY.search(text)
+    if m is None:
+        raise AssertionError("model.yml has no csp-self-only contentSecurityPolicy")
+    return text[:m.start()] + m.group(1) + '""' + text[m.end():], m.group(2)
+
+
 class RenderIdentity(unittest.TestCase):
     def setUp(self):
         r = subprocess.run(["git", "-C", str(REPO), "archive", "--format=tar", REFERENCE_TAG, "core/traefik"],
@@ -104,7 +116,14 @@ class RenderIdentity(unittest.TestCase):
             if rel == "dynamic/model.yml":
                 rest_a, access_a = _without_position_1((a / rel).read_text(encoding="utf-8"))
                 rest_b, access_b = _without_position_1((b / rel).read_text(encoding="utf-8"))
-                self.assertEqual(rest_a, rest_b, f"{rel} differs from {REFERENCE_TAG} outside position 1")
+                # csp-self-only lost 'unsafe-inline' and states base-uri and
+                # form-action (2026-11-12); its full value is checked in
+                # test_traefik_model.py.
+                rest_a, csp_a = _without_csp_self_only(rest_a)
+                rest_b, csp_b = _without_csp_self_only(rest_b)
+                self.assertEqual(rest_a, rest_b, f"{rel} differs from {REFERENCE_TAG} outside position 1 and csp-self-only")
+                self.assertIn("'unsafe-inline'", csp_a)
+                self.assertNotIn("'unsafe-inline'", csp_b, "csp-self-only allows no inline script or style")
                 self.assertIn("    access-lan:", access_a)
                 self.assertIn("    access-trusted:", access_b)
                 self.assertNotIn("access-lan", access_b, "the LAN class is gone (DEC-076)")

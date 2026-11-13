@@ -88,6 +88,13 @@ class Model(unittest.TestCase):
         self.assertTrue(BLOCKS <= set(mw), BLOCKS - set(mw))
         self.assertEqual(mw["auth-none"]["chain"]["middlewares"], [])
         self.assertEqual(mw["frame-self"]["headers"]["customFrameOptionsValue"], "SAMEORIGIN")
+        # csp-self-only holds its name: own origin only, nothing inline, and no
+        # frame-ancestors that would override the profile's X-Frame-Options.
+        csp = dict(d.strip().split(" ", 1) for d in mw["csp-self-only"]["headers"]["contentSecurityPolicy"].split(";") if d.strip())
+        self.assertNotIn("'unsafe-inline'", " ".join(csp.values()))
+        self.assertEqual((csp["default-src"], csp["script-src"], csp["style-src"]), ("'self'",) * 3)
+        self.assertEqual((csp["base-uri"], csp["form-action"]), ("'self'", "'self'"))
+        self.assertNotIn("frame-ancestors", csp)
         self.assertNotIn("stsIncludeSubdomains", mw["hsts-base"]["headers"], "the base never carries includeSubDomains")
         self.assertTrue(mw["hsts-include-subdomains"]["headers"]["stsIncludeSubdomains"])
         v = self.validate()

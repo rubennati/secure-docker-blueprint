@@ -191,7 +191,7 @@ this application. Where it stands decides what it does:
 
 | Block | Where | Why there |
 |---|---|---|
-| `frame-self` (the application frames its own pages), `csp-self-only` (an enforcing CSP the application was tested against), `hsts-include-subdomains` (the per-domain HSTS extension), `header-nosniff`, `header-permissions`, `header-frame-deny`, `header-referrer` (a single header an `application-owned` stack lacks) | **before** `${APP_TRAEFIK_HEADERS}@file` | Traefik applies the response changes of the first middleware last, so a block before the profile wins over it (measured 2026-10-18) |
+| `frame-self` (the application frames its own pages), `csp-self-only` (an enforcing CSP the application was tested against: own origin only, no inline script or style), `hsts-include-subdomains` (the per-domain HSTS extension), `header-nosniff`, `header-permissions`, `header-frame-deny`, `header-referrer` (a single header an `application-owned` stack lacks) | **before** `${APP_TRAEFIK_HEADERS}@file` | Traefik applies the response changes of the first middleware last, so a block before the profile wins over it (measured 2026-10-18) |
 | `forwarded-proto-https` (the application builds its URLs from `X-Forwarded-Proto`), a path strip, a redirect | **after** `${APP_TRAEFIK_AUTH}` | a request header or a rewrite the gate never needs to see |
 
 ```yaml
