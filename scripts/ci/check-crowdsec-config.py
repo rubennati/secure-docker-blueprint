@@ -132,7 +132,9 @@ def overlay_mounts(root: Path) -> str:
         return f"{KEY_OVERLAY} does not give the traefik service the secret {KEY_MOUNT}"
     source = ((doc.get("secrets") or {}).get(KEY_MOUNT) or {}).get("file")
     if source not in (str(KEY_FILE), f"./{KEY_FILE}"):
-        return f"{KEY_OVERLAY} reads {KEY_MOUNT} from {source!r}, expected ./{KEY_FILE}"
+        # The source path is not printed: CodeQL reads any value under a
+        # `secrets:` key as secret material.
+        return f"{KEY_OVERLAY} reads {KEY_MOUNT} from another file than ./{KEY_FILE}"
     return KEY_TARGET
 
 
