@@ -698,7 +698,9 @@ wrote."
 artifact. `development/static-site/` and `development/web-api/` are complete,
 working deployment shapes — a real build, a real hardened runtime, a
 local-validation compose file, each proven by a minimal fixture — that a real
-project copies into `apps/` or `business/` under its own name once it exists.
+project copies into its own repository, which a host checks out under
+`custom/<name>`, or into `apps/` or `business/` when the stack becomes part of
+this repository.
 They are never deployed from inside this repository, and they are not stacks
 in the access-pattern sense the five categories use: the [Directory
 Structure](#directory-structure) test asks how a running service reaches the

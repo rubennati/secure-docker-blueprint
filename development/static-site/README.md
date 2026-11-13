@@ -28,16 +28,32 @@ starting template for a real site's content.
 
 ## Adopting this pattern
 
-1. Copy `development/static-site/` into `apps/<project>/` or
-   `business/<project>/`.
+An own application runs on a host as an own stack: the pattern becomes the root
+of the project's own repository, and the host checks that repository out under
+`custom/<name>`
+([`deployment-lifecycle.md`](../../docs/standards/deployment-lifecycle.md#11--own-stacks-custom)).
+There `scripts/stacks.sh` lists it with the Blueprint release it follows and
+never removes it. `apps/` and `business/` hold the Blueprint's own stacks, the
+ones a host takes from the Blueprint's releases — the place for this pattern
+only when the stack becomes part of the Blueprint itself.
+
+1. Copy `development/static-site/` into the project's repository.
 2. Replace the recipe under `build.context` with the real project's source, or
    keep one recipe and delete the other.
 3. Rename `COMPOSE_PROJECT_NAME` and `APP_TRAEFIK_HOST` in `.env.example`.
-4. Rename the `app` service key in `docker-compose.yml` to `<project>-app` —
-   [`docs/standards/naming-conventions.md`](../../docs/standards/naming-conventions.md#services-on-a-shared-external-network)
-   requires an application-specific key on the shared `proxy-public` network so
-   two independently deployed stacks never publish the same Docker DNS name.
-5. Follow [`docs/standards/custom-application.md`](../../docs/standards/custom-application.md)
+   Add `<project>-edge`, the stack's own edge network that `TRAEFIK_NETWORK`
+   names, to `EDGE_NETWORKS` in `core/traefik/.env`, then render and `up -d`
+   there ([`edge-networks.md`](../../core/traefik/docs/edge-networks.md)).
+   Traefik creates the network and joins it.
+4. Rename the `app` service key in `docker-compose.yml` to `<project>-app`
+   ([`naming-conventions.md`](../../docs/standards/naming-conventions.md#services-on-a-shared-external-network)).
+   Compose publishes the key as a DNS name on the Traefik network. On the
+   stack's own edge network only Traefik sees it; on the shared `proxy-public`
+   every stack there does, and two stacks with the same key make the name
+   ambiguous.
+5. Give the README a line `**Blueprint:** vX.Y.Z`, the Blueprint release
+   whose standards the stack follows.
+6. Follow [`docs/standards/custom-application.md`](../../docs/standards/custom-application.md)
    for image identity, and [`docs/standards/new-app-checklist.md`](../../docs/standards/new-app-checklist.md)
    for `UPSTREAM.md`, backup documentation, and everything else a full stack
    carries that this pattern does not.
@@ -56,6 +72,8 @@ ALL` and `no-new-privileges` active, and reported `healthy`.
 
 ## Production deployment
 
+With the stack's edge network in `EDGE_NETWORKS` (step 3 above):
+
 ```bash
 cp .env.example .env
 docker compose up -d --build
@@ -67,10 +85,12 @@ Traefik routing, TLS and the four middleware positions follow the same
 
 ## Update / rebuild
 
-The image is rebuilt from source, not pulled:
+The image is rebuilt from source, not pulled. An own stack under `custom/`
+takes a release of its own repository:
 
 ```bash
-git pull                          # or however the real project's source updates
+git fetch --tags
+git checkout <tag>
 docker compose build --pull
 docker compose up -d
 ```
