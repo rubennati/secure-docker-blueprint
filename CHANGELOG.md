@@ -20,9 +20,13 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ### Fixed
 
+- **`stacks.sh` keeps Git from deleting data on a path it does not check out** (`scripts/stacks.sh`, `docs/standards/deployment-lifecycle.md` §2). Git counts a release directory outside a partial checkout as its own: once only ignored files are left in it — `.env`, `.secrets/`, `volumes/` — `git sparse-checkout` deletes them, and it follows a symbolic link to delete in the directory the link points to. A stack directory copied onto such a path, or a link from it to data kept elsewhere, was lost at the next `apply`, while `status` reported that file and checkout match. `apply` and `update` now refuse while a path outside the checkout holds a file or a link, and name it; `status` lists it.
+
 - **The Invoice Ninja preview renders while the editor asks for several at once** (`business/invoiceninja/docker-compose.yml`, `.env.example`, README). Chromium needs about 140 processes per render, and the editor requests a new preview as you type. With room for 200 processes, two overlapping previews failed: Chromium aborted, and the preview answered 500 after 60 seconds while a single PDF still rendered. The application now has 2 GB and 1024 processes, which holds six renders at once, and no CPU limit: with one core, four previews took 11-14 seconds instead of about one. `APP_MEMORY_LIMIT` and `APP_PIDS_LIMIT` in `.env` raise both without editing the compose file. The README names the container counter that shows which limit a failed render hit. The new limits apply once the container is recreated (`docker compose up -d app`).
 
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
+
+- **A closed OnlyOffice saves again** (`apps/onlyoffice/file-host-paths.yml`, `apps/onlyoffice/README.md`, `apps/seafile/README.md`). After a save the file host fetches the edited file from the Document Server's `/cache/files/` at its public name, and Seafile converts through `/ConvertService.ashx`. Behind a closed `APP_TRAEFIK_ACCESS` both calls were refused: the editor opened documents and every save failed. The opt-in `file-host-paths.yml` opens exactly those two paths with `access-public` — the server accepts the first only with a signed link valid for 900 seconds, the second only with a token signed with the JWT secret — and the editor keeps the stack's policy. The README's check now saves and reopens a document.
 
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
