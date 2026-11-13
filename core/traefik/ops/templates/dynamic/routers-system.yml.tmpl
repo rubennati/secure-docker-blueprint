@@ -12,8 +12,8 @@ http:
       # headers (first, so a refusal carries them too), VPN only, the strict
       # counter of an administration surface, no gate — the dashboard has
       # Traefik's own API behind it and nothing that logs in. The TLS option
-      # is named here on purpose: a system route may be stricter than the
-      # deployment standard.
+      # is `default` as shipped, the one every stack takes: under the wildcard
+      # another name answers 421 to a browser that comes from another host.
       middlewares:
         - headers-standard@file
         - access-vpn@file

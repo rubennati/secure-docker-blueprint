@@ -235,5 +235,53 @@ class ShippedExampleRequiresAChoice(unittest.TestCase):
         self.assertIn("Per-domain", out)
 
 
+class DashboardTlsOption(unittest.TestCase):
+    """The dashboard takes `default`, the TLS option every stack takes.
+
+    Traefik's SNI check compares option names: under the wildcard a browser
+    reuses the connection of another host for the dashboard, and a dashboard
+    naming tls-strict answers it 421 even when `default` is built from
+    tls-strict (measured with Traefik 3.7.17). validate.sh warns where that
+    can happen, and refuses a name the file provider does not define.
+    """
+
+    def _run(self, **overrides):
+        env = dict(BASE_ENV)
+        env.update({"ACME_WILDCARD_DOMAIN": "example.com", "TRAEFIK_DASHBOARD_CERT_RESOLVER": ""})
+        env.update(overrides)
+        return DashboardCertificateStrategy._run_with(self, env)
+
+    def test_the_example_ships_default(self):
+        lines = (TRAEFIK / ".env.example").read_text(encoding="utf-8").splitlines()
+        self.assertIn("TRAEFIK_DASHBOARD_TLS_OPTION=default", lines)
+
+    def test_default_under_the_wildcard_renders_and_does_not_warn(self):
+        r = self._run(TRAEFIK_DASHBOARD_TLS_OPTION="default")
+        self.assertEqual((r["render_rc"], r["validate_rc"]), (0, 0), r["validate_out"])
+        self.assertIn("options: default", r["dashboard"])
+        self.assertNotIn("421", r["validate_out"])
+
+    def test_a_profile_under_the_wildcard_warns_of_421(self):
+        r = self._run(TRAEFIK_DASHBOARD_TLS_OPTION="tls-strict", TLS_DEFAULT_OPTION="tls-strict")
+        self.assertEqual(r["validate_rc"], 0, r["validate_out"])
+        self.assertIn("WARNING: TRAEFIK_DASHBOARD_TLS_OPTION=tls-strict under *.example.com", r["validate_out"])
+        self.assertIn("421 Misdirected Request on traefik.example.com", r["validate_out"])
+        self.assertIn("TRAEFIK_DASHBOARD_TLS_OPTION=default", r["validate_out"])
+
+    def test_a_profile_outside_the_wildcard_does_not_warn(self):
+        r = self._run(TRAEFIK_DASHBOARD_TLS_OPTION="tls-strict", ACME_WILDCARD_DOMAIN="",
+                      TRAEFIK_DASHBOARD_CERT_RESOLVER="httpResolver")
+        self.assertEqual(r["validate_rc"], 0, r["validate_out"])
+        self.assertNotIn("421", r["validate_out"])
+
+    def test_a_name_the_file_provider_does_not_define_is_refused(self):
+        for value, says in (("tls-modern", "a name from before the middleware model"),
+                            ("strict", "must be default, tls-compatible, tls-standard or tls-strict")):
+            with self.subTest(value=value):
+                r = self._run(TRAEFIK_DASHBOARD_TLS_OPTION=value)
+                self.assertNotEqual(r["validate_rc"], 0)
+                self.assertIn(says, r["validate_out"])
+
+
 if __name__ == "__main__":
     unittest.main()
