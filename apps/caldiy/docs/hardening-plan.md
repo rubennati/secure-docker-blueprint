@@ -140,8 +140,9 @@ in `core/traefik/.env`, and the bouncer then stands on the `websecure` entrypoin
 
 ### 2.1 `threat-crowdsec` (IP/decision bouncer, fail-open)
 
-1. Switch the integration on: in `core/traefik/.env` set `CROWDSEC_BOUNCER_ENABLED=true`,
-   `CROWDSEC_BOUNCER_PLUGIN_VERSION` and `CROWDSEC_BOUNCER_KEY`, then
+1. Switch the integration on: the key in `core/traefik/.secrets/crowdsec_bouncer_key.txt`, and
+   in `core/traefik/.env` `CROWDSEC_BOUNCER_ENABLED=true`, `CROWDSEC_BOUNCER_PLUGIN_VERSION` and
+   `:crowdsec-bouncer.yml` appended to `COMPOSE_FILE` (`core/traefik/README.md`, "How to enable"), then
    `./ops/scripts/render.sh && ./ops/scripts/validate.sh && docker compose up -d --force-recreate traefik`
    — no template is edited. The render defines `threat-crowdsec` from
    `core/traefik/ops/templates/dynamic/crowdsec.yml.tmpl` and places it on the entrypoint.

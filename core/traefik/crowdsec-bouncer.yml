@@ -1,0 +1,28 @@
+# CrowdSec bouncer key — the overlay that hands Traefik the key file.
+#
+# With CROWDSEC_BOUNCER_ENABLED=true in .env, config/dynamic/crowdsec.yml names
+# /run/secrets/crowdsec_bouncer_key as the plugin's crowdsecLapiKeyFile. This
+# file mounts .secrets/crowdsec_bouncer_key.txt there as a Docker secret, so no
+# rendered file carries the key. Apply it next to the others:
+#
+#   COMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml:crowdsec-bouncer.yml
+#
+# render.sh refuses the switch without this file in COMPOSE_FILE, and refuses a
+# key file Traefik cannot read: Traefik runs as root without CAP_DAC_OVERRIDE,
+# so the file has to belong to root or to group 0 —
+#
+#   sudo chown "$USER":0 .secrets/crowdsec_bouncer_key.txt
+#   chmod 640 .secrets/crowdsec_bouncer_key.txt
+#
+# Compose ignores uid, gid and mode on a secret outside Swarm; the container
+# sees the host file's own. The plugin reads the key when it loads: after a new
+# key, recreate the container (README, "CrowdSec bouncer").
+
+services:
+  traefik:
+    secrets:
+      - crowdsec_bouncer_key
+
+secrets:
+  crowdsec_bouncer_key:
+    file: ./.secrets/crowdsec_bouncer_key.txt
