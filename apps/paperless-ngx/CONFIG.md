@@ -169,8 +169,7 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
 | `PAPERLESS_CONSUMER_IGNORE_PATTERNS` | Paths to ignore during consume | default (`.DS_Store`, `._*`, `.stfolder/*`, `.stversions/*`, `desktop.ini`, `@eaDir/*`, `Thumbs.db`) | low | **Nice-to-have** | Default covers Mac/Windows/Synology junk. Extend only if scanner produces its own cruft. |
-| `PAPERLESS_CONSUMER_BARCODE_SCANNER` | Barcode-detection library | default `PYZBAR` | low | **Nice-to-have** | Fallback `ZXING` only when pyzbar misses small/low-quality codes. Relevant only if barcode features are active. |
-| `PAPERLESS_CONSUMER_DELETE_DUPLICATES` | Auto-delete duplicate scans | `false` (default) | low | **Use-case-dependent** | Use-case: scanner grabs same stack twice, mail forwards with repeated attachments. Default `false` is safer — Paperless keeps original as evidence. Flip to `true` only with high-dupe workflow and accepted risk. |
+| `PAPERLESS_CONSUMER_DELETE_DUPLICATES` | Refuse a file whose content is already stored | `false` (default) | low | **Use-case-dependent** | Since 3.0 Paperless consumes duplicates and marks them in the UI. `true` deletes a duplicate from the consume folder without consuming it — the 2.x behaviour. Use-case: a scanner that sends the same stack twice. |
 | `PAPERLESS_CONSUMER_DISABLE` | Disable consume-folder entirely | unset | low | **Use-case-dependent** | Use-case: Paperless fed only via UI upload / API, consume folder not mounted. Saves a few MB RAM. |
 | `PAPERLESS_CONSUMER_RECURSIVE` | Watch subdirs of consume-folder | `false` (default) | low | **Use-case-dependent** | Use-case: required for `SUBDIRS_AS_TAGS` or `COLLATE_DOUBLE_SIDED`. Otherwise off. |
 | `PAPERLESS_CONSUMER_SUBDIRS_AS_TAGS` | Subfolder names → tags | `false` (default) | medium | **Use-case-dependent** | Use-case: scan workflow with pre-sorted folders (`consume/invoices/`, `consume/contracts/`). Requires `RECURSIVE=true`. |
@@ -179,9 +178,8 @@ Builds on Hosting & Security. In particular: `PAPERLESS_DISABLE_REGULAR_LOGIN` d
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
-| `PAPERLESS_CONSUMER_POLLING` | Poll interval (s) instead of iNotify | `0` (iNotify active) | low | **Use-case-dependent** | Use-case: consume folder on network share (CIFS/NFS/SSHFS) where iNotify events do not propagate. Reasonable value `30`-`60`. Costs CPU per poll. |
-| `PAPERLESS_CONSUMER_POLLING_RETRY_COUNT` | Retries before consuming identical file | default `5` | low | **Use-case-dependent** | Only with polling. Default usually fine. |
-| `PAPERLESS_CONSUMER_POLLING_DELAY` | Pause between retries (s) | default `5` | low | **Use-case-dependent** | Only with polling. Increase on slow network shares where large PDFs are still copying. |
+| `PAPERLESS_CONSUMER_POLLING_INTERVAL` | Poll interval (s) instead of filesystem notifications | `0` (notifications) | low | **Use-case-dependent** | Use-case: consume folder on a network share (CIFS/NFS/SSHFS) where notifications do not arrive. Reasonable value `30`-`60`. Costs CPU per poll. |
+| `PAPERLESS_CONSUMER_STABILITY_DELAY` | Seconds a file must stay unchanged before it is consumed | default `5` | low | **Use-case-dependent** | Applies to notifications and polling. Increase on slow network shares where large PDFs are still copying. |
 | `PAPERLESS_CONSUMER_INOTIFY_DELAY` | Settle time after last event before consume | default `0.5` (s) | low | **Nice-to-have** | Raise to `2.0`-`5.0` when scanner/network fires multiple events per file — otherwise double consume. |
 
 ### 3.3 Pre/Post-consumption hooks
@@ -271,8 +269,8 @@ For scanners without duplex. Nice feature when workflow requires it, otherwise o
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
-| `PAPERLESS_OCR_MODE` | When to run OCR | `skip` (default) | low | **Nice-to-have** | `skip` = OCR only pages without text (safe, saves CPU, preserves scanner OCR). `redo` = replace scanner OCR (when scanner quality is bad). `force` = rasterise everything (large files, only for exotic PDFs). Default is the right compromise 95% of the time. |
-| `PAPERLESS_OCR_SKIP_ARCHIVE_FILE` | Create archive (PDF/A) version | `never` (default) | low | **Use-case-dependent** | Use-case: tight storage + docs already have text → `with_text`. `always` = keep only original (saves space, loses "searchable"-guarantee). |
+| `PAPERLESS_OCR_MODE` | When to run OCR | `auto` (default) | low | **Nice-to-have** | `auto` = OCR only pages without text (saves CPU, keeps scanner OCR). `redo` = replace scanner OCR (when its quality is bad). `force` = rasterise everything (large files, only for exotic PDFs). `off` = no OCR. |
+| `PAPERLESS_ARCHIVE_FILE_GENERATION` | Create an archive (PDF/A) version | `auto` (default) | low | **Use-case-dependent** | `auto` archives scanned and image documents and keeps a born-digital PDF with text as it is. `always` = the 2.x behaviour, an archive for every document. `never` = originals only (saves space). |
 | `PAPERLESS_OCR_OUTPUT_TYPE` | PDF variant for archive version | `pdfa` (default) | low | **Nice-to-have** | `pdfa` = PDF/A-2b, archive standard, good default. `pdfa-1` only if external archive system requires PDF/A-1. `pdf` = no PDF/A conversion, smaller files but not archive-standard. |
 
 ### 4.3 Image pre-processing
@@ -350,8 +348,7 @@ Core rule: `TASK_WORKERS × THREADS_PER_WORKER ≤ CPU cores`. Exceed = Paperles
 
 | ENV var | What | Our default | Effort | Bucket | Rationale / note |
 |---|---|---|---|---|---|
-| `PAPERLESS_DB_TIMEOUT` | Connection timeout (s) | unset (Django default) | low | **Use-case-dependent** | Use-case: slow or remote DB → raise. Unnecessary for local container DB. |
-| `PAPERLESS_DB_POOLSIZE` | PostgreSQL connection pool per worker | unset (no pool) | medium | **Use-case-dependent** | Use-case: "couldn't get a connection" errors or DB timeouts under load → `8`. **Note**: PG `max_connections` must match: `(TASK_WORKERS + CELERY_WORKERS) × POOLSIZE + safety-margin`. With 1/1 worker and pool 8 → `≥20`. PG only, ignored on MariaDB. |
+| `PAPERLESS_DB_OPTIONS` | Driver options as one comma-separated string | unset | low | **Use-case-dependent** | Replaces the separate SSL, timeout and pool variables of 2.x. Use-case: slow or remote DB → `connect_timeout=<s>`; "couldn't get a connection" under load → `pool.max_size=8`, with PG `max_connections` ≥ `(TASK_WORKERS + CELERY_WORKERS) × pool size + margin`. Unnecessary for the local container DB. |
 | `PAPERLESS_DB_READ_CACHE_ENABLED` | Cache DB reads in Redis | `false` (default) | high | **Use-case-dependent** | Use-case: very DB-heavy UI / many documents + noticeable query latency. **Danger**: every external DB manipulation (backup-restore, manual SQL) requires `invalidate_cachalot` command. Without it = cache serves stale data → inconsistency bugs. Don't enable lightly. |
 | `PAPERLESS_READ_CACHE_TTL` | Cache lifetime (s) | default `3600` (1h) | low | **Use-case-dependent** | Only with `DB_READ_CACHE_ENABLED=true`. High TTL = more RAM, longer staleness on manual DB changes. |
 | `PAPERLESS_READ_CACHE_REDIS_URL` | Dedicated Redis instance for read-cache | unset (= main Redis) | high | **Use-case-dependent** | Use-case: cache entries shouldn't compete with scheduled tasks / queues for RAM → separate Redis with `maxmemory-policy allkeys-lru`. Not needed in standard setup. |
@@ -461,7 +458,7 @@ For an archive app, backup is **not** nice-to-have — it is core infrastructure
 | Scenario | Procedure | Bucket |
 |---|---|---|
 | **Paperless minor upgrade** (e.g. 2.20 → 2.21) | `docker compose pull && docker compose up -d` — migrations run automatically | **Mandatory procedure** to document |
-| **Paperless major upgrade** (2.x → 3.0) | 1. Backup via `document_exporter`. 2. Read release notes. 3. Compose pull. 4. Up. 5. If issues: rollback via restore into empty container. | **Mandatory procedure** to document |
+| **Paperless major upgrade** (2.x → 3.x) | 1. Move to 2.20.15 first and let it start — 3.x upgrades only from there. 2. Backup via `document_exporter`. 3. Work through the v3 steps in [UPSTREAM.md](UPSTREAM.md#from-2x-to-3x). 4. Compose pull, up. 5. If issues: rollback via restore into an empty container. | **Mandatory procedure** to document |
 | **PostgreSQL major upgrade** (16 → 17) | 1. `document_exporter --data-only`. 2. Fresh Postgres instance with new version. 3. Start Paperless against new DB. 4. `document_importer --data-only`. | **Use-case-dependent** — only when PG major is changed |
 
 ### 6.5 Management commands (maintenance cheatsheet)
