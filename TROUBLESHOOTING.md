@@ -165,6 +165,39 @@ sudo chown -R 999:999 volumes/data
 
 **Note:** `chown` without `sudo` fails with `Operation not permitted` if run as a non-root user — always use `sudo` for host directory ownership changes.
 
+### 3.2 Traefik runs, but every router answers 404, the log stays empty, or certificates are requested at every start
+
+**Symptom:** one of these, with the container up:
+
+- Every router that names an `@file` middleware answers `404`.
+- `volumes/logs/` holds no `traefik.log`, or `access.log` stops growing.
+- Each restart requests the certificates again, until Let's Encrypt refuses with a rate-limit error.
+
+**Root cause:** Traefik runs as root with `cap_drop: ALL`. Without `CAP_DAC_OVERRIDE`, root is bound by a file's mode like any other account. It gets the owner bits only for a file of uid 0 and the group bits only for group 0; for any other file it gets the bits for everyone else. A directory created or copied by hand as a normal user (`755`) can be read but not written, and a file of yours with mode `600` cannot be read.
+
+| Path | What Traefik needs | When it is missing |
+|---|---|---|
+| `config/traefik.yml`, `config/dynamic/` and each file in it | read (the directory also needs search) | One unreadable file makes the file provider load none of `config/dynamic`, so routers naming `@file` middlewares answer 404 |
+| `volumes/letsencrypt/` | write | No `acme.json` is created; certificates live in memory only |
+| `volumes/letsencrypt/acme.json` | owned by uid 0, mode `600` | Unreadable: as above. Readable by group or others: Traefik refuses the store ("permissions … are too open, please use 600") |
+| `volumes/logs/` and its log files | write | No log file; the access log CrowdSec parses stays empty |
+| `volumes/plugins-storage/` (CrowdSec bouncer on) | write | The plugin does not load, and every router on `websecure` is disabled |
+
+**Fix:** `bash ops/scripts/validate.sh` in `core/traefik` names each path Traefik cannot use, with its owner, group and mode, and prints the command that fixes it. The usual fixes are:
+
+```bash
+# in core/traefik
+chmod 644 config/dynamic/<file>.yml          # nothing secret belongs in config/dynamic
+sudo chown 0:0 volumes/logs
+sudo chown 0:0 volumes/letsencrypt && sudo chmod 700 volumes/letsencrypt
+sudo chown 0:0 volumes/letsencrypt/acme.json && sudo chmod 600 volumes/letsencrypt/acme.json
+docker compose restart traefik
+```
+
+`validate.sh` also warns when `.env`, `.secrets/` or a file in it is readable by every account on the host. `.env` holds the DNS provider token. `chmod 600 .env` and `chmod 700 .secrets` do not affect Traefik, because the bouncer key reaches it as a Docker secret.
+
+Under userns-remap or rootless Docker, the container's root is another account on the host, and `validate.sh` reports these checks as `NOT VERIFIED`.
+
 ---
 
 ## 4. Networking Issues

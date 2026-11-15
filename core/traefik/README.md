@@ -57,6 +57,12 @@ docker compose up -d
 docker compose ps
 ```
 
+`validate.sh` also checks `config/` and `volumes/` the way Traefik uses them:
+it runs as root without `CAP_DAC_OVERRIDE` and is bound by each file's mode.
+A file or directory Traefik cannot read or write fails the run, and the message
+includes the command that fixes it ([`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §3.2).
+A `.env` or `.secrets/` readable by every account on the host is a warning.
+
 These checks validate configuration; they do not establish that the deployed
 service or its firewall works. Open `https://<TRAEFIK_DASHBOARD_HOST>` from a VPN
 client and check that the certificate is valid. Without a VPN, check the certificate

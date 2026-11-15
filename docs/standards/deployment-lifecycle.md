@@ -285,6 +285,11 @@ newer Blueprint release usually carries newer pins in `.env.example`, but it doe
 change the `.env` you already have — adopting a release and adopting its pins are two
 separate acts.
 
+`./scripts/overview.sh --host` lists every image variable whose value in a stack's `.env`
+differs from the pin in its `.env.example`, such as a tag carried over from an older
+install. It is a hint and does not change the exit status. Take the pin from `.env.example`,
+unless the stack's `UPSTREAM.md` names a reason to stay on the older one.
+
 ## 9 — Roll back
 
 Returning to the previous Blueprint release is `git checkout` of the earlier tag followed

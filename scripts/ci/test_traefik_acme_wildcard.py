@@ -44,7 +44,9 @@ class Deployment:
         (self.root / ".env").write_text("".join(f'{k}="{v}"\n' for k, v in env.items()), encoding="utf-8")
 
     def _script(self, name):
-        r = subprocess.run(["bash", str(self.root / "ops" / "scripts" / name)], capture_output=True, text=True)
+        # The test user stands in for Traefik's root: acme.json is its file (file-access.sh).
+        env = dict(os.environ, TRAEFIK_RUN_AS=f"{os.getuid()}:{os.getgid()}")
+        r = subprocess.run(["bash", str(self.root / "ops" / "scripts" / name)], capture_output=True, text=True, env=env)
         return r.returncode, r.stdout + r.stderr
 
     def render(self):
@@ -61,6 +63,7 @@ class Deployment:
         path = self.root / "volumes" / "letsencrypt" / "acme.json"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(data), encoding="utf-8")
+        path.chmod(0o600)
         return path
 
 
@@ -228,8 +231,10 @@ class StoredCertificates(unittest.TestCase):
         path.chmod(0)
         self.addCleanup(path.chmod, 0o600)
         rc, out = d.validate()
-        self.assertEqual(rc, 0, out)
         self.assertIn("NOT VERIFIED: volumes/letsencrypt/acme.json is not readable for this user", out)
+        # Mode 000 is as closed to Traefik as to this user: refused (test_traefik_file_access.py).
+        self.assertNotEqual(rc, 0, out)
+        self.assertIn("Traefik cannot read and write volumes/letsencrypt/acme.json", out)
 
 
 if __name__ == "__main__":
