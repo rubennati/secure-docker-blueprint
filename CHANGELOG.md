@@ -75,6 +75,9 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
   **Migration:** none for one domain. A deployment that added a second wildcard by hand lists both domains, quoted, then runs `render.sh`.
 
+- **`tls-standard` offers the post-quantum key exchange** (`core/traefik/ops/templates/dynamic/tls-profiles.yml.tmpl`, `docs/standards/traefik-security.md`). Its curve list replaced Go's default and left out `X25519MLKEM768`, the hybrid of X25519 and ML-KEM-768 that current browsers and OpenSSL 3.5 offer. The deployment standard therefore negotiated classic X25519 alone, while `tls-compatible` and `tls-strict` already used the hybrid, and it refused a client that offers only the hybrid. `X25519MLKEM768` now comes first. TLS 1.3 clients get the hybrid; TLS 1.2 clients negotiate X25519 as before.
+  **Migration:** `render.sh`, then restart Traefik.
+
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts

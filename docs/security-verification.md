@@ -138,7 +138,7 @@ These controls are enforced by Traefik configuration rendered from templates in 
 |-------|-------|
 | **Implemented?** | Yes |
 | **Location** | `core/traefik/ops/templates/dynamic/tls-profiles.yml.tmpl` |
-| **Profiles** | `tls-compatible` (TLS 1.2+, sniStrict), `tls-standard` (TLS 1.2+, forward-secrecy-only ciphers, X25519 preferred), `tls-strict` (TLS 1.3 only, sniStrict) |
+| **Profiles** | `tls-compatible` (TLS 1.2+, sniStrict), `tls-standard` (TLS 1.2+, forward-secrecy-only ciphers, X25519MLKEM768 preferred under TLS 1.3, X25519 under TLS 1.2), `tls-strict` (TLS 1.3 only, sniStrict) |
 | **Default** | `TLS_DEFAULT_OPTION` in `.env` builds the file provider's reserved `default` option, which every `tls=true` router takes; a router names another profile only as a documented exception (`tls-conflict` in CI refuses two options on one host name) |
 | **Gaps** | TLS profile is documentation-recommended per app but not machine-verified. No CI check confirms a given app uses an appropriate profile. |
 
