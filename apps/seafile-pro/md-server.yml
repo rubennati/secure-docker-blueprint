@@ -30,12 +30,17 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # secrets-env.sh exports the Docker Secrets below, then starts the image's own command.
+    entrypoint: ["/bin/sh", "/config/secrets-env.sh"]
+    command: ["bash", "-c", "/opt/scripts/entrypoint.sh"]
+    secrets:
+      - SEAFILE_DB_PWD
+      - JWT_KEY
+      - REDIS_PWD
     environment:
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in .env}
       - SEAFILE_MYSQL_DB_HOST=db
       - SEAFILE_MYSQL_DB_PORT=3306
       - SEAFILE_MYSQL_DB_USER=${DB_USER}
-      - SEAFILE_MYSQL_DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD:?Set SEAFILE_MYSQL_DB_PASSWORD in .env}
       - SEAFILE_MYSQL_DB_SEAFILE_DB_NAME=seafile_db
       - SEAFILE_LOG_TO_STDOUT=false
       - MD_PORT=8084
@@ -48,16 +53,16 @@ services:
       - CACHE_PROVIDER=redis
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_PASSWORD=${REDIS_PASSWORD:?Set REDIS_PASSWORD in .env}
 
     # --- Storage ---
     volumes:
+      - ./config/secrets-env.sh:/config/secrets-env.sh:ro
       - ./volumes/seafile-data:/shared
 
     # --- Health & Observability ---
-    # healthcheck: none — the image has no shell, so there is nothing for
-    # healthcheck.test to run. Confirmed with
-    # `docker run --rm --entrypoint sh <image>`.
+    # healthcheck: none yet. The image has a shell (secrets-env.sh runs in
+    # it), but no endpoint or command has been established that tells a
+    # working server from a running process.
 
     # --- Networking ---
     networks:

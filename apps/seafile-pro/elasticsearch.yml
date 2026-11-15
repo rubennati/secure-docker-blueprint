@@ -48,6 +48,7 @@ services:
       - app-internal
 
 networks:
+  # Same definition as seafile-server.yml: Compose merges the files, and two
+  # definitions of one network make it recreate the network of a running stack.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
-    internal: true
