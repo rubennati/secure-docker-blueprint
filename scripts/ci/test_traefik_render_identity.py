@@ -9,8 +9,8 @@ Position 1 of model.yml is one decided difference (DEC-076, step 3:
 access-trusted and access-trusted-vpn in place of access-lan and access-lan-vpn)
 and the rendered edge-networks.yml and host/ingress.nft the others (DEC-075, step 5;
 DEC-078, step 6), and the dashboard router's middleware order (headers first, FA-13,
-2026-11-04), and the policy csp-self-only holds (own origin only, no 'unsafe-inline');
-those regions are cut out of both renders before the comparison and checked on their
+2026-11-04), and the policy csp-self-only holds (own origin only, no 'unsafe-inline'),
+and tls-standard's curve list (the post-quantum hybrid X25519MLKEM768 first); those regions are cut out of both renders before the comparison and checked on their
 own, and comment-only lines of model.yml are not compared; a step that changes
 anything else, anywhere, fails here. A shallow
 checkout without the tag skips, as the other tag-dependent tests do.
@@ -89,6 +89,15 @@ def _without_csp_self_only(text: str) -> tuple[str, str]:
     return text[:m.start()] + m.group(1) + '""' + text[m.end():], m.group(2)
 
 
+RELEASE_CURVES = ["X25519", "CurveP256", "CurveP384"]
+
+
+def _without_standard_curves(path: Path) -> tuple[dict, list]:
+    """(tls-profiles.yml as loaded, without tls-standard's curvePreferences; that list)."""
+    doc = yaml.safe_load(path.read_text(encoding="utf-8"))
+    return doc, doc["tls"]["options"]["tls-standard"].pop("curvePreferences")
+
+
 class RenderIdentity(unittest.TestCase):
     def setUp(self):
         r = subprocess.run(["git", "-C", str(REPO), "archive", "--format=tar", REFERENCE_TAG, "core/traefik"],
@@ -127,6 +136,15 @@ class RenderIdentity(unittest.TestCase):
                 self.assertIn("    access-lan:", access_a)
                 self.assertIn("    access-trusted:", access_b)
                 self.assertNotIn("access-lan", access_b, "the LAN class is gone (DEC-076)")
+                continue
+            if rel == "dynamic/tls-profiles.yml":
+                # tls-standard offers the post-quantum hybrid X25519MLKEM768
+                # first (2026-11-15); everything else loads as the release did.
+                ya, curves_a = _without_standard_curves(a / rel)
+                yb, curves_b = _without_standard_curves(b / rel)
+                self.assertEqual(ya, yb, f"{rel} differs from {REFERENCE_TAG} outside tls-standard's curves")
+                self.assertEqual(curves_a, RELEASE_CURVES)
+                self.assertEqual(curves_b, ["X25519MLKEM768"] + RELEASE_CURVES)
                 continue
             if rel == "dynamic/routers-system.yml":
                 # The headers position moved in front of access (FA-13, 2026-11-04):
