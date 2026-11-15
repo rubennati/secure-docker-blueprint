@@ -2,8 +2,9 @@
 # static-site pattern — production stack (Traefik, no backend)
 # =============================================================================
 # Reusable deployment shape for a build step that produces static files. Copy
-# this directory into apps/ or business/ under the real project's name, replace
-# the build context below with the real source, and follow
+# this directory into the real project's own repository, which a host checks
+# out under custom/<name> (docs/standards/deployment-lifecycle.md, section 11),
+# replace the build context below with the real source, and follow
 # docs/standards/custom-application.md for image identity.
 #
 # BLOCK ORDER matches every other stack in this repository — see
@@ -43,12 +44,12 @@ services:
     # --- Resources ---
     # Static file serving has no database or worker load. Starting values, not
     # measured — retune from `docker stats` once a real project is deployed.
+    # No cpus: nginx serving files pins no core (compose-structure.md).
     memswap_limit: 256m
     deploy:
       resources:
         limits:
           memory: 256m
-          cpus: "0.50"
           pids: 100
         reservations:
           memory: 64m
@@ -64,7 +65,8 @@ services:
     # persists or needs a volume.
 
     # --- Networking ---
-    # proxy-public only. There is no backend to isolate, so this pattern has no
+    # The Traefik network only — TRAEFIK_NETWORK, the stack's own edge network
+    # by default. There is no backend to isolate, so this pattern has no
     # app-internal network — that is the concrete difference from a stack with
     # a database.
     networks:
@@ -93,6 +95,10 @@ services:
 # NETWORKS
 # --------------------------------------------------------
 networks:
+  # The network Traefik reaches this stack on, created by core/traefik:
+  # TRAEFIK_NETWORK in .env names it — <project>-edge, the stack's own edge
+  # network, listed in core/traefik's EDGE_NETWORKS (DEC-075); or proxy-public,
+  # the shared network, where every member reaches every other.
   proxy-public:
     name: ${TRAEFIK_NETWORK}
     external: true
