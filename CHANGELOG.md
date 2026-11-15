@@ -8,6 +8,28 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Security
+
+- **The CrowdSec bouncer key is out of the configuration every account can read** (`core/traefik/`).
+  `render.sh` wrote the key into `config/dynamic/crowdsec.yml` with mode 644, in a
+  directory Traefik reads as a whole. Tightening the file to 600 took every router down:
+  Traefik runs as root without `CAP_DAC_OVERRIDE` and cannot read a file of another
+  user's, the plugin fails to load, and the entrypoint names a middleware that does not
+  exist. The key is a Docker secret now: `crowdsec-bouncer.yml` mounts
+  `.secrets/crowdsec_bouncer_key.txt` at `/run/secrets/crowdsec_bouncer_key`, and both
+  middlewares name that path as the plugin's `crowdsecLapiKeyFile`. `render.sh` refuses
+  the switch without the overlay in `COMPOSE_FILE` and with a key file Traefik cannot
+  read (it reads it as owner uid 0 or through group 0), and names one every account can
+  read. `validate.sh` checks the same, refuses a rendered middleware that still holds a
+  key, and reads the key inside the running container. With group 0 and mode 640, plugin
+  v1.7.1 on Traefik 3.7.17 authenticates from the file and pulls decisions; a 600 file of
+  the operator's gives `permission denied` and 404 on every router, the state `render.sh`
+  refuses. **Migration:** with the bouncer on, move the key from `CROWDSEC_BOUNCER_KEY`
+  in `.env` into `.secrets/crowdsec_bouncer_key.txt` (`sudo chown "$USER":0`,
+  `chmod 640`), append `:crowdsec-bouncer.yml` to `COMPOSE_FILE`, render and recreate
+  Traefik (`core/traefik/README.md`, "How to enable"). The old key was readable by every
+  account on the host; where other accounts exist, issue a new one.
+
 ### Added
 
 - **Own stacks in `custom/`** (`docs/standards/deployment-lifecycle.md` §11, `scripts/stacks.sh`, `scripts/overview.sh`, [DEC-082](.ai/decisions.md#dec-082)). An application from a private repository runs on the host in `custom/<name>`, a checkout of its own repository read through a deploy key, behind the same Traefik, CrowdSec and Authentik. It meets the same standards as a Blueprint stack and names the release it follows in its README (`**Blueprint:** vX.Y.Z`). `stacks.sh status` lists own stacks, `stacks.sh update` names the Migration notes each has to follow, and neither checks them out or removes them; a line under `custom/` in `stacks` is refused with the reason. `overview.sh` shows them in the service table and the router survey.
@@ -21,6 +43,8 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 ### Fixed
 
 - **`stacks.sh` keeps Git from deleting data on a path it does not check out** (`scripts/stacks.sh`, `docs/standards/deployment-lifecycle.md` §2). Git counts a release directory outside a partial checkout as its own: once only ignored files are left in it — `.env`, `.secrets/`, `volumes/` — `git sparse-checkout` deletes them, and it follows a symbolic link to delete in the directory the link points to. A stack directory copied onto such a path, or a link from it to data kept elsewhere, was lost at the next `apply`, while `status` reported that file and checkout match. `apply` and `update` now refuse while a path outside the checkout holds a file or a link, and name it; `status` lists it.
+
+- **The Invoice Ninja preview renders while the editor asks for several at once** (`business/invoiceninja/docker-compose.yml`, `.env.example`, README). Chromium needs about 140 processes per render, and the editor requests a new preview as you type. With room for 200 processes, two overlapping previews failed: Chromium aborted, and the preview answered 500 after 60 seconds while a single PDF still rendered. The application now has 2 GB and 1024 processes, which holds six renders at once, and no CPU limit: with one core, four previews took 11-14 seconds instead of about one. `APP_MEMORY_LIMIT` and `APP_PIDS_LIMIT` in `.env` raise both without editing the compose file. The README names the container counter that shows which limit a failed render hit. The new limits apply once the container is recreated (`docker compose up -d app`).
 
 - **A browser moves between the stacks of one domain without `421 Misdirected Request`** (nine stacks, `core/traefik`, `docs/standards/traefik-security.md`). Under the wildcard certificate a browser reuses one connection for every host, and Traefik answers 421 when the next host's router names another TLS option — compared by name, so `tls-strict` differs even from a `default` built from `tls-strict`. Nine stacks named an option with no reason recorded and now take `default`, the deployment standard: `apps/nextcloud`, `apps/whoami`, `apps/wordpress`, `business/openproject` and `business/vikunja` (were `tls-compatible`), `core/dockhand`, `core/orion-belt`, `core/portainer` and `core/shellhub` (were `tls-strict`). Among the clients `tls-compatible` admits, `tls-standard` refuses only Internet Explorer 11 on Windows 7 and 8.1. The dashboard ships `TRAEFIK_DASHBOARD_TLS_OPTION=default`; `validate.sh` warns when it names a profile under the wildcard and refuses a name Traefik does not define. Vaultwarden, JumpServer, Warpgate and Shlink keep their option and its reason. **Migration:** in `core/traefik/.env`, set `TRAEFIK_DASHBOARD_TLS_OPTION=default` and render; the nine stacks take `default` once recreated, and their `APP_TRAEFIK_TLS_OPTION` is no longer read.
 
