@@ -560,9 +560,15 @@ dashboard_covered_by_wildcard() {
   [ "${label#*.}" = "$label" ]               # exactly one label below the wildcard
 }
 
-if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DOMAIN:-}"; then
+# ACME_WILDCARD_DOMAIN is a list; the first domain that covers the host counts.
+dashboard_zone=""
+for zone in ${ACME_WILDCARD_DOMAIN:-}; do
+  if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${zone}"; then dashboard_zone="${zone}"; break; fi
+done
+
+if [ -n "${dashboard_zone}" ]; then
   if [ -n "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
-    echo "WARNING: *.${ACME_WILDCARD_DOMAIN} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
+    echo "WARNING: *.${dashboard_zone} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
     echo "         Traefik will request a second certificate for that hostname, publishing it in Certificate Transparency logs."
     echo "         Leave the variable empty to serve the wildcard instead."
   fi
@@ -571,7 +577,7 @@ if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DO
   # their content: a dashboard naming tls-strict answers that browser 421, even
   # when TLS_DEFAULT_OPTION builds `default` from tls-strict as well.
   if [ "${TRAEFIK_DASHBOARD_TLS_OPTION}" != default ]; then
-    echo "WARNING: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} under *.${ACME_WILDCARD_DOMAIN}, where every stack"
+    echo "WARNING: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} under *.${dashboard_zone}, where every stack"
     echo "         without an exception takes \`default\`. A browser that comes from such a host reuses its"
     echo "         connection, and Traefik answers 421 Misdirected Request on ${TRAEFIK_DASHBOARD_HOST}: it compares"
     echo "         option names. Set TRAEFIK_DASHBOARD_TLS_OPTION=default and render (no restart needed)."
@@ -579,7 +585,7 @@ if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DO
 elif [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
   echo "SELECT A CERTIFICATE STRATEGY — neither is configured for ${TRAEFIK_DASHBOARD_HOST}."
   echo
-  echo "  Wildcard    set ACME_WILDCARD_DOMAIN to the parent domain of that host,"
+  echo "  Wildcard    add the parent domain of that host to ACME_WILDCARD_DOMAIN,"
   echo "              and leave TRAEFIK_DASHBOARD_CERT_RESOLVER empty."
   echo "  Per-domain  set TRAEFIK_DASHBOARD_CERT_RESOLVER to a resolver name:"
   echo "              ${ACME_RESOLVER_DNS}  DNS-01, no public port needed"
@@ -680,10 +686,40 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   if [ -n "${ACME_WILDCARD_DOMAIN:-}" ]; then
     test -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" \
       || { echo "Missing config/dynamic/acme-wildcard.yml although ACME_WILDCARD_DOMAIN is set (run render.sh)"; exit 1; }
+    # One router per listed domain, and none for a domain the list dropped: a
+    # domain added after the last render is not requested, and one removed is
+    # still requested, until render.sh runs.
+    rendered_zones="$(sed -n 's/^[[:space:]]*- main: "\(.*\)"$/\1/p' "${ROOT_DIR}/config/dynamic/acme-wildcard.yml")"
+    for zone in ${ACME_WILDCARD_DOMAIN}; do
+      printf '%s\n' "${rendered_zones}" | grep -qxF "${zone}" \
+        || { echo "ERROR: ACME_WILDCARD_DOMAIN names ${zone}, but config/dynamic/acme-wildcard.yml requests no wildcard for it — run render.sh."; exit 1; }
+    done
+    for zone in ${rendered_zones}; do
+      case " ${ACME_WILDCARD_DOMAIN} " in *" ${zone} "*) ;; *)
+        echo "ERROR: config/dynamic/acme-wildcard.yml requests *.${zone}, which ACME_WILDCARD_DOMAIN does not name — run render.sh."; exit 1 ;;
+      esac
+    done
   elif [ -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" ]; then
     echo "WARNING: config/dynamic/acme-wildcard.yml exists but ACME_WILDCARD_DOMAIN is empty —"
     echo "         a wildcard router from an earlier render is still in place. Remove the file"
     echo "         (bash ops/scripts/reset-templates.sh, then render.sh) if the wildcard is no longer wanted."
+  fi
+
+  # The certificates Traefik stores against the wildcards the list asks for:
+  # one for a dropped domain is still served and renewed, one for a single
+  # hostname under a listed wildcard republishes that name at every renewal.
+  # acme.json belongs to Traefik's user with mode 600; another user is told so.
+  acme_file="${ROOT_DIR}/volumes/letsencrypt/$(basename "${ACME_STORAGE:-acme.json}")"
+  if [ -e "${acme_file}" ]; then
+    if [ ! -r "${acme_file}" ]; then
+      echo "NOT VERIFIED: ${acme_file#"${ROOT_DIR}/"} is not readable for this user — run validate.sh as root"
+      echo "              to compare the stored certificates with ACME_WILDCARD_DOMAIN."
+    elif command -v python3 >/dev/null 2>&1; then
+      # shellcheck disable=SC2086  # the list is meant to split into arguments
+      python3 "${ROOT_DIR}/ops/scripts/check-acme-certs.py" "${acme_file}" ${ACME_WILDCARD_DOMAIN:-} || true
+    else
+      echo "NOT VERIFIED: python3 missing — the stored certificates were not compared with ACME_WILDCARD_DOMAIN."
+    fi
   fi
 
   # The rendered state has to match the switch. Both directions are errors: the

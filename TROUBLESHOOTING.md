@@ -346,14 +346,16 @@ openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null \
 **Cause:** no certificate in Traefik's store matches the hostname, and the
 fallback is silent. On the per-domain path (`ACME_WILDCARD_DOMAIN` unset) this is
 the `tls.certresolver` label still commented out in the app's
-`docker-compose.yml`; on the wildcard path it is a hostname outside
-`*.${ACME_WILDCARD_DOMAIN}`, or a wildcard that was never issued (token
-permissions, `acme.json` empty).
+`docker-compose.yml`; on the wildcard path it is a hostname under none of the
+domains in `ACME_WILDCARD_DOMAIN`, or a wildcard that was never issued (token
+permissions on that zone; `validate.sh`, run as root, notes a listed domain
+`acme.json` holds no certificate for).
 
 **Fix:** per-domain — uncomment the `tls.certresolver` label, set
 `APP_TRAEFIK_CERT_RESOLVER` in the app `.env`, `docker compose up -d
 --force-recreate <service>`, re-run the `openssl` check. Wildcard — put the
-hostname under the wildcard domain, or opt that app into its own certificate
+hostname under a listed domain or add its domain to the list (render, validate,
+`docker compose up -d`), or opt that app into its own certificate
 with the same label. Which line goes where: `docs/standards/traefik-labels.md`
 → "Enabling certresolver"; the two strategies: `core/traefik/README.md` →
 "Certificate strategy".

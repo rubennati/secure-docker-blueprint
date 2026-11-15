@@ -68,6 +68,13 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 - **Paperless-ngx names its database engine and its path from 2.x** (`apps/paperless-ngx`). Both compose files set `PAPERLESS_DBENGINE: postgresql`, which 3.x documents as required for PostgreSQL; 3.4.2 still infers it from `PAPERLESS_DBHOST`. `UPSTREAM.md` says that 3.x upgrades only from 2.20.15 and lists what the move changes for this stack: archive files only for documents without text by default, removed consumer and OCR settings, duplicates consumed, consume scripts without positional arguments, a rebuilt search index. `CONFIG.md` describes the 3.x settings in place of the removed 2.x ones.
   **Migration:** none for an installation on 3.x. One on 2.x moves to 2.20.15 first, then follows `UPSTREAM.md` → "From 2.x to 3.x".
 
+- **Traefik requests a wildcard certificate for every domain it serves** (`core/traefik/ops/scripts/render.sh`, `validate.sh`, `check-acme-certs.py`, `.env.example`, `README.md`). `ACME_WILDCARD_DOMAIN` took one domain; a second zone needed a router written by hand into the rendered file, and the next render removed it without a word. The variable is now a quoted, space-separated list with one ACME router per domain. With one domain the render is unchanged.
+  - `render.sh` refuses an entry written as `*.example.com`, one that is not a lower-case domain name, and a domain listed twice.
+  - `validate.sh` checks the dashboard host against every listed domain. It refuses a rendered file that requests other domains than the list.
+  - Run as root, `validate.sh` compares `acme.json` with the list and warns about two cases: a stored wildcard the list no longer names, which Traefik keeps serving and renewing, and a certificate for a single hostname under a listed wildcard, whose every renewal republishes the name in Certificate Transparency logs.
+
+  **Migration:** none for one domain. A deployment that added a second wildcard by hand lists both domains, quoted, then runs `render.sh`.
+
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts

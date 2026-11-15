@@ -366,6 +366,22 @@ One certificate covers every subdomain. Requires DNS at Cloudflare — the one D
 
 `*.example.com` matches exactly one label: `traefik.example.com` is covered, `traefik.admin.example.com` is not. `validate.sh` checks the actual relationship between `TRAEFIK_DASHBOARD_HOST` and `ACME_WILDCARD_DOMAIN`, and refuses a configuration where neither a covering wildcard nor a resolver exists.
 
+**Several domains:** list them, space-separated inside the quotes:
+
+```env
+ACME_WILDCARD_DOMAIN="example.com example.net"
+```
+
+- `render.sh` writes one ACME router per domain into `acme-wildcard.yml`. The first keeps the name `acme-wildcard`, the others are `acme-wildcard-2`, `-3`, …
+- The Cloudflare token needs Zone:Read and DNS:Edit on every listed zone.
+- `validate.sh` refuses a rendered file that does not request exactly the listed domains, so a domain added or removed without `render.sh` does not pass.
+
+**Stored certificates:** where `volumes/letsencrypt/acme.json` exists, `validate.sh` compares it with the list. Run it as root, because the file belongs to Traefik's user with mode 600; another user gets `NOT VERIFIED`. It reads only the domain names in the file, never the keys. Each finding is a warning and does not fail the run:
+
+- A wildcard for a domain the list does not name: Traefik keeps serving and renewing it.
+- A certificate for a single hostname a listed wildcard covers: each renewal publishes that hostname in Certificate Transparency logs again.
+- A listed domain with no certificate yet is a note.
+
 ### Path B — Per-domain (one cert per subdomain)
 
 Each app requests its own cert. Works with any resolver, no wildcard setup.
@@ -454,6 +470,9 @@ It does not remove the one already stored:
   certificate, so there is no supported way to remove it selectively.
 - Certificate Transparency logs are append-only. A hostname already published
   stays published, whatever happens to the certificate.
+
+`validate.sh` names such a certificate (see "Stored certificates" above), so it is
+not forgotten.
 
 The change is therefore forward-looking. A new installation issues no separate
 dashboard certificate; an existing one stops requesting further ones. Neither the
