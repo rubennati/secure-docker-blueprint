@@ -95,15 +95,6 @@ directory. Their host paths are
 `/var/lib/docker/volumes/openproject_<name>/_data`, which is what a backup has to
 name.
 
-### Why `tls-compatible`
-
-The stack names `tls-compatible` on the router's `tls.options` label
-(`APP_TRAEFIK_TLS_OPTION=tls-compatible` in `.env`) — a documented exception
-kept from before the model, with no reason recorded. The profile exists for
-older clients that must still connect, and OpenProject is reached by whatever
-browsers a team already has. Verify on a host whether `tls-standard`, the
-deployment default, serves them, then remove the variable and the label.
-
 ### What it sends outward
 
 The security badge requests `releases.openproject.com/v1/check.svg` with a

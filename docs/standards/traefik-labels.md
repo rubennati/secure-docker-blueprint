@@ -181,6 +181,9 @@ and logs it; CI refuses it (`tls-conflict`).
 Under the wildcard certificate a browser reuses one HTTP/2 connection across
 host names; a host whose option differs from the connection's gets
 `421 Misdirected Request` ([`traefik-security.md`](traefik-security.md#tls-profiles-tls-profilesyml)).
+The comparison is by name: a label naming the profile that `default` is built
+from is still another option, so the way back to the shared connection is no
+label at all.
 
 ## Special Cases
 
