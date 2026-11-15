@@ -1,13 +1,13 @@
 http:
   routers:
-    acme-wildcard:
-      rule: "Host(`acme-bootstrap.${ACME_WILDCARD_DOMAIN}`)"
+    ${ACME_WILDCARD_ROUTER}:
+      rule: "Host(`acme-bootstrap.${ACME_WILDCARD_ZONE}`)"
       entryPoints:
         - websecure
       service: noop@internal
       tls:
         certResolver: ${ACME_RESOLVER_DNS}
         domains:
-          - main: "${ACME_WILDCARD_DOMAIN}"
+          - main: "${ACME_WILDCARD_ZONE}"
             sans:
-              - "*.${ACME_WILDCARD_DOMAIN}"
+              - "*.${ACME_WILDCARD_ZONE}"

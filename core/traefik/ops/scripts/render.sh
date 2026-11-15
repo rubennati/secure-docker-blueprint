@@ -302,6 +302,47 @@ done
 n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
 
 # ---------------------------------------------------------------------------
+# Wildcard certificates. ACME_WILDCARD_DOMAIN, quoted and space-separated, names
+# each domain that gets a certificate for itself and *.<domain>; one ACME router
+# per domain in config/dynamic/acme-wildcard.yml requests it over DNS-01. Empty
+# or unset renders no wildcard (per-domain certificates). Checked here because a
+# malformed name would request nothing and say so only in Traefik's log.
+# ---------------------------------------------------------------------------
+seen_zones=" "
+for zone in ${ACME_WILDCARD_DOMAIN:-}; do
+  case "${zone}" in
+    '*.'*)
+      echo "ERROR: ACME_WILDCARD_DOMAIN: '${zone}' — write the domain without '*.': ${zone#\*.}"
+      echo "       The certificate carries both the domain and *.<domain>."
+      exit 1 ;;
+  esac
+  if ! printf '%s' "${zone}" | grep -qE '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'; then
+    echo "ERROR: ACME_WILDCARD_DOMAIN: '${zone}' is not a domain name (lower-case labels of letters,"
+    echo "       digits and -, separated by dots, at least two labels: example.com)."
+    exit 1
+  fi
+  case "${seen_zones}" in *" ${zone} "*) echo "ERROR: ACME_WILDCARD_DOMAIN: '${zone}' is listed twice."; exit 1 ;; esac
+  seen_zones="${seen_zones}${zone} "
+done
+n_zones=$(printf '%s\n' ${ACME_WILDCARD_DOMAIN:-} | grep -c . || true)
+
+# One router per wildcard domain from the template. The first keeps the name
+# acme-wildcard, so a single domain renders as before; the others are
+# acme-wildcard-2, -3, ... The name is only the router's: Traefik keeps the
+# certificates in acme.json by domain.
+render_acme_wildcard() {
+  local zone i=0
+  printf '%s\n' "http:" "  routers:"
+  for zone in ${ACME_WILDCARD_DOMAIN}; do
+    i=$((i + 1))
+    if [ "${i}" -eq 1 ]; then ACME_WILDCARD_ROUTER=acme-wildcard; else ACME_WILDCARD_ROUTER="acme-wildcard-${i}"; fi
+    ACME_WILDCARD_ZONE="${zone}" ACME_WILDCARD_ROUTER="${ACME_WILDCARD_ROUTER}" \
+      envsubst '${ACME_WILDCARD_ROUTER} ${ACME_WILDCARD_ZONE} ${ACME_RESOLVER_DNS}' \
+      < "${TPL_DIR}/dynamic/acme-wildcard.yml.tmpl" | tail -n +3
+  done
+}
+
+# ---------------------------------------------------------------------------
 # The published ports, one block per address family (DEC-075.3, step 7).
 # TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6 each hold a host address or nothing;
 # nothing means that family is not published. render.sh writes them into
@@ -659,10 +700,13 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
       fi
       ;;
     acme-wildcard.yml)
-      if [ -z "${ACME_WILDCARD_DOMAIN:-}" ]; then
+      if [ "${n_zones}" -eq 0 ]; then
         echo " -> ${base} (skipped – ACME_WILDCARD_DOMAIN not set)"
         continue
       fi
+      render_acme_wildcard | place "$out"
+      echo " -> ${base} (${n_zones} wildcard domain(s): ${ACME_WILDCARD_DOMAIN})"
+      continue
       ;;
     routers-system.yml)
       # An empty dashboard resolver means the wildcard covers the dashboard
