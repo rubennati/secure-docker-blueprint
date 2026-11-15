@@ -287,7 +287,7 @@ docker compose config | sed -E 's/(CF_DNS_API_TOKEN: ).*/\1***REDACTED***/'
 | | |
 |---|---|
 | **State** | `volumes/letsencrypt/` — `acme.json`, holding the ACME account key and every issued certificate |
-| **Also needed** | `.env` — it holds `CF_DNS_API_TOKEN` and, with the bouncer on, `CROWDSEC_BOUNCER_KEY`, and the render needs it |
+| **Also needed** | `.env` — it holds `CF_DNS_API_TOKEN`, and the render needs it · `.secrets/crowdsec_bouncer_key.txt` with the bouncer on, owner and mode included |
 | **Reproducible** | `config/` — rendered by `ops/scripts/render.sh` from the templates and `.env` · `volumes/logs/` · `volumes/plugins-storage/`, downloaded again on start |
 | **Database** | None. |
 | **Quiescing** | Not needed. `acme.json` is rewritten atomically on issuance and renewal. |
