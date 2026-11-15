@@ -54,7 +54,7 @@ docker compose up -d
 # https://<APP_TRAEFIK_HOST> (only reachable from the configured access policy)
 ```
 
-As shipped: `access-vpn`, `limit-standard`, `headers-standard`, and `tls-strict` named on the router as a documented exception (VPN-only admin tool, current clients only). Adjust in `.env` if a different setup is needed.
+As shipped: `access-vpn`, `limit-standard`, `headers-standard`, and the deployment's TLS option (`TLS_DEFAULT_OPTION` in `core/traefik/.env`). Adjust in `.env` if a different setup is needed.
 
 ## Adding the local environment
 

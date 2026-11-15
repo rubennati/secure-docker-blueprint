@@ -259,7 +259,7 @@ work:
 | Block | Placed | What it does |
 |---|---|---|
 | `frame-self` | before the profile | `X-Frame-Options: SAMEORIGIN` — the application frames its own pages (listmonk's campaign preview, Nextcloud) |
-| `csp-self-only` | before the profile | an enforcing `Content-Security-Policy` for an application tested against it (whoami) |
+| `csp-self-only` | before the profile | an enforcing `Content-Security-Policy` for an application tested against it (whoami): scripts, styles and every other resource from the page's own origin, images and fonts also as `data:`, no inline script or style; `base-uri` and `form-action` stated, because they do not fall back to `default-src`. It names no `frame-ancestors`: where that directive is present, browsers ignore `X-Frame-Options`, and the profile or `frame-self` decides framing |
 | `hsts-include-subdomains` | before the profile | the per-domain HSTS extension, see above |
 | `header-*` | before the profile | one header an `application-owned` stack lacks |
 | `forwarded-proto-https` | after the four | `X-Forwarded-Proto: https` to the backend — an application that derives its URLs from it (Paperless-ngx, Matomo, the office servers, Ghost's ActivityPub) |
@@ -449,9 +449,15 @@ An option of its own also separates a stack from its neighbours in the
 browser. Under the wildcard certificate, host names that share an address
 share one HTTP/2 connection; a request for a host whose router takes another
 option than the connection was negotiated under is refused with
-`421 Misdirected Request`. So an exception costs more than its handshake, and
-it stays only where its reason holds
-([`core/traefik/README.md`](../../core/traefik/README.md#troubleshooting)).
+`421 Misdirected Request`. Traefik compares the option *names*, not what they
+contain: `tls-strict@file` is another option than a `default` built from
+`tls-strict`, and `tls-standard@file` another than the shipped `default`
+(measured with Traefik 3.7.17). Naming the profile `default` is built from
+therefore does not join the shared connection; only naming no option does. So an
+exception costs more than its handshake, and it stays only where its reason
+holds ([`core/traefik/README.md`](../../core/traefik/README.md#troubleshooting)).
+The dashboard's `TRAEFIK_DASHBOARD_TLS_OPTION` is `default` as shipped for the
+same reason; `validate.sh` warns when it names a profile under the wildcard.
 
 ---
 
