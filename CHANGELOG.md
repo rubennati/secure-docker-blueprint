@@ -84,6 +84,12 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 - **`overview.sh --host` names image pins a `.env` kept from an older install** (`scripts/overview.sh`, `docs/standards/deployment-lifecycle.md` §8). Every variable an `image:` line names is compared with the stack's `.env.example`; a difference is listed as a hint, and the exit status stays as it is.
 
+- **ERPNext prints PDFs while several are requested at once** (`business/erpnext/docker-compose.yml`, `README.md`, `UPSTREAM.md`). Each PDF starts a Chromium of about 65 processes and threads, and Frappe renders up to four at a time, each with its own Chromium when they start together. The backend's limit of 200 refused the forks at four PDFs. The renders hung until Gunicorn's timeout, and every later PDF answered `503 Server is busy` until the backend restarted. The backend's limit is 512; measured, four to twelve PDFs at once stay at 268 at most. The README describes an upstream hang that remains: a Chromium that does not report its start keeps the request until Gunicorn ends it after 120 seconds.
+  **Migration:** `docker compose up -d erpnext-backend`.
+
+- **`tls-standard` offers the post-quantum key exchange** (`core/traefik/ops/templates/dynamic/tls-profiles.yml.tmpl`, `docs/standards/traefik-security.md`). Its curve list replaced Go's default and left out `X25519MLKEM768`, the hybrid of X25519 and ML-KEM-768 that current browsers and OpenSSL 3.5 offer. The deployment standard therefore negotiated classic X25519 alone, while `tls-compatible` and `tls-strict` already used the hybrid, and it refused a client that offers only the hybrid. `X25519MLKEM768` now comes first. TLS 1.3 clients get the hybrid; TLS 1.2 clients negotiate X25519 as before.
+  **Migration:** `render.sh`, then restart Traefik.
+
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts

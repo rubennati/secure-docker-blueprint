@@ -158,12 +158,18 @@ services:
 
     # --- Resources ---
     # Two Gunicorn workers with four threads each (upstream's default).
+    # pids: every PDF starts a Chromium of about 65 processes and threads, and
+    # Frappe renders up to half of workers x threads PDFs at once — four here,
+    # each with its own Chromium when they start together. Measured: 262 at
+    # four or more; 200 refused the forks and left PDF printing answering 503
+    # until a restart (README, "PDF printing"). More workers or threads raise
+    # the need by about 65 for every two.
     memswap_limit: 2G          # == memory: no swap
     deploy:
       resources:
         limits:
           memory: 2G
-          pids: 200
+          pids: 512
         reservations:
           memory: 512M
 

@@ -46,6 +46,41 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 | `APP_TRAEFIK_ACCESS=access-vpn` | A company's books in one place |
 | `config/nginx-socketio.conf`: a second listener on 8081 for `/socket.io`, with `Origin http://$host:8080`, and the site name as a network alias of the frontend on `app-internal` | The realtime service authenticates a socket by fetching `<Origin>/api/method/frappe.realtime.get_user_info`. The image's nginx puts the public URL in `Origin`, which a container on `app-internal` cannot reach — every socket was refused with `Unauthorized: TypeError: fetch failed`. Upstream's own compose leaves that container on a network with a way out; this keeps the isolation and gives it an address that exists |
 
+## PDF printing under load (2026-11-15)
+
+Against `docker-compose.local.yml` at `v16.54.0` (Frappe 16.55.2), with the
+production limits applied to the backend and the queue workers. PDFs of a ToDo in
+the Standard format were requested through `download_pdf`, 1, 2, 4, 8 and 12 at
+once. Processes and threads were sampled from the backend's cgroup:
+
+- Chromium is the default generator (`pdf_generator` in Print Settings).
+  wkhtmltopdf failed in this setup: it fetches the stylesheets through the site's
+  `host_name`, which the local file sets to `http://localhost:8080`, unreachable
+  from the container.
+- `download_pdf` carries Frappe's concurrency limit: half of Gunicorn's
+  workers × threads, four here. Further requests wait 10 seconds for a slot, then
+  answer `503 Server is busy`.
+- A PDF takes about 65 processes and threads beyond Gunicorn's 16. PDFs that start
+  while no Chromium runs start one each: 75, 135, 253 and 262 at 1, 2, 4 and 8 on a
+  new site. Once warm, the same load stayed between 75 and 173.
+- At `pids: 200`, four PDFs at once on a new site reached the limit: 38 forks
+  refused, the four requests ended in `504` after 120 seconds, and 120 to 194
+  processes and threads of Chromium stayed behind. The renders kept their slots,
+  so every later PDF, one at a time and minutes later, answered `503`; other
+  requests were answered normally. Only a restart of the backend recovered it.
+- At `pids: 512` the limit was not reached (`pids.events` max 0; peak 268), and
+  memory peaked at 671 MiB of 2 GiB.
+- Frappe's start-up wait reads Chromium's stderr line by line, so its
+  `chromium_start_timeout` does not apply while no line arrives. On a new site, 2 of 8
+  PDFs at once hung until Gunicorn's 120-second timeout at `pids: 512`, and 3 of
+  12 without any limit; each left a Chromium behind. Printing then recovered by itself: the next 37
+  PDFs answered `200`.
+- In a queue worker, one PDF took 66 processes and threads at most, against a
+  limit of 100. The workers run one job at a time.
+
+**Outside this verification:** the production compose behind Traefik; print
+formats other than Standard; bulk PDF export; PDFs sent with email.
+
 ## The realtime service's session check (2026-09-23)
 
 Frappe's realtime server (`realtime/middlewares/authenticate.js`) authenticates a
@@ -150,7 +185,7 @@ throwaway `proxy-public` network without Traefik. `volumes/sites`, `volumes/logs
   its automatic restart
 
 **Outside this verification:** Traefik routing and TLS; the desk in a browser; accounting
-documents, stock and reports; email; PDF printing; an image upgrade with
+documents, stock and reports; email; PDF printing (measured on 2026-11-15, above); an image upgrade with
 `bench migrate`; backup and restore; more than one site.
 
 ## Version notes

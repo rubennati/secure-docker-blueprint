@@ -424,7 +424,7 @@ for the step-by-step enable and disable procedure.
 | Profile | Min TLS | Use case |
 |---------|---------|----------|
 | `tls-compatible` | 1.2 | older clients must connect |
-| `tls-standard` | 1.2 | strict ciphers and curves, X25519 preferred — the deployment standard |
+| `tls-standard` | 1.2 | strict ciphers and curves, the post-quantum hybrid X25519MLKEM768 preferred under TLS 1.3 and X25519 under TLS 1.2 — the deployment standard |
 | `tls-strict` | 1.3 | current browsers and clients only |
 
 A router with `tls=true` — every blueprint router — takes the file provider's
