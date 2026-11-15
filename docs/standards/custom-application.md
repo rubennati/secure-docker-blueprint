@@ -53,10 +53,11 @@ governance documents are recorded in
 [`development/static-site/`](../../development/static-site/) and
 [`development/web-api/`](../../development/web-api/). Both build a project's
 own source into a hardened production image; neither has a real application
-behind it. Adoption is by copying the pattern into `apps/` or `business/` under
-the real project's name, not by reference — at that point the copy is one of
-the two shapes above, most often the in-repo build layer, and this document's
-rules apply to it the same way. Each pattern is proven by a minimal fixture —
+behind it. Adoption is by copying, not by reference: into the project's own
+repository, which a host checks out under `custom/<name>` (below), or into
+`apps/` or `business/` when the stack becomes part of this repository — there
+the copy is one of the two shapes above, most often the in-repo build layer.
+This document's rules apply to the copy either way. Each pattern is proven by a minimal fixture —
 a working build that produces a healthy container — which establishes that the
 pattern's Dockerfile and Compose shape are correct. It does not establish that
 any real, adopted project has gone through it yet; that evidence starts

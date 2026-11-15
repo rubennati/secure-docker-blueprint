@@ -100,8 +100,8 @@ change containers is equivalent to root on the host. For a read-only view, set
 
 ### Who can reach it
 
-The route ships `access-vpn`, `limit-strict` and `headers-standard`, and names
-`tls-strict` as its TLS option. If the interface comes up blank or half-rendered
+The route ships `access-vpn`, `limit-strict` and `headers-standard`, and takes
+the deployment's TLS option. If the interface comes up blank or half-rendered
 on a cold cache, the proxy answered 429 to its first load: move to
 `limit-standard`, which keeps the headers and widens the burst to 500.
 

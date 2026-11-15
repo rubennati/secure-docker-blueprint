@@ -175,11 +175,12 @@ validates every compose file against the rules in
 
 The same job runs `scripts/ci/check-crowdsec-config.py --templates`. It renders
 `core/traefik` into a scratch copy three times — with the shipped `.env.example`,
-then with `CROWDSEC_BOUNCER_ENABLED=true` and a placeholder key, then with the
-switch off again over that render — and parses each result: the shipped default
-yields no plugin and no `crowdsec-*` middleware, the switch yields the plugin plus
-both middlewares keyed, and switching off removes both. It needs `envsubst`, which
-the runner image provides.
+then with `CROWDSEC_BOUNCER_ENABLED=true`, `crowdsec-bouncer.yml` in
+`COMPOSE_FILE` and a placeholder key file, then with the switch off again over
+that render — and parses each result: the shipped default yields no plugin and no
+`crowdsec-*` middleware; the switch yields the plugin plus both middlewares, each
+naming the key file the overlay mounts and holding no key; switching off removes
+both. It needs `envsubst`, which the runner image provides.
 
 `FAIL` blocks the pipeline. `WARN` is reported in the Job Summary but does not block.
 

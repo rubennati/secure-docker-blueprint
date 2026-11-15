@@ -8,6 +8,28 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+### Security
+
+- **The CrowdSec bouncer key is out of the configuration every account can read** (`core/traefik/`).
+  `render.sh` wrote the key into `config/dynamic/crowdsec.yml` with mode 644, in a
+  directory Traefik reads as a whole. Tightening the file to 600 took every router down:
+  Traefik runs as root without `CAP_DAC_OVERRIDE` and cannot read a file of another
+  user's, the plugin fails to load, and the entrypoint names a middleware that does not
+  exist. The key is a Docker secret now: `crowdsec-bouncer.yml` mounts
+  `.secrets/crowdsec_bouncer_key.txt` at `/run/secrets/crowdsec_bouncer_key`, and both
+  middlewares name that path as the plugin's `crowdsecLapiKeyFile`. `render.sh` refuses
+  the switch without the overlay in `COMPOSE_FILE` and with a key file Traefik cannot
+  read (it reads it as owner uid 0 or through group 0), and names one every account can
+  read. `validate.sh` checks the same, refuses a rendered middleware that still holds a
+  key, and reads the key inside the running container. With group 0 and mode 640, plugin
+  v1.7.1 on Traefik 3.7.17 authenticates from the file and pulls decisions; a 600 file of
+  the operator's gives `permission denied` and 404 on every router, the state `render.sh`
+  refuses. **Migration:** with the bouncer on, move the key from `CROWDSEC_BOUNCER_KEY`
+  in `.env` into `.secrets/crowdsec_bouncer_key.txt` (`sudo chown "$USER":0`,
+  `chmod 640`), append `:crowdsec-bouncer.yml` to `COMPOSE_FILE`, render and recreate
+  Traefik (`core/traefik/README.md`, "How to enable"). The old key was readable by every
+  account on the host; where other accounts exist, issue a new one.
+
 ### Added
 
 - **Own stacks in `custom/`** (`docs/standards/deployment-lifecycle.md` §11, `scripts/stacks.sh`, `scripts/overview.sh`, [DEC-082](.ai/decisions.md#dec-082)). An application from a private repository runs on the host in `custom/<name>`, a checkout of its own repository read through a deploy key, behind the same Traefik, CrowdSec and Authentik. It meets the same standards as a Blueprint stack and names the release it follows in its README (`**Blueprint:** vX.Y.Z`). `stacks.sh status` lists own stacks, `stacks.sh update` names the Migration notes each has to follow, and neither checks them out or removes them; a line under `custom/` in `stacks` is refused with the reason. `overview.sh` shows them in the service table and the router survey.
@@ -21,6 +43,23 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 ### Fixed
 
 - **`stacks.sh` keeps Git from deleting data on a path it does not check out** (`scripts/stacks.sh`, `docs/standards/deployment-lifecycle.md` §2). Git counts a release directory outside a partial checkout as its own: once only ignored files are left in it — `.env`, `.secrets/`, `volumes/` — `git sparse-checkout` deletes them, and it follows a symbolic link to delete in the directory the link points to. A stack directory copied onto such a path, or a link from it to data kept elsewhere, was lost at the next `apply`, while `status` reported that file and checkout match. `apply` and `update` now refuse while a path outside the checkout holds a file or a link, and name it; `status` lists it.
+
+- **The Invoice Ninja preview renders while the editor asks for several at once** (`business/invoiceninja/docker-compose.yml`, `.env.example`, README). Chromium needs about 140 processes per render, and the editor requests a new preview as you type. With room for 200 processes, two overlapping previews failed: Chromium aborted, and the preview answered 500 after 60 seconds while a single PDF still rendered. The application now has 2 GB and 1024 processes, which holds six renders at once, and no CPU limit: with one core, four previews took 11-14 seconds instead of about one. `APP_MEMORY_LIMIT` and `APP_PIDS_LIMIT` in `.env` raise both without editing the compose file. The README names the container counter that shows which limit a failed render hit. The new limits apply once the container is recreated (`docker compose up -d app`).
+
+- **Seafile Pro keeps no password in `.env`** (`apps/seafile-pro`). The database root and user passwords, the admin password, the JWT key, the Redis password, the OnlyOffice JWT secret and the SMTP password stood as variables in `.env` and in every container's configuration, readable with `docker inspect`. They are Docker Secrets in `.secrets/` now, as in Seafile CE, and so is the LLM key of the optional `seafile-ai.yml`. Seafile reads them from the environment only, so `config/secrets-env.sh` exports them in front of each service. The former reason, that `my_init` drops exported variables, does not hold: it had been checked with `docker exec … env`, which never shows them. A fresh stack under the new files initialises its databases, creates the administrator and serves login, upload, SeaDoc, notifications, thumbnails and the SeaSearch token behind Traefik, and no container's configuration carries a credential.
+  **Migration:** write the values your `.env` holds today into the files, unchanged — `db_root_pwd.txt` from `INIT_SEAFILE_MYSQL_ROOT_PASSWORD`, `seafile_db_pwd.txt` from `SEAFILE_MYSQL_DB_PASSWORD`, `seafile_admin_pwd.txt` from `INIT_SEAFILE_ADMIN_PASSWORD`, `jwt_key.txt` from `JWT_PRIVATE_KEY`, `redis_pwd.txt` from `REDIS_PASSWORD`, `onlyoffice_jwt_secret.txt` from `ONLYOFFICE_JWT_SECRET`, `smtp_pwd.txt` from `SEAFILE_SMTP_PASSWORD` — without a trailing newline, then `docker compose up -d` and remove the seven lines from `.env`. New values would no longer match the accounts MariaDB and Seahub created on the first start.
+
+- **Seafile CE's thumbnail server reads its credentials from the secrets too** (`apps/seafile/thumbnail-server.yml`). It was the one Seafile service without the shared entrypoint wrapper, so `.env` had to repeat the JWT key and the database password beside their secret files. It runs behind the wrapper now and serves a thumbnail to a signed-in session (403 without one); `.env` holds neither value. **Migration:** remove `JWT_PRIVATE_KEY` and `SEAFILE_MYSQL_DB_PASSWORD` from `.env` and recreate `seafile-thumbnail`.
+
+- **Seafile AI and Elasticsearch can be added to a running Seafile Pro** (`apps/seafile-pro/seafile-ai.yml`, `elasticsearch.yml`). Both overlays declared the stack's internal network `internal: true`, the other files without, so adding one made Compose recreate the network under the running stack. All files define it the same way now: not internal, because ClamAV fetches its signatures and Seafile AI reaches its LLM provider over it. Seafile AI joins a running stack without touching its network and reaches the provider's API.
+
+- **The development patterns lead to `custom/`** (`development/static-site`, `development/web-api`, `development/README.md`, `docs/standards/custom-application.md`, `docs/architecture.md`). They said to copy them into `apps/` or `business/`, which on a host is the Blueprint's checkout. An own application now goes into its own repository, which the host checks out under `custom/<name>`. The adoption steps add the stack's edge network to `EDGE_NETWORKS` and the README line `**Blueprint:** vX.Y.Z`, and an update takes a tag of that repository. The compose comments describe the Traefik network as the stack's own edge network by default, not `proxy-public`. `cpus` is gone from both: neither pattern pins a core, the case `compose-structure.md` sets it for.
+
+- **`csp-self-only` holds what its name says** (`core/traefik/ops/templates/dynamic/model.yml.tmpl`, `docs/standards/traefik-security.md`). The block allowed `'unsafe-inline'` for scripts and styles, so an injected inline script ran under a policy named self-only. It now admits scripts, styles and every other resource from the page's own origin only, images and fonts also as `data:`, and states `base-uri` and `form-action`, which do not fall back to `default-src`. In a browser under the new policy, an inline script, a `<style>` block and a `style` attribute are refused while the page's own script and stylesheet load; under the former one all three applied. whoami, the one stack with the block, serves plain text and JSON and needs nothing inline. A stack that adds the block now needs every script and style in files of its own.
+
+- **dnsmasq logs DNS queries only when `DNS_LOG_QUERIES=true`** (`core/dnsmasq`). The template carried `log-queries` unconditionally, so every name a device looked up, with its address, reached the container log whatever the variable said. `render.sh` now renders the line for `true` only and prints a note while it is on; an empty or missing value is off, and any other value stops the render. The example ships `false`. **Migration:** an existing `.env` carries the former default `true` and keeps logging; set `DNS_LOG_QUERIES=false`, render and restart.
+
+- **A browser moves between the stacks of one domain without `421 Misdirected Request`** (nine stacks, `core/traefik`, `docs/standards/traefik-security.md`). Under the wildcard certificate a browser reuses one connection for every host, and Traefik answers 421 when the next host's router names another TLS option — compared by name, so `tls-strict` differs even from a `default` built from `tls-strict`. Nine stacks named an option with no reason recorded and now take `default`, the deployment standard: `apps/nextcloud`, `apps/whoami`, `apps/wordpress`, `business/openproject` and `business/vikunja` (were `tls-compatible`), `core/dockhand`, `core/orion-belt`, `core/portainer` and `core/shellhub` (were `tls-strict`). Among the clients `tls-compatible` admits, `tls-standard` refuses only Internet Explorer 11 on Windows 7 and 8.1. The dashboard ships `TRAEFIK_DASHBOARD_TLS_OPTION=default`; `validate.sh` warns when it names a profile under the wildcard and refuses a name Traefik does not define. Vaultwarden, JumpServer, Warpgate and Shlink keep their option and its reason. **Migration:** in `core/traefik/.env`, set `TRAEFIK_DASHBOARD_TLS_OPTION=default` and render; the nine stacks take `default` once recreated, and their `APP_TRAEFIK_TLS_OPTION` is no longer read.
 
 - **`overview.sh` lists every stack category** (`scripts/overview.sh`). The service table read `core/`, `apps/` and `monitoring/` only; stacks under `business/` and `backup/` are in it now.
 

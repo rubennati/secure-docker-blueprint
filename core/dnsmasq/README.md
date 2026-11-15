@@ -83,6 +83,23 @@ docker exec dnsmasq kill -HUP 1
 
 This re-reads `records.hosts` and clears the DNS cache. No downtime.
 
+## Query log
+
+Off as shipped. `DNS_LOG_QUERIES=true` writes every query, with the address that
+asked it, to the container log: a record of which device looked up which name.
+Switch it on to trace a resolution problem, then off again:
+
+```bash
+# .env: DNS_LOG_QUERIES=true
+./ops/scripts/render.sh          # prints a NOTE while the log is on
+docker compose restart
+docker compose logs -f | grep 'query\['
+```
+
+dnsmasq's own start and error messages reach the log either way. An empty or
+missing value counts as off; anything other than `true` or `false` stops
+`render.sh`.
+
 ## Verify
 
 ```bash
@@ -104,6 +121,7 @@ nslookup google.com 127.0.0.1
 | DNS cache clear | `docker exec dnsmasq kill -HUP 1` |
 | `.env` + wildcard zones | `./ops/scripts/render.sh` then `docker compose restart` |
 | Upstream DNS, interfaces | `./ops/scripts/render.sh` then `docker compose restart` |
+| `DNS_LOG_QUERIES` | `./ops/scripts/render.sh` then `docker compose restart` |
 
 ## Important Notes
 

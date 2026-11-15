@@ -16,6 +16,7 @@ set -a
 source "${ROOT_DIR}/.env"
 set +a
 . "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
+. "${ROOT_DIR}/ops/scripts/bouncer-key.sh"
 
 # ---------------------------------------------------------------------------
 # CrowdSec reverse-proxy remediation: one switch in .env
@@ -59,6 +60,14 @@ esac
 if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" != true ]; then
   echo "ERROR: CROWDSEC_APPSEC_ENABLED=true needs CROWDSEC_BOUNCER_ENABLED=true — AppSec inspection runs inside the bouncer plugin."
   exit 1
+fi
+
+# The bouncer key is a file Traefik reads, never a value in config/ (ops/scripts/
+# bouncer-key.sh): with the switch on, the file has to exist and be readable for
+# root without capabilities, or the render would hand Traefik a plugin that
+# cannot load — and the entrypoint a middleware that does not exist.
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  bouncer_key_check "${ROOT_DIR}" || exit 1
 fi
 
 # The entrypoint middlewares (traefik.yml.tmpl, entryPoints.websecure.http):
@@ -321,6 +330,23 @@ if [ -n "${COMPOSE_FILE:-}" ]; then
       exit 1 ;;
   esac
   case "${compose_file_named}" in
+    *:"${BOUNCER_KEY_OVERLAY}":*)
+      if [ "${CROWDSEC_BOUNCER_ENABLED}" != true ] && [ ! -f "${ROOT_DIR}/${BOUNCER_KEY_FILE}" ]; then
+        echo "ERROR: COMPOSE_FILE applies ${BOUNCER_KEY_OVERLAY}, but ${BOUNCER_KEY_FILE} does not exist —"
+        echo "       Compose refuses to start a service whose secret has no file. With the bouncer off,"
+        echo "       remove ${BOUNCER_KEY_OVERLAY} from COMPOSE_FILE."
+        exit 1
+      fi ;;
+    *)
+      if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+        echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true, but COMPOSE_FILE does not apply ${BOUNCER_KEY_OVERLAY},"
+        echo "       which hands Traefik the bouncer key. Without it the plugin finds no key, does not"
+        echo "       load, and every router on websecure is disabled."
+        echo "       COMPOSE_FILE=${COMPOSE_FILE}:${BOUNCER_KEY_OVERLAY}"
+        exit 1
+      fi ;;
+  esac
+  case "${compose_file_named}" in
     *:network-dual-stack.yml:*)
       if [ -z "${TRAEFIK_BIND_V6+set}" ]; then
         echo "ERROR: COMPOSE_FILE applies network-dual-stack.yml, but TRAEFIK_BIND_V6 is not set. It has no"
@@ -506,7 +532,8 @@ if rendered_has_bouncer; then
     echo ""
     echo "       Keep it:   CROWDSEC_BOUNCER_ENABLED=true"
     echo "                  CROWDSEC_BOUNCER_PLUGIN_VERSION=<the version config/traefik.yml names>"
-    echo "                  CROWDSEC_BOUNCER_KEY=<the key config/dynamic names>"
+    echo "                  the key config/dynamic names, in ${BOUNCER_KEY_FILE} (README,"
+    echo "                  'How to enable')"
     echo "       Remove it: CROWDSEC_BOUNCER_ENABLED=false — then recreate the traefik container"
     echo "                  at once: the running entrypoint list names the threat middleware"
     echo "                  until the recreate, and every router on websecure is disabled in between."
@@ -569,6 +596,7 @@ echo "Rendering static config..."
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" | place "${CFG_DIR}/traefik.yml"
   echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared; entrypoint: ${ENTRYPOINT_THREAT}@file, compress@file)"
+  echo "    key: ${BOUNCER_KEY_FILE}, mounted by ${BOUNCER_KEY_OVERLAY} at ${BOUNCER_KEY_TARGET}"
 else
   # Drop the marker-delimited plugin block; the markers are comments and go with it.
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" \

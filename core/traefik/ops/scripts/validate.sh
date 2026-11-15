@@ -76,6 +76,7 @@ set -a
 source "${ROOT_DIR}/.env"
 set +a
 . "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
+. "${ROOT_DIR}/ops/scripts/bouncer-key.sh"
 
 REQUIRED=(
   TZ
@@ -475,6 +476,17 @@ case "${TLS_DEFAULT_OPTION:-}" in
     exit 1 ;;
   *) echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."; exit 1 ;;
 esac
+# The dashboard's option: `default`, the one every stack takes, or a profile by
+# name. Any other name is an option the file provider does not define, and
+# Traefik disables the dashboard router for it.
+case "${TRAEFIK_DASHBOARD_TLS_OPTION:-}" in
+  default|tls-compatible|tls-standard|tls-strict) ;;
+  tls-basic|tls-aplus|tls-modern)
+    echo "ERROR: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} is a name from before the middleware model."
+    echo "       Set TRAEFIK_DASHBOARD_TLS_OPTION=default, the option every stack takes."
+    exit 1 ;;
+  *) echo "ERROR: TRAEFIK_DASHBOARD_TLS_OPTION must be default, tls-compatible, tls-standard or tls-strict (got '${TRAEFIK_DASHBOARD_TLS_OPTION:-}')."; exit 1 ;;
+esac
 TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
 case "${TRAEFIK_FORWARDED_PROXY}" in
   none|cloudflare) ;;
@@ -499,11 +511,8 @@ if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" !=
   exit 1
 fi
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
-  if [ -z "${CROWDSEC_BOUNCER_KEY:-}" ]; then
-    echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true but CROWDSEC_BOUNCER_KEY is empty."
-    echo "       Generate one on the engine: docker exec crowdsec cscli bouncers add traefik-bouncer"
-    exit 1
-  fi
+  # The key file, as root without capabilities reads it (ops/scripts/bouncer-key.sh).
+  bouncer_key_check "${ROOT_DIR}" || exit 1
   version="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
   if ! printf '%s' "${version}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     echo "ERROR: CROWDSEC_BOUNCER_PLUGIN_VERSION must be a release tag like v1.7.1 (got '${version}')."
@@ -556,6 +565,16 @@ if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DO
     echo "WARNING: *.${ACME_WILDCARD_DOMAIN} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
     echo "         Traefik will request a second certificate for that hostname, publishing it in Certificate Transparency logs."
     echo "         Leave the variable empty to serve the wildcard instead."
+  fi
+  # Under the wildcard a browser reuses the connection of any other host of the
+  # domain for the dashboard. Traefik's SNI check compares TLS option names, not
+  # their content: a dashboard naming tls-strict answers that browser 421, even
+  # when TLS_DEFAULT_OPTION builds `default` from tls-strict as well.
+  if [ "${TRAEFIK_DASHBOARD_TLS_OPTION}" != default ]; then
+    echo "WARNING: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} under *.${ACME_WILDCARD_DOMAIN}, where every stack"
+    echo "         without an exception takes \`default\`. A browser that comes from such a host reuses its"
+    echo "         connection, and Traefik answers 421 Misdirected Request on ${TRAEFIK_DASHBOARD_HOST}: it compares"
+    echo "         option names. Set TRAEFIK_DASHBOARD_TLS_OPTION=default and render (no restart needed)."
   fi
 elif [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
   echo "SELECT A CERTIFICATE STRATEGY — neither is configured for ${TRAEFIK_DASHBOARD_HOST}."
@@ -683,7 +702,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       if [ -z "${switch_declared}" ]; then
         echo "ERROR: config/ carries the CrowdSec integration but CROWDSEC_BOUNCER_ENABLED is not set in .env."
         echo "       Set it to true to keep the integration (plus CROWDSEC_BOUNCER_PLUGIN_VERSION and"
-        echo "       CROWDSEC_BOUNCER_KEY), or to false to remove it, then run render.sh."
+        echo "       the key in ${BOUNCER_KEY_FILE}), or to false to remove it, then run render.sh."
       else
         echo "ERROR: CROWDSEC_BOUNCER_ENABLED=false but config/ still carries the integration — run render.sh."
       fi
@@ -777,10 +796,11 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     exit 1
   fi
 
-  # CrowdSec bouncer key. envsubst turns an unset CROWDSEC_BOUNCER_KEY into an
-  # empty string, so a bouncer that cannot authenticate renders without a word of
-  # complaint. The key is required only where a CrowdSec middleware was actually
-  # rendered — the default-off blueprint must validate without one.
+  # CrowdSec bouncer key. Every rendered CrowdSec middleware names the key file
+  # and carries no key itself: a key in config/dynamic is readable by every
+  # account on the host, which is what a configuration rendered before the key
+  # moved to .secrets/ still holds. Checked only where a CrowdSec middleware was
+  # actually rendered — the default-off blueprint validates without a key.
   #
   # The grep is a pre-filter, not the decision: it keeps a default-off install
   # free of any Python dependency. When it matches, the rendered YAML is parsed
@@ -793,7 +813,8 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       echo "ERROR: a CrowdSec middleware is enabled in the rendered config, but the"
       echo "       bouncer key check could not run. It needs python3 with PyYAML and"
       echo "       scripts/ci/check-crowdsec-config.py. Install them, or confirm by hand"
-      echo "       that crowdsecLapiKey is not empty before starting Traefik."
+      echo "       that config/dynamic/crowdsec.yml names crowdsecLapiKeyFile and carries"
+      echo "       no crowdsecLapiKey before starting Traefik."
       exit 1
     fi
   fi
@@ -976,6 +997,24 @@ PYEOF_STATIC
         echo "NOT VERIFIED: the start of ${TRAEFIK_CONTAINER_NAME} or the time of ${static_file} could not be read — an edit since the start was not ruled out."
         static_rc=3 ;;
     esac
+  fi
+fi
+# The bouncer key as the running Traefik reads it: inside the container, with
+# its capabilities. Absent means the container started without
+# crowdsec-bouncer.yml; present and unreadable means the plugin did not load and
+# every router on websecure is disabled now.
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ] && command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 \
+   && [ "$(docker inspect -f '{{.State.Running}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null)" = true ]; then
+  if ! docker exec "${TRAEFIK_CONTAINER_NAME}" test -e "${BOUNCER_KEY_TARGET}" 2>/dev/null; then
+    echo "PENDING: ${TRAEFIK_CONTAINER_NAME} has no ${BOUNCER_KEY_TARGET} — it started without ${BOUNCER_KEY_OVERLAY}."
+    echo "         'docker compose up -d --force-recreate traefik' here mounts it."
+    static_rc=3
+  elif ! docker exec "${TRAEFIK_CONTAINER_NAME}" cat "${BOUNCER_KEY_TARGET}" >/dev/null 2>&1; then
+    echo "ERROR: ${TRAEFIK_CONTAINER_NAME} cannot read ${BOUNCER_KEY_TARGET}: the bouncer plugin did not load,"
+    echo "       and every router on websecure is disabled. Give root the group, then recreate:"
+    bouncer_key_fix
+    echo "         docker compose up -d --force-recreate traefik"
+    exit 1
   fi
 fi
 [ "${static_rc}" -eq 3 ] && [ "${family_rc}" -eq 0 ] && family_rc=3
