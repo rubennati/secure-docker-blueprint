@@ -75,6 +75,9 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
   **Migration:** none for one domain. A deployment that added a second wildcard by hand lists both domains, quoted, then runs `render.sh`.
 
+- **ERPNext prints PDFs while several are requested at once** (`business/erpnext/docker-compose.yml`, `README.md`, `UPSTREAM.md`). Each PDF starts a Chromium of about 65 processes and threads, and Frappe renders up to four at a time, each with its own Chromium when they start together. The backend's limit of 200 refused the forks at four PDFs. The renders hung until Gunicorn's timeout, and every later PDF answered `503 Server is busy` until the backend restarted. The backend's limit is 512; measured, four to twelve PDFs at once stay at 268 at most. The README describes an upstream hang that remains: a Chromium that does not report its start keeps the request until Gunicorn ends it after 120 seconds.
+  **Migration:** `docker compose up -d erpnext-backend`.
+
 ## [0.9.9] — 2026-11-09 — Every stack current, closed and checked on a host
 
 Every stack was at the newest upstream release on 2026-11-08 or names why not, starts

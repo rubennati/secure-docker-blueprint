@@ -71,6 +71,30 @@ network alias. Traefik routes `/socket.io` to that port; everything else stays o
 8080. The site name travels in `Host`, so the backend resolves the site the same
 way as for any other request.
 
+## PDF printing
+
+Frappe renders PDFs with Chromium; wkhtmltopdf, still selectable in Print
+Settings, is deprecated upstream and leaves with v17. Each PDF starts a Chromium of
+about 65 processes and threads in the backend container, and Frappe renders at
+most half of Gunicorn's workers × threads at once — four with this stack's two
+workers and four threads. PDFs that start together each start their own Chromium:
+262 processes and threads at four or more, measured. The backend's `pids: 512`
+leaves room for that; at 200 Chromium could not start, the renders hung, and every
+later PDF answered `503 Server is busy` until the backend restarted. Raising the
+workers or threads raises the need by about 65 for every two. The queue workers
+render one PDF at a time, 66 measured against their 100.
+
+**Known upstream issue:** Frappe waits for Chromium's start-up line without a
+timeout. When Chromium does not print it, the request hangs until Gunicorn ends it
+after 120 seconds and answers `504`; the Chromium it started stays behind. Seen on a
+new site in 2 of 8 PDFs requested at once, and in 3 of 12 without any limit. Printing
+recovers by itself once Gunicorn has ended the request. If PDFs keep answering
+`503 Server is busy`, restart the backend:
+
+```bash
+docker compose restart erpnext-backend
+```
+
 ## What is mounted
 
 | Path | Holds |
