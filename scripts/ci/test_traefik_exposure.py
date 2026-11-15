@@ -21,6 +21,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from test_traefik_dashboard_cert import BASE_ENV, TRAEFIK  # noqa: E402
+import bouncer_key  # noqa: E402
 import no_daemon
 
 VALID_ENV = dict(BASE_ENV, ACME_WILDCARD_DOMAIN="example.com", TRAEFIK_FORWARDED_PROXY="none")
@@ -35,6 +36,7 @@ class Rendered(unittest.TestCase):
         shutil.copytree(TRAEFIK / "ops", self.root / "ops")
         for name in ("docker-compose.yml", "network-dual-stack.yml"):
             shutil.copy(TRAEFIK / name, self.root / name)
+        bouncer_key.write(self.root)
         # validate.sh reaches for the repository's CrowdSec config check when the bouncer is on
         (tmp / "scripts" / "ci").mkdir(parents=True)
         shutil.copy(TRAEFIK.parents[1] / "scripts" / "ci" / "check-crowdsec-config.py", tmp / "scripts" / "ci" / "check-crowdsec-config.py")
@@ -157,7 +159,7 @@ class LayersAndMarker(Rendered):
         self.assertNotIn("ERROR", v.stdout + v.stderr)
 
     def test_present_layers_are_named_as_present(self):
-        self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true", CROWDSEC_BOUNCER_KEY="test-key-not-a-secret",
+        self.render(dict(VALID_ENV, CROWDSEC_BOUNCER_ENABLED="true",
                          AUTHENTIK_FORWARD_AUTH_ENABLED="true", AUTHENTIK_FORWARD_AUTH_ADDRESS="http://authentik-server:9000"))
         v = self.validate()
         self.assertIn("crowdsec           present", v.stdout)
