@@ -722,6 +722,129 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     fi
   fi
 
+  # The files Traefik reads and writes, as root without CAP_DAC_OVERRIDE sees
+  # them (ops/scripts/file-access.sh). Each failure leaves Traefik running and
+  # its log names it once, at the start: an unreadable file in config/dynamic
+  # makes the file provider load nothing, so every router naming an @file
+  # middleware is disabled and answers 404; an acme.json Traefik cannot write
+  # keeps the certificates in memory, and every start requests them again until
+  # Let's Encrypt's rate limit refuses; an unwritable log directory leaves the
+  # access log CrowdSec parses empty. Docker creates a missing bind-mount
+  # directory as root, so only a directory made or changed by hand fails here.
+  # Under userns-remap or rootless Docker, the container's root is another
+  # account on the host, and owner and group cannot be judged from here.
+  access_errors=0
+  access_error() {  # message, then one fix line per further argument
+    echo "ERROR: $1"
+    shift
+    printf '       %s\n' "$@"
+    access_errors=$((access_errors + 1))
+  }
+  remapped=""
+  if command -v docker >/dev/null 2>&1 \
+     && docker info --format '{{json .SecurityOptions}}' 2>/dev/null | grep -qE 'name=(userns|rootless)'; then
+    remapped=1
+    echo "NOT VERIFIED: Docker runs with userns-remap or rootless — whether Traefik can use config/ and volumes/"
+    echo "              depends on the remapped account and was not checked here."
+  fi
+  if [ -z "${remapped}" ]; then
+    if ! traefik_can "${ROOT_DIR}/config/traefik.yml" r; then
+      access_error "Traefik cannot read config/traefik.yml ($(traefik_meta)) and does not start." \
+        "chmod 644 config/traefik.yml"
+    fi
+    if ! traefik_can "${ROOT_DIR}/config/dynamic" rx; then
+      access_error "Traefik cannot list config/dynamic ($(traefik_meta)): the file provider loads nothing," \
+        "and every router naming an @file middleware answers 404." "chmod 755 config/dynamic"
+    else
+      for f in "${ROOT_DIR}"/config/dynamic/*.yml "${ROOT_DIR}"/config/dynamic/*.yaml "${ROOT_DIR}"/config/dynamic/*.toml; do
+        [ -e "${f}" ] || continue
+        if ! traefik_can "${f}" r; then
+          access_error "Traefik cannot read ${f#"${ROOT_DIR}/"} ($(traefik_meta)): one unreadable file makes the" \
+            "file provider load none of config/dynamic, and every router naming an @file middleware" \
+            "answers 404. Nothing secret belongs in config/dynamic, so every account may read it:" \
+            "chmod 644 ${f#"${ROOT_DIR}/"}"
+        fi
+      done
+    fi
+
+    le_dir="${ROOT_DIR}/volumes/letsencrypt"
+    if [ -d "${le_dir}" ]; then
+      if ! traefik_can "${le_dir}" wx; then
+        access_error "Traefik cannot write volumes/letsencrypt ($(traefik_meta)): no acme.json is created, the" \
+          "certificates live in memory, and every start requests them again until Let's Encrypt's" \
+          "rate limit refuses. The directory belongs to Traefik's user:" \
+          "sudo chown 0:0 volumes/letsencrypt && sudo chmod 700 volumes/letsencrypt"
+      fi
+      if [ -e "${acme_file}" ] || [ ! -x "${le_dir}" ]; then
+        rc=0; traefik_can "${acme_file}" rw || rc=$?
+        acme_rel="${acme_file#"${ROOT_DIR}/"}"
+        acme_fix="sudo chown 0:0 ${acme_rel} && sudo chmod 600 ${acme_rel}"
+        if [ "${rc}" -eq 2 ]; then
+          echo "NOT VERIFIED: ${acme_rel} cannot be inspected by this user — run validate.sh as root to check"
+          echo "              that Traefik can use it."
+        elif [ "${rc}" -ne 0 ]; then
+          access_error "Traefik cannot read and write ${acme_rel} ($(traefik_meta)): the certificates live in" \
+            "memory, and every start requests them again until Let's Encrypt's rate limit refuses." \
+            "${acme_fix}"
+        elif [ "${T_MODE:1:2}" != 00 ]; then
+          access_error "${acme_rel} has mode ${T_MODE}: Traefik refuses a certificate store that group or" \
+            "others may read ('permissions … are too open, please use 600'), and its resolvers issue nothing." \
+            "${acme_fix}"
+        fi
+      fi
+    fi
+
+    log_dir="${ROOT_DIR}/volumes/logs"
+    if [ -d "${log_dir}" ]; then
+      if ! traefik_can "${log_dir}" wx; then
+        access_error "Traefik cannot write volumes/logs ($(traefik_meta)): it writes no log file, and the" \
+          "access log CrowdSec parses stays empty. The directory belongs to Traefik's user:" \
+          "sudo chown 0:0 volumes/logs"
+      fi
+      for f in "${TRAEFIK_LOG_FILE}" "${TRAEFIK_ACCESSLOG_FILE}"; do
+        case "${f}" in /var/log/traefik/*) ;; *) continue ;; esac
+        f="${log_dir}/${f#/var/log/traefik/}"
+        if [ -e "${f}" ] && ! traefik_can "${f}" w; then
+          access_error "Traefik cannot write ${f#"${ROOT_DIR}/"} ($(traefik_meta)) — the log stays as it is." \
+            "sudo chown 0:0 ${f#"${ROOT_DIR}/"}"
+        fi
+      done
+    fi
+
+    plugin_dir="${ROOT_DIR}/volumes/plugins-storage"
+    if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ] && [ -d "${plugin_dir}" ] && ! traefik_can "${plugin_dir}" wx; then
+      access_error "Traefik cannot write volumes/plugins-storage ($(traefik_meta)): the bouncer plugin is not" \
+        "stored and does not load, and every router on websecure is disabled." \
+        "sudo chown -R 0:0 volumes/plugins-storage"
+    fi
+  fi
+
+  # .env carries the DNS provider's token, .secrets/ the bouncer key: neither is
+  # for every account on the host. Compose reads both as the operator, the key
+  # reaches Traefik as a Docker secret, so 600 and 700 cost nothing. The bouncer
+  # key with the switch on is judged above, by bouncer_key_check.
+  if traefik_stat "${ROOT_DIR}/.env" && [ $(( ${T_MODE:2:1} & 4 )) -ne 0 ]; then
+    echo "WARNING: .env is readable by every account on this host (mode ${T_MODE}) — chmod 600 .env"
+  fi
+  if [ -d "${ROOT_DIR}/.secrets" ]; then
+    if traefik_stat "${ROOT_DIR}/.secrets" && [ "${T_MODE:2:1}" != 0 ]; then
+      echo "WARNING: .secrets is open to every account on this host (mode ${T_MODE}) — chmod 700 .secrets"
+    fi
+    for f in "${ROOT_DIR}"/.secrets/*; do
+      [ -f "${f}" ] || continue
+      [ "${CROWDSEC_BOUNCER_ENABLED}" = true ] && [ "${f}" = "${ROOT_DIR}/${BOUNCER_KEY_FILE}" ] && continue
+      if traefik_stat "${f}" && [ $(( ${T_MODE:2:1} & 4 )) -ne 0 ]; then
+        echo "WARNING: ${f#"${ROOT_DIR}/"} is readable by every account on this host (mode ${T_MODE}) — chmod 600 ${f#"${ROOT_DIR}/"}"
+      fi
+    done
+  fi
+
+  if [ "${access_errors}" -gt 0 ]; then
+    echo ""
+    echo "Refusing to continue: Traefik cannot use ${access_errors} file(s) or directory(ies) above."
+    exit 1
+  fi
+
   # The rendered state has to match the switch. Both directions are errors: the
   # integration present while the switch is off is the drift render.sh refuses
   # to paper over, and the switch on without the rendered halves means render.sh
