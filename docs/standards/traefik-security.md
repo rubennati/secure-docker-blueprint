@@ -259,7 +259,7 @@ work:
 | Block | Placed | What it does |
 |---|---|---|
 | `frame-self` | before the profile | `X-Frame-Options: SAMEORIGIN` — the application frames its own pages (listmonk's campaign preview, Nextcloud) |
-| `csp-self-only` | before the profile | an enforcing `Content-Security-Policy` for an application tested against it (whoami) |
+| `csp-self-only` | before the profile | an enforcing `Content-Security-Policy` for an application tested against it (whoami): scripts, styles and every other resource from the page's own origin, images and fonts also as `data:`, no inline script or style; `base-uri` and `form-action` stated, because they do not fall back to `default-src`. It names no `frame-ancestors`: where that directive is present, browsers ignore `X-Frame-Options`, and the profile or `frame-self` decides framing |
 | `hsts-include-subdomains` | before the profile | the per-domain HSTS extension, see above |
 | `header-*` | before the profile | one header an `application-owned` stack lacks |
 | `forwarded-proto-https` | after the four | `X-Forwarded-Proto: https` to the backend — an application that derives its URLs from it (Paperless-ngx, Matomo, the office servers, Ghost's ActivityPub) |
