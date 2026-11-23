@@ -42,6 +42,11 @@ connection failures.
   agent. No compose change. Sources:
   https://github.com/portainer/portainer/releases/tag/2.45.3,
   https://github.com/portainer/portainer/releases/tag/2.45.2
+- Moved `portainer/agent` from `2.45.3` to `2.45.4` on 2026-11-23 (released
+  2026-11-18), together with the central `portainer/portainer-ce` in `core/portainer/`.
+  The advisories of 2.45.4 are fixed in the server's access control; the agent release
+  lists no change of its own and no new variable. No compose change. Source:
+  https://github.com/portainer/portainer/releases/tag/2.45.4
 
 ## Upgrade checklist
 
