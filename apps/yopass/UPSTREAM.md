@@ -17,7 +17,7 @@
 
 ## What we use
 
-- `jhaals/yopass:16.1.0`, distroless build, runs as a fixed non-root UID
+- `jhaals/yopass:16.2.0`, the Rust server, distroless build, runs as a fixed non-root UID
 - `memcached:1.6.45-alpine` as the ephemeral store — the upstream-documented
   default backend, matching every value Yopass stores: TTL-based, no
   durability required or wanted
@@ -92,6 +92,31 @@ Secret Requests on; it requires a different, licensed product from upstream.
     15.0.0 stops trusting spoofed forwarded addresses. 16.0.1 is rebuilt with
     Go 1.27.3 for CVE-2026-111943 (certificate chains through distrusted
     intermediates).
+- Moved to `16.2.0` on 2026-11-23 (released 2026-11-18). It fixes GHSA-4v9j-h5v5-4vjw (medium):
+  the sender of a secret chooses the Argon2 cost and the number of password key packets, and
+  the web client limited only the memory, so a crafted secret could keep the recipient's
+  browser busy for seconds to hours. The client now refuses more than 16 passes, parallelism
+  above 16 or more than 8 key packets before deriving a key. It reaches this stack through the
+  bundled web UI, which is public by design; the server never decrypts and was not affected.
+  - The version tag is now the Rust server, which 16.1.0 offered as `:next`. This stack follows
+    it: the same flags and variables (`MEMCACHED`, `PORT`), the same data format in Memcached,
+    the same entrypoint `/yopass-server` with `--health-check`, user `1000`, a distroless
+    Debian 12 base, about half the image size. `read_only`, `cap_drop: ALL` and the healthcheck
+    stay as they are. The Go server stays available as `go-16.2.0` for a way back; both read
+    the same backend.
+  - Session cookies change format, so OIDC users log in again; this stack runs no OIDC. The
+    image no longer contains the `/yopass` CLI, which this stack does not use. A missing
+    database now answers `503` instead of `404`, and `--trusted-proxies` accepts only IPs
+    and CIDRs (not set here).
+  - New `REQUIRE_AUTH_ALL` puts opening secrets behind sign-in too; it needs OIDC and is not
+    set here.
+  - A secret stored by the 16.1.0 Go server is returned by the 16.2.0 Rust server after the
+    switch and decrypts to its text; a new one-time secret answers `200` once and `404` on the
+    second read; the container is healthy with `read_only` and `cap_drop: ALL` (local stack,
+    2026-11-23).
+  Sources: https://github.com/jhaals/yopass/releases/tag/16.2.0,
+  https://github.com/jhaals/yopass/security/advisories/GHSA-4v9j-h5v5-4vjw,
+  https://github.com/jhaals/yopass/blob/master/server/README.md#differences-from-the-go-server
 
 ## Upgrade checklist
 
