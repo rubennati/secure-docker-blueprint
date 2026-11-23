@@ -681,16 +681,6 @@
         "GHSA-6q48-6c7w-9gw2"
       ]
     },
-    "n8nio/n8n": {
-      "stacks": [
-        "apps/n8n"
-      ],
-      "reason": "The newest image was built before Alpine published brotli-libs 1.2.1-r0, and upstream has not rebuilt it. 2.46.6 is the newest stable n8n release; 2.47 is a pre-release.",
-      "risk": "Node.js, which makes n8n's own HTTP requests, has its own brotli; the Alpine library serves curl and freetype, so a workflow running curl against an untrusted server could reach it (not checked).",
-      "cves": [
-        "CVE-2026-111497"
-      ]
-    },
     "openproject/openproject": {
       "stacks": [
         "business/openproject"
