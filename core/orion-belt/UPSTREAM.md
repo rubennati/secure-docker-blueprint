@@ -9,8 +9,8 @@
   `ghcr.io/orion-belt-dev/orion-belt-agent` (GHCR)
 - **Self-host compose reference:** `docker-compose.prod.yml` and
   `docker-compose.prod.agent.yml` in the upstream repo
-- **License:** Apache-2.0 (with Commons Clause)
-- **Use restrictions:** Apache-2.0 with the Commons Clause, which withholds the right to Sell — defined as providing to third parties, for a fee or other consideration, a product or service whose value derives entirely or substantially from its functionality, including fees for hosting or for consulting and support related to it — https://github.com/orion-belt-dev/orion-belt/blob/master/LICENSE · checked 2026-09-21
+- **License:** AGPL-3.0
+- **Use restrictions:** none for self-hosting; since 1.5.0 the project is licensed AGPL-3.0-only, and distributing it or offering a modified version over a network requires publishing the source under the same licence — https://github.com/orion-belt-dev/orion-belt/blob/master/LICENSE · checked 2026-11-23
 - **Decision facts checked:** 2026-09-21
 - **Origin:** Individual maintainer · Mohamed Zrouga · no single jurisdiction
 - **Domain:** Identity, access and secrets
@@ -43,21 +43,16 @@ operational risk that a feature list does not capture. Re-evaluate this
 status at the next update to this stack rather than carrying it forward
 unexamined.
 
-## License — Commons Clause
+## License
 
-Apache-2.0 with a Commons Clause condition: self-hosting and internal
-commercial use are explicitly permitted; selling Orion Belt itself, or a
-hosted service whose value derives substantially from it, is not. Fine for
-this repository's self-hosted, personal-infrastructure scope. Classified
-as `source-available` in this repository's sovereignty tooling — see the
-one-line addition this required in `scripts/ci/sovereignty-report.py`
-(`SOURCE_AVAILABLE` gained `"Commons Clause"`), the smallest change that
-correctly reflects a real restriction rather than reporting this as plain
-open source.
+AGPL-3.0-only since 1.5.0, replacing Apache-2.0 with the Commons Clause.
+Using, modifying and running it is free, commercial use included. Distributing
+it, or offering a modified version over a network, requires publishing the
+source under the same licence. Fine for this repository's self-hosted scope.
 
 ## What we use
 
-- `ghcr.io/orion-belt-dev/orion-belt-server:1.4.0`
+- `ghcr.io/orion-belt-dev/orion-belt-server:1.5.0`
 - `postgres:16.16-alpine`, following upstream's own `docker-compose.prod.yml`
   exactly for this pairing
 - The agent (`docker-compose.agent.yml`), documented but not started here
@@ -69,6 +64,7 @@ open source.
 |--------|--------|
 | Docker Secrets for the Postgres password on the database side | Postgres natively supports `POSTGRES_PASSWORD_FILE`; upstream's own compose does not use it, but there is no reason not to on the side that supports it |
 | No `_FILE` support on the server's own `POSTGRES_PASSWORD`/`ORION_JWT_SECRET` | Verified directly by reading `/app/entrypoint.sh` inside the image: both are read as plain environment variables and written in clear into a generated config file. No entrypoint wrapper was added — see "What was actually verified" |
+| `user: "10001:10001"` | Since 1.5.0 the entrypoint, started as root, chowns the state directories and switches to `orionbelt` with `su-exec`; under `cap_drop: ALL` the chown fails and the container restarts in a loop (tested). Started as `orionbelt`, it skips that step; the bind-mounted `recordings` and `hostkey` directories belong to 10001:10001 |
 | `tmpfs: /var/log/orion-belt` added | Verified against a live container: the bundled audit-logger plugin fails to configure under `read_only: true` without it |
 | `cap_add: CHOWN, DAC_OVERRIDE, FOWNER, SETGID, SETUID` on Postgres | The same documented, previously-verified requirement `apps/_reference` states for Postgres startup under `cap_drop: ALL` |
 | SSH gateway published directly, not through Traefik | Raw SSH; only the API/console is HTTP(S) |
@@ -115,6 +111,28 @@ open source.
   to Go 1.27.3 for reported vulnerabilities, lets users delete only their own
   SSH keys and validates admin-set plugin URLs and mail headers, and 1.4.0
   audits key, token and WebAuthn logins that were not audited before.
+- Moved from `1.4.0` to `1.5.0` on 2026-11-23 (released 2026-11-15); the agent
+  example (`.env.agent.example`) moved with it. No GHSA published; the release
+  carries the fixes of the project's 2026-11-02 security audit: MFA backup codes can
+  no longer be reused; `ocp` downloads reject path traversal in remote file names;
+  with a Host CA configured, agents no longer trust a gateway that omits its
+  certificate; the API server has timeouts, a request body limit and security
+  headers; rate-limiter and live-session memory leaks are fixed; agent registration,
+  credential changes and file-browser actions are audited; the generated agent
+  install script verifies downloads against the signed `checksums.txt`. Built with
+  Go 1.27.4 (GO-2026-6859). Breaking changes and what they mean here: the server
+  container runs as `orionbelt` (10001) — under this stack's `cap_drop: ALL` the
+  entrypoint's root-time chown of the state directories fails, so the compose now
+  starts it as `user: "10001:10001"` and the `recordings` and `hostkey` directories
+  must be chowned to 10001:10001 once (host key and data kept, tested on a 1.4.0
+  data set); the server refuses the example JWT secret and any shorter than 32 bytes
+  (`openssl rand -hex 32`, as in `.env.example`, gives 64); the first start converts
+  timestamp columns to `TIMESTAMPTZ`, rewriting each table once under a lock — a
+  large `audit_logs` table means a pause, and a non-UTC host whose time zone cannot
+  be detected needs `ORION_DB_LEGACY_TIMEZONE`; the licence is now AGPL-3.0-only (see
+  [License](#license)). Sources:
+  https://github.com/orion-belt-dev/orion-belt/releases/tag/v1.5.0,
+  https://github.com/orion-belt-dev/orion-belt/blob/master/docs/DEPLOYMENT_HARDENING.md
 
 ## Upgrade checklist
 

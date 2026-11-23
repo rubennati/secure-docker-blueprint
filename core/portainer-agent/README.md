@@ -130,7 +130,7 @@ file and in the compose comment rather than in CI.
 ## Known Issues
 
 - **Live-tested: no.**
-- **`APP_TAG=2.45.3`** — keep in sync with the central Portainer major version.
+- **`APP_TAG=2.45.4`** — keep in sync with the central Portainer major version.
 - **Edge Mode needs outbound HTTPS to the central Portainer** — typically 443. Check egress firewall if the agent never shows as connected.
 
 ## Open findings

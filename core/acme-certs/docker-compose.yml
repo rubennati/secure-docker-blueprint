@@ -14,7 +14,7 @@ services:
   #   ./scripts/wizard.sh                      Interactive certificate wizard (host-side)
   #   docker compose exec acme-certs /scripts/issue.sh
   #   docker compose exec acme-certs /scripts/renew.sh
-  #   docker compose exec acme-certs /scripts/convert-to-pfx.sh <domain> <password>
+  #   docker compose exec acme-certs /scripts/convert-to-pfx.sh <domain>   (asks for the PFX password)
   # --------------------------------------------------------
   acme-certs:
     # --- Identity ---

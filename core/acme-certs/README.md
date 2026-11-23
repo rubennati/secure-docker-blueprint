@@ -89,7 +89,10 @@ docker compose exec \
 
 ## Renewal
 
-Certificates are **renewed automatically** by crond inside the container.
+Certificates are **renewed automatically** by crond inside the container. The
+cron job runs every six hours and renews inside the window the CA suggests through
+ACME Renewal Information (ARI); set `NO_ARI=1` in the service's `environment` to
+renew on acme.sh's fixed interval instead.
 
 To trigger a manual renewal:
 
@@ -151,10 +154,16 @@ Some devices don't accept PEM files. They need PFX (PKCS#12) — a single file t
 
 ```bash
 docker compose exec acme-certs \
-  /scripts/convert-to-pfx.sh example.com your-chosen-password
+  /scripts/convert-to-pfx.sh example.com
 ```
 
-This creates `./volumes/output/example.com/example.com.pfx`. When importing the PFX on the device, enter the same password you chose above.
+The script asks for the password without echoing it. For a script, pass it as
+`-e PFX_PASSWORD=...` to `docker compose exec` instead. A password given as the second
+argument still works but is deprecated: it shows up in the process list and the shell
+history.
+
+This creates `./volumes/output/example.com/example.com.pfx`, readable only by its
+owner. When importing the PFX on the device, enter the same password you chose above.
 
 ## Scripts Reference
 

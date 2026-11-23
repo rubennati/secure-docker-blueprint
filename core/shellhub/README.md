@@ -14,9 +14,8 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 |---|---|---|
 | `db` | `postgres` | Device registry, users, sessions |
 | `valkey` | `valkey/valkey` | Job queue + cache, no persistence |
-| `server` | `shellhubio/server` | API + the SSH rendezvous point agents dial into |
-| `ui` | `shellhubio/ui` | Web frontend, reached only through `gateway` |
-| `gateway` | `shellhubio/gateway` | Reverse proxy in front of `server` + `ui` — this is what Traefik fronts |
+| `shellhub-server` | `shellhubio/server` | API, the embedded gateway in front of API and `ui` (port 80 — what Traefik fronts), and the SSH rendezvous point agents dial into |
+| `ui` | `shellhubio/ui` | Web frontend, reached only through the server's gateway |
 
 The devices you actually connect to are not part of this stack — they run
 the ShellHub agent separately, the same relationship `monitoring/beszel` has
@@ -28,7 +27,7 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 
 ```bash
 cp .env.local.example .env.local
-mkdir -p volumes/local/postgres
+mkdir -p volumes/local/postgres volumes/local/gateway
 ssh-keygen -t rsa -b 4096 -m PEM -f volumes/local/ssh_private_key -N ""
 openssl genrsa -out volumes/local/api_private_key 4096
 openssl rsa -in volumes/local/api_private_key -pubout -out volumes/local/api_public_key
@@ -41,25 +40,26 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 ```bash
 cp .env.example .env
-mkdir -p .secrets volumes/postgres
+mkdir -p .secrets volumes/postgres volumes/gateway
 openssl rand -hex 32 > .secrets/db_pwd.txt
 ssh-keygen -t rsa -b 4096 -m PEM -f .secrets/ssh_private_key -N ""
 openssl genrsa -out .secrets/api_private_key 4096
 openssl rsa -in .secrets/api_private_key -pubout -out .secrets/api_public_key
-# server and gateway run as root without capabilities (no DAC_OVERRIDE): a
-# 0600 key owned by your user is unreadable to them — hand both keys to root
-sudo chown 0:0 .secrets/api_private_key .secrets/ssh_private_key
+# server runs as root without capabilities (no DAC_OVERRIDE): a 0600 key owned
+# by your user is unreadable to it, and a directory owned by your user is not
+# writable — hand both keys and the gateway's state directory to root
+sudo chown 0:0 .secrets/api_private_key .secrets/ssh_private_key volumes/gateway
 sed -i "s|^SHELLHUB_POSTGRES_PASSWORD=.*|SHELLHUB_POSTGRES_PASSWORD=$(cat .secrets/db_pwd.txt)|" .env
 ```
 
 The `sed` line copies `.secrets/db_pwd.txt`'s contents into `.env` as
 `SHELLHUB_POSTGRES_PASSWORD` — see `.env.example`'s Secrets section for why
-this one value cannot be a Docker Secret on the `server`/`gateway` side even
+this one value cannot be a Docker Secret on the `server` side even
 though the database itself uses one.
 
 ```bash
 docker compose up -d
-docker compose ps    # all five services should reach "healthy"
+docker compose ps    # all four services should reach "healthy"
 ```
 
 Log in at `https://<APP_TRAEFIK_HOST>` to create the first account, then
@@ -70,9 +70,9 @@ install an agent on a target machine and register it from the UI.
 | Port | Protocol | Reachable from | Through Traefik? |
 |---|---|---|---|
 | `SHELLHUB_SSH_PORT` (2222) | Raw SSH (agent rendezvous + your `ssh` client) | Every device running an agent, and everyone who needs to connect to one | No — not HTTP |
-| Gateway (80 internally) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
+| Server's embedded gateway (80 internally, not published on the host) | HTTPS | `APP_TRAEFIK_ACCESS` policy — VPN-only by default | Yes |
 
-The ports listen on `SHELLHUB_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach the gateway; IPv6 is not published ([DEC-075](../../.ai/decisions.md#dec-075)).
+The SSH port listens on `SHELLHUB_BIND` — an IPv4 address, `0.0.0.0` as shipped, required. Narrow it to the VPN address where the whole LAN or internet need not reach it; IPv6 is not published ([DEC-075](../../.ai/decisions.md#dec-075)).
 
 The SSH port has to be reachable from both directions this repository
 normally keeps separate: agents on target machines dial *out* to it, and

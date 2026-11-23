@@ -31,7 +31,7 @@ Runs on `http://localhost:8080` without Traefik, DNS or a certificate; port 2222
 ```bash
 cp .env.local.example .env.local
 mkdir -p volumes/local/postgres volumes/local/recordings volumes/local/hostkey
-sudo chown 0:0 volumes/local/recordings volumes/local/hostkey
+sudo chown 10001:10001 volumes/local/recordings volumes/local/hostkey
 docker compose -f docker-compose.local.yml --env-file .env.local up -d
 # http://localhost:8080
 docker compose -f docker-compose.local.yml --env-file .env.local down
@@ -44,9 +44,9 @@ cp .env.example .env
 mkdir -p .secrets volumes/postgres volumes/recordings volumes/hostkey
 openssl rand -hex 32 > .secrets/db_pwd.txt
 openssl rand -hex 32 > .secrets/jwt_secret.txt
-# The app runs as root without capabilities (no DAC_OVERRIDE): hand it the
+# The app runs as orionbelt (10001) without capabilities: hand it the
 # directories it writes, or it cannot save its SSH host key
-sudo chown 0:0 volumes/recordings volumes/hostkey
+sudo chown 10001:10001 volumes/recordings volumes/hostkey
 sed -i "s|^ORION_JWT_SECRET=.*|ORION_JWT_SECRET=$(cat .secrets/jwt_secret.txt)|" .env
 sed -i "s|^POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$(cat .secrets/db_pwd.txt)|" .env
 ```
