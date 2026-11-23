@@ -13,10 +13,10 @@ Seven services — `opnform-nginx` is the single Traefik entry point:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `opnform-nginx` | `nginx:1.31.8` | HTTP entry point — routes `/api/*` to php-fpm, everything else to Nuxt |
-| `api` | `jhumanj/opnform-api:2.8.4` | Laravel backend — php-fpm on port 9000 |
+| `api` | `jhumanj/opnform-api:2.8.6` | Laravel backend — php-fpm on port 9000 |
 | `api-worker` | same | `artisan queue:work` — processes async jobs (notifications, webhooks) |
 | `api-scheduler` | same | `artisan schedule:work` — runs scheduled tasks |
-| `ui` | `jhumanj/opnform-client:2.8.4` | Nuxt SSR frontend on port 3000 |
+| `ui` | `jhumanj/opnform-client:2.8.6` | Nuxt SSR frontend on port 3000 |
 | `db` | `postgres:16.15-alpine` | Primary store (forms, responses, users, workspaces) |
 | `redis` | `redis:8.10.3-alpine` | Cache, queue, sessions |
 
@@ -90,12 +90,12 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/healthcheck # 200 OK  (API via opnform
 
 ## Security Model
 
-- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.` at 2.8.4) by `SELF_HOSTED=true`.
+- **First-user-wins admin** — the first visit to `/` redirects to `/setup`, and the first registered account becomes the workspace admin; there is no setup secret. With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: register over the VPN, then open it. Subsequent signups are refused (`Registration is not allowed.` at 2.8.6) by `SELF_HOSTED=true`.
 - **`APP_KEY`** encrypts Laravel sessions and tokens. Rotating invalidates all active sessions.
 - **`JWT_SECRET`** signs API tokens. Rotating logs out all users.
 - **`FRONT_API_SECRET` / `NUXT_API_SECRET`** is a shared secret between the Laravel API and the Nuxt SSR layer. Both must have the same value.
 - **`DB_PWD_INLINE` duplicates the DB password** — Laravel reads `DB_PASSWORD` from env only (no `_FILE` support). Postgres side uses `POSTGRES_PASSWORD_FILE`.
-- **`APP_TRUSTED_PROXIES: "*"`** — required so Laravel honours `X-Forwarded-Proto=https` from Traefik.
+- **`TRUSTED_PROXIES` is not set.** Since 2.8.5 OpnForm then accepts `X-Forwarded-Proto` from any address for HTTPS detection and ignores forwarded client address, host and port headers. The API is reached only through this stack's nginx, behind Traefik, so rate limits count the proxy's address, not the client's. Upstream advises against `TRUSTED_PROXIES=*`; an empty value turns the protocol fallback off.
 - **`NUXT_PRIVATE_API_BASE=http://opnform-nginx/api`** — Nuxt SSR calls the API via the internal Docker network (not the public URL), avoiding DNS resolution failures on private networks.
 - **`no-new-privileges:true`** on all services.
 - **`headers-standard` sends `X-Frame-Options: DENY`, which blocks the form embed.** Putting a form in another page — a website, a [Notion page](https://help.opnform.com/en/article/can-i-embed-my-form-in-a-notion-page-or-site-x7guph/) — is a documented OpnForm feature and how most forms are distributed. The default stays denying because the form pages and the workspace admin share one hostname, so relaxing the header for the forms relaxes it for form management as well. To embed, switch the router to `headers-application-owned` and add a stack middleware before it that sets a `frame-ancestors` CSP naming the sites you embed into; `apps/onlyoffice` shows the shape. `frame-self` does not help — it permits same-origin framing only, and an embed is by definition another origin.
@@ -167,10 +167,6 @@ with it; a queue restored mid-flight simply retries.
 | `redis:8.10.3-alpine` | — | — | — |
 
 <!-- findings:end -->
-
-The API image, `jhumanj/opnform-api:2.8.4`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1, listed by CISA as exploited). It is the newest release, and upstream has not rebuilt the image.
-
-**Risk:** the library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint could in principle reach it. Limit webhooks to endpoints you trust and move to the next release.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

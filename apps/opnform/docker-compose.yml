@@ -154,7 +154,6 @@ services:
       APP_URL: https://${APP_TRAEFIK_HOST}
       FRONT_URL: https://${APP_TRAEFIK_HOST}
       APP_KEY: ${APP_KEY:?Set APP_KEY in .env}
-      APP_TRUSTED_PROXIES: "*"
       # Secrets shared with Nuxt UI (SSR authentication)
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env}
       FRONT_API_SECRET: ${FRONT_API_SECRET:?Set FRONT_API_SECRET in .env}
