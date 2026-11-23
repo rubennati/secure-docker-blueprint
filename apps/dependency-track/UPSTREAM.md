@@ -18,7 +18,7 @@
 
 ## What we use
 
-- `dependencytrack/apiserver:5.2.1` + `dependencytrack/frontend:5.2.1` —
+- `dependencytrack/apiserver:5.2.2` + `dependencytrack/frontend:5.2.2` —
   the v5 "Hyades" architecture, where API server and frontend are separate
   images (v4's bundled image no longer exists)
 - `postgres:18.7-alpine` — the only supported database in v5; H2, MySQL and
@@ -32,7 +32,7 @@ assumed: **`latest` on both `dependencytrack/apiserver` and
 upstream states reaches end-of-life in December 2026. Anyone pulling
 `latest` today gets v4, not v5 — this is called out as a known trap in
 upstream's own documentation, not an inference. This stack pins the full
-`5.2.1` tag, as upstream's own production guidance requires regardless of
+`5.2.2` tag, as upstream's own production guidance requires regardless of
 this trap.
 
 ## What we changed vs. upstream's documented example
@@ -79,6 +79,31 @@ this trap.
   storage (the `s3` provider).
 
 ## Version notes
+
+- Moved from `5.2.1` to `5.2.2` on 2026-11-23 (released 2026-11-18), API
+  server and frontend together. Fixes GHSA-wvfc-q5x2-9786 (low): sessions were
+  not revoked when a user's password changed or the user was suspended, so a
+  stolen session outlived both; it reaches every login on this stack. The API
+  server pins FreeMarker 2.3.35 (CVE-2026-84939, which upstream states does not
+  reach Dependency-Track) and snappy-java 1.1.10.12, runs on Temurin 25.0.5,
+  and adds `-XX:-UseBASE64Intrinsics` to the default JVM options against
+  CVE-2026-114938 (OpenJDK 17+ on x64 CPUs with AVX-512 VBMI; no fixed Temurin
+  build existed at release). This stack sets no `JAVA_OPTIONS`, so the flag
+  applies; whoever replaces `JAVA_OPTIONS` must add it again or use
+  `EXTRA_JAVA_OPTIONS`. The frontend image no longer contains `brotli-libs`
+  (CVE-2026-111497). Upgrade notes: ENISA moved its EU KEV catalogue, and an
+  existing instance keeps the old URL, which answers `404` — set
+  **Administration → KEV Sources → ENISA EU KEV → Feed URL** to
+  `https://raw.githubusercontent.com/enisaeu/CNW/main/eukev/eukev.json`, save,
+  then **Mirror now**; a new instance has the new URL. Component policies with
+  vulnerability conditions now honour rating overrides from analyses, so
+  violations can appear or disappear at the next evaluation. The schema
+  migration runs at start. Upgraded on data from 5.2.1: the project and its
+  component from an uploaded BOM were kept, the admin logged in, a wrong
+  password answered `401`, the frontend answered `200`. Sources:
+  https://github.com/DependencyTrack/dependency-track/releases/tag/5.2.2,
+  https://github.com/DependencyTrack/dependency-track/security/advisories/GHSA-wvfc-q5x2-9786,
+  https://github.com/DependencyTrack/docs/blob/main/docs/guides/upgrading/v5.2.2.md
 
 - Moved to `5.2.1` on 2026-11-05 (released 2026-10-25), API server and
   frontend together. Upstream's upgrade notes
