@@ -8,7 +8,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `kimai-app` | `kimai/kimai2:2.71.0` | PHP/Symfony + Apache + cron |
+| `kimai-app` | `kimai/kimai2:2.72.1` | PHP/Symfony + Apache + cron |
 | `db` | `mariadb:11.4.13` | Timesheets, users, customers, projects |
 
 ## Try it locally
