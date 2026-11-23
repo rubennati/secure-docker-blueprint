@@ -167,8 +167,10 @@ services:
     # --- Health & Observability ---
     # uWSGI also answers plain HTTP on 8081. Django answers 400 to a Host
     # outside DD_ALLOWED_HOSTS, so the check uses `localhost`, not 127.0.0.1.
+    # The django image carries no curl since 3.5.100; Python's urllib fails on
+    # any status of 400 or above, as curl -f did.
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8081/login || exit 1"]
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8081/login', timeout=8)"]
       interval: 30s
       timeout: 10s
       retries: 5
