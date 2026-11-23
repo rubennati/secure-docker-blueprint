@@ -52,6 +52,20 @@
   another user, `TRUSTED_HOSTS` parsing), 2.70.1 (images rebuilt on fixed PHP versions
   after the October 2026 PHP security release). No GHSA or CVE IDs are listed in the
   notes.
+- Moved to `2.72.1` (2026-11-20) on 2026-11-23. Security fixes in 2.72.0 (2026-11-13):
+  the form login route is disabled when SAML is active and form login is switched off
+  (#6311), custom-field values sent through the API are validated (#6301), the locale
+  route matching in the global firewall is fixed, and the Twig sandbox policy is
+  tightened. No GHSA or CVE IDs are listed in the notes, and the repository has no
+  published advisory for these versions. The SAML fix does not reach this stack, which
+  configures no SAML; the API and Twig fixes do. 2.72.0 also shortens the default
+  lifetime of password-reset links to 30 minutes. 2.72.1 rebuilds the images on patched
+  base images. The image moves to PHP 8.5 on Debian 13; with it the brotli finding of
+  2.71.0 (CVE-2026-111497) is gone — a local Trivy scan of `2.72.1` reports no CRITICAL
+  finding with a fix. No migration: the entrypoint reports the schema already at the
+  newest version, and no variable changed. Sources:
+  https://github.com/kimai/kimai/releases/tag/2.72.0,
+  https://github.com/kimai/kimai/releases/tag/2.72.1
 
 ## Upgrade checklist
 

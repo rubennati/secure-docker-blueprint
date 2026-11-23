@@ -19,7 +19,7 @@ The origin comes from the governing-law clause of Chatwoot's terms of service
 
 ## What we use
 
-- `chatwoot/chatwoot:v4.19.1` for web and worker. Upstream's production compose pins
+- `chatwoot/chatwoot:v4.20.1` for web and worker. Upstream's production compose pins
   `:latest`; not used here. A `-ce` tag also exists; this stack uses the tag upstream's
   compose names.
 - `pgvector/pgvector:0.8.7-pg16` — upstream's production compose uses
@@ -108,6 +108,26 @@ enterprise features; backup and restore; an upgrade across versions.
   for security hardening (Twilio webhook verification, CSS sanitization) and
   v4.19.1 moves the build stage to Node.js 24.22.1 (CVE-2026-111497, build only).
   No GHSA named.
+- Moved to `v4.20.1` (2026-11-20) on 2026-11-23, web and worker together. v4.20.0
+  states "30+ security fixes and hardening improvements across authentication,
+  webhooks, APIs, data access, and dependencies"; v4.20.1 moves to Ruby 3.4.13,
+  upgrades the Alpine packages at build time and leaves npm and corepack out of the
+  production image. No GHSA or CVE is named, and the repository has no published
+  advisory for these versions. Changes that need an operator: a Messenger inbox
+  rejects webhook events while the Facebook app secret is blank (`FB_APP_SECRET`, or
+  Super Admin → Settings → Messenger; #16576), and the Messenger verify token is now
+  compared exactly; a manual WhatsApp Cloud inbox checks signatures once the Meta app
+  secret is saved in its settings (#16548); Bandwidth inboxes move to OAuth client
+  credentials before 2026-12-02 (#16052). libvips 8.13 or newer is required, which
+  the image carries. The Dockerfile keeps the same user, paths and port; upstream's
+  production compose and `.env.example` add no variable. The web service migrates at
+  start. Upgrade tested on the local file: `v4.19.1` with an administrator, an
+  account, a website inbox and a contact, then `v4.20.1`: 15 migrations ran without
+  error, web and worker healthy under `read_only` and `cap_drop: ALL`, the contact
+  found through the API, password sign-in `200`, the anonymous request `401`. The
+  Messenger, WhatsApp Cloud and Bandwidth channels were not exercised. Sources: https://github.com/chatwoot/chatwoot/releases/tag/v4.20.0,
+  https://github.com/chatwoot/chatwoot/releases/tag/v4.20.1,
+  https://github.com/chatwoot/chatwoot/pull/16576
 - Moved `redis` from `7.4-alpine` to `8.10.3-alpine` on 2026-11-05, a new major
   ; the tag follows the 8.10 patch releases (8.10.3,
   2026-10-26). Redis 8 is offered under RSALv2, SSPLv1 or AGPLv3 at the user's

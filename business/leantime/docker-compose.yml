@@ -160,6 +160,13 @@ services:
       LEAN_ALLOW_TELEMETRY: "false"
       LEAN_NEWS_ENABLED: "false"
 
+      # OAuth for MCP clients on /mcp, on by default since 3.16.0. When on,
+      # /oauth/register accepts a client registration from anyone who reaches
+      # the host name, without a session (measured: 201) and stores it in the
+      # database. Off removes the OAuth endpoints; an operator who connects an
+      # MCP client sets it to "true". See UPSTREAM.md.
+      LEAN_OAUTH_ENABLED: "false"
+
       # Logs to the container log rather than to a file inside the volume.
       LEAN_LOG_CHANNELS: stderr
       LEAN_DEBUG: "0"

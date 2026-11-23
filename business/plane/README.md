@@ -92,8 +92,9 @@ used. It mounts the same `volumes/`, so run one at a time.
   on an internal network.
 - **Non-root everywhere it works.** Every Plane image declares root. The
   backend runs as uid 1000 — the image makes `/code` world-writable, which is
-  how it works at all — and so do Valkey and Silo. The nginx and Caddy images
-  keep root and get the capability each needs, no more.
+  how it works at all — and so do Valkey and Silo. The web, admin and space
+  images keep root without any capability; the proxy keeps root with
+  `NET_BIND_SERVICE` only.
 - **`CORS_ALLOWED_ORIGINS` is set** to the host name; upstream leaves it empty.
 - **Webhooks reach anywhere by default.** `APP_WEBHOOK_ALLOWED_HOSTS` is empty,
   which means no restriction. A webhook is an outbound request the application

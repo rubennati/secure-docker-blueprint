@@ -97,6 +97,12 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
   `LEAN_NEWS_ENABLED=false` turn both off, verified against the effective
   configuration. Installing a plugin still contacts `marketplace.leantime.io`,
   because that is what the marketplace is.
+- **OAuth for MCP clients is off.** Upstream turns it on from 3.16.0, and
+  `/oauth/register` then accepts a client registration from anyone who reaches
+  the host name, without a session. `LEAN_OAUTH_ENABLED=false` in
+  `docker-compose.yml` removes the OAuth endpoints. To connect an MCP client
+  such as Claude or ChatGPT, set it to `"true"`; the client has to reach the
+  host name, which `access-vpn` does not allow from outside the VPN.
 - **`read_only: true`, `cap_drop: ALL`, `no-new-privileges`, non-root** —
   verified against 3.9.8. Four bind mounts and four tmpfs are the only writable
   paths; upstream's own compose example grants CHOWN, SETGID and SETUID, and
