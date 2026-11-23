@@ -78,6 +78,17 @@ Migrating data from SQLite to Postgres requires running NocoDB's CLI `nc-migrate
   GHSA-r872-6prr-v2jc, GHSA-9g75-jg2x-68m4, GHSA-jcc2-3vff-7867,
   GHSA-qgv3-m9j5-jph8, GHSA-9fp2-px3g-mggq, GHSA-2ggp-wwhj-f84q,
   GHSA-4wph-jpw9-43hh, GHSA-4j94-335x-8wjj, GHSA-ppvx-p9g2-5m37.
+- Moved to `2026.10.2` on 2026-11-23 (released 2026-11-19). A bug-fix release with a security
+  entry and no advisory ID published by 2026-11-23: shared views and shared dashboards return
+  only the fields they show, forms write only their own fields, Editors no longer see secrets
+  stored in workflow steps, workflow webhooks accept bodies up to 1 MB. The first two reach any
+  instance that publishes a shared view or a form; this route ships at `access-vpn`, so only
+  once it is opened to the public. No manual migration step, no variable removed; for self-
+  hosting it fixes sign-in with `NC_SSO=oidc` and makes `NC_DISABLE_SUPPORT_CHAT` also stop the
+  chat script, neither set here. A base with a table and a row created on 2026.10.1 is still
+  there on 2026.10.2: the super-admin signs in through the API and the row is returned
+  (local stack, 2026-11-23). Source:
+  https://github.com/nocodb/nocodb/releases/tag/2026.10.2
 
 ## Upgrade checklist
 
