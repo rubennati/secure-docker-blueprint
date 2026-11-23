@@ -12,7 +12,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---|---|---|
-| `web` | `openproject/openproject:17.9.6-slim` | Application server (port 8080) |
+| `web` | `openproject/openproject:17.9.8-slim` | Application server (port 8080) |
 | `worker` | same image | Background job processor |
 | `cron` | same image | Scheduled tasks (email digests, cleanup) |
 | `seeder` | same image | One-shot: DB migrations + seed data |
@@ -149,7 +149,7 @@ schema gets written over the restore.
 - **Base64 passwords and DATABASE_URL**: base64 passwords contain `+`, `/`, `=` which break the `postgres://` URL parser. The entrypoint URL-encodes the password with `sed` before embedding it. See `config/entrypoint.sh`.
 - **Autoheal** (from upstream compose) is omitted — it requires a direct Docker socket mount. OpenProject restarts via `restart: unless-stopped` on failure.
 - **Hocuspocus** (real-time collaborative editing) is omitted. Enable by adding the `hocuspocus` service from the upstream compose when needed.
-- **Plugins** require building a custom image on top of `openproject/openproject:17.9.6-slim`. See upstream docs.
+- **Plugins** require building a custom image on top of `openproject/openproject:17.9.8-slim`. See upstream docs.
 
 ## Open findings
 
