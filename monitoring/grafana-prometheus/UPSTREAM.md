@@ -92,6 +92,12 @@ Grafana's four outbound behaviours are off: usage reporting, update checks,
 plugin update checks and the news feed. Installing a plugin from the catalogue
 still reaches grafana.com, which is what a plugin catalogue is.
 
+One behaviour stays on: at every start Grafana 13 installs its preinstalled
+plugins from grafana.com in the background, about 18 of them, among them the
+Prometheus data source this stack needs (Grafana 13 no longer bundles it), and
+with `preinstall_auto_update` on it moves them to newer versions. Measured on
+13.3.0 and 13.3.1 on 2026-11-23.
+
 Prometheus, node_exporter and cAdvisor make no outbound call of their own.
 Prometheus reaches exactly the targets in `config/prometheus.yml`.
 

@@ -122,6 +122,9 @@ you own, and a decision rather than a default.
   relied on.
 - **Four outbound behaviours are off**: usage reporting, update checks, plugin
   update checks and the news feed — all on by default, all to grafana.com.
+  The preinstalled plugins, the Prometheus data source among them, are still
+  fetched from grafana.com at start (`UPSTREAM.md`, *What reaches the network on
+  its own*).
 - **`read_only`, `cap_drop: ALL`, `no-new-privileges`, non-root** on both base
   services.
 - **`access-vpn`.** A metrics dashboard describes the installation it
