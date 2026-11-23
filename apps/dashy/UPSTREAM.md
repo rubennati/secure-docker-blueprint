@@ -54,6 +54,17 @@
   sub-pages, OIDC re-login keeps the requested page. No migration steps. Sources:
   https://github.com/Lissy93/dashy/releases/tag/4.9.0,
   https://github.com/Lissy93/dashy/compare/4.8.7...4.9.15
+- Moved to `4.10.0` on 2026-11-23 (released 2026-11-22); 4.9.18 to 4.9.21 lie between. The
+  4.10.0 release notes cover everything since 4.9.0, so the security entries they list — auth
+  headers to lookalike origins (#2426, GHSA-rv37-gcpm-x55f, high) and header-auth users missing
+  from `conf.yml` (#2430, GHSA-7rv3-cjr6-j29v, medium) — were already fixed at the previous pin
+  (4.9.12 and 4.9.15). What 4.9.17 to 4.10.0 adds: the CORS proxy substitutes environment
+  placeholders inside Basic auth credentials of widgets (#2443), documentation and translation
+  fixes, and dependency updates. No configuration change, no migration. The image starts
+  healthy with the stack's `cap_drop: ALL` and read-only `conf.yml`, reports 4.10.0 and serves
+  the dashboard (local stack, 2026-11-23). Sources:
+  https://github.com/Lissy93/dashy/releases/tag/4.10.0,
+  https://github.com/Lissy93/dashy/compare/4.9.17...4.10.0
 
 ## Useful commands
 
