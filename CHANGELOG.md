@@ -8,6 +8,32 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+## [0.9.10] — 2026-11-23 — Security releases of November 2026
+
+Traefik v3.7.19 closes a path-parameter bypass of path-based access policies;
+every host should take it first. 42 further stacks move to the release that
+fixes their advisories, and PostgreSQL, Valkey, MongoDB, Silo and Elasticsearch
+move to their security releases in every stack that pins them. Each move was
+upgraded on existing data with the stack's local compose file: migrations ran,
+the data was there afterwards and login or the API answered. No host run is part
+of this release; `Last verified` dates are unchanged.
+
+An existing host keeps its `.env` and its secrets; set the new tag and run
+`docker compose pull && docker compose up -d`. Back up the database before an
+application move. Some stacks ask for one more step, each written as
+**Upgrade:** below:
+
+- **Traefik:** set the tag, run `render.sh` and `validate.sh`, recreate the
+  container; every router is down for the few seconds of the restart.
+- **Invoice Ninja:** dump the database first, then pull and `up -d`.
+- **PostgreSQL:** after the restart, `reindexdb --all --concurrently`.
+- **ShellHub, Orion Belt, Stalwart, Dependency-Track, ERPNext, Leantime, Zammad,
+  Dify, Obot, Chatwoot, Velociraptor, JumpServer:** the stack's own step in its
+  entry.
+
+Not moved: MariaDB (the fixed tags are not on Docker Hub yet) and LibrePhotos'
+PostgreSQL (no `pgautoupgrade` image for 18.7 yet).
+
 ### Security
 
 - **Traefik `v3.7.19`: path-based access policies hold for paths with path parameters** (`core/traefik`). v3.7.18 fixes five advisories, four of which reach this blueprint:
@@ -1385,7 +1411,8 @@ Initial public release.
 - No CI workflows yet (compose validate, markdown lint, secret scan) — planned for 0.2.0
 - No automatic backup orchestration — planned in Evaluating section of ROADMAP
 
-[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.9...HEAD
+[Unreleased]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.10...HEAD
+[0.9.10]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.9...v0.9.10
 [0.9.9]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.8...v0.9.9
 [0.9.8]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.7...v0.9.8
 [0.9.7]: https://github.com/rubennati/secure-docker-blueprint/compare/v0.9.6...v0.9.7
