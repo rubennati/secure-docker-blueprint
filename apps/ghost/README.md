@@ -10,7 +10,7 @@ Base stack (two services):
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `ghost-app` | `ghost:6.75.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
+| `ghost-app` | `ghost:6.78.0-alpine` | Ghost CMS (Node.js), serves the blog + admin UI on port `2368` |
 | `db` | `mysql:8.4.13` | Ghost's content database (posts, members, settings) |
 
 Optional ActivityPub stack (`activitypub.yml`):
