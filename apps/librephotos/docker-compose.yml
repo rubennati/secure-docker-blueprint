@@ -90,6 +90,12 @@ services:
       # exists (upstream default true). Off here: pins move through this
       # repository, not through an in-app notice.
       UPDATE_CHECK: "false"
+      # From 1.6.0 the backend keeps scrubbed error reports in its database and
+      # sends them only when an admin picks a destination. Upstream's default
+      # for "Share with the LibrePhotos maintainers" is a GlitchTip project on
+      # errors.niaz.omg.lol; empty removes that choice, so reports stay on this
+      # server or go to the operator's own SENTRY_DSN.
+      ERROR_REPORTING_MAINTAINERS_DSN: ""
       TZ: ${TZ}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
       BACKEND_HOST: backend

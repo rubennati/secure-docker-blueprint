@@ -8,9 +8,9 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `proxy` | `reallibrephotos/librephotos-proxy:1.5.1` | nginx — routes `/api` → backend, `/` → frontend, serves media files |
-| `backend` | `reallibrephotos/librephotos:1.5.1` | Django + gunicorn + ML workers (face detection, CLIP, scene classification) |
-| `frontend` | `reallibrephotos/librephotos-frontend:1.5.1` | Static React build |
+| `proxy` | `reallibrephotos/librephotos-proxy:1.6.0` | nginx — routes `/api` → backend, `/` → frontend, serves media files |
+| `backend` | `reallibrephotos/librephotos:1.6.0` | Django + gunicorn + ML workers (face detection, CLIP, scene classification) |
+| `frontend` | `reallibrephotos/librephotos-frontend:1.6.0` | Static React build |
 | `db` | `pgautoupgrade/pgautoupgrade:18.6-trixie` | Postgres with automatic major-version upgrade on startup |
 
 ## Try it locally
