@@ -162,9 +162,9 @@ the plain value exists nowhere else.
 
 <!-- findings:end -->
 
-The Shlink image, `ghcr.io/shlinkio/shlink:5.1.8`, and the web client, `shlink-web-client:4.9.0`, each ship Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). Both are the newest release, and upstream has not rebuilt them.
+The web client, `shlink-web-client:4.9.0`, ships Alpine `brotli-libs` 1.2.0 with one CRITICAL finding (CVE-2026-111497, fixed in 1.2.1). It is the newest release, and upstream has not rebuilt it. The server image at `5.1.9` ships `brotli-libs` 1.2.1.
 
-**Risk:** the library backs PHP's curl, which Shlink uses when it fetches remote pages such as a long URL's title, so a hostile site could in principle reach it; the static web client does not use it. Move to the next release.
+**Risk:** the static web client does not use the library: nginx serves its files without brotli. Move to the next release.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 
