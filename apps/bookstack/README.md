@@ -10,7 +10,7 @@ Two services:
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `bookstack-app` | `lscr.io/linuxserver/bookstack:version-v26.09.2` (digest-pinned) | BookStack web app (LSIO build with Apache + PHP 8) |
+| `bookstack-app` | `lscr.io/linuxserver/bookstack:version-v26.09.3` (digest-pinned) | BookStack web app (LSIO build with Apache + PHP 8) |
 | `db` | `mariadb:12.3.3` | Primary data store (pages, users, revisions, attachments metadata) |
 
 Attachments and images live in `./volumes/config/www/uploads/` (inside the LSIO `/config` mount).
@@ -43,7 +43,7 @@ cp .env.example .env
 # Edit: APP_TRAEFIK_HOST, TZ, PUID/PGID
 
 # 2. Generate Laravel APP_KEY (one-time)
-docker run --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:version-v26.09.2 appkey
+docker run --rm --entrypoint /bin/bash lscr.io/linuxserver/bookstack:version-v26.09.3 appkey
 # Copy the 'base64:...' output into APP_KEY in .env
 
 # 3. Generate DB secrets

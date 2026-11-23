@@ -78,6 +78,28 @@ See the [ntfy config reference](https://docs.ntfy.sh/config/) for the full list.
   - Experimental clustering (v2.30.0 onwards) stays off; upstream says it is
     not ready for production.
   https://github.com/binwiederhier/ntfy/releases
+- Moved to `v2.38.1` on 2026-11-23 (released 2026-11-16). No `server.yml` key is removed or
+  renamed, and the message cache needs no migration. Both releases fix denial of service in
+  message templating, which any client allowed to publish can use with `X-Template: yes`:
+  v2.38.0 caps the string `replace`, `regexReplaceAll` and `join` build, which a crafted
+  template could grow until the server ran out of memory; v2.38.1, a security release, checks
+  values before printing them, enforces the execution deadline inside a single action, limits
+  regular expressions, `cat`, `toPrettyJSON`, `concat`, `keys`, `uniq` and the sequence
+  functions. v2.38.1 also stops slow S3 attachment uploads and unresponsive web push endpoints
+  from holding memory and connections, and counts the web push subscription limit per IP
+  prefix instead of per address; this stack keeps attachments on disk and sets up no web
+  push, so those two do not reach it. v2.38.0 is built with Go 1.27.4. Upstream published no
+  advisory ID for these fixes.
+  - Breaking for templates: `printf` takes only plain directives (no argument indexes, no
+    `%p`, no lists or dicts), and `html`, `js` and `urlquery` are no longer allowed. This
+    stack ships no template directory; a publisher whose inline template uses one of those
+    functions now gets `400` (ntfy error 40044) and has to change the template.
+  - v2.38.0 shares rate limits across cluster nodes; clustering stays off here.
+  - An instance upgraded from v2.37.2 with a user and cached messages keeps both: the poll
+    returns the old messages, the admin account answers, an inline template still renders
+    and one calling `html` is refused with `400` (local stack, 2026-11-23).
+  Sources: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.0,
+  https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1
 
 ## Upgrade checklist
 

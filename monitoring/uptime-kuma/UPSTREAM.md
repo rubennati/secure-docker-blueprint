@@ -46,6 +46,18 @@
   push monitor retries, status page refresh timer, recurring maintenance timezone)
   and dependency updates. It fixes GHSA-86ch-2247-gr56 (RSS cache poisoning) and
   replaces the outdated `apicache` with `http-cache-semantics` for it.
+- Moved to `2.5.12` on 2026-11-23 (released 2026-11-17). Three patch releases with no
+  breaking change and no migration. `2.5.10` moves the image to Node.js 22.23.5, the Node.js
+  security release of November 2026 (high-severity issues upstream says could reach Uptime
+  Kuma). `2.5.11` fixes GHSA-437w-j82f-9vjh, remote code execution through a regression in an
+  upstream package, reachable by an admin only; upstream withholds the details and severity for
+  seven days, and the advisory was not yet published on 2026-11-23. `2.5.12` sandboxes a
+  library upstream calls dangerous (#8187) and updates dependencies. An instance upgraded from
+  2.5.9 with an admin and two HTTP monitors keeps both: login answers and the monitor list
+  returns them, the healthcheck passes and the log carries no error (local stack, 2026-11-23).
+  Sources: https://github.com/louislam/uptime-kuma/releases/tag/2.5.10,
+  https://github.com/louislam/uptime-kuma/releases/tag/2.5.11,
+  https://github.com/louislam/uptime-kuma/releases/tag/2.5.12
 
 ## Upgrade checklist
 

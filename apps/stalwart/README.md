@@ -183,7 +183,7 @@ in front of this server.
   the bans above depend on it.
 - **DANE is off.** Stalwart reports that Docker's resolver cannot validate
   DNSSEC and disables DANE for outgoing mail.
-- **Not run at v1.0.3.** The measurements above are from v0.16.24 on
+- **Not run at v1.1.1.** The measurements above are from v0.16.24 on
   2026-10-03. A v0.16 data store does not open in v1; `UPSTREAM.md`, "Version
   notes", has the migration.
 - **The web interface is not pinned by the image tag.** It is downloaded at

@@ -33,7 +33,7 @@ secret-request flow, with a different tradeoff (see its README).
 
 | Service | Image | Purpose |
 |---|---|---|
-| yopass-app | jhaals/yopass | Web UI + API |
+| yopass-app | jhaals/yopass (Rust server) | Web UI + API |
 | memcached | memcached | Ephemeral secret store (TTL-based; no persistence by design) |
 
 ## Security model

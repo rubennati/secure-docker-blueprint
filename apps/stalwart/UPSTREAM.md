@@ -21,13 +21,13 @@ Part of the development was funded through NLnet's NGI0 funds.
 
 14 927 stars, pushed 2026-10-03, release v0.16.24 on 2026-09-27; six patch
 releases between 2026-08-24 and 2026-09-27. v1.0.0 followed on 2026-10-26 and
-v1.0.3 on 2026-11-04; v1.0.0 changed the database layout, so a v0.16 store is
+v1.1.1 on 2026-11-16; v1.0.0 changed the database layout, so a v0.16 store is
 migrated with a separate tool, not opened in place (Version notes). Five
 advisories are published, each with a fixed release; the newest fix is 0.15.5.
 
 ## What we use
 
-- `stalwartlabs/stalwart:v1.0.3`, one container, RocksDB in `volumes/data`.
+- `stalwartlabs/stalwart:v1.1.1`, one container, RocksDB in `volumes/data`.
 - `mail.yml`, an opt-in overlay that publishes 25, 465 and 993.
 - `ops/setup.sh`, which completes setup over the management API.
 
@@ -131,6 +131,35 @@ Read from the start log of v0.16.24:
   https://stalw.art/docs/migration/upgrade-0-16/ ·
   https://github.com/stalwartlabs/stalwart-migrate/blob/main/SCHEMA_CHANGES.md ·
   https://security-tracker.debian.org/tracker/CVE-2026-111497
+- Moved to `v1.1.1` on 2026-11-23 (released 2026-11-16), across v1.1.0. Upstream labels neither
+  release a security release and published no advisory, but v1.1.1 fixes three issues that
+  reach this stack: a file uploaded as HTML under `/dav/file/` could run scripts on the
+  server's origin when another user opened it (now served with `nosniff` and a sandboxing
+  `Content-Security-Policy`); floods of empty quoted strings before IMAP login, or of `(`
+  after it, could exhaust server memory; a queued message was visible to and managed by every
+  tenant with a recipient, now only by the sender's tenant. v1.1.0 drains deliveries on
+  shutdown so a restart no longer delivers twice, and restricts ACME names per tenant domain
+  (Enterprise).
+  - Breaking in v1.1.0: passkeys (WebAuthn) need new `sysPasskey*` permissions, which default
+    roles created by an earlier version lack. The compose files now pass
+    `STALWART_UPDATE_ROLE_PERMISSIONS` through, empty by default; an existing installation
+    starts once with it set to `true` and then without it. The variable named in the v1.0.3
+    entry above needs the same pass-through, which the compose files did not have before.
+    The relying party ID of a passkey is the host of `STALWART_PUBLIC_URL`, so the web
+    interface has to be reached under that host.
+  - Breaking in v1.1.1: the Netcup DNS provider uses the CloudDNS REST API and needs the key in
+    the new `apiKey` field. This stack configures no DNS provider.
+  - Masked email addresses move into the open-source edition.
+  - The image keeps uid 2000, the volumes, ports, `curl` and `/healthz/live`.
+  - An installation set up by `ops/setup.sh` on v1.0.3 with one delivered message moves to
+    v1.1.1 with one start under `STALWART_UPDATE_ROLE_PERMISSIONS=true`: the default roles then
+    carry the five `sysPasskey*` permissions, the container is healthy without the variable on
+    the next start, the administrator signs in, the message is still in the mailbox, and an
+    HTML file under `/dav/file/` is served with `nosniff` and `sandbox` (local stack,
+    2026-11-23). Sources:
+    https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.0,
+    https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.1,
+    https://stalw.art/docs/auth/authorization/permissions#default-roles-on-upgraded-servers
 
 ## Upgrade checklist
 
@@ -139,7 +168,10 @@ Read from the start log of v0.16.24:
    change the database layout (v1.0.0 did)
 2. Copy `volumes/data` and `volumes/etc` with the container stopped
 3. Raise `APP_TAG` in `.env` and in `.env.local.example`
-4. `docker compose pull && docker compose up -d`
+4. `docker compose pull && docker compose up -d`; when the release notes ask for
+   it, the first start after the move runs with
+   `STALWART_UPDATE_ROLE_PERMISSIONS=true docker compose up -d`, then
+   `docker compose up -d` without it
 5. Sign in, send a message between two accounts, and read *Blocked IPs* and the
    queue
 6. Record the result in `Last verified` once it ran behind `core/traefik`

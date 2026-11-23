@@ -14,7 +14,7 @@
 
 ## What we use
 
-- Official image, pinned tag: `qdrant/qdrant:v1.20.0-unprivileged` (`amd64` and
+- Official image, pinned tag: `qdrant/qdrant:v1.20.2-unprivileged` (`amd64` and
   `arm64`, 74 MB). The `-unprivileged` variant runs as `qdrant` (uid/gid 1000);
   the plain tag runs as root.
 - Command `./entrypoint.sh` in `/qdrant`, ports `6333` (REST, dashboard) and
@@ -121,6 +121,18 @@ on a throwaway `proxy-public` network without Traefik:
   timestamps follow `TZ`, which the compose file sets. Advisories fixed:
   GHSA-3gph-6c29-p29v (high, 1.19.2), GHSA-frc7-44gm-99qq (critical, distributed
   mode only, 1.20.0); RUSTSEC-2026-0382 and RUSTSEC-2026-0383.
+- Moved to `v1.20.2-unprivileged` on 2026-11-23 (released 2026-11-16); 1.20.1 lies between. No
+  storage migration, no configuration key removed. 1.20.1 carries one security fix without an
+  advisory ID: a JWT scoped to some collections no longer sees the snapshot telemetry of the
+  others (qdrant/qdrant#11477). It does not reach this stack, which uses the single API key and
+  no JWT access control. Also in 1.20.1: faster HNSW builds (PiPNN) and cold on-disk filters,
+  fixes for a flush-order bug in copy-on-write and a panic in the Greek stemmer. 1.20.2 builds
+  HNSW graphs with the classic algorithm again by default, so `ef_construct` keeps tuning
+  graph quality, and reads collection configs without `ef_construct`. A collection with a point
+  and a snapshot created on 1.20.0 is still there on 1.20.2: the point answers with its payload,
+  the snapshot is listed, a request without the key gets `401` (local stack, 2026-11-23).
+  Sources: https://github.com/qdrant/qdrant/releases/tag/v1.20.1,
+  https://github.com/qdrant/qdrant/releases/tag/v1.20.2
 
 ## Upgrade checklist
 
