@@ -19,7 +19,7 @@
 - `ghcr.io/shlinkio/shlink:5.1.8` — the server, RoadRunner with PHP workers.
 - `ghcr.io/shlinkio/shlink-web-client:4.9.0` — the browser interface, static
   files behind nginx. Optional; the API works without it.
-- `postgres:18.6-alpine`. Shlink's own default is SQLite, which upstream states
+- `postgres:18.7-alpine`. Shlink's own default is SQLite, which upstream states
   is not supported for production.
 
 ## What we changed and why

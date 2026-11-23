@@ -19,7 +19,7 @@ The licence names DefectDojo, Inc.; no jurisdiction was found in the pages check
 - `defectdojo/defectdojo-django:3.5.0` for uWSGI, the Celery worker, Celery beat
   and the initializer, and `defectdojo/defectdojo-nginx:3.5.0`. Upstream's compose
   defaults to `:latest`; not used here.
-- `postgres:18.6-alpine` and `valkey/valkey:9.1.2-alpine` — the versions upstream's
+- `postgres:18.7-alpine` and `valkey/valkey:9.1.2-alpine` — the versions upstream's
   compose pins (it also pins their digests).
 - The seven services of upstream's `docker-compose.yml`, unchanged in shape.
 

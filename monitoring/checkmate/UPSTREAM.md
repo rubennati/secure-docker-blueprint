@@ -27,7 +27,7 @@ the `bluewave-labs` organisation name do not match the product name.
 - `ghcr.io/bluewave-labs/checkmate:v3.13.1`, one container carrying the API,
   the built dashboard and the worker that runs the checks. Two ports: 52345
   serves everything, 52346 answers `/livez` for the worker.
-- `mongo:8.0.32`.
+- `mongo:8.0.38`.
 
 ## What we changed and why
 

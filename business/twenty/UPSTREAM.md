@@ -21,7 +21,7 @@ public benefit corporation incorporated in Delaware.
 
 - `twentycrm/twenty:v2.56.1` for both server and worker, as upstream's compose does.
   Upstream pins `:latest`; not used here.
-- `postgres:16.15` — upstream's compose runs the PostgreSQL 16 line.
+- `postgres:16.16` — upstream's compose runs the PostgreSQL 16 line.
 - `redis:8.10.3-alpine` — upstream's compose uses an untagged `redis`.
 - Local file storage, upstream's default; the S3 option is not configured.
 

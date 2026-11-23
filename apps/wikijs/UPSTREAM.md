@@ -34,7 +34,7 @@ findings at that pin have no fix on 2.x. This stack moved to 3.x; see
 - `ghcr.io/requarks/wiki:3.2.0` — upstream's own registry. Debian-based
   `node:26` with tini as init, uid 1000 (`node`), about 850 MB because it
   carries a headless Chrome for optional server-side rendering.
-- `postgres:18.6-alpine` for the database.
+- `postgres:18.7-alpine` for the database.
 - Two containers. Pages, uploaded files, users and settings live in the
   database (schema `wiki`); the data volume holds caches and the optional Git
   content mirror.

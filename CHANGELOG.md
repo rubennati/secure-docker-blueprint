@@ -43,6 +43,16 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
   Traefik (`core/traefik/README.md`, "How to enable"). The old key was readable by every
   account on the host; where other accounts exist, issue a new one.
 
+- **PostgreSQL, Valkey, MongoDB, Silo and Elasticsearch at their security releases** (every stack that pins them). A restart on the new image is the whole upgrade for each; on existing data the rows, keys, documents and objects are there afterwards.
+  - PostgreSQL 18.7, 17.12, 16.16 and 15.20 (release of 2026-11-12, 52 CVEs, many scored 8.8 for code execution as an authenticated database user, among them CVE-2026-116303 to CVE-2026-116336 and CVE-2026-120139 to CVE-2026-120154) in 36 stacks. No dump is needed. The release fixes index corruption it cannot repair after the fact: btree indexes on `bpchar` columns, `gist_trgm_ops` indexes and, where suspected, GIN indexes need a rebuild. `reindexdb --all --concurrently` rebuilds them without blocking writes.
+  - Valkey 9.1.4 and 7.2.16 (CVE-2026-130822, high; 7.2.16 also carries GHSA-f4q9-j22m-xqq9 from 7.2.15) in `apps/immich`, `apps/defectdojo`, `apps/heyform`, `core/shellhub` and `business/plane`.
+  - MongoDB 8.0.38 (the fixes of 8.0.37, which is not on Docker Hub: 19 CVEs including CVE-2026-118383, a pre-authentication use-after-free scored 9.5) in `apps/unifi`, `apps/heyform`, `business/opensign` and `monitoring/checkmate`.
+  - Silo `RELEASE.2026-11-12T00-00-00Z` (SN-2026-020 and SN-2026-022, critical; SN-2026-021, -023, -024, -025, high) in `business/plane` and `monitoring/langfuse`. A single node without batch jobs needs nothing beyond the restart.
+  - Elasticsearch 8.19.25 in `apps/seafile-pro`'s `elasticsearch.yml` (CVE-2026-91403 and CVE-2026-114820, high; CVE-2026-115715 and CVE-2026-115710, medium). CVE-2026-114938 in the bundled JDK is fixed in no Elasticsearch release yet.
+
+  **Upgrade:** set the tag in the stack's `.env`, then `docker compose pull && docker compose up -d`; for PostgreSQL, afterwards `docker compose exec <db> reindexdb -U <user> --all --concurrently`.
+  Not moved: `apps/librephotos` stays at PostgreSQL 18.6 until `pgautoupgrade` publishes 18.7. MariaDB 12.3.4, 11.8.10, 11.4.14 and 10.11.20 (14 CVEs, up to 7.5) are released upstream but not yet on Docker Hub; the nine MariaDB stacks keep their pins until they are.
+
 ### Added
 
 - **Own stacks in `custom/`** (`docs/standards/deployment-lifecycle.md` §11, `scripts/stacks.sh`, `scripts/overview.sh`, [DEC-082](.ai/decisions.md#dec-082)). An application from a private repository runs on the host in `custom/<name>`, a checkout of its own repository read through a deploy key, behind the same Traefik, CrowdSec and Authentik. It meets the same standards as a Blueprint stack and names the release it follows in its README (`**Blueprint:** vX.Y.Z`). `stacks.sh status` lists own stacks, `stacks.sh update` names the Migration notes each has to follow, and neither checks them out or removes them; a line under `custom/` in `stacks` is refused with the reason. `overview.sh` shows them in the service table and the router survey.

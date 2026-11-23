@@ -19,8 +19,8 @@
 
 - `docker.langfuse.com/langfuse/langfuse:4.76.0` and `…/langfuse-worker:4.76.0`.
   Upstream's compose file uses the floating `:4`; not used here.
-- `postgres:18.6`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
-  `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` — the same five components as upstream's compose, pinned.
+- `postgres:18.7`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
+  `pgsty/silo:RELEASE.2026-11-12T00-00-00Z` — the same five components as upstream's compose, pinned.
   Upstream's object store is `cgr.dev/chainguard/minio` with no tag; Silo is a
   maintained MinIO fork with release tags (see "Object store: Silo instead of MinIO").
 - This is upstream's smallest self-hosted shape (Docker Compose). Nothing is

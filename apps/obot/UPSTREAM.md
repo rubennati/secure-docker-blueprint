@@ -26,7 +26,7 @@ a refresh.
 ## What we use
 
 - `ghcr.io/obot-platform/obot:v0.28.0`, one container.
-- `postgres:18.6-alpine`, which **replaces the PostgreSQL the image bundles**.
+- `postgres:18.7-alpine`, which **replaces the PostgreSQL the image bundles**.
 - `tecnativa/docker-socket-proxy:v0.5.0` between obot and the Docker daemon.
 
 ## What we changed and why

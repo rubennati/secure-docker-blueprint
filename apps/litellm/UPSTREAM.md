@@ -18,7 +18,7 @@
 - `ghcr.io/berriai/litellm-non_root:v1.108.3` — upstream's non-root variant with
   a versioned release tag. Upstream's own quick-start pins the floating
   `main-stable`; not used here.
-- `postgres:18.6` — LiteLLM's virtual keys, budgets and spend log need a
+- `postgres:18.7` — LiteLLM's virtual keys, budgets and spend log need a
   database; upstream's Prisma schema targets PostgreSQL.
 - One proxy container plus the database. No Redis (only for multi-instance
   rate-limit sharing), no Prometheus sidecar.

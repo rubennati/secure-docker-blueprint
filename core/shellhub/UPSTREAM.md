@@ -23,7 +23,7 @@
 
 - `shellhubio/server`, `shellhubio/ui`, `shellhubio/gateway`, all at the
   same version, matching upstream's single-`${SHELLHUB_VERSION}` model
-- `postgres:18.6` and `valkey/valkey:9.1.3-alpine`. Upstream's own
+- `postgres:18.7` and `valkey/valkey:9.1.4-alpine`. Upstream's own
   `docker-compose.postgres.yml` still pins `postgres:18.0`; this stack runs the
   newest 18.x patch release instead (see Version notes)
 

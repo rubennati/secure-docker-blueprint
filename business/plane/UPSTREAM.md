@@ -29,9 +29,9 @@ RabbitMQ and Silo (a MinIO fork). Upstream's own shape, with the pins changed:
 
 | | Upstream's Community Edition compose | Here |
 |---|---|---|
-| Object store | `pgsty/silo:RELEASE.2026-09-16T00-00-00Z` | `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` |
-| PostgreSQL | `postgres:15.7-alpine` (2024) | `postgres:15.19-alpine` |
-| Valkey | `valkey/valkey:7.2.11-alpine` | `valkey/valkey:7.2.14-alpine` |
+| Object store | `pgsty/silo:RELEASE.2026-09-16T00-00-00Z` | `pgsty/silo:RELEASE.2026-11-12T00-00-00Z` |
+| PostgreSQL | `postgres:15.7-alpine` (2024) | `postgres:15.20-alpine` |
+| Valkey | `valkey/valkey:7.2.11-alpine` | `valkey/valkey:7.2.16-alpine` |
 | RabbitMQ | `rabbitmq:3.13.6-management-alpine` (2024) | `rabbitmq:3.13.7-management-alpine` |
 
 Upstream's compose names `pgsty/silo` for the object store since v1.4.3; this
