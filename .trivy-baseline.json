@@ -42,85 +42,23 @@
         "CVE-2026-13221",
         "CVE-2026-33210",
         "CVE-2026-42496",
-        "CVE-2026-8376",
-        "GHSA-f3w6-w445-fwh9"
-      ]
-    },
-    "chatwoot/chatwoot": {
-      "stacks": [
-        "business/chatwoot"
-      ],
-      "reason": "v4.19.1 (2026-10-24) is the newest release; the Active Storage fix needs Rails 8.0.5.2 or later and Chatwoot is on Rails 7.2.",
-      "risk": "Chatwoot accepts attachments from the public, so the Active Storage flaw (ImageMagick analysis) is potentially reachable; which image processor Chatwoot uses was not checked. net-imap needs unvalidated arguments from inbox settings; zlib reachability not determined.",
-      "cves": [
-        "CVE-2026-27820",
-        "CVE-2026-42257",
-        "GHSA-f3w6-w445-fwh9"
-      ]
-    },
-    "collabora/code": {
-      "stacks": [
-        "apps/collabora"
-      ],
-      "reason": "26.04.5.2.1 is the newest tag.",
-      "risk": "The DOMPurify flaw applies only with SAFE_FOR_TEMPLATES and DOM output modes in the browser-side bundle; whether Collabora uses them was not checked.",
-      "cves": [
-        "GHSA-cg2g-xh64-v4q7"
-      ]
-    },
-    "defectdojo/defectdojo-django": {
-      "stacks": [
-        "apps/defectdojo"
-      ],
-      "reason": "3.5.0 (2026-11-02) is the newest release; the -alpine variant would only drop the kernel headers.",
-      "risk": "linux-libc-dev holds kernel headers that nothing in the container executes; the running kernel is the host's. certifi is used for DefectDojo's outbound HTTPS and trusts revoked eMudhra intermediates, which matters only to an on-path attacker holding those keys.",
-      "cves": [
-        "CVE-2026-99083",
-        "GHSA-6q48-6c7w-9gw2"
-      ]
-    },
-    "dependencytrack/apiserver": {
-      "stacks": [
-        "apps/dependency-track"
-      ],
-      "reason": "5.2.1 is the newest release; FreeMarker 2.3.34 comes in through JDBI, whose latest release still depends on it. Upstream: DependencyTrack/dependency-track#7670 (closed, not affected).",
-      "risk": "FreeMarker is only used by the database layer for SQL templates; upstream states Dependency-Track is not affected.",
-      "cves": [
-        "CVE-2026-84939"
-      ]
-    },
-    "dependencytrack/frontend": {
-      "stacks": [
-        "apps/dependency-track"
-      ],
-      "reason": "The newest image was built before Alpine published brotli-libs 1.2.1-r0, and upstream has not rebuilt it. 5.2.1 is the newest release.",
-      "risk": "brotli is a dependency of curl and freetype; the nginx serving the static frontend uses neither.",
-      "cves": [
-        "CVE-2026-111497"
-      ]
-    },
-    "facturascripts/facturascripts": {
-      "stacks": [
-        "business/facturascripts"
-      ],
-      "reason": "2026.7 is upstream's stable image (latest); 2026.72, which drops the brotli finding, is published as beta.",
-      "risk": "linux-libc-dev holds kernel headers that nothing in the container executes; the running kernel is the host's. brotli's decoder flaw is reached only if a process decompresses brotli data from a hostile source (in Debian mainly through libcurl); not checked per application.",
-      "cves": [
-        "CVE-2026-99083"
+        "CVE-2026-8376"
       ]
     },
     "frappe/erpnext": {
       "stacks": [
         "business/erpnext"
       ],
-      "reason": "v16.53.0 (2026-10-28) is the newest v16 image.",
-      "risk": "All six findings sit in frappe's node_modules build tooling (loader-utils, shell-quote, the Go runtime inside esbuild), used to build assets, not by the running web, worker or socket.io processes (not verified line by line).",
+      "reason": "v16.60.0 (2026-11-19) is the newest v16 image; it is built on Debian 13.7 packages from before the MariaDB 11.8.8 client update.",
+      "risk": "Eight of the findings sit in frappe's node_modules build tooling (loader-utils, shell-quote, the Go runtime inside esbuild), used to build assets, not by the running web, worker or socket.io processes (not verified line by line). CVE-2026-44172 and CVE-2026-49261 sit in the MariaDB client library Debian 13 ships (fixed in 11.8.8, not yet in the image); ERPNext uses it to talk to its own MariaDB on the stack's internal network, so a hostile database server would be needed to reach it (not checked further).",
       "cves": [
         "CVE-2022-37601",
         "CVE-2023-24538",
         "CVE-2023-24540",
         "CVE-2024-24790",
         "CVE-2025-68121",
+        "CVE-2026-44172",
+        "CVE-2026-49261",
         "CVE-2026-9277"
       ]
     },
@@ -134,8 +72,7 @@
         "CVE-2025-68121",
         "CVE-2026-106445",
         "CVE-2026-106446",
-        "CVE-2026-90711",
-        "GHSA-cg2g-xh64-v4q7"
+        "CVE-2026-90711"
       ]
     },
     "ghcr.io/calnode/calnode": {
@@ -307,6 +244,20 @@
         "CVE-2026-8376"
       ]
     },
+    "ghcr.io/requarks/wiki": {
+      "stacks": [
+        "apps/wikijs"
+      ],
+      "reason": "3.6.0 (2026-11) is the newest Wiki.js release and fixes a critical stored XSS; its Debian 13.7 base predates the MariaDB 11.8.8 client, OpenEXR and kernel-header updates. 3.2.0 had none of these findings but carries the XSS.",
+      "risk": "CVE-2026-44172 and CVE-2026-49261 sit in the MariaDB client library Debian 13 ships (fixed in 11.8.8, not yet in the image); Wiki.js in this stack talks to PostgreSQL and does not load it. OpenEXR (CVE-2026-42216, CVE-2026-42217) is an image-decoding library; whether Wiki.js's image handling loads it for uploaded files was not checked. linux-libc-dev holds kernel headers, which nothing runs.",
+      "cves": [
+        "CVE-2026-42216",
+        "CVE-2026-42217",
+        "CVE-2026-44172",
+        "CVE-2026-49261",
+        "CVE-2026-99362"
+      ]
+    },
     "ghcr.io/rubennati/cal.diy": {
       "stacks": [
         "apps/caldiy"
@@ -314,52 +265,7 @@
       "reason": "This project's own build of the Cal.diy fork, on Next.js 16.2.3 and Debian 12. The fixes need a rebuild of the fork on Next.js 16.4.1 or later and a current base image; that rebuild is planned and not done.",
       "risk": "Next.js, Sentry and the Node.js packages sit in the web application's request path and count as reachable; whether each advisory applies to Cal.diy's use has not been checked. The Debian packages and kernel headers are not on that path. Shipped default is access-vpn.",
       "cves": [
-        "CVE-2025-68121",
-        "CVE-2026-102422",
-        "CVE-2026-106445",
-        "CVE-2026-106446",
-        "CVE-2026-111497",
-        "CVE-2026-114139",
-        "CVE-2026-13221",
-        "CVE-2026-25971",
-        "CVE-2026-33845",
-        "CVE-2026-42010",
-        "CVE-2026-42496",
-        "CVE-2026-43037",
-        "CVE-2026-44172",
-        "CVE-2026-49261",
-        "CVE-2026-56367",
-        "CVE-2026-59873",
-        "CVE-2026-75604",
-        "CVE-2026-8376",
-        "CVE-2026-90711",
-        "CVE-2026-98432",
-        "GHSA-2464-fhr4-w9xw",
-        "GHSA-2xp9-vwfh-vxw4",
-        "GHSA-673q-mjm6-r5xr",
-        "GHSA-vcvr-r3jv-pc5j"
-      ]
-    },
-    "ghcr.io/rubennati/cert-ops-tool": {
-      "stacks": [
-        "core/acme-certs"
-      ],
-      "reason": "This project's own build on Alpine; the fixes need a rebuild on a current Alpine base, which is planned and not done.",
-      "risk": "No published port and no inbound connections; the container only connects out to the ACME CA and the Cloudflare API. openssl is on that path; whether the scripts use socat or bind-tools has not been checked.",
-      "cves": [
-        "CVE-2026-31789",
-        "CVE-2026-3593",
-        "CVE-2026-56123"
-      ]
-    },
-    "ghcr.io/shlinkio/shlink": {
-      "stacks": [
-        "apps/shlink"
-      ],
-      "reason": "The newest image was built before Alpine published brotli-libs 1.2.1-r0, and upstream has not rebuilt it. 5.1.8 is the newest release.",
-      "risk": "The library backs PHP's curl, which Shlink uses when it fetches remote pages such as a long URL's title, so a hostile site could in principle reach it (not checked).",
-      "cves": [
-        "CVE-2026-111497"
+        "CVE-2025-68121"
       ]
     },
     "ghcr.io/shlinkio/shlink-web-client": {
@@ -430,62 +336,18 @@
         "CVE-2026-9277"
       ]
     },
-    "invoiceninja/invoiceninja-debian": {
-      "stacks": [
-        "business/invoiceninja"
-      ],
-      "reason": "5.13.53 (2026-11-02) is the newest release and its digest is unchanged since the scan; the Debian kernel-header fix (6.12.115-2) is newer than the build.",
-      "risk": "linux-libc-dev holds kernel headers that nothing in the container runs; the running kernel is the host's.",
-      "cves": [
-        "CVE-2026-99083"
-      ]
-    },
-    "jhumanj/opnform-api": {
-      "stacks": [
-        "apps/opnform"
-      ],
-      "reason": "The newest image was built before Alpine published brotli-libs 1.2.1-r0, and upstream has not rebuilt it. 2.8.4 is the newest OpnForm release.",
-      "risk": "The library backs PHP's curl, which OpnForm uses for outbound requests such as webhooks, so a hostile endpoint answering with brotli could in principle reach the decoder (not checked).",
-      "cves": [
-        "CVE-2026-111497"
-      ]
-    },
     "jumpserver/jms_all": {
       "stacks": [
         "core/jumpserver"
       ],
-      "reason": "v5.1.1 (2026-10-20) is the newest JumpServer release; upstream has not rebuilt it with the fixed Tomcat, Spring, Netty, Pillow and Debian packages.",
-      "risk": "Tomcat, Spring Web MVC and Pillow are in the request path of the bundled web components and count as reachable for anyone who reaches the UI. certifi and the JDK trust revoked eMudhra intermediates, which matters only to an on-path attacker holding those keys. Shipped default is access-vpn.",
+      "reason": "v5.2.1 (2026-11) is the newest JumpServer release; its Debian 13.7 base predates the MariaDB 11.8.8 client and kernel-header updates, and the bundled wisp and PAM agent binaries are built with an old gRPC and Go.",
+      "risk": "CVE-2026-44172 and CVE-2026-49261 sit in the MariaDB client library Debian 13 ships (fixed in 11.8.8, not yet in the image); JumpServer reaches only its own database through it. linux-libc-dev holds kernel headers, which nothing runs. gRPC CVE-2026-33186 is in wisp, which listens only inside the container; the Go runtime finding is in PAM agent binaries the image offers for download to managed hosts, where they run outside this stack. Shipped default is access-vpn.",
       "cves": [
         "CVE-2025-68121",
-        "CVE-2026-111497",
-        "CVE-2026-112393",
-        "CVE-2026-112398",
-        "CVE-2026-112403",
-        "CVE-2026-112900",
-        "CVE-2026-47884",
-        "CVE-2026-47890",
-        "CVE-2026-55276",
-        "CVE-2026-65182",
-        "CVE-2026-65637",
-        "CVE-2026-65905",
-        "CVE-2026-68525",
-        "CVE-2026-75595",
-        "CVE-2026-91403",
-        "CVE-2026-96639",
-        "CVE-2026-98432",
-        "CVE-2026-99083",
-        "GHSA-6q48-6c7w-9gw2"
-      ]
-    },
-    "kimai/kimai2": {
-      "stacks": [
-        "business/kimai"
-      ],
-      "reason": "2.71.0 (2026-10-25) is the newest release.",
-      "risk": "brotli's decoder flaw is reached only if a process decompresses brotli data from a hostile source (in Debian mainly through libcurl); not checked per application.",
-      "cves": [
-        "CVE-2026-111497"
+        "CVE-2026-33186",
+        "CVE-2026-44172",
+        "CVE-2026-49261",
+        "CVE-2026-99362"
       ]
     },
     "kopia/kopia": {
@@ -517,10 +379,9 @@
       "stacks": [
         "business/leantime"
       ],
-      "reason": "3.13.2 (2026-10-31) is the newest release.",
-      "risk": "The jmespath flaw needs its opt-in compiler, off by default. brotli's decoder flaw is reached only if a process decompresses brotli data from a hostile source (in Debian mainly through libcurl); not checked per application.",
+      "reason": "3.16.0 (2026-11) is the newest release and still bundles jmespath.php 2.8.0.",
+      "risk": "The jmespath flaw needs its opt-in compiler, off by default.",
       "cves": [
-        "CVE-2026-111497",
         "CVE-2026-54133"
       ]
     },
@@ -538,16 +399,15 @@
       "stacks": [
         "monitoring/uptime-kuma"
       ],
-      "reason": "2.5.9 (2026-10-31) is the newest release and has not been rebuilt; the -slim variant drops only the Chromium findings and also drops Real Browser monitors and the embedded MariaDB.",
-      "risk": "Chromium runs only for Real Browser monitors and loads the monitored page; protobufjs only for gRPC monitors with an untrusted definition; the Go runtime sits in the healthcheck helper; tar and brotli are not reached in normal use.",
+      "reason": "2.5.12 is the newest release; it still bundles these Node.js packages and the old Go healthcheck helper.",
+      "risk": "protobufjs is reached only by gRPC monitors with an untrusted definition; jsonata only by monitors that evaluate a JSON query against a response, so point those at trusted endpoints (the jsonata flaws were not checked in detail); the Go runtime sits in the healthcheck helper, which calls only the local web server; tar is not reached in normal use.",
       "cves": [
         "CVE-2024-24790",
         "CVE-2025-68121",
-        "CVE-2026-111497",
-        "CVE-2026-118333",
-        "CVE-2026-118337",
         "CVE-2026-41242",
-        "CVE-2026-59873"
+        "CVE-2026-59873",
+        "CVE-2026-77414",
+        "CVE-2026-77415"
       ]
     },
     "lscr.io/linuxserver/unifi-network-application": {
@@ -568,52 +428,6 @@
         "CVE-2026-65905",
         "CVE-2026-68525",
         "CVE-2026-8763"
-      ]
-    },
-    "makeplane/plane-backend": {
-      "stacks": [
-        "business/plane"
-      ],
-      "reason": "v1.4.3 is the newest stable Plane release.",
-      "risk": "PyJWT's flaw applies when an application accepts mixed key types; whether Plane's token handling does has not been checked.",
-      "cves": [
-        "CVE-2026-102268"
-      ]
-    },
-    "makeplane/plane-live": {
-      "stacks": [
-        "business/plane"
-      ],
-      "reason": "v1.4.3 (2026-10-28) is the newest stable Plane release; only release candidates follow.",
-      "risk": "storybook and tinypool are development and test tools in node_modules that the server does not run. proxy-addr matters only for trusted-proxy entries in IPv4-mapped IPv6 form (not checked).",
-      "cves": [
-        "CVE-2026-104848",
-        "CVE-2026-104849",
-        "CVE-2026-114125",
-        "CVE-2026-90711"
-      ]
-    },
-    "makeplane/plane-proxy": {
-      "stacks": [
-        "business/plane"
-      ],
-      "reason": "v1.4.3 is the newest stable Plane release; upstream has not rebuilt its Alpine base.",
-      "risk": "Brotli's decoder flaw needs untrusted brotli input to be decompressed; a reverse proxy normally compresses responses, but whether this one uses the library was not checked.",
-      "cves": [
-        "CVE-2026-111497"
-      ]
-    },
-    "makeplane/plane-space": {
-      "stacks": [
-        "business/plane"
-      ],
-      "reason": "v1.4.3 (2026-10-28) is the newest stable Plane release; only release candidates follow.",
-      "risk": "Same as plane-live: storybook and tinypool are not run; proxy-addr matters only for IPv4-mapped IPv6 trusted-proxy entries.",
-      "cves": [
-        "CVE-2026-104848",
-        "CVE-2026-104849",
-        "CVE-2026-114125",
-        "CVE-2026-90711"
       ]
     },
     "mariadb": {
@@ -685,11 +499,10 @@
       "stacks": [
         "business/openproject"
       ],
-      "reason": "17.9.6 (2026-10-30) is the newest release; 18.0 is still a release candidate.",
-      "risk": "The Active Storage flaw needs attachments analysed with ImageMagick and the json flaw needs allow_duplicate_key: false on user input; whether OpenProject reaches either was not checked.",
+      "reason": "17.9.8 (2026-11) is the newest release and still bundles the json gem 2.18.3; 18.0 is still a release candidate.",
+      "risk": "The json flaw needs allow_duplicate_key: false on user input; whether OpenProject reaches it was not checked.",
       "cves": [
-        "CVE-2026-33210",
-        "GHSA-f3w6-w445-fwh9"
+        "CVE-2026-33210"
       ]
     },
     "opensign/opensign": {
