@@ -19,10 +19,10 @@
 
 | Component | Tag | Notes |
 |---|---|---|
-| Invoice Ninja | `5.13.53` | Latest release 2026-11-02 |
+| Invoice Ninja | `5.13.56` | Latest release 2026-11-20 |
 | MySQL | `8.4` | LTS — upstream target DB |
 | Redis | `8.10-alpine` | |
-| Nginx | `1.31-alpine` | |
+| Nginx | `1.31.9-alpine-slim` | |
 
 ## What We Use From Upstream
 
@@ -161,6 +161,27 @@ docker compose up -d
 - Moved to `5.13.53` on 2026-11-05 (released 2026-11-02). A fix for a partial-payment regression in InvoicePay and static
   analysis cleanup; no migration, no variable change (only `config/ninja.php`
   changes in the application config), no advisory.
+- Moved to `5.13.56` on 2026-11-23 (released 2026-11-20). The image moves PHP from 8.5.12 to
+  8.5.13, the PHP security release of 2026-11-19 (session handling use-after-free and
+  TOCTOU, backtrace use-after-free after a fatal error, PHP-FPM request smuggling and an
+  FPM epoll use-after-free, a PHAR signature bypass). 5.13.54 tightens validation and
+  authorisation checks ("Auth boundaries"), 5.13.56 fixes a fatal on `GET /documents`. No
+  migration between 5.13.53 and 5.13.56: an installation upgraded from 5.13.53 with data
+  keeps its 320 migrations, `artisan migrate` reports nothing to migrate, and login, the
+  invoice list, the quote PDF and the live preview answer 200 (local stack, 2026-11-23).
+  5.13.55 reads an optional Redis username and key prefix from `.env`; this stack runs its
+  own Redis with a password and no ACL user and sets neither. Sources:
+  https://github.com/invoiceninja/invoiceninja/releases/tag/v5.13.54,
+  https://github.com/invoiceninja/invoiceninja/releases/tag/v5.13.55,
+  https://github.com/invoiceninja/invoiceninja/releases/tag/v5.13.56
+- nginx `1.31.9` (2026-11-18) is a security release: CVE-2026-125283 (buffer overflow with
+  `try_files` and `alias` together), CVE-2026-123007 (HTTP/2 flow-control window overflow),
+  CVE-2026-123633 and CVE-2026-121810 (use-after-free in HTTP/2 and HTTP/3 when
+  `worker_connections` run out), CVE-2026-123634 (`resolver`), CVE-2026-113425 (mail proxy),
+  CVE-2026-120967 and CVE-2026-120993 (stream module, PROXY protocol v2). This nginx sits behind Traefik on the stack's internal
+  network and speaks HTTP/1.1 only, so the HTTP/2 and HTTP/3 entries do not reach it. No
+  configuration in this repository combines `alias` with `try_files`; `nginx -t` passes on
+  the 1.31.9 image. Source: https://nginx.org/en/CHANGES
 - nginx moved from `1.29-alpine` to `1.31-alpine` on 2026-11-05; it stays on the mainline branch (1.29 was mainline too, 1.30 is the
   stable branch). The "Change:" entries from 1.30.0 to 1.31.8 do not touch this
   configuration: HTTP/2 and HTTP/3 requests carrying `Connection`, `Upgrade`, `TE`
