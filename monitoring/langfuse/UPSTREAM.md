@@ -17,7 +17,7 @@
 
 ## What we use
 
-- `docker.langfuse.com/langfuse/langfuse:4.76.0` and `…/langfuse-worker:4.76.0`.
+- `docker.langfuse.com/langfuse/langfuse:4.83.0` and `…/langfuse-worker:4.83.0`.
   Upstream's compose file uses the floating `:4`; not used here.
 - `postgres:18.7`, `clickhouse/clickhouse-server:26.10.3.7`, `redis:8.10.3-alpine` and
   `pgsty/silo:RELEASE.2026-11-12T00-00-00Z` — the same five components as upstream's compose, pinned.
@@ -130,6 +130,26 @@ stack since the withdrawal started empty.
 
 ## Version notes
 
+- Moved to `4.83.0` on 2026-11-23 (released 2026-11-19), web and worker
+  together, across 4.77.0 to 4.82.0. Security fixes: 4.82.0 refuses a GitHub
+  Enterprise SSO base URL that points to an internal address and no longer
+  follows redirects on the emails endpoint (SSRF, langfuse/langfuse#20164;
+  reaches an instance only where GitHub Enterprise SSO is configured in the
+  app); 4.80.0 binds a session to the user id it was issued for, so a token
+  of a deleted account no longer resolves to a new account with the same
+  email (langfuse/langfuse#20078); 4.79.0 distrusts the compromised emSign
+  certificate paths for AI Gateway calls; 4.78.0 to 4.81.0 raise undici,
+  nodemailer, fast-xml-parser, hono and basic-ftp. Upstream publishes no
+  advisory ID for them. Breaking: 4.77.0 removes automatic tokenization, so
+  token counts and costs come only from what the SDK or the provider reports
+  (https://langfuse.com/changelog/2026-11-06-retiring-tokenization). 4.80.0
+  sends ClickHouse query parameters in the request body
+  (`LANGFUSE_CLICKHOUSE_MULTIPART_QUERY_PARAMS`, default `true`), so they no
+  longer appear in URLs, spans or proxy logs; ClickHouse 26.10 accepts it.
+  New variables are optional and not set here. 25 PostgreSQL migrations run
+  at the first start; images, uid, entrypoint, ports and healthchecks are
+  unchanged, so the compose files keep their configuration —
+  https://github.com/langfuse/langfuse/releases.
 - Moved to `4.76.0` on 2026-11-08 (released 2026-11-05), web and worker
   together. No breaking change, variable or migration is
   labelled; the release is small fixes and refactoring, and web and worker move

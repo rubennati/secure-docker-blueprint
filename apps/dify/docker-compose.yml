@@ -28,6 +28,11 @@ x-dify-env: &dify-env
   ENDPOINT_URL_TEMPLATE: https://${APP_TRAEFIK_HOST}/e/{hook_id}
   SECRET_KEY__FILE: /run/secrets/SECRET_KEY
   CHECK_UPDATE_URL: ""
+  # From 1.20.0 the api image carries DeepEval for the Evaluation feature.
+  # Upstream sets these two in its env files, which this stack does not load:
+  # DeepEval reads no dotenv file and sends no telemetry.
+  DEEPEVAL_DISABLE_DOTENV: "1"
+  DEEPEVAL_TELEMETRY_OPT_OUT: "1"
   LOG_LEVEL: INFO
   LOG_FILE: ""
   UV_CACHE_DIR: /tmp/.uv-cache
