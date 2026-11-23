@@ -24,7 +24,7 @@ regular patch cadence.
 
 ## What we use
 
-- `leantime/leantime:3.13.2`, one container. Inside it supervisord runs three
+- `leantime/leantime:3.16.0`, one container. Inside it supervisord runs three
   programs: nginx on 8080, php-fpm on 127.0.0.1:9000, and
   `bin/leantime schedule:work` — the scheduler that sends notifications and the
   daily digest. It is not optional.
@@ -43,6 +43,7 @@ regular patch cadence.
 | The schema is created by `ops/install.sh`, not by the web installer | `/install` creates the first account — the owner — from an unauthenticated form. Making that the command line's job means the window never exists on a routed host name |
 | `LEAN_ALLOW_TELEMETRY=false` | Upstream's default is `true`. Measured below |
 | `LEAN_NEWS_ENABLED=false` | Pulls an RSS feed from leantime.io on its own. The variable is upstream's own answer for air-gapped installations |
+| `LEAN_OAUTH_ENABLED=false` | Upstream's default is `true` from 3.16.0. With it on, `POST /oauth/register` creates an OAuth client for anyone who reaches the host name, without a session (measured: `201`, rate-limited to 10 per IP and hour by `LEAN_RATELIMIT_OAUTH_REGISTER`), and `/.well-known/oauth-authorization-server` is public. Off, those routes fall through to the login redirect and `/mcp` answers `401` |
 | `LEAN_LOG_CHANNELS=stderr` | The default writes `storage/logs/error.log` inside the volume. Upstream documents `stderr` for containers |
 | `LEAN_SESSION_SECURE=true` | Otherwise it is auto-detected, and TLS ends at Traefik |
 | `LEAN_SESSION_PASSWORD_FILE` | Upstream's sample configuration ships a fixed session salt. Ours is a Docker Secret |
@@ -128,6 +129,33 @@ notifications the scheduler sends, and a restore from the volumes below.
   `caching_sha2_password`, which `SELECT user, plugin FROM mysql.user;` confirms
   before the move. Take the `mysqldump` before the tag changes: going back to
   8.4 is only a restore of that dump.
+- Moved to `3.16.0` (2026-11-23) on 2026-11-23. Security fixes: 3.15.1 (the calendar
+  showed the personal events of every user with a higher user id; deactivating a user
+  now ends their sessions and stops their API keys and access tokens, and a
+  "Deactivated" API key is disabled; a draft doc opens only for its author until it is
+  published), 3.15.2 (`comments.pollComments` returned to-do comments from another
+  project when a canvas item shared the id; drafts stay private through comments,
+  edits and deletes over JSON-RPC; LDAP and OIDC logins refuse deactivated and
+  pending accounts), 3.16.0 (mention and collaborator pushes went to users without
+  access to the project). All reach this stack; the LDAP/OIDC one only where SSO is
+  configured. No GHSA or CVE IDs are listed in the notes, and the repository has no
+  published advisory for these versions. Database migrations in 3.16.0 (db version
+  3.5.34 → 3.5.36: `zp_oauth_*` tables, a `summary` column on `zp_queue`). Until they
+  run, every route redirects to `/install/update`: run checklist step 4. 3.16.0 turns
+  on OAuth sign-in for MCP clients on `/mcp` (`LEAN_OAUTH_ENABLED`, default `true`,
+  signing keys generated on first use and stored encrypted in the database); this
+  stack sets it to `false` — see the table above. 3.14.0 refuses CustomFields below
+  1.6.0 and removes calendar string hooks and legacy HTMX event aliases used by
+  plugins; 3.15.1 lets only roles with the project-delete permission delete a client
+  that has projects, and drops closed projects from the pickers. 3.16.0 users of the
+  AdvancedAuth plugin update it to 1.5.0. Paths, ports, the `www-data` uid and the
+  writable paths are unchanged. Sources:
+  https://github.com/Leantime/leantime/releases/tag/v3.14.0,
+  https://github.com/Leantime/leantime/releases/tag/v3.15.0,
+  https://github.com/Leantime/leantime/releases/tag/v3.15.1,
+  https://github.com/Leantime/leantime/releases/tag/v3.15.2,
+  https://github.com/Leantime/leantime/releases/tag/v3.15.3,
+  https://github.com/Leantime/leantime/releases/tag/v3.16.0
 
 ## Upgrade checklist
 
@@ -147,5 +175,5 @@ notifications the scheduler sends, and a restore from the volumes below.
 curl -s https://raw.githubusercontent.com/leantime/leantime/master/.docker/docker-compose.yml
 
 # Every setting the application knows, with upstream's defaults and comments
-docker run --rm --entrypoint sh leantime/leantime:3.13.2 -c 'cat config/sample.env'
+docker run --rm --entrypoint sh leantime/leantime:3.16.0 -c 'cat config/sample.env'
 ```
