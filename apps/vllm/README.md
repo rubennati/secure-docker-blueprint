@@ -25,7 +25,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
   branches 535, 550, 565, 570 and 575.
 - Room for the model: its weights plus the KV cache must fit in VRAM
   (`VLLM_GPU_MEMORY_UTILIZATION` of it).
-- Disk for the image (8.7 GB compressed) and for `./volumes/cache`, which holds
+- Disk for the image (10 GB compressed) and for `./volumes/cache`, which holds
   the downloaded weights.
 
 ## Architecture
