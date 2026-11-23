@@ -47,6 +47,34 @@ Key design choices:
 
 ## Version notes
 
+- Moved from `2.8.4` to `2.8.6` on 2026-11-23 (released 2026-11-19). 2.8.6 is
+  upstream's security release for the API image: PHP `8.3.36` → `8.3.37`, the
+  PHP security release of 2026-11-19 (among them the critical
+  CVE-2026-129289, PHP-FPM request smuggling through an unread request body,
+  which applies to this stack's php-fpm behind nginx, and the session and
+  timezone-cache use-after-free advisories CVE-2026-126714, CVE-2026-115560,
+  CVE-2026-129481 and CVE-2026-129496), on Alpine 3.24.4, which also removes
+  `brotli-libs` 1.2.0 (CVE-2026-111497). The bundled-compose nginx `1.30.7`
+  does not apply here; this stack runs its own `nginx:1.31.9`. No OpnForm GHSA
+  is published. 2.8.6 also returns less personal data through MCP. 2.8.5 adds
+  the nullable `failure_streak` column to `form_integrations`; the API
+  entrypoint runs the migration at start, and integrations now pause after
+  repeated delivery failures. 2.8.5 makes `TRUSTED_PROXIES`, when absent,
+  trust `X-Forwarded-Proto` from any address and nothing else. The variable
+  this stack set, `APP_TRUSTED_PROXIES: "*"`, is read by no OpnForm code, so it
+  is removed from both compose files; the stack now runs on that fallback,
+  which gives HTTPS detection behind Traefik (see the README's Security Model).
+  2.8.5 adds `OPNFORM_TELEMETRY_DISABLED` as the new name of the telemetry
+  switch; `OPNFORM_ANONYMOUS_TELEMETRY_DISABLED`, set here, is still read while
+  the new one is absent. Upgraded on data from 2.8.4: the migration ran, the
+  admin logged in, the form and its submission were kept, a second
+  registration was refused. Sources:
+  https://github.com/OpnForm/OpnForm/releases/tag/v2.8.5,
+  https://github.com/OpnForm/OpnForm/releases/tag/v2.8.6,
+  https://github.com/OpnForm/OpnForm/pull/1418,
+  https://docs.opnform.com/deployment/docker#if-a-reverse-proxy-is-in-front-of-opnform,
+  https://github.com/php/php-src/security-advisories
+
 - Moved to `2.8.4` on 2026-11-05 (released 2026-11-05). Both images now carry the tag. No database migration from 2.8.1
   to 2.8.4; API and client move together, as `APP_TAG` names both. 2.8.2
   saves edits to existing integrations correctly and filters shared and
