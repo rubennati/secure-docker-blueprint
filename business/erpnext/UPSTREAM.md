@@ -22,7 +22,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 ## What we use
 
-- `frappe/erpnext:v16.54.0` — one image for every role, published for amd64 and
+- `frappe/erpnext:v16.60.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
 - `mariadb:11.8.9` (upstream's compose pin) and `redis:8.10.3-alpine` (upstream pins `8.6-alpine`).
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
@@ -190,6 +190,37 @@ documents, stock and reports; email; PDF printing (measured on 2026-11-15, above
 
 ## Version notes
 
+- Moved to `v16.60.0` (ERPNext released 2026-11-17; image pushed 2026-11-19, index
+  digest `sha256:3847babae025dae001e638b7fc5503c944fd968216b3074e60edfcc240fb2db6`)
+  on 2026-11-23. The image carries Frappe 16.60.2 and frappe_docker's nginx template
+  from commit d34f0f92 (2026-11-19), so it fixes both:
+  GHSA-94mh-qq29-qwrf (high, frappe_docker, fixed in v4.3.0: the template's
+  `/files/` rule that adds `Content-Disposition: attachment` to SVG, HTML and XML was
+  case-sensitive, so a public upload named `poc.SVG` was served inline and ran script
+  in the site origin; any logged-in user who can attach a file could plant it) and
+  GHSA-vwqr-4mjv-ffrm (high, Frappe, fixed in 16.60.1: email endpoints let any
+  authenticated user, a Website User included, send mail through the site's email
+  account under another sender; upstream reports it exploited). Both reach this
+  stack, which serves through the image's own nginx template. Measured on the local
+  file: on `v16.54.0` a public `poc.SVG` answered `Content-Type: image/svg+xml` with
+  no `Content-Disposition`; on `v16.60.0` the same file answers
+  `Content-disposition: attachment`. The tag was pushed again at 2026-11-19 22:01
+  UTC from the frappe_docker build that contains the fix; `docker compose pull`
+  fetches that image. v16.55 to v16.60 list no breaking change in configuration;
+  v16.60 adds Insights dashboards (upgraded sites keep the classic ones until the
+  setting changes) and Frappe 16.60 adds Flow, an AI assistant whose daemon keeps
+  its runtime files in `/home/frappe/frappe-bench/flow-server`. On this read-only
+  image filesystem the daemon does not start: `bench migrate` prints `flow server
+  not running: [Errno 30] Read-only file system` and exits `0`. Flow stays
+  unavailable in this stack; nothing else depends on it. `bench --site … migrate`
+  applies the schema changes (checklist step 5). Upgrade tested on the local file:
+  a site created on `v16.54.0` with a ToDo, then `v16.60.0` and `migrate`: exit 0,
+  login `200`, the ToDo read back, socket.io polling `200`. Sources:
+  https://github.com/frappe/frappe_docker/security/advisories/GHSA-94mh-qq29-qwrf,
+  https://github.com/frappe/frappe/security/advisories/GHSA-vwqr-4mjv-ffrm,
+  https://github.com/frappe/frappe_docker/commit/d34f0f92a1,
+  https://github.com/frappe/erpnext/releases/tag/v16.60.0,
+  https://github.com/frappe/frappe/releases/tag/v16.60.0
 - Moved to `v16.54.0` on 2026-11-08. Fixes, among
   them a migration error with Asset Depreciation Schedules on older sites; no
   configuration change. The nginx configuration forwards `Upgrade` on the
