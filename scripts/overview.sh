@@ -11,7 +11,8 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # --host     compare the files stacks install outside the checkout (host-files.sh)
-#            and check the TLS option per host name across stacks
+#            and check the TLS option per host name across stacks, the image
+#            pins against .env.example, and the Docker and VPN packages
 # --routers  list every Traefik router with its four positions and TLS option
 WITH_HOST=0
 WITH_ROUTERS=0
@@ -409,6 +410,52 @@ if [ "$WITH_HOST" = 1 ]; then
     printf " ${GREEN}as pinned${RESET} ${DIM}— the .env of %s stack(s) names the images .env.example pins${RESET}\n" "$n_pin_stacks"
   else
     printf " ${DIM}Take the pin from .env.example unless the stack's UPSTREAM.md names a reason to stay; a hint, not a failure.${RESET}\n"
+  fi
+  printf "\n"
+
+  # Docker and VPN packages: the versions against the minimums of
+  # docs/in-use.md, the updates apt has pending for them, and the two daemon
+  # facts that decide whether such an update stops every container —
+  # live-restore, and a docker.service bound to tailscaled. A hint, not a
+  # failure: the update policy is the operator's (docs/host-baseline.md).
+  printf " ${BOLD}Docker and VPN packages${RESET} ${DIM}(docs/in-use.md, docs/host-baseline.md)${RESET}\n"
+  at_least() { [ "$(printf '%s\n%s\n' "$2" "$1" | sort -V | head -n1)" = "$2" ]; }
+  show_version() { # name, installed, minimum
+    if [ -z "$2" ]; then
+      printf "   %-16s ${DIM}not found${RESET}\n" "$1"
+    elif [ -n "$3" ] && ! at_least "$2" "$3"; then
+      printf "   %-16s ${YELLOW}%s${RESET} ${DIM}— below the minimum %s${RESET}\n" "$1" "$2" "$3"
+    else
+      printf "   %-16s %s\n" "$1" "$2"
+    fi
+  }
+  engine="$(docker version --format '{{.Server.Version}}' 2>/dev/null || true)"
+  show_version "Docker Engine" "$engine" 28.0
+  show_version "containerd" "$(containerd --version 2>/dev/null | grep -oE 'v?[0-9]+\.[0-9]+\.[0-9]+' | head -n1 | sed 's/^v//' || true)" 1.7
+  show_version "Compose" "$(docker compose version --short 2>/dev/null | sed 's/^v//' || true)" 2.33.1
+  show_version "Tailscale" "$(tailscale version 2>/dev/null | head -n1 || true)" 1.66.1
+  if [ -n "$engine" ]; then
+    if [ "$(docker info --format '{{.LiveRestoreEnabled}}' 2>/dev/null || true)" = "true" ]; then
+      printf "   ${GREEN}live-restore on${RESET} ${DIM}— a patch update of the Engine leaves the containers running${RESET}\n"
+    else
+      printf "   ${YELLOW}live-restore off${RESET} ${DIM}— every Engine update or daemon restart stops every container${RESET}\n"
+    fi
+  fi
+  docker_deps="$(systemctl show docker.service -p Requires -p BindsTo -p PartOf 2>/dev/null || true)"
+  if printf '%s' "$docker_deps" | grep -q tailscaled; then
+    printf "   ${YELLOW}docker.service requires tailscaled${RESET} ${DIM}— a Tailscale update or restart stops Docker and every container${RESET}\n"
+  fi
+  if command -v apt >/dev/null 2>&1; then
+    pending="$(apt list --upgradable 2>/dev/null | grep -E '^(docker-ce|docker-ce-cli|containerd\.io|docker-compose-plugin|docker-buildx-plugin|tailscale)/' || true)"
+    if [ -n "$pending" ]; then
+      printf '%s\n' "$pending" | while read -r pkg new _ rest; do
+        from="$(printf '%s' "$rest" | sed -n 's/.*upgradable from: \([^]]*\)].*/\1/p')"
+        printf "   ${YELLOW}%s${RESET} %s ${DIM}— installed %s${RESET}\n" "${pkg%%/*}" "$new" "$from"
+      done
+      printf "   ${DIM}Pending as of the last apt update. docker-ce and docker-ce-cli wait for a maintenance window; see docs/host-baseline.md.${RESET}\n"
+    else
+      printf "   ${GREEN}no update pending${RESET} ${DIM}for the Docker and VPN packages, as of the last apt update${RESET}\n"
+    fi
   fi
   printf "\n"
 

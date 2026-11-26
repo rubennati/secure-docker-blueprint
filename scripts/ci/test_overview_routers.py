@@ -11,6 +11,9 @@
   example files are not compared
 - --host compares every variable an image: line names in a live .env with the
   pin in .env.example: a difference is a hint and leaves the exit status alone
+- --host names the Docker and VPN package versions below their minimum,
+  live-restore off, a docker.service bound to tailscaled and the package
+  updates apt has pending — hints that leave the exit status alone
 - an unknown option is refused
 
 Run:
@@ -179,6 +182,61 @@ class ImagePins(Scratch):
         rc, out = self.run_tool("--host")
         self.assertIn("Image pins", out)
         self.assertIn("no stack has a .env — nothing to compare", out)
+
+
+STUB_DOCKER = """#!/bin/sh
+case "$1 $2" in
+  "version --format") echo "$STUB_ENGINE";;
+  "info --format") echo "$STUB_LIVE_RESTORE";;
+  "compose version") echo v5.7.0;;
+esac
+"""
+STUB_APT = """#!/bin/sh
+echo "Listing..."
+echo "docker-ce/trixie 5:29.10.0-1~debian.13~trixie amd64 [upgradable from: 5:29.9.3-1~debian.13~trixie]"
+echo "curl/trixie 8.14.1-2 amd64 [upgradable from: 8.14.1-1]"
+"""
+
+
+class HostPackages(Scratch):
+    def run_with_stubs(self, engine, live_restore, requires, apt=True):
+        bin_dir = self.root / "stubs"
+        bin_dir.mkdir()
+        stubs = {
+            "docker": STUB_DOCKER,
+            "containerd": "#!/bin/sh\necho 'containerd containerd.io v2.4.2 abc'\n",
+            "tailscale": "#!/bin/sh\necho 1.104.5\necho 'tailscale commit: x'\n",
+            "systemctl": f"#!/bin/sh\necho 'Requires={requires}'\necho BindsTo=\necho PartOf=\n",
+        }
+        if apt:
+            stubs["apt"] = STUB_APT
+        for name, body in stubs.items():
+            (bin_dir / name).write_text(body, encoding="utf-8")
+            (bin_dir / name).chmod(0o755)
+        env = dict(os.environ, HOST_FILES_PREFIX=str(self.root / "host"),
+                   STUB_ENGINE=engine, STUB_LIVE_RESTORE=live_restore,
+                   PATH=f"{bin_dir}:/usr/bin:/bin")
+        r = subprocess.run(["bash", str(self.root / "scripts" / "overview.sh"), "--host"],
+                           capture_output=True, text=True, cwd=str(self.root), env=env)
+        return r.returncode, ANSI.sub("", r.stdout + r.stderr)
+
+    def test_an_old_engine_without_live_restore_bound_to_tailscaled_is_named(self):
+        rc, out = self.run_with_stubs("27.5.1", "false", "containerd.service tailscaled.service")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Docker Engine    27.5.1 — below the minimum 28.0", out)
+        self.assertIn("Compose          5.7.0", out)
+        self.assertIn("live-restore off", out)
+        self.assertIn("docker.service requires tailscaled", out)
+        self.assertIn("docker-ce 5:29.10.0-1~debian.13~trixie — installed 5:29.9.3-1~debian.13~trixie", out)
+        self.assertNotIn("curl", out)   # not a Docker or VPN package
+
+    def test_a_current_host_reports_no_warning(self):
+        rc, out = self.run_with_stubs("29.10.0", "true", "containerd.service", apt=False)
+        self.assertEqual(rc, 0, out)
+        self.assertIn("Docker Engine    29.10.0\n", out)
+        self.assertIn("live-restore on", out)
+        self.assertNotIn("requires tailscaled", out)
+        self.assertNotIn("below the minimum", out)
 
 
 if __name__ == "__main__":

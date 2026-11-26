@@ -25,9 +25,12 @@ itself stays unversioned — this gate constrains the tag, not the content.
 4. `ROADMAP.md`: shipped items removed from the open lists
 5. `README.md`: version badge
 6. Record significant release verification in the relevant host or maintenance record, when new evidence exists
-7. `upstream-status.json` refreshed from the image scan and `LIFECYCLE.md` regenerated;
+7. Every stack in [`docs/in-use.md`](../../docs/in-use.md) checked for this release — new
+   version, security fix, breaking change, lab upgrade test — with the version and the
+   date; no tag while a row is older than the release
+8. `upstream-status.json` refreshed from the image scan and `LIFECYCLE.md` regenerated;
    the stacks whose pin moved past their tested version read for likely breakage
-8. Tag, then `gh release create vX.Y.0 --draft` for minor versions — patch versions
+9. Tag, then `gh release create vX.Y.0 --draft` for minor versions — patch versions
    are git tags only
 
 ## Merging to main
