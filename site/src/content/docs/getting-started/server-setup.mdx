@@ -85,8 +85,9 @@ restarts, which is what updating the Docker packages does. Without it, every suc
 update restarts every container on the machine at once, and that simultaneous
 start-up is its own kind of load.
 
-What it does not do: it does not survive a reboot, it does not help across a major
-daemon version change — upstream supports it for patch releases only — and it is no
+What it does not do: it does not survive a reboot, it does not help across a move
+to another minor or major release — upstream supports it for patch releases only,
+29.10.0 to 29.10.1 but not 29.9 to 29.10 — and it is no
 substitute for the resource limits each service carries. What it removes is one
 avoidable restart.
 

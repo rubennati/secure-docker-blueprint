@@ -28,7 +28,7 @@ recorded), **not tested**, **open** (a known gap).
 | System | Debian 13, cloud kernel, updated to the current point release; one reboot for a kernel update | tested (two reboots, a third with the `nftables.service` drop-in: T8) |
 | Updates | `unattended-upgrades` for security updates, automatic reboot off — a kernel update waits for a planned reboot | configured |
 | Time, journal, swap | `systemd-timesyncd` synchronised; journald persistent, capped at 200 MB; swap with a low `swappiness` | configured |
-| Docker | Docker Engine 29 with Compose 5 — the tested versions; the minimum is Engine 28.0 with Compose 2.33.1 ([`deployment-lifecycle.md`](standards/deployment-lifecycle.md) §1) — `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`) | tested |
+| Docker | Docker Engine 29 with Compose 5 — the tested versions; the minimum is Engine 28.0 with Compose 2.33.1 ([`deployment-lifecycle.md`](standards/deployment-lifecycle.md) §1) — `daemon.json`: `local` log driver with size limits, `ipv6` and `ip6tables` on, `userland-proxy: false` (`core/traefik/docs/ipv6-dual-stack.md`); `live-restore` was not set on this host and joined the baseline later (SHOULD 4) | tested |
 | Accounts | `<admin>`: key only, `sudo`; `<break-glass>`: password, no key, denied by sshd, for the provider console only; `root` locked | tested (console login, M1/M2) |
 | SSH | keys only (`AuthenticationMethods publickey`), root login off, `MaxAuthTries 3`, `LoginGraceTime 30`, no X11 or agent forwarding; TCP forwarding left on | tested |
 | Network | static public IPv4 and IPv6 from the provider, `accept_ra 0` on `<public-if>`; IPv4/IPv6 forwarding on (Docker); reverse-path filter loose on `<public-if>` | configured |
@@ -86,7 +86,9 @@ Each point names what it is for, what it depends on, and how to check it.
 8. **IPv6 treated as a first-class path.** Every rule exists for both families; the
    provider filter, the host ruleset and the exposure test cover IPv6 as well.
 9. **Security updates installed automatically, reboots planned.** A kernel update is
-   only in effect after a reboot.
+   only in effect after a reboot. This covers the distribution's security origins;
+   Docker's and the VPN's own repositories follow
+   [Docker and VPN packages](#docker-and-vpn-packages).
 
 ### SHOULD — recommended hardening and operation
 
@@ -101,7 +103,25 @@ Each point names what it is for, what it depends on, and how to check it.
    Docker and the VPN may start in either order. Check: a reboot with the console open,
    then the ruleset, the VPN and every container.
 4. **Docker's daemon settings set once:** a log driver with size limits,
-   `userland-proxy: false`, IPv6 and `ip6tables` on for a dual-stack host.
+   `userland-proxy: false`, IPv6 and `ip6tables` on for a dual-stack host, and
+   `"live-restore": true`. Purpose of `live-restore`: containers keep running while
+   the daemon restarts, which is what a Docker package update and the optional
+   daemon watchdog do. Without it, each of them stops every container on the host at
+   once. Limits, from Docker's documentation:
+   - It covers patch releases only — 29.10.0 to 29.10.1. A move to another minor
+     release (29.9 to 29.10) or major release is outside what upstream supports;
+     plan it as a restart of every container.
+   - It does not survive a reboot, and does not cover a changed daemon option such
+     as the address pools or the storage driver.
+   - It applies to standalone containers, not to Swarm services. The blueprint uses
+     no Swarm.
+   - While the daemon is down, a container's log output fills a 64 KB buffer, and a
+     full buffer blocks the container's writes. Keep the daemon down for seconds,
+     not minutes.
+
+   Enabling it needs no container restart: add the line, then
+   `systemctl reload docker`. Check: `docker info --format '{{.LiveRestoreEnabled}}'`
+   prints `true`; `scripts/overview.sh --host` reports it.
 5. **Address pools sized for the number of networks** — with an edge network and an
    internal network per stack, Docker's default pools run out at about thirty. Set
    `default-address-pools` before the networks exist, on ranges that overlap nothing the
@@ -169,6 +189,125 @@ Each point names what it is for, what it depends on, and how to check it.
 - **Kernel and sysctl hardening** beyond SHOULD 12 (Lynis' list: auditd rules, file
   integrity, a GRUB password), measured against Docker's need for forwarding.
 
+## Docker and VPN packages
+
+**Decision: Docker's packages update in a maintenance window, not automatically.**
+Docker's repository — `docker-ce`, `docker-ce-cli`, `containerd.io`,
+`docker-compose-plugin`, `docker-buildx-plugin` — stays out of
+`Unattended-Upgrade::Origins-Pattern`. All five update together, by
+[Updating Docker on a host](#updating-docker-on-a-host), at least once a month and
+within a week of a release that fixes a security issue. `scripts/overview.sh --host`
+lists what is pending.
+
+Why:
+
+- **An update of `docker-ce` restarts the daemon.** With `live-restore` the containers
+  survive a patch release. They do not reliably survive a move to another minor
+  release, which is what most updates on a host a few weeks behind are. Without
+  `live-restore`, every container stops at once.
+- **Partial updates create combinations nobody tested.** If Docker's repository is an
+  allowed origin, `unattended-upgrades` still holds back an upgrade that would install
+  a new package. `containerd.io` and the Compose plugin then move while `docker-ce`
+  stays behind, and the Engine runs with a containerd it was not released with. Two
+  hosts updated this way drift apart: same blueprint, different Engine releases.
+- **One window, all packages, the same release on every host.** The targets are in
+  [`in-use.md`](in-use.md#host-components).
+
+**The VPN client may update automatically**, through its own auto-update or through
+`unattended-upgrades`, under one condition: `docker.service` must not depend on it.
+A drop-in with `Requires=tailscaled.service` or `BindsTo=tailscaled.service` makes
+systemd stop Docker, and every container, whenever the VPN client restarts — on
+every update. The tested configuration starts Docker and Tailscale unordered and in
+parallel (SNAT fix, SHOULD 1), so no such dependency is needed. Check:
+`systemctl show docker.service -p Requires -p BindsTo -p PartOf` names no `tailscaled`;
+`scripts/overview.sh --host` warns if it does. A VPN restart drops VPN sessions for
+seconds; the second way in (MUST 6) covers a client update that fails.
+
+Minimums: Docker Engine 28.0, Compose 2.33.1, Tailscale 1.66.1. The reasons are in
+[`in-use.md`](in-use.md#host-components).
+
+## Updating Docker on a host
+
+In a maintenance window, with the console (MUST 6) at hand.
+
+**Before:**
+
+1. Read the release notes of the target Engine: deprecated or removed daemon
+   options, changed defaults. Note whether the move stays within one minor release
+   (patch) or crosses one.
+2. `scripts/overview.sh --host`: installed and pending versions, `live-restore`, a
+   `docker.service` bound to `tailscaled`. Remove such a binding first.
+3. Record what runs, to compare afterwards:
+
+   ```bash
+   docker ps --format '{{.Names}}\t{{.Status}}' | sort > ~/docker-before.txt
+   docker ps -a --filter status=exited --format '{{.Names}}\t{{.Status}}' | sort > ~/docker-stopped-before.txt
+   docker ps -q | xargs docker inspect --format '{{.Name}} {{.HostConfig.RestartPolicy.Name}}' | grep -vE ' (unless-stopped|always)$'
+   ```
+
+   The last command lists running containers whose restart policy does not bring
+   them back after a daemon restart; it should print nothing. A container stopped by
+   hand (`docker stop`, `docker kill`) stays down after a restart; the second file
+   keeps those from being mistaken for casualties.
+4. Disk: `df -h /var/lib/docker` and `docker system df`.
+5. For a very high stack in [`in-use.md`](in-use.md), a backup from today.
+
+**Update** — all Docker packages together:
+
+```bash
+sudo apt-get update
+apt list --upgradable 2>/dev/null | grep -E '^(docker|containerd)'
+sudo apt-get install --only-upgrade docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+```
+
+Within one minor release, with `live-restore` on, the containers keep running. Across
+a minor release, expect every container to be stopped and started by the daemon.
+
+**After:**
+
+1. `docker version --format '{{.Server.Version}}'` shows the target;
+   `docker info --format '{{.LiveRestoreEnabled}}'` shows `true`.
+2. Every container that ran before runs again:
+
+   ```bash
+   diff <(cut -f1 ~/docker-before.txt) <(docker ps --format '{{.Names}}' | sort)
+   docker ps --filter health=unhealthy
+   docker ps --filter status=restarting
+   ```
+
+   The `diff` prints nothing, and the other two list no container. After a
+   patch release with `live-restore`, the uptimes in `docker ps` are unchanged: the
+   containers were never restarted.
+3. A stack that is not back: `docker compose up -d` in its directory, then
+   `docker inspect --format '{{.State.ExitCode}} {{.State.Error}}' <container>` for
+   the reason.
+4. The reverse proxy answers from outside (`scripts/exposure-test.sh` or a request to
+   a public name), and `journalctl -u docker --since -1h` shows no error.
+5. `scripts/overview.sh --host` again: no Docker package pending.
+
+### When every container stopped at once
+
+All containers with the same start time, or a monitor that saw every service go down
+in the same minute, mean the daemon stopped them. Find which event did:
+
+```bash
+docker inspect --format '{{.Name}} {{.State.StartedAt}}' $(docker ps -q) | sort -k2
+journalctl -u docker -u containerd -u tailscaled -u docker-daemon-watchdog --since '<day> 00:00' --until '<day> 23:59'
+zgrep -h -A4 'Start-Date: <day>' /var/log/apt/history.log*
+less /var/log/unattended-upgrades/unattended-upgrades.log
+systemctl show docker.service -p Requires -p BindsTo -p PartOf
+apt-mark showhold; grep -nE 'Docker|docker|tailscale' /etc/apt/apt.conf.d/50unattended-upgrades
+last -x reboot shutdown | head
+```
+
+| What the logs show | Cause | Fix |
+|---|---|---|
+| `docker-ce` in the apt history at that time, `Commandline` is `unattended-upgrade`, then `Stopping docker.service` | an automatic Engine update without `live-restore`, or across a minor release | Docker's repository out of the allowed origins; `live-restore` on |
+| `tailscale` in the apt history, or `tailscaled` restarting, then `Stopping docker.service` | `docker.service` bound to `tailscaled` | remove the drop-in |
+| `docker-daemon-watchdog` restarting Docker | a hung daemon, restarted without `live-restore` | `live-restore` on; find why the daemon hung |
+| a reboot or shutdown entry | a reboot | none |
+| only `containerd.io` updated | unlikely alone: Docker's own unit only *wants* containerd, and containerd stops only its main process | look for a second event in the same minute |
+
 ## Lessons from the tested hosts
 
 - A rule that looks right in a file is not proof: every point above was accepted only
@@ -191,5 +330,9 @@ Each point names what it is for, what it depends on, and how to check it.
   repository was on the same host.
 - Docker's default address pools include `192.168.0.0/16`, which can overlap a LAN; set
   the pools before the first network (SHOULD 5).
+- `live-restore` (SHOULD 4) and the update runbook have not been exercised on a tested
+  host. On a host without `live-restore`, every container has been seen stopping at
+  once in the same minute, twice; the event behind it was not established. The
+  diagnosis above names what to read.
 - The IPv4 tailnet anti-spoofing drop refuses a forged source from a container, and the
   tailnet path still works for real clients (2026-11-04).
