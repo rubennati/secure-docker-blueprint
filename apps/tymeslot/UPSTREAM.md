@@ -95,6 +95,20 @@ Tailscale client → Traefik (TLS, 443) → tymeslot-app :4000 (Bandit, LiveView
   "$POSTGRES_USER" -d postgres' < dump.sql` (errors that the bootstrap role and
   database already exist are expected); then `docker compose up -d`. A return to
   the old major is only a restore of that dump.
+- Moved to `1.49.0-slim` on 2026-11-26 (released 2026-11-24), index digest
+  `sha256:8e2ab533b12348a31bdfdd2ba02ca4fb79ee387036363655b1988df0628bfe5d`, read from
+  the registry. Releases 1.42.0 to 1.49.0
+  (https://github.com/tymeslot/tymeslot/releases). One breaking change, for meeting
+  payments only (off here): 1.43.0 needs `STRIPE_CONNECT_CLIENT_ID`, the redirect URI
+  `https://<domain>/dashboard/payments/connect/callback` and the Connect webhook event
+  `account.application.deauthorized`, and drops `MEETING_PAYMENTS_DEFAULT_COUNTRY`.
+  1.44.0 adds `TRUSTED_PROXIES` (empty by default): the public addresses of a CDN or
+  load balancer to skip when the client address is resolved — behind Cloudflare
+  (`proxied` profile) it takes Cloudflare's ranges, otherwise it stays empty, since
+  Traefik is the only hop; an invalid entry stops the container. 1.46.0 adds optional
+  e-mail verification of bookings. 35 migrations run at the first start; on data from
+  1.41.0 they ran through, the existing account was there afterwards and the login
+  page answered. PostgreSQL 14 or newer, unchanged. No advisory.
 
 ## Upgrade checklist
 

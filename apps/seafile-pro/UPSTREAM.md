@@ -213,6 +213,50 @@ If you need Elasticsearch instead of SeaSearch:
   https://github.com/redis/redis/releases/tag/8.10.3,
   https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh,
   https://manual.seafile.com/latest/setup/setup_ce_by_docker/
+- Moved to `13.0.30` on 2026-11-26 (released 2026-11-20), with SeaDoc `2.0.14`
+  (2026-11-20). A security release, without an upgrade step or SQL change
+  (changelog: https://plus.seafile.com/wiki/publish/seafile-wiki/5L80/, security list:
+  https://plus.seafile.com/wiki/publish/seafile-wiki/O50D/; no CVE IDs given). High:
+  the shared Markdown image endpoint could expose files outside the share. Medium:
+  WOPI write and lock operations without an edit-permission check and PutFile
+  without a lock check; **the OnlyOffice save callback without JWT validation**
+  (this stack's `onlyoffice-callback.yml` opens that path with `access-public`, so
+  13.0.30 is the release to run with it); share-link passwords leaking across users,
+  a backslash in a file name bypassing the shared-folder quota, preview-only folder
+  links allowing ZIP download, and four API checks. SeaDoc 2.0.13/2.0.14: SQL
+  injection and path tampering fixed, download links hardened against SSRF,
+  authentication and socket handling (high), and a rate limit of 600 requests per
+  address and minute. The notification, metadata and thumbnail servers have no
+  13.0.30 image; `13.0-latest` still resolves to the pinned 13.0.29/13.0.28. The
+  upgrade on data is checked with the Community Edition image of the same release
+  (`apps/seafile`): library and file there afterwards, the file downloads.
+- **Seafile 14 is not a pin target yet.** Every 14.0 release so far (14.0.9 to
+  14.0.11) is labelled beta in the changelog, and the manual's `latest` still points
+  to 13.0. What the move will ask, from the 14.0 upgrade notes: new server
+  compose files; `ENABLE_SEAFDAV`, `ENABLE_METADATA_MANAGEMENT` and the search
+  settings move into `.env`; `METADATA_SERVER_URL` becomes
+  `INNER_METADATA_SERVER_URL`; face recognition is removed; the AI settings move to
+  `conf/seafile_ai_config.yaml`; several `seahub_settings.py` keys are removed or
+  renamed (traffic limits per role); SeaDoc 3.0; for 14.0.11 a manual
+  `md_server_snapshots` table. No downgrade path is documented. Revisit when a 14.0
+  release is no longer marked beta.
+- **MariaDB 10.11 stays.** It is the line Seafile 13 and 14 ship in their own compose
+  files, and it is supported until 2028-02-16 (https://mariadb.org/about/#maintenance-policy).
+  10.11.20 (2026-11-16, 13 CVEs, highest CVSS 7.5) is released but not on Docker Hub;
+  `10.11.19` was rebuilt there on 2026-11-20 — that rebuild is the update Dockhand and
+  similar tools report, a new digest of the same tag, not a new version. A
+  `docker compose pull` takes it. Move the pin when the `10.11.20` tag appears. A
+  move to 11.8 LTS is possible but neither named nor excluded by Seafile; it would
+  be its own step with a dump, as `README.md` → *Backup* describes.
+- ClamAV moved to `1.5.5` on 2026-11-26 (released 2026-11-18,
+  https://github.com/Cisco-Talos/clamav/releases): ten CVEs in the scanner's parsers,
+  CVE-2026-76411, -76414 to -76417, -76421, -76422, -76430, -76515 and -76516 —
+  out-of-bounds writes in the LZX and UPX/PE unpackers among them, reached by any
+  uploaded file the scanner reads. No configuration change. The image is amd64 only,
+  as before.
+- SeaSearch stays at `1.0.8`: `1.0.9` was pushed on 2026-11-24 without release notes,
+  and `1.0-latest`, the tag Seafile's compose files name, still points to 1.0.8.
+  Move when upstream promotes it.
 
 ## Upgrade checklist
 

@@ -113,6 +113,28 @@
   https://github.com/redis/redis/releases/tag/8.0.0,
   https://github.com/redis/redis/releases/tag/8.10.3,
   https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh
+- Moved to `3.5.1` on 2026-11-26 (3.5.0 released 2026-11-17, 3.5.1 2026-11-18;
+  https://github.com/paperless-ngx/paperless-ngx/releases). **Breaking: allowed hosts.**
+  With `PAPERLESS_URL` set — this stack sets it to `https://${APP_TRAEFIK_HOST}` —
+  3.5 admits only that host and `localhost`; before, any host was admitted. A
+  request by IP address or by another name is answered 400. The healthcheck asked
+  for `http://127.0.0.1:8000/` and turned the container unhealthy under 3.5.1; it now
+  sends `Host: localhost`. Requests through Traefik carry the configured name and
+  are unaffected. A deployment reached under a second name lists it in
+  `PAPERLESS_ALLOWED_HOSTS`. Migrations `documents.0028` to `0030` replace the tag
+  tree (django-treenode → adjacency list) and run at start; on data from 3.4.2 the
+  documents, their text and the tags were there afterwards, and a new upload was
+  consumed. New: `PAPERLESS_SESSION_CLEANUP_TASK_CRON` (default `0 3 * * *`) prunes
+  expired sessions; bulk edits run asynchronously. No advisory in 3.5.x.
+- Apache Tika moved to `3.3.3.1` on 2026-11-26, a rebuild of Tika 3.3.3 (the fourth
+  number is the image build). Held below **3.4.0** (released 2026-11-23): 3.4 caps a
+  multipart attachment at 50 MB by default (`maxAttachmentBytes`, CVE-2026-54225) and
+  lowers the zip-bomb and embedding-depth limits, so a large document Paperless
+  hands to Tika would be refused; Paperless's own compose still ships 3.3.1.0. Move
+  when upstream Paperless moves, or with a measured limit.
+- Gotenberg stays at `8.40.0`, the last release of 8: Gotenberg 9 (2026-11-05)
+  renames the PDF routes and fields Paperless calls, and Paperless does not support
+  it (paperless-ngx issue 14839, closed as not planned for now).
 
 ## Upgrade checklist
 

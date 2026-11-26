@@ -8,10 +8,10 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 
 | Service | Image | Purpose |
 |---------|-------|---------|
-| `immich-app` | `ghcr.io/immich-app/immich-server:v3.3.6` | Web UI + REST API + upload handler |
-| `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.3.6` | CLIP embeddings, face detection, object recognition |
+| `immich-app` | `ghcr.io/immich-app/immich-server:v3.4.2` | Web UI + REST API + upload handler |
+| `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.4.2` | CLIP embeddings, face detection, object recognition |
 | `db` | `ghcr.io/immich-app/postgres:14-vectorchord1.1.1` (digest-pinned) | Postgres with vector extensions for similarity search |
-| `redis` | `valkey/valkey:9.1.3` | Background job queue (Bull/BullMQ) |
+| `redis` | `valkey/valkey:9.2.1` | Background job queue (Bull/BullMQ) |
 
 ## Try it locally
 
@@ -75,7 +75,7 @@ curl -fsSI https://<APP_TRAEFIK_HOST>/api/server/ping   # 200 OK, {"res":"pong"}
 
 ## Security Model
 
-- **First-user-wins admin** — until an admin exists, `POST /api/auth/admin-sign-up` makes the first caller the admin, with no setup secret; afterwards it answers `Admin setup is not available` (v3.3.6). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
+- **First-user-wins admin** — until an admin exists, `POST /api/auth/admin-sign-up` makes the first caller the admin, with no setup secret; afterwards it answers `Admin setup is not available` (v3.3.6, v3.4.2). With a public route that is whoever arrives first, which is why the route ships at `access-vpn`: create the admin over the VPN, then open it.
 - **`DB_PASSWORD` restricted to `[A-Za-z0-9]`** — Immich does not support special characters in the DB password. Keep generation aligned (see Setup step 2).
 - **`DB_PWD_INLINE` duplicates the DB password** — see Known Issues.
 - **Postgres on `app-internal` (`internal: true`)** — only the Immich services can reach it.
@@ -155,6 +155,47 @@ Two preconditions upstream states, both of which invalidate a restore if missed:
 - **Restore only into a fresh install** — a database the Immich server has never started against. If the server has run, recreate the volume first. Where the database cannot be started on its own, set `DB_SKIP_MIGRATIONS=true` before bringing the stack up, so the server does not migrate a database that is about to be replaced.
 
 **Restore order:** database first, then the library, then the app.
+
+## Upgrading PostgreSQL
+
+The database image ships PostgreSQL 14, the major Immich's own compose still uses.
+PostgreSQL 14 left support with 14.25 on 2026-11-12. Immich runs on 14 to 19, and
+`ghcr.io/immich-app/postgres` publishes `18-vectorchord1.1.1` with the same extension
+version and the same data path (`PGDATA=/var/lib/postgresql/data`), so the volume
+line stays. A new major cannot open the old data directory: the move is a dump and
+a restore into an empty directory, with the procedure of *Restore* above.
+
+1. Back up as under *Backup*, the library included.
+2. Stop the server and take the dump:
+
+   ```bash
+   docker compose stop immich-app machine-learning
+   docker compose exec -T db sh -c 'pg_dump --username="$POSTGRES_USER" "$POSTGRES_DB"' | gzip > dump-pg14.sql.gz
+   docker compose stop db
+   ```
+
+3. Keep the old data directory as the way back, and start the new major on an
+   empty one:
+
+   ```bash
+   sudo mv volumes/postgres volumes/postgres-14
+   # .env: DB_TAG=18-vectorchord1.1.1@sha256:f7388adc1e3414800a71506528917f4f5615249f5fe7a872b1e1431e01b72ad7
+   docker compose up -d db
+   ```
+
+4. Restore with the pipeline under *Restore* (the `sed`, `--single-transaction`,
+   `ON_ERROR_STOP=on`), from `dump-pg14.sql.gz`.
+5. `docker compose up -d`, then sign in and open an original.
+
+**Way back:** stop the stack, move `volumes/postgres-14` back to `volumes/postgres`, set
+the 14 digest again and start. Delete `volumes/postgres-14` only once the new major
+has run through a backup and a restore of its own.
+
+Checked on data from v3.4.2: the restore exits 0 under `ON_ERROR_STOP`, the server
+starts on 18.7, accounts, assets and their metadata are there and an original
+downloads. VectorChord stays at
+1.1.1, so no `REINDEX` is due. The machine-learning container was not part of the
+run; its embeddings live in the same database and move with it.
 
 ## Known Issues
 

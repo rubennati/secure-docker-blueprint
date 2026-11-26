@@ -117,6 +117,11 @@ Restore DB dump and `volumes/storage/`, revert `APP_TAG`.
   row another transaction changed after its snapshot fails with error 1020
   instead of overwriting it; the new default collation `utf8mb4_uca1400_ai_ci`
   does not apply, as the stack sets `utf8mb4_unicode_ci` explicitly.
+- **MariaDB `12.3.3` stays** (2026-11-26). 12.3.4 (2026-11-16) is released but not on
+  Docker Hub; `12.3.3` was rebuilt there on 2026-11-20, and that new digest of the
+  same tag is the update Dockhand and similar tools report. `docker compose pull`
+  takes it. Move the pin when the `12.3.4` tag appears
+  (https://mariadb.org/mariadb/all-releases/).
 
 ## Useful commands
 

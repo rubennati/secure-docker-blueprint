@@ -322,10 +322,11 @@ services:
 
     # --- Health & Observability ---
     # The login page, not /: / redirects to it whatever the state and stayed
-    # healthy with the database stopped, while the login page answered 500
-    #.
+    # healthy with the database stopped, while the login page answered 500.
+    # Host: localhost, because 3.5 admits only PAPERLESS_URL's host and
+    # localhost once PAPERLESS_URL is set: 127.0.0.1 is answered 400.
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8000/accounts/login/ >/dev/null || exit 1"]
+      test: ["CMD-SHELL", "curl -fsS -H 'Host: localhost' http://127.0.0.1:8000/accounts/login/ >/dev/null || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5

@@ -100,6 +100,16 @@ See the [ntfy config reference](https://docs.ntfy.sh/config/) for the full list.
     and one calling `html` is refused with `400` (local stack, 2026-11-23).
   Sources: https://github.com/binwiederhier/ntfy/releases/tag/v2.38.0,
   https://github.com/binwiederhier/ntfy/releases/tag/v2.38.1
+- Moved to `v2.38.2` on 2026-11-26 (released 2026-11-24), a security release
+  (https://github.com/binwiederhier/ntfy/releases/tag/v2.38.2): go-smtp 0.17.0 →
+  0.26.0 (GO-2026-7029, memory exhaustion through `BDAT`) — incoming mail must now
+  end its lines with CRLF, which matters only with the SMTP server on (off here);
+  every `X-Forwarded-For` line is read, so a client can no longer forge its address
+  past the rate and login limits behind a proxy that appends a second line; wildcard
+  access entries such as `alerts_*` now also block reservations of the topics they
+  cover, and a tier with a reservation limit of 0 reserves nothing (0 meant
+  unlimited). No `server.yml` key changes. Messages cached under v2.38.1 are served
+  after the upgrade, and publishing works.
 
 ## Upgrade checklist
 
