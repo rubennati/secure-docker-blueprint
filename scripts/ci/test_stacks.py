@@ -48,7 +48,7 @@ class Scratch:
         o = self.origin
         o.mkdir()
         git(o, "init", "-q", "-b", "main")
-        write(o / ".gitignore", "/stacks\n**/.env\n**/volumes/\n**/.secrets/\n")
+        write(o / ".gitignore", "/stacks\n/custom/\n**/.env\n**/volumes/\n**/.secrets/\n")
         write(o / "README.md", "root\n")
         write(o / "stacks.example", "core/traefik\n")
         (o / "scripts").mkdir()
@@ -78,6 +78,21 @@ class Scratch:
         return subprocess.run(["bash", str(self.host / "scripts" / "stacks.sh"), *args],
                               cwd=self.host, env=env, capture_output=True, text=True,
                               stdin=stdin if stdin is not None else subprocess.DEVNULL)
+
+    def own_stack(self, name, readme, tag=None):
+        """custom/<name> as a checkout of its own repository, with data of its own."""
+        d = self.host / "custom" / name
+        d.mkdir(parents=True)
+        git(d, "init", "-q", "-b", "main")
+        write(d / "README.md", readme)
+        write(d / ".gitignore", ".env\nvolumes/\n")
+        git(d, "add", "-A")
+        git(d, "commit", "-q", "-m", "init")
+        if tag:
+            git(d, "tag", tag)
+        write(d / ".env", "X=1\n")
+        write(d / "volumes/data/site", "data\n")
+        return d
 
     def checked_out(self):
         return sorted(git(self.host, "sparse-checkout", "list").split())
@@ -115,6 +130,74 @@ class StacksTest(unittest.TestCase):
         self.assertIn("apps/vaultwarden/volumes/data/db", r.stdout)
         self.assertIn("apps/vaultwarden", self.s.checked_out())
         self.assertTrue((self.s.host / "apps/vaultwarden/volumes/data/db").is_file())
+
+    def data_elsewhere(self, name):
+        """A stack's files outside the checkout: .env, a secret and its data."""
+        d = self.s.root / "data" / name
+        write(d / ".env", "X=1\n")
+        write(d / ".secrets/token.txt", "secret\n")
+        write(d / "volumes/state", "data\n")
+        return d
+
+    def assertIntact(self, d):
+        for f in (".env", ".secrets/token.txt", "volumes/state"):
+            self.assertTrue((d / f).is_file(), f)
+
+    def test_apply_refuses_a_symbolic_link_on_a_path_not_checked_out(self):
+        # Git would delete .env, .secrets/ and volumes/ in the link's target:
+        # the directory is outside the checkout and holds only ignored files.
+        self.s.stacks("core/traefik")
+        self.assertEqual(self.s.run("apply").returncode, 0)
+        data = self.data_elsewhere("crowdsec")
+        (self.s.host / "core/crowdsec").symlink_to(data)
+        self.s.stacks("core/traefik", "apps/whoami")
+        r = self.s.run("apply")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nothing applied", r.stderr)
+        self.assertRegex(r.stdout, r"core/crowdsec\s+symbolic link to ")
+        self.assertIntact(data)
+        self.assertNotIn("apps/whoami", self.s.checked_out())
+
+    def test_apply_refuses_files_on_a_path_not_checked_out(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        data = self.data_elsewhere("vaultwarden")
+        shutil.copytree(data, self.s.host / "apps/vaultwarden")
+        r = self.s.run("apply")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertRegex(r.stdout, r"apps/vaultwarden\s+directory with files")
+        self.assertNotRegex(r.stdout, r"\n   apps\s")
+        self.assertIntact(self.s.host / "apps/vaultwarden")
+
+    def test_apply_leaves_an_empty_directory_alone(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        (self.s.host / "apps/vaultwarden").mkdir(parents=True)
+        r = self.s.run("apply")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_update_refuses_a_link_on_a_path_the_target_adds(self):
+        # apps/nextcloud exists in v2 only; the check reads the target too.
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        data = self.data_elsewhere("nextcloud")
+        (self.s.host / "apps").mkdir(exist_ok=True)
+        (self.s.host / "apps/nextcloud").symlink_to(data)
+        r = self.s.run("update", "v2", "--yes")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("nothing changed", r.stderr)
+        self.assertRegex(r.stdout, r"apps/nextcloud\s+symbolic link to ")
+        self.assertEqual(git(self.s.host, "describe", "--tags", "--exact-match").strip(), "v1")
+        self.assertIntact(data)
+
+    def test_status_names_what_sits_on_a_path_not_checked_out(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        (self.s.host / "core/crowdsec").symlink_to(self.data_elsewhere("crowdsec"))
+        r = self.s.run("status")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Not checked out, yet something is there", r.stdout)
+        self.assertRegex(r.stdout, r"core/crowdsec\s+symbolic link to ")
 
     def test_apply_drops_a_stack_without_local_files(self):
         self.s.stacks("core/traefik", "apps/whoami")
@@ -185,6 +268,48 @@ class StacksTest(unittest.TestCase):
         self.assertIn("Release: v1", r.stdout)
         self.assertIn("In the file, not checked out", r.stdout)
         self.assertIn("Checked out, not in the file", r.stdout)
+
+
+    def test_own_stacks_survive_apply_and_update(self):
+        self.s.stacks("core/traefik", "apps/whoami")
+        self.s.run("apply")
+        d = self.s.own_stack("site", "# Site\n\n**Blueprint:** v1\n", tag="1.0.0")
+        self.s.stacks("core/traefik")
+        self.assertEqual(self.s.run("apply").returncode, 0)
+        r = self.s.run("update", "v2", "--yes")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue((d / "volumes/data/site").is_file())
+        self.assertTrue((d / ".env").is_file())
+        self.assertEqual(git(self.s.host, "status", "--porcelain").strip(), "")
+
+    def test_status_lists_own_stacks_with_their_blueprint_release(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        self.s.own_stack("site", "# Site\n\n**Blueprint:** v1\n", tag="1.0.0")
+        self.s.own_stack("api", "# API\n")
+        r = self.s.run("status")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("Own stacks (custom/):", r.stdout)
+        self.assertRegex(r.stdout, r"custom/site\s+1\.0\.0\s+follows Blueprint v1\n")
+        self.assertIn("no Blueprint line in README.md", r.stdout)
+
+    def test_update_names_own_stacks_and_the_release_they_follow(self):
+        self.s.stacks("core/traefik")
+        self.s.run("apply")
+        self.s.own_stack("site", "**Blueprint:** v1\n")
+        self.s.own_stack("api", "no line\n")
+        r = self.s.run("update", "v2", "--yes")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("custom/site follows v1 — read the Migration notes in CHANGELOG.md between v1 and v2", r.stdout)
+        self.assertIn("custom/api names no Blueprint release", r.stdout)
+
+    def test_apply_refuses_a_custom_line_and_says_why(self):
+        before = self.s.checked_out()
+        self.s.stacks("core/traefik", "custom/site")
+        r = self.s.run("apply")
+        self.assertNotEqual(r.returncode, 0)
+        self.assertIn("managed by its own repository", r.stderr)
+        self.assertEqual(self.s.checked_out(), before)
 
 
 if __name__ == "__main__":

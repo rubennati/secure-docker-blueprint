@@ -62,7 +62,6 @@ services:
       APP_URL: http://localhost:8080
       FRONT_URL: http://localhost:8080
       APP_KEY: ${APP_KEY:?Set APP_KEY in .env.local}
-      APP_TRUSTED_PROXIES: "*"
       JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env.local}
       FRONT_API_SECRET: ${FRONT_API_SECRET:?Set FRONT_API_SECRET in .env.local}
       DB_CONNECTION: pgsql

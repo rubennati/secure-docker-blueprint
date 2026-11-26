@@ -16,10 +16,10 @@ The licence names DefectDojo, Inc.; no jurisdiction was found in the pages check
 
 ## What we use
 
-- `defectdojo/defectdojo-django:3.5.0` for uWSGI, the Celery worker, Celery beat
-  and the initializer, and `defectdojo/defectdojo-nginx:3.5.0`. Upstream's compose
+- `defectdojo/defectdojo-django:3.5.202` for uWSGI, the Celery worker, Celery beat
+  and the initializer, and `defectdojo/defectdojo-nginx:3.5.202`. Upstream's compose
   defaults to `:latest`; not used here.
-- `postgres:18.6-alpine` and `valkey/valkey:9.1.2-alpine` — the versions upstream's
+- `postgres:18.7-alpine` and `valkey/valkey:9.1.2-alpine` — the versions upstream's
   compose pins (it also pins their digests).
 - The seven services of upstream's `docker-compose.yml`, unchanged in shape.
 
@@ -99,6 +99,41 @@ formats; notifications and ticketing integrations; Celery beat's scheduled jobs
 firing; backup and restore; an upgrade across versions.
 
 ## Version notes
+
+- Moved from `3.5.0` to `3.5.202` on 2026-11-23 (released 2026-11-20), django
+  and nginx together. Advisories fixed, all medium or low and all needing a
+  logged-in user: GHSA-5hrf-g6cv-x87c (API token kept working while a forced
+  password reset was pending), GHSA-j46h-37q8-gj8w (organization details
+  readable without organization access) and GHSA-4w49-mcm5-gvrf (low; report
+  image links kept working after access to the product was lost), fixed in
+  3.5.100; GHSA-5p4p-m8h3-p66m (cross-site scripting in the engagement and
+  test calendar pages), 3.5.103; GHSA-m569-6pxf-6h65 and GHSA-fcjq-4r94-g37v
+  (test and finding titles of other products readable on report and
+  risk-acceptance pages), 3.5.200. The nginx image moves to nginx 1.31.9.
+  Database migrations `0306` to `0314` run in the initializer, among them
+  64-bit alert IDs (`0312`, rewrites the alerts table once) and the repair of
+  concurrent indexes left invalid by an interrupted build. Breaking for this
+  stack: from 3.5.100 the django image no longer contains `curl`, nor does
+  the nginx image; the uWSGI healthcheck used it and stayed unhealthy, which
+  held back nginx. Both compose files now check with Python's `urllib`, which
+  fails on any status of 400 or above as `curl -f` did. The nginx healthcheck
+  already used busybox `wget`. 3.5.200 adds the optional
+  `DD_TRUFFLEHOG_FOLD_COMMITS` and a stable `unique_id_from_tool` for
+  Trufflehog findings (deduplication unchanged on default settings), and
+  `DD_OS_MESSAGE_ENABLED=False` now also hides the Pro link in the user menu;
+  none is set here. The Tool Type, Tool Configuration and API Scan
+  Configuration removals move to 3.6.0. Upgraded on data from 3.5.0: the
+  initializer applied the nine migrations and exited 0, the product type,
+  product and imported finding were kept, token login worked and a wrong
+  password was refused, an import after the move succeeded, the Celery worker
+  came up. Sources:
+  https://github.com/DefectDojo/django-DefectDojo/releases/tag/3.5.100,
+  https://github.com/DefectDojo/django-DefectDojo/releases/tag/3.5.103,
+  https://github.com/DefectDojo/django-DefectDojo/releases/tag/3.5.200,
+  https://github.com/DefectDojo/django-DefectDojo/releases/tag/3.5.202,
+  https://github.com/DefectDojo/django-DefectDojo/security/advisories,
+  https://docs.defectdojo.com/releases/os_upgrading/upgrading_guide/,
+  https://github.com/DefectDojo/django-DefectDojo/pull/16581
 
 - Valkey moved to `9.1.3-alpine` on 2026-10-31 (released 2026-10-26); the stack's state is anchored on the application pin, which did not
   move. Upstream marks the release

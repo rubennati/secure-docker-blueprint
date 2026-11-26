@@ -1,6 +1,10 @@
 # Proposal — when a check runs, and why
 
-**Status: a decision document, not a configuration.** Nothing here changes a
+**Status: a decision document, not a configuration.** Open decision 2 and the
+image scan on the pull request into `main` are settled by
+[DEC-081](../.ai/decisions.md#dec-081) (2026-11-09): since DEC-079 that scan
+blocks nothing, so the image scan runs weekly and by hand only, and the IaC scan
+keeps every trigger. The rest stays open as written below. Nothing else here changes a
 workflow. The workflows run as [`standards/ci.md`](standards/ci.md) and
 [`security-verification.md`](security-verification.md) describe them; pull
 request #302, which adds triggers to `trivy.yml`, is closed without a merge and

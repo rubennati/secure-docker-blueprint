@@ -112,7 +112,7 @@ services:
   # --------------------------------------------------------
   app:
     # --- Identity ---
-    image: nginxinc/nginx-unprivileged:${APP_TAG}
+    image: ghcr.io/nginx/nginx-unprivileged:${APP_TAG}
     container_name: ${CONTAINER_NAME_APP}
     restart: unless-stopped
     # Wait for a HEALTHY database, not merely a started one.

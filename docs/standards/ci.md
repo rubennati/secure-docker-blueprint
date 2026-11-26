@@ -175,11 +175,12 @@ validates every compose file against the rules in
 
 The same job runs `scripts/ci/check-crowdsec-config.py --templates`. It renders
 `core/traefik` into a scratch copy three times — with the shipped `.env.example`,
-then with `CROWDSEC_BOUNCER_ENABLED=true` and a placeholder key, then with the
-switch off again over that render — and parses each result: the shipped default
-yields no plugin and no `crowdsec-*` middleware, the switch yields the plugin plus
-both middlewares keyed, and switching off removes both. It needs `envsubst`, which
-the runner image provides.
+then with `CROWDSEC_BOUNCER_ENABLED=true`, `crowdsec-bouncer.yml` in
+`COMPOSE_FILE` and a placeholder key file, then with the switch off again over
+that render — and parses each result: the shipped default yields no plugin and no
+`crowdsec-*` middleware; the switch yields the plugin plus both middlewares, each
+naming the key file the overlay mounts and holding no key; switching off removes
+both. It needs `envsubst`, which the runner image provides.
 
 `FAIL` blocks the pipeline. `WARN` is reported in the Job Summary but does not block.
 
@@ -457,12 +458,14 @@ runs inside job 4 on every pull request.
 ## Outside the ten — `Trivy` and `Stack status`
 
 `.github/workflows/trivy.yml` runs on a pull request into `main`, on a push to
-`main`, weekly and on manual dispatch.
+`main`, weekly and on manual dispatch. Only the IaC config scan runs on all four;
+the image scan and the stack status run weekly and by hand
+([DEC-081](../../.ai/decisions.md#dec-081)).
 
 - **IaC config scan** — `trivy config` over the repository, results to the GitHub
   Security tab. Required on `main`.
-- **Image CVE scan** — every image the checkers discover, CRITICAL and HIGH, each
-  to its own report in the `trivy-image-scan-results` artifact, with a count-level
+- **Image CVE scan** — weekly on `main` and by hand on any branch: every image
+  the checkers discover, CRITICAL and HIGH, each to its own report in the `trivy-image-scan-results` artifact, with a count-level
   summary on the job page. A finding in an upstream image is information: it
   appears in the summary, in the stack's `## Open findings` and in `LIFECYCLE.md`,
   and blocks nothing ([DEC-079](../../.ai/decisions.md#dec-079)).
@@ -470,7 +473,7 @@ runs inside job 4 on every pull request.
   `.trivy-baseline.json` does not record. The job fails only on the repository's
   own errors: an exception without its reason, an unreadable report, an image
   that left no trace. Not a required check.
-- **Stack status** — after the scan, outside pull requests,
+- **Stack status** — after the scan,
   `scripts/ci/upstream-status.py` writes per stack the pin and its release date,
   the newest upstream release, an archived or quiet upstream and the findings at
   the pin: to the pinned issue labelled `stack-status` on `main`, and to the

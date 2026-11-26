@@ -1,0 +1,47 @@
+# --------------------------------------------------------
+# FILE HOST PATHS — opt-in, for a closed Document Server
+# --------------------------------------------------------
+# The file host that embeds the editor calls this server itself, not only the
+# browser does, and it calls it at this server's public name — the address the
+# server hands out. A closed access policy refuses a request from a Docker
+# container or another host, so behind APP_TRAEFIK_ACCESS other than
+# access-public the editor opens documents and saving fails:
+#
+#   /cache/files/…        the edited file, fetched by the file host after the
+#                         save callback (Seafile: seahub onlyoffice/views.py,
+#                         requests.get(url) on the callback's url), and the
+#                         result of a conversion. The server's nginx serves it
+#                         only with a valid signed link — md5 over the expiry,
+#                         the path and the server's secret — and refuses an
+#                         expired one; a link lives 900 s (storage.fs.urlExpires).
+#   /ConvertService.ashx  the conversion API, which Seafile calls when a user
+#                         converts a document (seahub onlyoffice/converter.py).
+#                         JWT_ENABLED makes it refuse a request without a token
+#                         signed with the shared secret.
+#
+# Nextcloud, set up as its README describes, calls the server at its public
+# name as well. This file opens those two paths with access-public and nothing
+# else: the editor, its scripts and its websocket keep APP_TRAEFIK_ACCESS. With
+# the shipped access-public it changes nothing; leave it out.
+#
+#   COMPOSE_FILE=docker-compose.yml:file-host-paths.yml
+#
+# The four positions: the stack's headers, public, the stack's limit, no gate at
+# the proxy — the signed link and the JWT are the server's.
+services:
+  onlyoffice-app:
+    labels:
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.rule=Host(`${APP_TRAEFIK_HOST}`) && PathPrefix(`/cache/files/`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.middlewares=header-nosniff@file,${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,auth-none@file,forwarded-proto-https@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-saved-files.service=${COMPOSE_PROJECT_NAME}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.rule=Host(`${APP_TRAEFIK_HOST}`) && Path(`/ConvertService.ashx`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.priority=100"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.tls=true"
+      #- "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.tls.certresolver=${APP_TRAEFIK_CERT_RESOLVER}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.middlewares=header-nosniff@file,${APP_TRAEFIK_HEADERS}@file,access-public@file,${APP_TRAEFIK_LIMIT}@file,auth-none@file,forwarded-proto-https@file"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}-convert.service=${COMPOSE_PROJECT_NAME}"

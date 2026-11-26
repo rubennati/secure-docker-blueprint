@@ -9,6 +9,8 @@
 - --host compares the TLS option per host name across the stacks with a live
   .env: two different options for one name are reported and exit 1; the
   example files are not compared
+- --host compares every variable an image: line names in a live .env with the
+  pin in .env.example: a difference is a hint and leaves the exit status alone
 - an unknown option is refused
 
 Run:
@@ -143,6 +145,40 @@ class HostCheck(Scratch):
         rc, out = self.run_tool("--hosts")
         self.assertEqual(rc, 2, out)
         self.assertIn("usage:", out)
+
+
+class ImagePins(Scratch):
+    def pinned(self, project, example, live):
+        d = self.root / "apps" / project
+        d.mkdir(parents=True)
+        (d / "docker-compose.yml").write_text(
+            "services:\n  app:\n    image: example/app:${APP_TAG}\n  db:\n    image: ${DB_IMAGE:-postgres:18}\n",
+            encoding="utf-8")
+        (d / ".env.example").write_text(example, encoding="utf-8")
+        if live is not None:
+            (d / ".env").write_text(live, encoding="utf-8")
+
+    def test_a_tag_older_than_the_pin_is_named(self):
+        self.pinned("old", "APP_TAG=2.4.1\nDB_IMAGE=postgres:18.6\nAPP_HOST=a.example.com\n",
+                    'APP_TAG="2.0.0"\nDB_IMAGE=postgres:18.6\nAPP_HOST=b.example.com\n')
+        rc, out = self.run_tool("--host")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("apps/old APP_TAG=2.0.0 — this checkout pins 2.4.1", out)
+        self.assertNotIn("DB_IMAGE=", out)
+        self.assertNotIn("APP_HOST", out)   # not an image variable
+        self.assertIn("a hint, not a failure", out)
+
+    def test_the_pins_alone_say_as_pinned(self):
+        self.pinned("same", "APP_TAG=2.4.1\n", "APP_TAG=2.4.1\n")
+        rc, out = self.run_tool("--host")
+        self.assertEqual(rc, 0, out)
+        self.assertIn("as pinned — the .env of 1 stack(s) names the images .env.example pins", out)
+
+    def test_without_a_live_env_nothing_is_compared(self):
+        self.pinned("example", "APP_TAG=2.4.1\n", None)
+        rc, out = self.run_tool("--host")
+        self.assertIn("Image pins", out)
+        self.assertIn("no stack has a .env — nothing to compare", out)
 
 
 if __name__ == "__main__":

@@ -30,19 +30,23 @@ services:
       - no-new-privileges:true
 
     # --- Configuration ---
+    # secrets-env.sh exports the Docker Secrets below, then starts the image's own command.
+    entrypoint: ["/bin/sh", "/config/secrets-env.sh", "/sbin/my_init", "--", "/scripts/enterpoint.sh"]
+    secrets:
+      - SEAFILE_DB_PWD
+      - JWT_KEY
     environment:
       - DB_HOST=db
       - DB_PORT=3306
       - DB_USER=${DB_USER}
-      - DB_PASSWORD=${SEAFILE_MYSQL_DB_PASSWORD:?Set SEAFILE_MYSQL_DB_PASSWORD in .env}
       - DB_NAME=${SEAHUB_DB_NAME:-seahub_db}
       - TIME_ZONE=${TZ}
-      - JWT_PRIVATE_KEY=${JWT_PRIVATE_KEY:?Set JWT_PRIVATE_KEY in .env}
       - NON_ROOT=false
       - SEAHUB_SERVICE_URL=http://seafile-pro-app
 
     # --- Storage ---
     volumes:
+      - ./config/secrets-env.sh:/config/secrets-env.sh:ro
       - ./volumes/seadoc-data:/shared
 
     # --- Health & Observability ---

@@ -86,7 +86,7 @@ scan_component() {
 }
 
 # Scan all component directories
-for category in "core:core" "apps:app" "monitoring:mon"; do
+for category in "core:core" "apps:app" "business:biz" "monitoring:mon" "backup:bak" "custom:own"; do
   dir_name="${category%%:*}"
   type_label="${category##*:}"
   target="${ROOT_DIR}/${dir_name}"
@@ -162,7 +162,7 @@ printf "\n"
 # the model replaces), what Traefik would disable (an empty position), and
 # which routers name a TLS option other than the deployment standard.
 
-ROUTER_ROOTS="core apps business monitoring backup development"
+ROUTER_ROOTS="core apps business monitoring backup development custom"
 
 # The value of a variable in an env file, unquoted; empty when unset.
 envval() {
@@ -380,6 +380,38 @@ if [ "$WITH_HOST" = 1 ]; then
     printf " ${GREEN}no conflict${RESET} ${DIM}— one TLS option per host name${RESET}\n"
   fi
   printf "\n"
+
+  # Image pins: a .env copied from an older install keeps the image tags of
+  # that release, and nothing else says so — the stack starts on the old line,
+  # perhaps one without security fixes. Every variable an image: line names is
+  # compared with this checkout's .env.example. A hint, not a failure: the
+  # exit status does not change, and a pin kept on purpose stays as it is.
+  printf " ${BOLD}Image pins${RESET} ${DIM}(each live .env against this checkout's .env.example)${RESET}\n"
+  n_pin_stacks=0; n_pins=0
+  for root in $ROUTER_ROOTS; do
+    [ -d "${ROOT_DIR}/${root}" ] || continue
+    for component in "${ROOT_DIR}/${root}"/*/; do
+      [ -f "${component}.env" ] && [ -f "${component}.env.example" ] || continue
+      n_pin_stacks=$((n_pin_stacks + 1))
+      stack="${component#"${ROOT_DIR}"/}"; stack="${stack%/}"
+      for var in $(cat "${component}"*.yml 2>/dev/null | grep -E '^[[:space:]]*image:' | grep -oE '\$\{[A-Za-z0-9_]+' | sed 's/^\${//' | sort -u || true); do
+        want="$(envval "${component}.env.example" "$var")"
+        have="$(envval "${component}.env" "$var")"
+        [ -n "$want" ] && [ -n "$have" ] && [ "$want" != "$have" ] || continue
+        n_pins=$((n_pins + 1))
+        printf " ${YELLOW}%s${RESET} %s=%s ${DIM}— this checkout pins %s${RESET}\n" "$stack" "$var" "$have" "$want"
+      done
+    done
+  done
+  if [ "$n_pin_stacks" -eq 0 ]; then
+    printf " ${DIM}no stack has a .env — nothing to compare${RESET}\n"
+  elif [ "$n_pins" -eq 0 ]; then
+    printf " ${GREEN}as pinned${RESET} ${DIM}— the .env of %s stack(s) names the images .env.example pins${RESET}\n" "$n_pin_stacks"
+  else
+    printf " ${DIM}Take the pin from .env.example unless the stack's UPSTREAM.md names a reason to stay; a hint, not a failure.${RESET}\n"
+  fi
+  printf "\n"
+
   [ "$host_rc" -ne 0 ] && exit "$host_rc"
   [ "$conflicts" -ne 0 ] && exit 1
   exit 0

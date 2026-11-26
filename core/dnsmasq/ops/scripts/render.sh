@@ -45,6 +45,19 @@ for n in 1 2 3 4 5 6 7 8 9; do
 done
 export DNS_WILDCARD_LINES
 
+# Query log: every name a device looks up, with its address, in the container
+# log. Off unless DNS_LOG_QUERIES=true; an empty or missing value is off.
+case "${DNS_LOG_QUERIES:-false}" in
+  true)
+    DNS_LOG_QUERIES_LINE="log-queries"
+    echo "NOTE: DNS_LOG_QUERIES=true — every query and the address that asked it goes to the container log." >&2 ;;
+  false)
+    DNS_LOG_QUERIES_LINE="# log-queries is off (DNS_LOG_QUERIES=false)" ;;
+  *)
+    echo "ERROR: DNS_LOG_QUERIES must be true or false (got '${DNS_LOG_QUERIES}')." >&2; exit 1 ;;
+esac
+export DNS_LOG_QUERIES_LINE
+
 echo "Rendering dnsmasq.conf ..."
 envsubst < "$TEMPLATE_DIR/dnsmasq.conf.tmpl" > "$CONFIG_DIR/dnsmasq.conf"
 

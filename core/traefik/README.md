@@ -57,6 +57,12 @@ docker compose up -d
 docker compose ps
 ```
 
+`validate.sh` also checks `config/` and `volumes/` the way Traefik uses them:
+it runs as root without `CAP_DAC_OVERRIDE` and is bound by each file's mode.
+A file or directory Traefik cannot read or write fails the run, and the message
+includes the command that fixes it ([`TROUBLESHOOTING.md`](../../TROUBLESHOOTING.md) §3.2).
+A `.env` or `.secrets/` readable by every account on the host is a warning.
+
 These checks validate configuration; they do not establish that the deployed
 service or its firewall works. Open `https://<TRAEFIK_DASHBOARD_HOST>` from a VPN
 client and check that the certificate is valid. Without a VPN, check the certificate
@@ -279,7 +285,7 @@ changes last), a request header **after** `${APP_TRAEFIK_AUTH}`.
 | Block | Side | Used by |
 |---|---|---|
 | `frame-self` — `X-Frame-Options: SAMEORIGIN`, the application frames its own pages | before | listmonk, Nextcloud |
-| `csp-self-only` — an enforcing CSP for an application tested against it | before | whoami |
+| `csp-self-only` — an enforcing CSP for an application tested against it: everything from its own origin, no inline script or style | before | whoami |
 | `hsts-include-subdomains` — the per-domain HSTS extension | before | no stack by default |
 | `header-nosniff`, `header-permissions`, `header-frame-deny`, `header-referrer` — one header an `application-owned` stack lacks | before | Keycloak, Matomo, the office servers |
 | `forwarded-proto-https` — `X-Forwarded-Proto: https` to the backend | after | Paperless-ngx, Matomo, the office servers, Ghost's ActivityPub |
@@ -320,9 +326,11 @@ CrowdSec section below has the switches and what each covers.
 `TLS_DEFAULT_OPTION` in `.env` names the profile the file provider's reserved
 `default` option is built from; every router with `tls=true` takes it, so the
 standard label pattern names no option. A stack overrides with
-`tls.options=${APP_TRAEFIK_TLS_OPTION}@file` only as a documented exception; the
-dashboard names `TRAEFIK_DASHBOARD_TLS_OPTION`. A change of the default takes
-effect on a recreate of the container.
+`tls.options=${APP_TRAEFIK_TLS_OPTION}@file` only as a documented exception. The
+dashboard's `TRAEFIK_DASHBOARD_TLS_OPTION` is `default` as shipped, the option
+every stack takes; a profile name there holds only where the dashboard has a
+certificate of its own (see `421 Misdirected Request` under Troubleshooting). A
+change of the default takes effect on a recreate of the container.
 
 ## ACME Resolvers
 
@@ -363,6 +371,22 @@ One certificate covers every subdomain. Requires DNS at Cloudflare — the one D
 **Dashboard:** leave `TRAEFIK_DASHBOARD_CERT_RESOLVER` empty. It follows the same rule as the apps — `render.sh` omits the router's `certResolver` and Traefik serves the wildcard. A resolver set here requests a second certificate and publishes the dashboard hostname in Certificate Transparency logs; `validate.sh` warns when both are set.
 
 `*.example.com` matches exactly one label: `traefik.example.com` is covered, `traefik.admin.example.com` is not. `validate.sh` checks the actual relationship between `TRAEFIK_DASHBOARD_HOST` and `ACME_WILDCARD_DOMAIN`, and refuses a configuration where neither a covering wildcard nor a resolver exists.
+
+**Several domains:** list them, space-separated inside the quotes:
+
+```env
+ACME_WILDCARD_DOMAIN="example.com example.net"
+```
+
+- `render.sh` writes one ACME router per domain into `acme-wildcard.yml`. The first keeps the name `acme-wildcard`, the others are `acme-wildcard-2`, `-3`, …
+- The Cloudflare token needs Zone:Read and DNS:Edit on every listed zone.
+- `validate.sh` refuses a rendered file that does not request exactly the listed domains, so a domain added or removed without `render.sh` does not pass.
+
+**Stored certificates:** where `volumes/letsencrypt/acme.json` exists, `validate.sh` compares it with the list. Run it as root, because the file belongs to Traefik's user with mode 600; another user gets `NOT VERIFIED`. It reads only the domain names in the file, never the keys. Each finding is a warning and does not fail the run:
+
+- A wildcard for a domain the list does not name: Traefik keeps serving and renewing it.
+- A certificate for a single hostname a listed wildcard covers: each renewal publishes that hostname in Certificate Transparency logs again.
+- A listed domain with no certificate yet is a note.
 
 ### Path B — Per-domain (one cert per subdomain)
 
@@ -453,6 +477,9 @@ It does not remove the one already stored:
 - Certificate Transparency logs are append-only. A hostname already published
   stays published, whatever happens to the certificate.
 
+`validate.sh` names such a certificate (see "Stored certificates" above), so it is
+not forgotten.
+
 The change is therefore forward-looking. A new installation issues no separate
 dashboard certificate; an existing one stops requesting further ones. Neither the
 stored certificate nor the transparency entry it already produced can be undone by
@@ -506,9 +533,12 @@ CrowdSec detects threats (brute force, CVE probes, crawling), the bouncer enforc
 
 ### How to enable
 
-One switch in `.env`. The templates are not edited — `render.sh` reads
-`CROWDSEC_BOUNCER_ENABLED` and emits the plugin block into `config/traefik.yml`
-and the middleware file `config/dynamic/crowdsec.yml`, or neither.
+One switch in `.env`, a key file and an overlay. The templates are not edited:
+`render.sh` reads `CROWDSEC_BOUNCER_ENABLED` and emits either both of the plugin
+block in `config/traefik.yml` and the middleware file
+`config/dynamic/crowdsec.yml`, or neither. The key never goes into either file.
+`crowdsec-bouncer.yml` mounts `.secrets/crowdsec_bouncer_key.txt` as a Docker
+secret, and the middlewares name it as the plugin's `crowdsecLapiKeyFile`.
 
 ```bash
 # -----------------------------------------------
@@ -518,19 +548,25 @@ cd /path/to/secure-docker-blueprint/core/crowdsec
 docker compose ps   # should show "healthy"
 
 # -----------------------------------------------
-# Step 2: Generate a bouncer API key
+# Step 2: Issue the bouncer key into Traefik's key file
 # -----------------------------------------------
-# core/crowdsec/README.md, "Generate the bouncer key" — the command, and what to
-# do when the key appears a second time after a Docker restart
+# What to do when the key appears a second time after a Docker restart:
+# core/crowdsec/README.md, "Generate the bouncer key"
+cd /path/to/secure-docker-blueprint/core/traefik
+mkdir -p .secrets && chmod 700 .secrets
+docker exec crowdsec cscli bouncers add traefik-bouncer -o raw > .secrets/crowdsec_bouncer_key.txt
+# Traefik runs as root without capabilities and reads the file only as its
+# owner or through group 0 — keep it yours and give root the group:
+sudo chown "$USER":0 .secrets/crowdsec_bouncer_key.txt
+chmod 640 .secrets/crowdsec_bouncer_key.txt
 
 # -----------------------------------------------
-# Step 3: Set the switch in Traefik's .env
+# Step 3: Set the switch and the overlay in Traefik's .env
 # -----------------------------------------------
-cd /path/to/secure-docker-blueprint/core/traefik
 nano .env
 #   CROWDSEC_BOUNCER_ENABLED=true
 #   CROWDSEC_BOUNCER_PLUGIN_VERSION=v1.7.1      # a release the running Traefik loads
-#   CROWDSEC_BOUNCER_KEY=<key-from-step-2>
+#   COMPOSE_FILE=<as before>:crowdsec-bouncer.yml
 
 # -----------------------------------------------
 # Step 4: Render, validate, restart
@@ -539,8 +575,10 @@ nano .env
 ./ops/scripts/validate.sh
 docker compose up -d --force-recreate traefik
 # The plugin block is static configuration, read at startup — a restart is
-# required. validate.sh refuses the switch without a key, a plugin version
-# that is not a release tag, and a config/ that does not match the switch.
+# required. render.sh refuses the switch without the overlay in COMPOSE_FILE
+# and with a key file Traefik cannot read; validate.sh also refuses a plugin
+# version that is not a release tag and a config/ that does not match the
+# switch, and checks inside the running container that Traefik reads the key.
 
 # -----------------------------------------------
 # Step 5: Confirm it is in front of every router
@@ -552,6 +590,21 @@ docker compose up -d --force-recreate traefik
 # whoami-first validation in core/crowdsec/docs/profiles.md: a banned test
 # address must be answered 403 on whoami, your own path must still load.
 ```
+
+**Why the key is a file Traefik reads through group 0.** `config/dynamic` has to
+stay readable for Traefik as a whole, so a key inside it would be readable by
+every account on the host. Traefik runs as root with `cap_drop: ALL`; without
+`CAP_DAC_OVERRIDE` the kernel applies the file's mode to root like to any other
+user. A key file with mode 600 that belongs to you is unreadable to it. The
+plugin then fails to load, the entrypoint names a middleware that does not
+exist, and every router on `websecure` answers 404. Compose ignores `uid`, `gid`
+and `mode` on a secret outside Swarm ([Compose Structure](../../docs/standards/compose-structure.md#two-properties-of-file-based-secrets-that-surprise-people)),
+so the ownership on the host is what counts. Group 0 with mode 640 lets root
+read it while you keep editing it; owner root with mode 600 works as well.
+
+The plugin reads the key when it loads. A new key, written in place with
+`printf '%s' "$KEY" > .secrets/crowdsec_bouncer_key.txt`, takes effect with
+`docker compose up -d --force-recreate traefik`.
 
 What the rendered result looks like, and what each half does:
 
@@ -598,10 +651,11 @@ To carry the installation over:
 grep -nE 'version:' config/traefik.yml                     # the plugin version
 grep -nE 'crowdsecLapiKey' config/dynamic/*.yml            # the key in use
 
-# 2. Put both into .env, alongside the switch
+# 2. Put the version into .env, alongside the switch and the overlay, and the
+#    key into the key file ("How to enable", steps 2 and 3)
 #   CROWDSEC_BOUNCER_ENABLED=true
 #   CROWDSEC_BOUNCER_PLUGIN_VERSION=<the version from step 1>
-#   CROWDSEC_BOUNCER_KEY=<the key from step 1>
+#   COMPOSE_FILE=<as before>:crowdsec-bouncer.yml
 
 # 3. Render into a copy first and diff — the middlewares move from
 #    integrations.yml into crowdsec.yml; the plugin block stays where it was
@@ -680,6 +734,7 @@ docker exec crowdsec cscli decisions delete --ip <your-address>
 | WAF blocking valid requests | Set `CROWDSEC_APPSEC_ENABLED=false` in `.env`, run `render.sh` and recreate Traefik (`--force-recreate`). Check CrowdSec logs for false positives |
 | Bouncer not connecting | `docker exec crowdsec cscli bouncers list` — check last heartbeat. Verify both containers are on the `crowdsec-security` network |
 | High latency | Verify `crowdsecMode: stream` (not `live`). Stream mode has no per-request overhead |
+| `421 Misdirected Request` for one host while another works | Both hosts share a certificate (the wildcard) and an address, so the browser reuses the HTTP/2 connection of one for the other. When their routers take different TLS options, one stack naming `tls-strict` or `tls-compatible` and the other `default`, Traefik refuses the reused connection with 421; the access log shows it per request. Traefik compares the options by name: a router naming `tls-strict` differs from `default` even when `TLS_DEFAULT_OPTION=tls-strict` builds `default` from the same profile. Closing the other tabs of the domain gives a new connection. The lasting fix is one option for both: drop a stack's `tls.options` label where its reason does not hold ([TLS options](../../docs/standards/traefik-security.md#tls-profiles-tls-profilesyml)), and keep `TRAEFIK_DASHBOARD_TLS_OPTION=default`; `validate.sh` warns when the dashboard names another option under the wildcard |
 
 ## Authentik forward-auth (optional)
 
@@ -1049,7 +1104,7 @@ not restart.
 | | |
 |---|---|
 | **Database** | None. |
-| **State** | `./volumes/letsencrypt` — `acme.json`, holding the ACME account key and every issued certificate |
+| **State** | `./volumes/letsencrypt` — `acme.json`, holding the ACME account key and every issued certificate · `./.secrets/crowdsec_bouncer_key.txt` with the bouncer on — a lost key is issued again on the engine |
 | **Reproducible** | `./config` — rendered by `ops/scripts/render.sh` from the tracked templates in `ops/templates/` and `.env` · `./volumes/logs` · `./volumes/plugins-storage` — plugins are re-downloaded on start |
 | **Quiescing** | Not needed. `acme.json` is rewritten atomically on issuance and renewal. |
 
@@ -1057,9 +1112,10 @@ No database hook. This stack is `source_directories` only. The static and
 dynamic configuration under `config/` is neither backed up nor in git — it is
 generated output (`.gitignore`), rendered again from the templates and `.env`.
 `.env` is what the render needs and is not in git either: it holds
-`CF_DNS_API_TOKEN` and, with the bouncer switched on, `CROWDSEC_BOUNCER_KEY`,
-so it has to be in place before a restore
-([`docs/standards/restore.md`](../../docs/standards/restore.md), step 3).
+`CF_DNS_API_TOKEN`, so it has to be in place before a restore
+([`docs/standards/restore.md`](../../docs/standards/restore.md), step 3). So does
+`.secrets/crowdsec_bouncer_key.txt` with the bouncer switched on, owner and mode
+included: `render.sh` refuses a key file Traefik cannot read.
 
 **`acme.json` contains private keys.** It is the one file in this repository that
 combines "small enough to overlook" with "grants the ability to impersonate every
@@ -1081,11 +1137,11 @@ proxy is up.
 
 <!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
 
-**Findings in the upstream images** at the pin `v3.7.17` — the newest upstream release. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+**Findings in the upstream images** at the pin `v3.7.20` — upstream has released `v3.8.0` since. Scanned 2026-11-26; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `tecnativa/docker-socket-proxy:v0.5.0` | 0 · 7 | — | — |
-| `traefik:v3.7.17` | — | — | — |
+| `traefik:v3.7.20` | — | — | — |
 
 <!-- findings:end -->

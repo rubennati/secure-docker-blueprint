@@ -15,10 +15,10 @@
 
 ## What we use
 
-- `ghcr.io/berriai/litellm-non_root:v1.108.3` — upstream's non-root variant with
+- `ghcr.io/berriai/litellm-non_root:v1.108.15` — upstream's non-root variant with
   a versioned release tag. Upstream's own quick-start pins the floating
   `main-stable`; not used here.
-- `postgres:18.6` — LiteLLM's virtual keys, budgets and spend log need a
+- `postgres:18.7` — LiteLLM's virtual keys, budgets and spend log need a
   database; upstream's Prisma schema targets PostgreSQL.
 - One proxy container plus the database. No Redis (only for multi-instance
   rate-limit sharing), no Prometheus sidecar.
@@ -95,6 +95,33 @@ throwaway Ollama container serving `smollm2:135m`:
 
 ## Version notes
 
+- Moved to `v1.108.15` on 2026-11-23 (released 2026-11-21), the newest patch
+  of the 1.108 LTS line (the `lts` tag points to the same digest). Pinned by
+  the digest of the multi-arch index (linux/amd64, linux/arm64),
+  `sha256:58f6d7c22857e2a755a3d3aee8d55d1662524a2a29b8035d58eafbbf45d88274`.
+  Releases are now signed keyless; the signature of that digest verified on
+  2026-11-23 with `cosign verify --certificate-identity
+  https://github.com/BerriAI/project-releaser/.github/workflows/release.yml@refs/heads/main
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com`.
+  Fixes high GHSA-2rwg-2wh4-7c4f (v1.108.6: an authenticated caller could
+  send Azure Entra credential fields in a request body and read the proxy's
+  environment, master key included; reaches only proxies with an `azure/`
+  or `azure_ai/` model and no `AZURE_API_KEY`) and medium
+  GHSA-4xm2-x5g5-wc8q (v1.108.13: a virtual key without a user could read
+  the records of other userless keys through `/key/info`). Behaviour changes
+  for clients and admins: model and pass-through routes refuse
+  `client_id`, `client_secret`, `tenant_id` and the Azure login fields in the
+  body; such request tags move into `metadata` (v1.108.6). Responses-only
+  fields such as `max_tool_calls` answer `400` on providers bridged through
+  chat completions unless `drop_params` is on (v1.108.7). Only proxy admins
+  can set `os.environ/` values in team model writes; team admins get `403`
+  (v1.108.11). Keyless JSON-configured deployments answer `401` until
+  `api_key` or the provider's key variable is set (v1.108.15); the example
+  model in `config/config.yaml` sets `api_key`. The images move to a newer
+  Wolfi base (v1.108.9). No database migration is pending from v1.108.3; uid,
+  entrypoint, port 4000 and the health routes are unchanged —
+  https://github.com/BerriAI/litellm/releases/tag/v1.108.15,
+  https://github.com/BerriAI/litellm/security/advisories.
 - Moved to `v1.108.3` on 2026-11-08, the digest re-
   resolved. 1.108.1 to 1.108.3 are fixes; upstream: "No action needed to
   upgrade".

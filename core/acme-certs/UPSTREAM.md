@@ -31,6 +31,25 @@
 - **SAN default leak**: Old wizard used .env SAN default when input was empty, causing wrong wildcard domain. Fixed in wizard rewrite.
 - **CF_Token not in exec**: `docker compose exec` bypasses entrypoint. Fixed: `issue.sh` loads secret directly.
 
+## Version notes
+
+- Moved `ghcr.io/rubennati/cert-ops-tool` from `0.2.1` to `0.3.0` on 2026-11-23
+  (released 2026-11-11), a security release. Images up to `0.2.1` are built on
+  `neilpang/acme.sh:3.1.2` (Alpine 3.22) and carry known vulnerabilities in OpenSSL,
+  curl, OpenSSH, BIND tools and socat; `0.3.0` is built on `neilpang/acme.sh:3.1.6`
+  (Alpine 3.23), pinned by digest, with Alpine security updates applied at build time.
+  The scripts run under `umask 077`, so private keys and PFX files are owner-only from
+  creation; `issue.sh`, `renew.sh`, `convert-to-pfx.sh` and the wizard reject domain
+  values that are not host names, since the value becomes a path under `/output`.
+  `convert-to-pfx.sh` takes the password from a prompt or `PFX_PASSWORD`; the second
+  argument still works, prints a deprecation warning and leaves the password in the
+  process list. acme.sh 3.1.6 renews by ACME Renewal Information (ARI) by default, the
+  cron job runs every six hours; `NO_ARI=1` disables it. Upstream acme.sh removed the
+  `dns_hetzner` and `dns_linode` (v3) hooks in favour of `dns_hetznercloud` and
+  `dns_linode_v4`; this stack uses Cloudflare DNS-01 only, so neither applies. No
+  compose change. Sources: https://github.com/rubennati/cert-ops-tool/releases/tag/v0.3.0,
+  https://github.com/acmesh-official/acme.sh/releases
+
 ## Upgrade checklist
 
 1. Check [acme.sh releases](https://github.com/acmesh-official/acme.sh/releases)

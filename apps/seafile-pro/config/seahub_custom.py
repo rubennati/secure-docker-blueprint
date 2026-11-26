@@ -5,7 +5,7 @@
 # by entrypoint.sh on container start.
 #
 # Secrets are injected via environment variables
-# (exported by entrypoint.sh from Docker Secrets).
+# (exported by secrets-env.sh from Docker Secrets).
 
 import os
 
@@ -18,7 +18,7 @@ ENABLE_VIDEO_THUMBNAIL = True
 
 # --- SMTP / Email ---
 # Active only when SEAFILE_SMTP_HOST is set. Leave empty to disable.
-# Password comes directly from .env (not Docker Secrets — my_init limitation).
+# Password from the Docker Secret smtp_pwd.txt, exported by secrets-env.sh.
 _smtp_host = os.environ.get('SEAFILE_SMTP_HOST', '')
 if _smtp_host:
     _use_tls = os.environ.get('SEAFILE_SMTP_USE_TLS', 'true').lower() == 'true'
@@ -32,7 +32,7 @@ if _smtp_host:
     SERVER_EMAIL = DEFAULT_FROM_EMAIL
 
 # --- OnlyOffice Integration ---
-# On only when ONLYOFFICE_JWT_SECRET is set in .env and ONLYOFFICE_HOST names a host;
+# On only when .secrets/onlyoffice_jwt_secret.txt holds the secret and ONLYOFFICE_HOST names a host;
 # an empty value or the placeholder keeps it off. Always on, Seahub opened
 # every office file in an editor page that loads api.js from ONLYOFFICE_HOST even
 # where no Document Server answers there.

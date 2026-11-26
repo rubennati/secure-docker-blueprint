@@ -22,7 +22,7 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 
 ## What we use
 
-- `frappe/erpnext:v16.54.0` — one image for every role, published for amd64 and
+- `frappe/erpnext:v16.60.0` — one image for every role, published for amd64 and
   arm64. Upstream's compose pins `platform: linux/amd64`; this stack does not.
 - `mariadb:11.8.9` (upstream's compose pin) and `redis:8.10.3-alpine` (upstream pins `8.6-alpine`).
 - frappe_docker's `compose.yaml` with `overrides/compose.mariadb.yaml` and
@@ -45,6 +45,41 @@ AGPL-3.0. The Frappe framework underneath is MIT.
 | No backup-cron override | Upstream's runs Ofelia with the Docker socket |
 | `APP_TRAEFIK_ACCESS=access-vpn` | A company's books in one place |
 | `config/nginx-socketio.conf`: a second listener on 8081 for `/socket.io`, with `Origin http://$host:8080`, and the site name as a network alias of the frontend on `app-internal` | The realtime service authenticates a socket by fetching `<Origin>/api/method/frappe.realtime.get_user_info`. The image's nginx puts the public URL in `Origin`, which a container on `app-internal` cannot reach — every socket was refused with `Unauthorized: TypeError: fetch failed`. Upstream's own compose leaves that container on a network with a way out; this keeps the isolation and gives it an address that exists |
+
+## PDF printing under load (2026-11-15)
+
+Against `docker-compose.local.yml` at `v16.54.0` (Frappe 16.55.2), with the
+production limits applied to the backend and the queue workers. PDFs of a ToDo in
+the Standard format were requested through `download_pdf`, 1, 2, 4, 8 and 12 at
+once. Processes and threads were sampled from the backend's cgroup:
+
+- Chromium is the default generator (`pdf_generator` in Print Settings).
+  wkhtmltopdf failed in this setup: it fetches the stylesheets through the site's
+  `host_name`, which the local file sets to `http://localhost:8080`, unreachable
+  from the container.
+- `download_pdf` carries Frappe's concurrency limit: half of Gunicorn's
+  workers × threads, four here. Further requests wait 10 seconds for a slot, then
+  answer `503 Server is busy`.
+- A PDF takes about 65 processes and threads beyond Gunicorn's 16. PDFs that start
+  while no Chromium runs start one each: 75, 135, 253 and 262 at 1, 2, 4 and 8 on a
+  new site. Once warm, the same load stayed between 75 and 173.
+- At `pids: 200`, four PDFs at once on a new site reached the limit: 38 forks
+  refused, the four requests ended in `504` after 120 seconds, and 120 to 194
+  processes and threads of Chromium stayed behind. The renders kept their slots,
+  so every later PDF, one at a time and minutes later, answered `503`; other
+  requests were answered normally. Only a restart of the backend recovered it.
+- At `pids: 512` the limit was not reached (`pids.events` max 0; peak 268), and
+  memory peaked at 671 MiB of 2 GiB.
+- Frappe's start-up wait reads Chromium's stderr line by line, so its
+  `chromium_start_timeout` does not apply while no line arrives. On a new site, 2 of 8
+  PDFs at once hung until Gunicorn's 120-second timeout at `pids: 512`, and 3 of
+  12 without any limit; each left a Chromium behind. Printing then recovered by itself: the next 37
+  PDFs answered `200`.
+- In a queue worker, one PDF took 66 processes and threads at most, against a
+  limit of 100. The workers run one job at a time.
+
+**Outside this verification:** the production compose behind Traefik; print
+formats other than Standard; bulk PDF export; PDFs sent with email.
 
 ## The realtime service's session check (2026-09-23)
 
@@ -150,11 +185,42 @@ throwaway `proxy-public` network without Traefik. `volumes/sites`, `volumes/logs
   its automatic restart
 
 **Outside this verification:** Traefik routing and TLS; the desk in a browser; accounting
-documents, stock and reports; email; PDF printing; an image upgrade with
+documents, stock and reports; email; PDF printing (measured on 2026-11-15, above); an image upgrade with
 `bench migrate`; backup and restore; more than one site.
 
 ## Version notes
 
+- Moved to `v16.60.0` (ERPNext released 2026-11-17; image pushed 2026-11-19, index
+  digest `sha256:3847babae025dae001e638b7fc5503c944fd968216b3074e60edfcc240fb2db6`)
+  on 2026-11-23. The image carries Frappe 16.60.2 and frappe_docker's nginx template
+  from commit d34f0f92 (2026-11-19), so it fixes both:
+  GHSA-94mh-qq29-qwrf (high, frappe_docker, fixed in v4.3.0: the template's
+  `/files/` rule that adds `Content-Disposition: attachment` to SVG, HTML and XML was
+  case-sensitive, so a public upload named `poc.SVG` was served inline and ran script
+  in the site origin; any logged-in user who can attach a file could plant it) and
+  GHSA-vwqr-4mjv-ffrm (high, Frappe, fixed in 16.60.1: email endpoints let any
+  authenticated user, a Website User included, send mail through the site's email
+  account under another sender; upstream reports it exploited). Both reach this
+  stack, which serves through the image's own nginx template. Measured on the local
+  file: on `v16.54.0` a public `poc.SVG` answered `Content-Type: image/svg+xml` with
+  no `Content-Disposition`; on `v16.60.0` the same file answers
+  `Content-disposition: attachment`. The tag was pushed again at 2026-11-19 22:01
+  UTC from the frappe_docker build that contains the fix; `docker compose pull`
+  fetches that image. v16.55 to v16.60 list no breaking change in configuration;
+  v16.60 adds Insights dashboards (upgraded sites keep the classic ones until the
+  setting changes) and Frappe 16.60 adds Flow, an AI assistant whose daemon keeps
+  its runtime files in `/home/frappe/frappe-bench/flow-server`. On this read-only
+  image filesystem the daemon does not start: `bench migrate` prints `flow server
+  not running: [Errno 30] Read-only file system` and exits `0`. Flow stays
+  unavailable in this stack; nothing else depends on it. `bench --site … migrate`
+  applies the schema changes (checklist step 5). Upgrade tested on the local file:
+  a site created on `v16.54.0` with a ToDo, then `v16.60.0` and `migrate`: exit 0,
+  login `200`, the ToDo read back, socket.io polling `200`. Sources:
+  https://github.com/frappe/frappe_docker/security/advisories/GHSA-94mh-qq29-qwrf,
+  https://github.com/frappe/frappe/security/advisories/GHSA-vwqr-4mjv-ffrm,
+  https://github.com/frappe/frappe_docker/commit/d34f0f92a1,
+  https://github.com/frappe/erpnext/releases/tag/v16.60.0,
+  https://github.com/frappe/frappe/releases/tag/v16.60.0
 - Moved to `v16.54.0` on 2026-11-08. Fixes, among
   them a migration error with Asset Depreciation Schedules on older sites; no
   configuration change. The nginx configuration forwards `Upgrade` on the

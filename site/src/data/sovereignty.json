@@ -787,8 +787,8 @@
     "bloc": "none",
     "country": "Individual maintainer",
     "entity": "Mohamed Zrouga",
-    "license": "Apache-2.0 (with Commons Clause)",
-    "license_class": "source-available",
+    "license": "AGPL-3.0",
+    "license_class": "osi",
     "origin": "Individual maintainer · Mohamed Zrouga · no single jurisdiction"
   },
   "core/portainer": {

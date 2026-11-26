@@ -118,6 +118,40 @@
 
 Paperless does schema migrations on every minor bump. The classifier model may also need rebuilding.
 
+### From 2.x to 3.x
+
+3.x upgrades only from 2.20.15
+(https://github.com/paperless-ngx/paperless-ngx/blob/v3.4.2/docs/migration-v3.md). An installation
+on an older 2.x moves to `2.20.15` first, starts once so its migrations run, and then moves to 3.x.
+What the move asks of this stack:
+
+- **Database engine:** `PAPERLESS_DBENGINE: postgresql` is set in both compose files. 3.x documents
+  it as required for PostgreSQL; 3.4.2 still infers it from `PAPERLESS_DBHOST`.
+- **Secret key:** 3.x refuses to start without `PAPERLESS_SECRET_KEY`. This stack reads it from
+  `.secrets/secret_key.txt`; keep the value, or sessions and signed tokens end.
+- **Archive files:** `PAPERLESS_ARCHIVE_FILE_GENERATION` defaults to `auto`, so a born-digital PDF
+  that already has text gets no PDF/A copy. 2.x made one for every document; set `always` to keep
+  that. `PAPERLESS_OCR_MODE=skip` is now `auto`.
+- **Removed settings:** `PAPERLESS_OCR_SKIP_ARCHIVE_FILE`, `PAPERLESS_CONSUMER_BARCODE_SCANNER`,
+  `PAPERLESS_CONSUMER_POLLING_DELAY` and `PAPERLESS_CONSUMER_POLLING_RETRY_COUNT` are gone;
+  `PAPERLESS_CONSUMER_POLLING` is `PAPERLESS_CONSUMER_POLLING_INTERVAL`, and
+  `PAPERLESS_CONSUMER_IGNORE_PATTERNS` takes regular expressions. The SSL, timeout and pool
+  variables move into `PAPERLESS_DB_OPTIONS`. Remove them from `.env` and the compose override.
+- **Duplicates** are consumed and marked in the UI; `PAPERLESS_CONSUMER_DELETE_DUPLICATES=true`
+  refuses them as 2.x did.
+- **Encrypted documents** must be decrypted with `decrypt_documents` on 2.x; 3.x cannot read them.
+- **Consume scripts** receive no positional arguments; they read `DOCUMENT_ID`,
+  `DOCUMENT_SOURCE_PATH` and the other environment variables.
+- **Search** moves to Tantivy; the index is rebuilt on the first start. Saved views that searched
+  notes or custom fields without a prefix need `notes.note:` or `custom_fields.value:`.
+- **OIDC** (`sso.yml`): a callback that fails with `invalid_client` needs `"token_auth_method"` in
+  the provider's `settings`.
+- **Task history** is dropped by the migration.
+- **CPU:** the classifier needs `x86-64-v2` (SSE4.2); on an older CPU set
+  `PAPERLESS_TRAIN_TASK_CRON=disable`.
+
+### Every update
+
 1. Release notes: https://github.com/paperless-ngx/paperless-ngx/releases (look for "Breaking changes")
 2. Back up:
 

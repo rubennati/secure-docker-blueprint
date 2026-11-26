@@ -76,6 +76,7 @@ set -a
 source "${ROOT_DIR}/.env"
 set +a
 . "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
+. "${ROOT_DIR}/ops/scripts/bouncer-key.sh"
 
 REQUIRED=(
   TZ
@@ -475,6 +476,17 @@ case "${TLS_DEFAULT_OPTION:-}" in
     exit 1 ;;
   *) echo "ERROR: TLS_DEFAULT_OPTION must be tls-compatible, tls-standard or tls-strict (got '${TLS_DEFAULT_OPTION:-}')."; exit 1 ;;
 esac
+# The dashboard's option: `default`, the one every stack takes, or a profile by
+# name. Any other name is an option the file provider does not define, and
+# Traefik disables the dashboard router for it.
+case "${TRAEFIK_DASHBOARD_TLS_OPTION:-}" in
+  default|tls-compatible|tls-standard|tls-strict) ;;
+  tls-basic|tls-aplus|tls-modern)
+    echo "ERROR: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} is a name from before the middleware model."
+    echo "       Set TRAEFIK_DASHBOARD_TLS_OPTION=default, the option every stack takes."
+    exit 1 ;;
+  *) echo "ERROR: TRAEFIK_DASHBOARD_TLS_OPTION must be default, tls-compatible, tls-standard or tls-strict (got '${TRAEFIK_DASHBOARD_TLS_OPTION:-}')."; exit 1 ;;
+esac
 TRAEFIK_FORWARDED_PROXY="$(printf '%s' "${TRAEFIK_FORWARDED_PROXY:-none}" | tr '[:upper:]' '[:lower:]')"
 case "${TRAEFIK_FORWARDED_PROXY}" in
   none|cloudflare) ;;
@@ -499,11 +511,8 @@ if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" !=
   exit 1
 fi
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
-  if [ -z "${CROWDSEC_BOUNCER_KEY:-}" ]; then
-    echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true but CROWDSEC_BOUNCER_KEY is empty."
-    echo "       Generate one on the engine: docker exec crowdsec cscli bouncers add traefik-bouncer"
-    exit 1
-  fi
+  # The key file, as root without capabilities reads it (ops/scripts/bouncer-key.sh).
+  bouncer_key_check "${ROOT_DIR}" || exit 1
   version="${CROWDSEC_BOUNCER_PLUGIN_VERSION:-v1.7.1}"
   if ! printf '%s' "${version}" | grep -qE '^v[0-9]+\.[0-9]+\.[0-9]+$'; then
     echo "ERROR: CROWDSEC_BOUNCER_PLUGIN_VERSION must be a release tag like v1.7.1 (got '${version}')."
@@ -551,16 +560,32 @@ dashboard_covered_by_wildcard() {
   [ "${label#*.}" = "$label" ]               # exactly one label below the wildcard
 }
 
-if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${ACME_WILDCARD_DOMAIN:-}"; then
+# ACME_WILDCARD_DOMAIN is a list; the first domain that covers the host counts.
+dashboard_zone=""
+for zone in ${ACME_WILDCARD_DOMAIN:-}; do
+  if dashboard_covered_by_wildcard "${TRAEFIK_DASHBOARD_HOST}" "${zone}"; then dashboard_zone="${zone}"; break; fi
+done
+
+if [ -n "${dashboard_zone}" ]; then
   if [ -n "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
-    echo "WARNING: *.${ACME_WILDCARD_DOMAIN} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
+    echo "WARNING: *.${dashboard_zone} already covers ${TRAEFIK_DASHBOARD_HOST}, and TRAEFIK_DASHBOARD_CERT_RESOLVER is set."
     echo "         Traefik will request a second certificate for that hostname, publishing it in Certificate Transparency logs."
     echo "         Leave the variable empty to serve the wildcard instead."
+  fi
+  # Under the wildcard a browser reuses the connection of any other host of the
+  # domain for the dashboard. Traefik's SNI check compares TLS option names, not
+  # their content: a dashboard naming tls-strict answers that browser 421, even
+  # when TLS_DEFAULT_OPTION builds `default` from tls-strict as well.
+  if [ "${TRAEFIK_DASHBOARD_TLS_OPTION}" != default ]; then
+    echo "WARNING: TRAEFIK_DASHBOARD_TLS_OPTION=${TRAEFIK_DASHBOARD_TLS_OPTION} under *.${dashboard_zone}, where every stack"
+    echo "         without an exception takes \`default\`. A browser that comes from such a host reuses its"
+    echo "         connection, and Traefik answers 421 Misdirected Request on ${TRAEFIK_DASHBOARD_HOST}: it compares"
+    echo "         option names. Set TRAEFIK_DASHBOARD_TLS_OPTION=default and render (no restart needed)."
   fi
 elif [ -z "${TRAEFIK_DASHBOARD_CERT_RESOLVER:-}" ]; then
   echo "SELECT A CERTIFICATE STRATEGY — neither is configured for ${TRAEFIK_DASHBOARD_HOST}."
   echo
-  echo "  Wildcard    set ACME_WILDCARD_DOMAIN to the parent domain of that host,"
+  echo "  Wildcard    add the parent domain of that host to ACME_WILDCARD_DOMAIN,"
   echo "              and leave TRAEFIK_DASHBOARD_CERT_RESOLVER empty."
   echo "  Per-domain  set TRAEFIK_DASHBOARD_CERT_RESOLVER to a resolver name:"
   echo "              ${ACME_RESOLVER_DNS}  DNS-01, no public port needed"
@@ -661,10 +686,163 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
   if [ -n "${ACME_WILDCARD_DOMAIN:-}" ]; then
     test -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" \
       || { echo "Missing config/dynamic/acme-wildcard.yml although ACME_WILDCARD_DOMAIN is set (run render.sh)"; exit 1; }
+    # One router per listed domain, and none for a domain the list dropped: a
+    # domain added after the last render is not requested, and one removed is
+    # still requested, until render.sh runs.
+    rendered_zones="$(sed -n 's/^[[:space:]]*- main: "\(.*\)"$/\1/p' "${ROOT_DIR}/config/dynamic/acme-wildcard.yml")"
+    for zone in ${ACME_WILDCARD_DOMAIN}; do
+      printf '%s\n' "${rendered_zones}" | grep -qxF "${zone}" \
+        || { echo "ERROR: ACME_WILDCARD_DOMAIN names ${zone}, but config/dynamic/acme-wildcard.yml requests no wildcard for it — run render.sh."; exit 1; }
+    done
+    for zone in ${rendered_zones}; do
+      case " ${ACME_WILDCARD_DOMAIN} " in *" ${zone} "*) ;; *)
+        echo "ERROR: config/dynamic/acme-wildcard.yml requests *.${zone}, which ACME_WILDCARD_DOMAIN does not name — run render.sh."; exit 1 ;;
+      esac
+    done
   elif [ -f "${ROOT_DIR}/config/dynamic/acme-wildcard.yml" ]; then
     echo "WARNING: config/dynamic/acme-wildcard.yml exists but ACME_WILDCARD_DOMAIN is empty —"
     echo "         a wildcard router from an earlier render is still in place. Remove the file"
     echo "         (bash ops/scripts/reset-templates.sh, then render.sh) if the wildcard is no longer wanted."
+  fi
+
+  # The certificates Traefik stores against the wildcards the list asks for:
+  # one for a dropped domain is still served and renewed, one for a single
+  # hostname under a listed wildcard republishes that name at every renewal.
+  # acme.json belongs to Traefik's user with mode 600; another user is told so.
+  acme_file="${ROOT_DIR}/volumes/letsencrypt/$(basename "${ACME_STORAGE:-acme.json}")"
+  if [ -e "${acme_file}" ]; then
+    if [ ! -r "${acme_file}" ]; then
+      echo "NOT VERIFIED: ${acme_file#"${ROOT_DIR}/"} is not readable for this user — run validate.sh as root"
+      echo "              to compare the stored certificates with ACME_WILDCARD_DOMAIN."
+    elif command -v python3 >/dev/null 2>&1; then
+      # shellcheck disable=SC2086  # the list is meant to split into arguments
+      python3 "${ROOT_DIR}/ops/scripts/check-acme-certs.py" "${acme_file}" ${ACME_WILDCARD_DOMAIN:-} || true
+    else
+      echo "NOT VERIFIED: python3 missing — the stored certificates were not compared with ACME_WILDCARD_DOMAIN."
+    fi
+  fi
+
+  # The files Traefik reads and writes, as root without CAP_DAC_OVERRIDE sees
+  # them (ops/scripts/file-access.sh). Each failure leaves Traefik running and
+  # its log names it once, at the start: an unreadable file in config/dynamic
+  # makes the file provider load nothing, so every router naming an @file
+  # middleware is disabled and answers 404; an acme.json Traefik cannot write
+  # keeps the certificates in memory, and every start requests them again until
+  # Let's Encrypt's rate limit refuses; an unwritable log directory leaves the
+  # access log CrowdSec parses empty. Docker creates a missing bind-mount
+  # directory as root, so only a directory made or changed by hand fails here.
+  # Under userns-remap or rootless Docker, the container's root is another
+  # account on the host, and owner and group cannot be judged from here.
+  access_errors=0
+  access_error() {  # message, then one fix line per further argument
+    echo "ERROR: $1"
+    shift
+    printf '       %s\n' "$@"
+    access_errors=$((access_errors + 1))
+  }
+  remapped=""
+  if command -v docker >/dev/null 2>&1 \
+     && docker info --format '{{json .SecurityOptions}}' 2>/dev/null | grep -qE 'name=(userns|rootless)'; then
+    remapped=1
+    echo "NOT VERIFIED: Docker runs with userns-remap or rootless — whether Traefik can use config/ and volumes/"
+    echo "              depends on the remapped account and was not checked here."
+  fi
+  if [ -z "${remapped}" ]; then
+    if ! traefik_can "${ROOT_DIR}/config/traefik.yml" r; then
+      access_error "Traefik cannot read config/traefik.yml ($(traefik_meta)) and does not start." \
+        "chmod 644 config/traefik.yml"
+    fi
+    if ! traefik_can "${ROOT_DIR}/config/dynamic" rx; then
+      access_error "Traefik cannot list config/dynamic ($(traefik_meta)): the file provider loads nothing," \
+        "and every router naming an @file middleware answers 404." "chmod 755 config/dynamic"
+    else
+      for f in "${ROOT_DIR}"/config/dynamic/*.yml "${ROOT_DIR}"/config/dynamic/*.yaml "${ROOT_DIR}"/config/dynamic/*.toml; do
+        [ -e "${f}" ] || continue
+        if ! traefik_can "${f}" r; then
+          access_error "Traefik cannot read ${f#"${ROOT_DIR}/"} ($(traefik_meta)): one unreadable file makes the" \
+            "file provider load none of config/dynamic, and every router naming an @file middleware" \
+            "answers 404. Nothing secret belongs in config/dynamic, so every account may read it:" \
+            "chmod 644 ${f#"${ROOT_DIR}/"}"
+        fi
+      done
+    fi
+
+    le_dir="${ROOT_DIR}/volumes/letsencrypt"
+    if [ -d "${le_dir}" ]; then
+      if ! traefik_can "${le_dir}" wx; then
+        access_error "Traefik cannot write volumes/letsencrypt ($(traefik_meta)): no acme.json is created, the" \
+          "certificates live in memory, and every start requests them again until Let's Encrypt's" \
+          "rate limit refuses. The directory belongs to Traefik's user:" \
+          "sudo chown 0:0 volumes/letsencrypt && sudo chmod 700 volumes/letsencrypt"
+      fi
+      if [ -e "${acme_file}" ] || [ ! -x "${le_dir}" ]; then
+        rc=0; traefik_can "${acme_file}" rw || rc=$?
+        acme_rel="${acme_file#"${ROOT_DIR}/"}"
+        acme_fix="sudo chown 0:0 ${acme_rel} && sudo chmod 600 ${acme_rel}"
+        if [ "${rc}" -eq 2 ]; then
+          echo "NOT VERIFIED: ${acme_rel} cannot be inspected by this user — run validate.sh as root to check"
+          echo "              that Traefik can use it."
+        elif [ "${rc}" -ne 0 ]; then
+          access_error "Traefik cannot read and write ${acme_rel} ($(traefik_meta)): the certificates live in" \
+            "memory, and every start requests them again until Let's Encrypt's rate limit refuses." \
+            "${acme_fix}"
+        elif [ "${T_MODE:1:2}" != 00 ]; then
+          access_error "${acme_rel} has mode ${T_MODE}: Traefik refuses a certificate store that group or" \
+            "others may read ('permissions … are too open, please use 600'), and its resolvers issue nothing." \
+            "${acme_fix}"
+        fi
+      fi
+    fi
+
+    log_dir="${ROOT_DIR}/volumes/logs"
+    if [ -d "${log_dir}" ]; then
+      if ! traefik_can "${log_dir}" wx; then
+        access_error "Traefik cannot write volumes/logs ($(traefik_meta)): it writes no log file, and the" \
+          "access log CrowdSec parses stays empty. The directory belongs to Traefik's user:" \
+          "sudo chown 0:0 volumes/logs"
+      fi
+      for f in "${TRAEFIK_LOG_FILE}" "${TRAEFIK_ACCESSLOG_FILE}"; do
+        case "${f}" in /var/log/traefik/*) ;; *) continue ;; esac
+        f="${log_dir}/${f#/var/log/traefik/}"
+        if [ -e "${f}" ] && ! traefik_can "${f}" w; then
+          access_error "Traefik cannot write ${f#"${ROOT_DIR}/"} ($(traefik_meta)) — the log stays as it is." \
+            "sudo chown 0:0 ${f#"${ROOT_DIR}/"}"
+        fi
+      done
+    fi
+
+    plugin_dir="${ROOT_DIR}/volumes/plugins-storage"
+    if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ] && [ -d "${plugin_dir}" ] && ! traefik_can "${plugin_dir}" wx; then
+      access_error "Traefik cannot write volumes/plugins-storage ($(traefik_meta)): the bouncer plugin is not" \
+        "stored and does not load, and every router on websecure is disabled." \
+        "sudo chown -R 0:0 volumes/plugins-storage"
+    fi
+  fi
+
+  # .env carries the DNS provider's token, .secrets/ the bouncer key: neither is
+  # for every account on the host. Compose reads both as the operator, the key
+  # reaches Traefik as a Docker secret, so 600 and 700 cost nothing. The bouncer
+  # key with the switch on is judged above, by bouncer_key_check.
+  if traefik_stat "${ROOT_DIR}/.env" && [ $(( ${T_MODE:2:1} & 4 )) -ne 0 ]; then
+    echo "WARNING: .env is readable by every account on this host (mode ${T_MODE}) — chmod 600 .env"
+  fi
+  if [ -d "${ROOT_DIR}/.secrets" ]; then
+    if traefik_stat "${ROOT_DIR}/.secrets" && [ "${T_MODE:2:1}" != 0 ]; then
+      echo "WARNING: .secrets is open to every account on this host (mode ${T_MODE}) — chmod 700 .secrets"
+    fi
+    for f in "${ROOT_DIR}"/.secrets/*; do
+      [ -f "${f}" ] || continue
+      [ "${CROWDSEC_BOUNCER_ENABLED}" = true ] && [ "${f}" = "${ROOT_DIR}/${BOUNCER_KEY_FILE}" ] && continue
+      if traefik_stat "${f}" && [ $(( ${T_MODE:2:1} & 4 )) -ne 0 ]; then
+        echo "WARNING: ${f#"${ROOT_DIR}/"} is readable by every account on this host (mode ${T_MODE}) — chmod 600 ${f#"${ROOT_DIR}/"}"
+      fi
+    done
+  fi
+
+  if [ "${access_errors}" -gt 0 ]; then
+    echo ""
+    echo "Refusing to continue: Traefik cannot use ${access_errors} file(s) or directory(ies) above."
+    exit 1
   fi
 
   # The rendered state has to match the switch. Both directions are errors: the
@@ -683,7 +861,7 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       if [ -z "${switch_declared}" ]; then
         echo "ERROR: config/ carries the CrowdSec integration but CROWDSEC_BOUNCER_ENABLED is not set in .env."
         echo "       Set it to true to keep the integration (plus CROWDSEC_BOUNCER_PLUGIN_VERSION and"
-        echo "       CROWDSEC_BOUNCER_KEY), or to false to remove it, then run render.sh."
+        echo "       the key in ${BOUNCER_KEY_FILE}), or to false to remove it, then run render.sh."
       else
         echo "ERROR: CROWDSEC_BOUNCER_ENABLED=false but config/ still carries the integration — run render.sh."
       fi
@@ -777,10 +955,11 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
     exit 1
   fi
 
-  # CrowdSec bouncer key. envsubst turns an unset CROWDSEC_BOUNCER_KEY into an
-  # empty string, so a bouncer that cannot authenticate renders without a word of
-  # complaint. The key is required only where a CrowdSec middleware was actually
-  # rendered — the default-off blueprint must validate without one.
+  # CrowdSec bouncer key. Every rendered CrowdSec middleware names the key file
+  # and carries no key itself: a key in config/dynamic is readable by every
+  # account on the host, which is what a configuration rendered before the key
+  # moved to .secrets/ still holds. Checked only where a CrowdSec middleware was
+  # actually rendered — the default-off blueprint validates without a key.
   #
   # The grep is a pre-filter, not the decision: it keeps a default-off install
   # free of any Python dependency. When it matches, the rendered YAML is parsed
@@ -793,7 +972,8 @@ if [ -f "${ROOT_DIR}/config/traefik.yml" ]; then
       echo "ERROR: a CrowdSec middleware is enabled in the rendered config, but the"
       echo "       bouncer key check could not run. It needs python3 with PyYAML and"
       echo "       scripts/ci/check-crowdsec-config.py. Install them, or confirm by hand"
-      echo "       that crowdsecLapiKey is not empty before starting Traefik."
+      echo "       that config/dynamic/crowdsec.yml names crowdsecLapiKeyFile and carries"
+      echo "       no crowdsecLapiKey before starting Traefik."
       exit 1
     fi
   fi
@@ -976,6 +1156,24 @@ PYEOF_STATIC
         echo "NOT VERIFIED: the start of ${TRAEFIK_CONTAINER_NAME} or the time of ${static_file} could not be read — an edit since the start was not ruled out."
         static_rc=3 ;;
     esac
+  fi
+fi
+# The bouncer key as the running Traefik reads it: inside the container, with
+# its capabilities. Absent means the container started without
+# crowdsec-bouncer.yml; present and unreadable means the plugin did not load and
+# every router on websecure is disabled now.
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ] && command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1 \
+   && [ "$(docker inspect -f '{{.State.Running}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null)" = true ]; then
+  if ! docker exec "${TRAEFIK_CONTAINER_NAME}" test -e "${BOUNCER_KEY_TARGET}" 2>/dev/null; then
+    echo "PENDING: ${TRAEFIK_CONTAINER_NAME} has no ${BOUNCER_KEY_TARGET} — it started without ${BOUNCER_KEY_OVERLAY}."
+    echo "         'docker compose up -d --force-recreate traefik' here mounts it."
+    static_rc=3
+  elif ! docker exec "${TRAEFIK_CONTAINER_NAME}" cat "${BOUNCER_KEY_TARGET}" >/dev/null 2>&1; then
+    echo "ERROR: ${TRAEFIK_CONTAINER_NAME} cannot read ${BOUNCER_KEY_TARGET}: the bouncer plugin did not load,"
+    echo "       and every router on websecure is disabled. Give root the group, then recreate:"
+    bouncer_key_fix
+    echo "         docker compose up -d --force-recreate traefik"
+    exit 1
   fi
 fi
 [ "${static_rc}" -eq 3 ] && [ "${family_rc}" -eq 0 ] && family_rc=3

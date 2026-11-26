@@ -74,6 +74,7 @@ services:
       LEAN_APP_URL: http://localhost:8080
       LEAN_ALLOW_TELEMETRY: "false"
       LEAN_NEWS_ENABLED: "false"
+      LEAN_OAUTH_ENABLED: "false"
       LEAN_LOG_CHANNELS: stderr
       LEAN_DEBUG: "0"
       TZ: ${TZ}

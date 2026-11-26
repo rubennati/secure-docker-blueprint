@@ -165,6 +165,39 @@ sudo chown -R 999:999 volumes/data
 
 **Note:** `chown` without `sudo` fails with `Operation not permitted` if run as a non-root user — always use `sudo` for host directory ownership changes.
 
+### 3.2 Traefik runs, but every router answers 404, the log stays empty, or certificates are requested at every start
+
+**Symptom:** one of these, with the container up:
+
+- Every router that names an `@file` middleware answers `404`.
+- `volumes/logs/` holds no `traefik.log`, or `access.log` stops growing.
+- Each restart requests the certificates again, until Let's Encrypt refuses with a rate-limit error.
+
+**Root cause:** Traefik runs as root with `cap_drop: ALL`. Without `CAP_DAC_OVERRIDE`, root is bound by a file's mode like any other account. It gets the owner bits only for a file of uid 0 and the group bits only for group 0; for any other file it gets the bits for everyone else. A directory created or copied by hand as a normal user (`755`) can be read but not written, and a file of yours with mode `600` cannot be read.
+
+| Path | What Traefik needs | When it is missing |
+|---|---|---|
+| `config/traefik.yml`, `config/dynamic/` and each file in it | read (the directory also needs search) | One unreadable file makes the file provider load none of `config/dynamic`, so routers naming `@file` middlewares answer 404 |
+| `volumes/letsencrypt/` | write | No `acme.json` is created; certificates live in memory only |
+| `volumes/letsencrypt/acme.json` | owned by uid 0, mode `600` | Unreadable: as above. Readable by group or others: Traefik refuses the store ("permissions … are too open, please use 600") |
+| `volumes/logs/` and its log files | write | No log file; the access log CrowdSec parses stays empty |
+| `volumes/plugins-storage/` (CrowdSec bouncer on) | write | The plugin does not load, and every router on `websecure` is disabled |
+
+**Fix:** `bash ops/scripts/validate.sh` in `core/traefik` names each path Traefik cannot use, with its owner, group and mode, and prints the command that fixes it. The usual fixes are:
+
+```bash
+# in core/traefik
+chmod 644 config/dynamic/<file>.yml          # nothing secret belongs in config/dynamic
+sudo chown 0:0 volumes/logs
+sudo chown 0:0 volumes/letsencrypt && sudo chmod 700 volumes/letsencrypt
+sudo chown 0:0 volumes/letsencrypt/acme.json && sudo chmod 600 volumes/letsencrypt/acme.json
+docker compose restart traefik
+```
+
+`validate.sh` also warns when `.env`, `.secrets/` or a file in it is readable by every account on the host. `.env` holds the DNS provider token. `chmod 600 .env` and `chmod 700 .secrets` do not affect Traefik, because the bouncer key reaches it as a Docker secret.
+
+Under userns-remap or rootless Docker, the container's root is another account on the host, and `validate.sh` reports these checks as `NOT VERIFIED`.
+
 ---
 
 ## 4. Networking Issues
@@ -215,6 +248,15 @@ sudo chown -R 999:999 volumes/data
    ```
 
 4. **Router name collision** — two services with same `COMPOSE_PROJECT_NAME` → same router name → one wins, one loses.
+
+5. **Every router answers 404 at once, with the CrowdSec bouncer on** — the plugin did not load, so the entrypoint names a middleware that does not exist. The usual cause is a key file Traefik cannot read: it runs as root without `CAP_DAC_OVERRIDE`, and a `.secrets/crowdsec_bouncer_key.txt` with mode 600 that belongs to your user is closed to it. `bash ops/scripts/validate.sh` in `core/traefik` checks it inside the running container.
+
+   ```bash
+   docker exec traefik-core grep -i "crowdsec" /var/log/traefik/traefik.log | tail -3
+   # "read file path failed open /run/secrets/crowdsec_bouncer_key: permission denied"
+   sudo chown "$USER":0 .secrets/crowdsec_bouncer_key.txt && chmod 640 .secrets/crowdsec_bouncer_key.txt
+   docker compose up -d --force-recreate traefik
+   ```
 
 **Fix for typo:** Correct `.env`, then `docker compose up -d --force-recreate <service>`.
 
@@ -337,14 +379,16 @@ openssl s_client -connect <domain>:443 -servername <domain> 2>/dev/null \
 **Cause:** no certificate in Traefik's store matches the hostname, and the
 fallback is silent. On the per-domain path (`ACME_WILDCARD_DOMAIN` unset) this is
 the `tls.certresolver` label still commented out in the app's
-`docker-compose.yml`; on the wildcard path it is a hostname outside
-`*.${ACME_WILDCARD_DOMAIN}`, or a wildcard that was never issued (token
-permissions, `acme.json` empty).
+`docker-compose.yml`; on the wildcard path it is a hostname under none of the
+domains in `ACME_WILDCARD_DOMAIN`, or a wildcard that was never issued (token
+permissions on that zone; `validate.sh`, run as root, notes a listed domain
+`acme.json` holds no certificate for).
 
 **Fix:** per-domain — uncomment the `tls.certresolver` label, set
 `APP_TRAEFIK_CERT_RESOLVER` in the app `.env`, `docker compose up -d
 --force-recreate <service>`, re-run the `openssl` check. Wildcard — put the
-hostname under the wildcard domain, or opt that app into its own certificate
+hostname under a listed domain or add its domain to the list (render, validate,
+`docker compose up -d`), or opt that app into its own certificate
 with the same label. Which line goes where: `docs/standards/traefik-labels.md`
 → "Enabling certresolver"; the two strategies: `core/traefik/README.md` →
 "Certificate strategy".
@@ -436,7 +480,9 @@ grep -nE 'crowdsecLapiKey' config/dynamic/*.yml   # key in use
 # then in .env:
 #   CROWDSEC_BOUNCER_ENABLED=true
 #   CROWDSEC_BOUNCER_PLUGIN_VERSION=<that version>
-#   CROWDSEC_BOUNCER_KEY=<that key>
+#   COMPOSE_FILE=<as before>:crowdsec-bouncer.yml
+# and that key in .secrets/crowdsec_bouncer_key.txt, group 0, mode 640
+# (core/traefik/README.md, "How to enable")
 ./ops/scripts/render.sh && ./ops/scripts/validate.sh
 ```
 

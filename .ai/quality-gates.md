@@ -82,8 +82,8 @@ protection leaves every pull request waiting on a check that can never report.
 All ten jobs above are required on a pull request into **either** protected
 branch, `Checker coverage`, `Docs QA` and `Workflow supply chain` included; `main`
 requires one more, the IaC config scan of `trivy.yml` — eleven in all
-([`decisions.md`](decisions.md#dec-079)). The image CVE scan runs on a pull request
-into `main` and reports; a finding in an upstream image does not block. Both rulesets also require
+([`decisions.md`](decisions.md#dec-079)). The image CVE scan runs weekly and by hand
+([`decisions.md`](decisions.md#dec-081)) and reports; a finding in an upstream image does not block. Both rulesets also require
 the branch to be up to date before merging, so the run that
 gates a merge is the run against the integration that lands. Neither has a
 standing bypass actor.
@@ -139,8 +139,9 @@ What neither mode covers:
 
 ## Not blocking, deliberately
 
-- **Trivy** is not a check on `dev`. It runs weekly, on pushes to `main` and on pull
-  requests into `main`, where the IaC config scan is required. The image CVE scan
+- **Trivy** is not a check on `dev`. The IaC config scan runs on pull requests into
+  `main`, where it is required, on pushes to `main`, weekly and by hand; the image CVE
+  scan weekly and by hand ([`decisions.md`](decisions.md#dec-081)). It
   reports: a CRITICAL finding not recorded in `.trivy-baseline.json` is named in the
   summary and blocks nothing ([`decisions.md`](decisions.md#dec-079)); the job fails
   only on the repository's own errors.

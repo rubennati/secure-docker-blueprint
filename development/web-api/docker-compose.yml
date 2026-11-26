@@ -2,9 +2,11 @@
 # web-api pattern — production stack (Traefik, no datastore)
 # =============================================================================
 # Reusable deployment shape for a generic backend service: source → build →
-# image → health → Traefik. Copy this directory into apps/ or business/ under
-# the real project's name, replace fixture/ with the real source, and follow
-# docs/standards/custom-application.md for image identity.
+# image → health → Traefik. Copy this directory into the real project's own
+# repository, which a host checks out under custom/<name>
+# (docs/standards/deployment-lifecycle.md, section 11), replace fixture/ with
+# the real source, and follow docs/standards/custom-application.md for image
+# identity.
 #
 # Deliberately has no database, Redis, queue or worker — those are optional
 # extensions, added the same way apps/_reference shows, only when the real
@@ -43,13 +45,13 @@ services:
 
     # --- Resources ---
     # Starting values, not measured — retune from `docker stats` once a real
-    # project is deployed.
+    # project is deployed. No cpus: the fixture pins no core; a real service
+    # that does sets one with its reason (compose-structure.md).
     memswap_limit: 256m
     deploy:
       resources:
         limits:
           memory: 256m
-          cpus: "0.50"
           pids: 100
         reservations:
           memory: 64m
@@ -69,8 +71,9 @@ services:
     # state — see apps/_reference for the pattern.
 
     # --- Networking ---
-    # proxy-public only. No app-internal network exists here because there is
-    # no datastore to isolate — add one, named `${COMPOSE_PROJECT_NAME}-internal`
+    # The Traefik network only — TRAEFIK_NETWORK, the stack's own edge network
+    # by default. No app-internal network exists here because there is no
+    # datastore to isolate — add one, named `${COMPOSE_PROJECT_NAME}-internal`
     # and `internal: true`, the moment a database or cache is added.
     networks:
       - proxy-public
@@ -98,6 +101,10 @@ services:
 # NETWORKS
 # --------------------------------------------------------
 networks:
+  # The network Traefik reaches this stack on, created by core/traefik:
+  # TRAEFIK_NETWORK in .env names it — <project>-edge, the stack's own edge
+  # network, listed in core/traefik's EDGE_NETWORKS (DEC-075); or proxy-public,
+  # the shared network, where every member reaches every other.
   proxy-public:
     name: ${TRAEFIK_NETWORK}
     external: true

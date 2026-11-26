@@ -11,6 +11,9 @@ services:
 
   app:
     image: ghcr.io/velocidex/velociraptor-server:${APP_TAG}
+    # Upstream publishes this image for amd64 only; on an arm64 machine Docker
+    # runs it under emulation, which needs the platform named from 0.77.4 on.
+    platform: linux/amd64
     container_name: velociraptor-local-app
     restart: unless-stopped
     security_opt: [no-new-privileges:true]

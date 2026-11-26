@@ -16,6 +16,7 @@ set -a
 source "${ROOT_DIR}/.env"
 set +a
 . "${ROOT_DIR}/ops/scripts/exposure-profile.sh"
+. "${ROOT_DIR}/ops/scripts/bouncer-key.sh"
 
 # ---------------------------------------------------------------------------
 # CrowdSec reverse-proxy remediation: one switch in .env
@@ -59,6 +60,14 @@ esac
 if [ "${CROWDSEC_APPSEC_ENABLED}" = true ] && [ "${CROWDSEC_BOUNCER_ENABLED}" != true ]; then
   echo "ERROR: CROWDSEC_APPSEC_ENABLED=true needs CROWDSEC_BOUNCER_ENABLED=true — AppSec inspection runs inside the bouncer plugin."
   exit 1
+fi
+
+# The bouncer key is a file Traefik reads, never a value in config/ (ops/scripts/
+# bouncer-key.sh): with the switch on, the file has to exist and be readable for
+# root without capabilities, or the render would hand Traefik a plugin that
+# cannot load — and the entrypoint a middleware that does not exist.
+if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+  bouncer_key_check "${ROOT_DIR}" || exit 1
 fi
 
 # The entrypoint middlewares (traefik.yml.tmpl, entryPoints.websecure.http):
@@ -293,6 +302,47 @@ done
 n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
 
 # ---------------------------------------------------------------------------
+# Wildcard certificates. ACME_WILDCARD_DOMAIN, quoted and space-separated, names
+# each domain that gets a certificate for itself and *.<domain>; one ACME router
+# per domain in config/dynamic/acme-wildcard.yml requests it over DNS-01. Empty
+# or unset renders no wildcard (per-domain certificates). Checked here because a
+# malformed name would request nothing and say so only in Traefik's log.
+# ---------------------------------------------------------------------------
+seen_zones=" "
+for zone in ${ACME_WILDCARD_DOMAIN:-}; do
+  case "${zone}" in
+    '*.'*)
+      echo "ERROR: ACME_WILDCARD_DOMAIN: '${zone}' — write the domain without '*.': ${zone#\*.}"
+      echo "       The certificate carries both the domain and *.<domain>."
+      exit 1 ;;
+  esac
+  if ! printf '%s' "${zone}" | grep -qE '^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$'; then
+    echo "ERROR: ACME_WILDCARD_DOMAIN: '${zone}' is not a domain name (lower-case labels of letters,"
+    echo "       digits and -, separated by dots, at least two labels: example.com)."
+    exit 1
+  fi
+  case "${seen_zones}" in *" ${zone} "*) echo "ERROR: ACME_WILDCARD_DOMAIN: '${zone}' is listed twice."; exit 1 ;; esac
+  seen_zones="${seen_zones}${zone} "
+done
+n_zones=$(printf '%s\n' ${ACME_WILDCARD_DOMAIN:-} | grep -c . || true)
+
+# One router per wildcard domain from the template. The first keeps the name
+# acme-wildcard, so a single domain renders as before; the others are
+# acme-wildcard-2, -3, ... The name is only the router's: Traefik keeps the
+# certificates in acme.json by domain.
+render_acme_wildcard() {
+  local zone i=0
+  printf '%s\n' "http:" "  routers:"
+  for zone in ${ACME_WILDCARD_DOMAIN}; do
+    i=$((i + 1))
+    if [ "${i}" -eq 1 ]; then ACME_WILDCARD_ROUTER=acme-wildcard; else ACME_WILDCARD_ROUTER="acme-wildcard-${i}"; fi
+    ACME_WILDCARD_ZONE="${zone}" ACME_WILDCARD_ROUTER="${ACME_WILDCARD_ROUTER}" \
+      envsubst '${ACME_WILDCARD_ROUTER} ${ACME_WILDCARD_ZONE} ${ACME_RESOLVER_DNS}' \
+      < "${TPL_DIR}/dynamic/acme-wildcard.yml.tmpl" | tail -n +3
+  done
+}
+
+# ---------------------------------------------------------------------------
 # The published ports, one block per address family (DEC-075.3, step 7).
 # TRAEFIK_BIND_V4 and TRAEFIK_BIND_V6 each hold a host address or nothing;
 # nothing means that family is not published. render.sh writes them into
@@ -319,6 +369,23 @@ if [ -n "${COMPOSE_FILE:-}" ]; then
       echo "       COMPOSE_FILE=${COMPOSE_FILE}:config/published-ports.yml"
       echo "       scripts/migrate-traefik-env.sh --all adds it (CHANGELOG, Migration)."
       exit 1 ;;
+  esac
+  case "${compose_file_named}" in
+    *:"${BOUNCER_KEY_OVERLAY}":*)
+      if [ "${CROWDSEC_BOUNCER_ENABLED}" != true ] && [ ! -f "${ROOT_DIR}/${BOUNCER_KEY_FILE}" ]; then
+        echo "ERROR: COMPOSE_FILE applies ${BOUNCER_KEY_OVERLAY}, but ${BOUNCER_KEY_FILE} does not exist —"
+        echo "       Compose refuses to start a service whose secret has no file. With the bouncer off,"
+        echo "       remove ${BOUNCER_KEY_OVERLAY} from COMPOSE_FILE."
+        exit 1
+      fi ;;
+    *)
+      if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
+        echo "ERROR: CROWDSEC_BOUNCER_ENABLED=true, but COMPOSE_FILE does not apply ${BOUNCER_KEY_OVERLAY},"
+        echo "       which hands Traefik the bouncer key. Without it the plugin finds no key, does not"
+        echo "       load, and every router on websecure is disabled."
+        echo "       COMPOSE_FILE=${COMPOSE_FILE}:${BOUNCER_KEY_OVERLAY}"
+        exit 1
+      fi ;;
   esac
   case "${compose_file_named}" in
     *:network-dual-stack.yml:*)
@@ -506,7 +573,8 @@ if rendered_has_bouncer; then
     echo ""
     echo "       Keep it:   CROWDSEC_BOUNCER_ENABLED=true"
     echo "                  CROWDSEC_BOUNCER_PLUGIN_VERSION=<the version config/traefik.yml names>"
-    echo "                  CROWDSEC_BOUNCER_KEY=<the key config/dynamic names>"
+    echo "                  the key config/dynamic names, in ${BOUNCER_KEY_FILE} (README,"
+    echo "                  'How to enable')"
     echo "       Remove it: CROWDSEC_BOUNCER_ENABLED=false — then recreate the traefik container"
     echo "                  at once: the running entrypoint list names the threat middleware"
     echo "                  until the recreate, and every router on websecure is disabled in between."
@@ -569,6 +637,7 @@ echo "Rendering static config..."
 if [ "${CROWDSEC_BOUNCER_ENABLED}" = true ]; then
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" | place "${CFG_DIR}/traefik.yml"
   echo " -> traefik.yml (CrowdSec bouncer plugin ${CROWDSEC_BOUNCER_PLUGIN_VERSION} declared; entrypoint: ${ENTRYPOINT_THREAT}@file, compress@file)"
+  echo "    key: ${BOUNCER_KEY_FILE}, mounted by ${BOUNCER_KEY_OVERLAY} at ${BOUNCER_KEY_TARGET}"
 else
   # Drop the marker-delimited plugin block; the markers are comments and go with it.
   envsubst < "${TPL_DIR}/traefik.yml.tmpl" \
@@ -631,10 +700,13 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
       fi
       ;;
     acme-wildcard.yml)
-      if [ -z "${ACME_WILDCARD_DOMAIN:-}" ]; then
+      if [ "${n_zones}" -eq 0 ]; then
         echo " -> ${base} (skipped – ACME_WILDCARD_DOMAIN not set)"
         continue
       fi
+      render_acme_wildcard | place "$out"
+      echo " -> ${base} (${n_zones} wildcard domain(s): ${ACME_WILDCARD_DOMAIN})"
+      continue
       ;;
     routers-system.yml)
       # An empty dashboard resolver means the wildcard covers the dashboard

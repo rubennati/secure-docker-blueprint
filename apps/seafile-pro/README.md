@@ -47,15 +47,18 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 cp .env.example .env
 nano .env  # Set APP_TRAEFIK_HOST, SEAFILE_ADMIN_EMAIL, ONLYOFFICE_HOST, TZ
 
-# 2. Generate passwords
-sed -i "s|^INIT_SEAFILE_MYSQL_ROOT_PASSWORD=.*|INIT_SEAFILE_MYSQL_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
-sed -i "s|^SEAFILE_MYSQL_DB_PASSWORD=.*|SEAFILE_MYSQL_DB_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
-sed -i "s|^INIT_SEAFILE_ADMIN_PASSWORD=.*|INIT_SEAFILE_ADMIN_PASSWORD=$(openssl rand -base64 32 | tr -d '\n')|" .env
-sed -i "s|^JWT_PRIVATE_KEY=.*|JWT_PRIVATE_KEY=$(openssl rand -base64 48 | tr -d '\n')|" .env
-sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$(openssl rand -hex 32)|" .env
-# OnlyOffice JWT secret — copy from the OnlyOffice server (must match exactly); left
-# empty, the integration stays off:
-#   sed -i "s|^ONLYOFFICE_JWT_SECRET=.*|ONLYOFFICE_JWT_SECRET=<paste-value>|" .env
+# 2. Create the secrets (Docker Secrets in .secrets/, see Secrets below)
+mkdir -p .secrets
+openssl rand -base64 32 | tr -d '\n' > .secrets/db_root_pwd.txt
+openssl rand -base64 32 | tr -d '\n' > .secrets/seafile_db_pwd.txt
+openssl rand -base64 24 | tr -d '\n' > .secrets/seafile_admin_pwd.txt
+openssl rand -base64 48 | tr -d '\n' > .secrets/jwt_key.txt
+openssl rand -hex 32    | tr -d '\n' > .secrets/redis_pwd.txt
+# OnlyOffice JWT secret — copy from the OnlyOffice server (must match exactly);
+# an empty file keeps the integration off. SMTP password — empty without SMTP.
+: > .secrets/onlyoffice_jwt_secret.txt
+: > .secrets/smtp_pwd.txt
+chmod 600 .secrets/*.txt
 
 # 3. Pull images
 docker compose pull
@@ -66,7 +69,7 @@ docker compose up -d
 # 5. Wait for app healthy (first boot initialises databases — takes ~3 min)
 docker compose ps
 
-# 6. Inject Blueprint configs (runs once — see Passwords section)
+# 6. Inject Blueprint configs (runs once — see Config injection)
 docker compose restart seafile-pro-app
 
 # 7. Build search index
@@ -81,7 +84,7 @@ docker exec seafile-pro-app grep "SEASEARCH" /shared/seafile/conf/seafevents.con
 docker exec seafile-pro-app grep "virus_scan" /shared/seafile/conf/seafile.conf    # Antivirus configured
 curl -s https://your-domain/notification/ping              # {"ret": "pong"}
 docker exec seafile-pro-app grep "Blueprint" /shared/seafile/conf/seahub_settings.py   # settings injected
-docker exec seafile-pro-app env | grep JWT_PRIVATE_KEY     # key reaches the app
+docker exec seafile-pro-app sh -c 'tr "\0" "\n" < /proc/$(pgrep -f "gunicorn.*seahub" | head -1)/environ | grep -c ^JWT_PRIVATE_KEY='   # 1: the key reaches Seahub
 docker exec seafile-pro-app bash -c "curl -s https://secure.eicar.org/eicar.com.txt | clamdscan -"  # FOUND
 ```
 
@@ -95,9 +98,21 @@ OnlyOffice needs a server-to-server network path to Seafile's configured hostnam
 
 On the OnlyOffice server, add the Seafile domain to `ONLYOFFICE_ALLOWED_ORIGINS` so browsers can embed the editor in an iframe — see `apps/onlyoffice/.env.example`. **Changes to `ONLYOFFICE_ALLOWED_ORIGINS` require container recreation** (`docker compose up -d --force-recreate` on the OnlyOffice server), not just restart — the value is baked into a Traefik label at container creation time.
 
-## Passwords
+## Secrets
 
-Passwords are stored in `.env` (gitignored). Docker Secrets are not used because Seafile's init system (`my_init`) doesn't preserve exported environment variables. See UPSTREAM.md for the technical explanation.
+Every password and key is a Docker Secret in `.secrets/` (gitignored); `.env.example`
+lists the seven files and how to create them. Seafile's services read these values from
+the environment only and know no `_FILE` variant, so `config/secrets-env.sh` runs in
+front of each service: it exports the secrets that container mounts under the names the
+service reads, then starts the image's own command. The values reach the service's
+processes, including those `my_init` starts, and stand neither in `.env` nor in
+`docker inspect`.
+
+`docker exec <container> env` does not show them: it lists the container's configured
+environment, not that of the running service. Check a process instead, as in Verify.
+
+The MariaDB container reads `MYSQL_ROOT_PASSWORD_FILE` itself; Redis reads its password
+from the secret file in its command.
 
 ## Config injection
 
@@ -114,7 +129,7 @@ Adding a brand-new setting that was absent from `seahub_custom.py` at injection 
 | | |
 |---|---|
 | **Database** | MariaDB · container `seafile-pro-db` · **three databases**: `ccnet_db`, `seafile_db`, `seahub_db` · user `seafile` |
-| **Password** | `SEAFILE_MYSQL_DB_PASSWORD` in `.env`. **This stack creates no `.secrets/` file** — see Passwords above — so the borgmatic snippet below needs one written for it from `.env`: `mkdir -p .secrets && grep '^SEAFILE_MYSQL_DB_PASSWORD=' .env \| cut -d= -f2- \| tr -d '\n' > .secrets/seafile_db_pwd.txt && chmod 600 .secrets/seafile_db_pwd.txt` (the variable is not set in your shell, so a `printf` of it writes an empty file). Borgmatic reads credentials from a file, a container, KeePassXC or systemd; there is no form that reads a `.env` entry directly |
+| **Password** | `.secrets/seafile_db_pwd.txt` — the file the borgmatic snippet below reads |
 | **State** | `./volumes/mysql` (databases) · **`./volumes/seafile-data`** — the file store · `./volumes/seadoc-data` |
 | **Reproducible** | `./volumes/redis` (cache) · the Elasticsearch volume · `./volumes/seasearch-data` — both search indexes, rebuildable |
 | **Quiescing** | Not needed for the dumps. Content-addressed blocks tolerate a mid-write copy. |
@@ -153,8 +168,8 @@ for user 'seafile'`. Create the account before starting the app:
 ```bash
 docker compose up -d db
 # restore the three dumps, then:
-docker compose exec -T db sh -c 'mariadb -uroot -p"$MYSQL_ROOT_PASSWORD"' <<SQL
-CREATE USER IF NOT EXISTS 'seafile'@'%' IDENTIFIED BY '$(grep '^SEAFILE_MYSQL_DB_PASSWORD=' .env | cut -d= -f2- | tr -d '\n')';
+docker compose exec -T db sh -c 'mariadb -uroot -p"$(cat /run/secrets/DB_ROOT_PWD)"' <<SQL
+CREATE USER IF NOT EXISTS 'seafile'@'%' IDENTIFIED BY '$(cat .secrets/seafile_db_pwd.txt)';
 GRANT ALL PRIVILEGES ON ccnet_db.* TO 'seafile'@'%';
 GRANT ALL PRIVILEGES ON seafile_db.* TO 'seafile'@'%';
 GRANT ALL PRIVILEGES ON seahub_db.* TO 'seafile'@'%';
@@ -166,21 +181,21 @@ docker compose up -d
 
 <!-- findings:start — generated by scripts/ci/lifecycle-report.py from upstream-status.json; edit the text around it -->
 
-**Findings in the upstream images** at the pin `13.0.29` — upstream has released `14.0.9` since. Scanned 2026-11-09; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
+**Findings in the upstream images** at the pin `13.0.29` — upstream has released `14.0.11` since. Scanned 2026-11-26; counted are findings with a published fix, as CRITICAL · HIGH. They come with the images as upstream publishes them.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `clamav/clamav:1.5.4` | — | — | — |
-| `elasticsearch:8.19.23` | 0 · 1 | 0 · 3 | — |
-| `mariadb:10.11.19` | 0 · 1 | — | 1 · 25 |
+| `clamav/clamav:1.5.4` | 0 · 1 | — | — |
+| `elasticsearch:8.19.25` | — | 0 · 1 | — |
+| `mariadb:10.11.19` | — | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 | `seafileltd/notification-server:13.0.29` | 0 · 1 | — | — |
-| `seafileltd/sdoc-server:2.0.11` | 0 · 1 | 2 · 40 | — |
-| `seafileltd/seafile-ai:13.0.10` | 10 · 616 | 11 · 71 | — |
+| `seafileltd/sdoc-server:2.0.11` | 39 · 664 | 2 · 41 | — |
+| `seafileltd/seafile-ai:13.0.10` | 11 · 754 | 11 · 80 | — |
 | `seafileltd/seafile-md-server:13.0.28` | 0 · 2 | — | 0 · 25 |
-| `seafileltd/seafile-pro-mc:13.0.29` | 0 · 1 | 0 · 16 | 0 · 1 |
-| `seafileltd/seasearch:1.0.8` | 0 · 2 | — | 0 · 13 |
-| `seafileltd/thumbnail-server:13.0.29` | 0 · 1 | 1 · 14 | — |
+| `seafileltd/seafile-pro-mc:13.0.29` | 39 · 664 | 0 · 18 | 0 · 1 |
+| `seafileltd/seasearch:1.0.8` | 0 · 2 | — | 0 · 14 |
+| `seafileltd/thumbnail-server:13.0.29` | 39 · 668 | 1 · 14 | — |
 
 <!-- findings:end -->
 

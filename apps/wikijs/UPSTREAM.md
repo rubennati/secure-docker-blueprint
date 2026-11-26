@@ -31,10 +31,10 @@ findings at that pin have no fix on 2.x. This stack moved to 3.x; see
 
 ## What we use
 
-- `ghcr.io/requarks/wiki:3.2.0` — upstream's own registry. Debian-based
+- `ghcr.io/requarks/wiki:3.6.0` — upstream's own registry. Debian-based
   `node:26` with tini as init, uid 1000 (`node`), about 850 MB because it
   carries a headless Chrome for optional server-side rendering.
-- `postgres:18.6-alpine` for the database.
+- `postgres:18.7-alpine` for the database.
 - Two containers. Pages, uploaded files, users and settings live in the
   database (schema `wiki`); the data volume holds caches and the optional Git
   content mirror.
@@ -100,6 +100,32 @@ curl -s https://raw.githubusercontent.com/requarks/wiki/3.1.0/dev/build/Dockerfi
 
 ## Version notes
 
+- Moved to `3.6.0` on 2026-11-23 (released 2026-11-22), across `3.3.0`,
+  `3.3.1`, `3.4.0` and `3.5.0`. Fixes the advisories that reach `3.2.0`:
+  critical GHSA-jp85-8jq5-9gv6 (stored XSS in the map block's marker label
+  lets any account that can edit a page become administrator, `3.4.0`); high
+  GHSA-6m8p-37cv-c4f5 (asset writes past folder rules, `3.3.0`),
+  GHSA-848h-794v-rmq9 (a feedback board created above protected pages
+  bypasses their rules, `3.4.0`) and GHSA-h9p4-jmp2-c54v (stored XSS in the
+  page history view, `3.6.0`); medium GHSA-pq85-v5r4-w5xj,
+  GHSA-87m5-mch4-5f2q (page move and creation into denied branches, `3.3.0`),
+  GHSA-x6q9-c4vx-rf3g (a symlink in a synced Git storage repository writes
+  into `.git` and runs code, `3.3.1`; reaches only sites with Git storage),
+  GHSA-5539-6c4x-464h, GHSA-35c7-6872-jrh6, GHSA-gv55-77xw-q5v3,
+  GHSA-47c8-3859-4ccf and GHSA-74j8-43gw-p2pr (page-existence and source
+  disclosure, asset and locale rule bypasses, `3.4.0`); low
+  GHSA-74gh-jx9m-95qj (thumbnails served without the read check, `3.4.0`).
+  The XSS and rule-bypass advisories need an account that can edit pages or
+  assets; with `access-vpn` every route answers VPN clients only. No breaking change, no new variable;
+  the image, its entrypoint, port 3000 and `/_ready` are unchanged, so the
+  compose files keep their configuration. Twelve database migrations run on
+  the first start (`20261114090330_cookie-consent` to
+  `20261122082450_page-templates`); back up the database before. New in this
+  range: group-level 2FA enforcement and page locks (`3.3.0`), a management
+  CLI, maintenance mode and a plain OAuth2 strategy (`3.4.0`), Confluence,
+  DokuWiki and XWiki importers (`3.5.0`), page templates (`3.6.0`) —
+  https://github.com/requarks/wiki/releases,
+  https://github.com/requarks/wiki/security/advisories.
 - Moved to `3.2.0` on 2026-11-08. 3.1.1 and 3.2.0
   fix GHSA-p5rv-hmh3-wrv8, GHSA-7mf7-wprw-7fjm and GHSA-fxw3-8676-67fm; no
   configuration change.

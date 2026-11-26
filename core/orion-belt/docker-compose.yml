@@ -75,6 +75,12 @@ services:
         condition: service_healthy
 
     # --- Security ---
+    # The image's own user since 1.5.0. Started as root, the entrypoint chowns
+    # the state directories and switches user with su-exec — both need
+    # capabilities (CHOWN, SETUID, SETGID) this stack drops. Started as
+    # orionbelt, the entrypoint skips that step: the bind-mounted directories
+    # must belong to 10001:10001 (README.md#setup).
+    user: "10001:10001"
     security_opt:
       - no-new-privileges:true
     cap_drop:
@@ -88,7 +94,7 @@ services:
       # the audit log plugin silently does nothing without this. Ephemeral
       # by design: if you need audit logs to survive a restart, replace
       # this with a bind mount instead.
-      - /var/log/orion-belt
+      - /var/log/orion-belt:uid=10001,gid=10001
 
     memswap_limit: 512m
     deploy:
@@ -142,7 +148,6 @@ services:
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
       - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
       - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=8080"
 

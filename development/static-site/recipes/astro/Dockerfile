@@ -16,7 +16,7 @@ RUN npm run build
 # Identical across every recipe: a hardened, non-root nginx serving static
 # files. No shell access is needed at runtime, so nothing from the build stage
 # survives except dist/.
-FROM nginxinc/nginx-unprivileged:1.31.7-alpine-slim@sha256:a8cb0f33d51fa107c96fd2bd3a71aaf564ec131e9d2bdf8700944f0ed8b170d7
+FROM ghcr.io/nginx/nginx-unprivileged:1.31.10-alpine-slim@sha256:f4afc48254dc77ea692ec6979d220e5b1176331c636a4d51c502ffdded6789bd
 COPY --from=builder /src/dist /usr/share/nginx/html
 USER 101
 EXPOSE 8080

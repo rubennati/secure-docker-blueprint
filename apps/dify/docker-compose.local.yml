@@ -39,7 +39,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 30s
-    image: postgres:15.19-alpine
+    image: postgres:15.20-alpine
     networks:
     - dify-local
     restart: unless-stopped
@@ -69,6 +69,8 @@ services:
       APP_WEB_URL: http://localhost:3000
       CELERY_BROKER_URL__FILE: /run/secrets/CELERY_BROKER_URL
       CHECK_UPDATE_URL: ''
+      DEEPEVAL_DISABLE_DOTENV: '1'
+      DEEPEVAL_TELEMETRY_OPT_OUT: '1'
       CODE_EXECUTION_API_KEY__FILE: /run/secrets/SANDBOX_API_KEY
       CODE_EXECUTION_ENDPOINT: http://sandbox:8194
       CONSOLE_API_URL: http://localhost:5001
@@ -123,7 +125,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 2m0s
-    image: langgenius/dify-api:1.19.0
+    image: langgenius/dify-api:1.20.0
     networks:
     - dify-local
     read_only: true
@@ -166,7 +168,7 @@ services:
       interval: 30s
       retries: 5
       start_period: 1m0s
-    image: langgenius/dify-web:1.19.0
+    image: langgenius/dify-web:1.20.0
     networks:
     - dify-local
     read_only: true
@@ -256,7 +258,7 @@ services:
       SERVER_KEY__FILE: /run/secrets/PLUGIN_DAEMON_KEY
       SERVER_PORT: '5002'
       TZ: UTC
-    image: langgenius/dify-plugin-daemon:0.6.14-local
+    image: langgenius/dify-plugin-daemon:0.6.15-local
     networks:
     - dify-local
     read_only: true
@@ -389,6 +391,8 @@ services:
       CELERY_BROKER_URL__FILE: /run/secrets/CELERY_BROKER_URL
       CELERY_WORKER_AMOUNT: '2'
       CHECK_UPDATE_URL: ''
+      DEEPEVAL_DISABLE_DOTENV: '1'
+      DEEPEVAL_TELEMETRY_OPT_OUT: '1'
       CODE_EXECUTION_API_KEY__FILE: /run/secrets/SANDBOX_API_KEY
       CODE_EXECUTION_ENDPOINT: http://sandbox:8194
       CONSOLE_API_URL: http://localhost:5001
@@ -432,7 +436,7 @@ services:
       UV_CACHE_DIR: /tmp/.uv-cache
       VECTOR_STORE: pgvector
       APP_API_URL: http://localhost:5001
-    image: langgenius/dify-api:1.19.0
+    image: langgenius/dify-api:1.20.0
     networks:
     - dify-local
     read_only: true
@@ -462,12 +466,20 @@ services:
     entrypoint:
     - /bin/sh
     - /secrets-entrypoint.sh
-    - /bin/bash
-    - /entrypoint.sh
+    - celery
+    - -A
+    - app.celery
+    - beat
+    - --loglevel
+    - INFO
+    - --schedule
+    - /tmp/celerybeat-schedule
     environment:
       APP_WEB_URL: http://localhost:3000
       CELERY_BROKER_URL__FILE: /run/secrets/CELERY_BROKER_URL
       CHECK_UPDATE_URL: ''
+      DEEPEVAL_DISABLE_DOTENV: '1'
+      DEEPEVAL_TELEMETRY_OPT_OUT: '1'
       CODE_EXECUTION_API_KEY__FILE: /run/secrets/SANDBOX_API_KEY
       CODE_EXECUTION_ENDPOINT: http://sandbox:8194
       CONSOLE_API_URL: http://localhost:5001
@@ -511,7 +523,7 @@ services:
       UV_CACHE_DIR: /tmp/.uv-cache
       VECTOR_STORE: pgvector
       APP_API_URL: http://localhost:5001
-    image: langgenius/dify-api:1.19.0
+    image: langgenius/dify-api:1.20.0
     networks:
     - dify-local
     read_only: true
@@ -530,6 +542,7 @@ services:
     - ./.secrets/sandbox_api_key.txt:/run/secrets/SANDBOX_API_KEY:ro
     - ./.secrets/plugin_daemon_key.txt:/run/secrets/PLUGIN_DAEMON_KEY:ro
     - ./.secrets/plugin_inner_api_key.txt:/run/secrets/PLUGIN_INNER_API_KEY:ro
+    - ./volumes/storage:/app/api/storage
 networks:
   dify-local:
     name: dify-local

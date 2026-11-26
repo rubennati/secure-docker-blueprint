@@ -27,7 +27,7 @@ the design rather than neglect.
 ## What we use
 
 - `ghcr.io/plausible/community-edition:v3.2.1`, one container.
-- `postgres:18.6-alpine` for accounts, sites and settings.
+- `postgres:18.7-alpine` for accounts, sites and settings.
 - `clickhouse/clickhouse-server:26.10.3.7-alpine` for the events.
 - Four ClickHouse configuration files from the community-edition repository
   (MIT), vendored under `config/clickhouse/` so the stack does not depend on a
@@ -47,7 +47,7 @@ the design rather than neglect.
 | The first account is created by `ops/create-admin.sh` | Until one exists, Plausible sends `/login` and `/sites` to `/register` whatever `DISABLE_REGISTRATION` says, and that form makes whoever completes it the owner |
 | `DISABLE_REGISTRATION=true` | Upstream's CE default is `invite_only`. Once the owner exists, further accounts are invited from a site's settings, so nothing needs the sign-up form again |
 | ClickHouse `26.10` instead of upstream's `24.12` | Upstream's compose pins a December 2024 release that is out of support, while upstream's own CI runs `25.11` — so the pin is stale rather than a requirement. Verified here on 26.8 against the migrations and an ingested event; 26.10 not yet |
-| `postgres:18.6-alpine` with `PGDATA` set | Upstream pins `16-alpine`. Same `PGDATA` pattern as `apps/defectdojo` |
+| `postgres:18.7-alpine` with `PGDATA` set | Upstream pins `16-alpine`. Same `PGDATA` pattern as `apps/defectdojo` |
 | Docker Secrets named `SECRET_KEY_BASE`, `DATABASE_URL`, `CLICKHOUSE_DATABASE_URL`, `TOTP_VAULT_KEY` | Plausible reads each setting from `/run/secrets/<NAME>` before the environment (`CONFIG_DIR`, default `/run/secrets`), so no wrapper and no `_FILE` suffix is needed. Upstream's compose passes all four as environment variables |
 | `read_only: true`, `cap_drop: ALL`, `no-new-privileges` | Upstream's compose sets none of them. The image already runs as uid 999 and writes only to its data volume and `/tmp` |
 | No `ports:` | Upstream publishes `HTTP_PORT` to the host. Traefik reaches the container over the proxy network instead |

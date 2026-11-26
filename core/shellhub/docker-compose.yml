@@ -1,11 +1,12 @@
 # =============================================================================
-# ShellHub — production stack (Traefik for the gateway, direct port for the
-# SSH rendezvous)
+# ShellHub — production stack (Traefik for the web UI and API, direct port for
+# the SSH rendezvous)
 # =============================================================================
 # Agent-based, reverse-connection SSH access platform. Devices run a ShellHub
 # agent (not part of this deployment — installed on the machines you want to
-# reach) that dials out to the server below; the gateway fronts the web UI
-# and API. See README.md for the full security model.
+# reach) that dials out to the server below. Since v0.30.0 the gateway runs
+# inside the server process and fronts the web UI and API on the server's
+# port 80, which Traefik reaches. See README.md for the full security model.
 #
 # Spec: docs/standards/compose-structure.md · security-baseline.md
 # =============================================================================
@@ -120,9 +121,9 @@ services:
       retries: 5
 
   # --------------------------------------------------------
-  # SERVER (API + SSH rendezvous — agents dial in here)
+  # SERVER (API + embedded gateway + SSH rendezvous — agents dial in here)
   # --------------------------------------------------------
-  server:
+  shellhub-server:
     # --- Identity ---
     image: shellhubio/server:${SHELLHUB_VERSION}
     container_name: ${CONTAINER_NAME_SERVER}
@@ -173,17 +174,43 @@ services:
       SHELLHUB_SSH_PORT: 2222
       # Upstream defaults to a daily usage report to telemetry.shellhub.io.
       SHELLHUB_TELEMETRY: "false"
+      # The embedded gateway (Caddy inside the server, v0.30.0+) serves the
+      # web UI and API on port 80 and routes on the Host header, which must
+      # match SHELLHUB_DOMAIN — Traefik passes the original Host through.
       SHELLHUB_DOMAIN: ${APP_TRAEFIK_HOST}
+      SHELLHUB_GATEWAY: "true"
+      # PROXY protocol on the gateway's listener — for a layer-4 load
+      # balancer. Traefik speaks HTTP to it and sends no PROXY header.
+      SHELLHUB_PROXY: ${SHELLHUB_PROXY}
+      # The hops allowed to name the client in X-Forwarded-For: Traefik.
+      SHELLHUB_PROXY_TRUSTED_IPS: ${SHELLHUB_PROXY_TRUSTED_IPS}
+      # Caddy's own directories default to /root/.config and /root/.local,
+      # which the read-only root filesystem refuses (verified: config autosave
+      # error, no instance ID). Data — the instance ID — goes to the volume,
+      # the autosaved config, rebuilt on every start, to /tmp.
+      XDG_DATA_HOME: /data
+      XDG_CONFIG_HOME: /tmp
       TZ: ${TZ}
     secrets:
       - api_private_key
       - api_public_key
       - ssh_private_key
 
+    # --- Storage ---
+    # The embedded gateway's certificate store (Caddy storage). With
+    # SHELLHUB_AUTO_SSL=false it holds no certificate, but the root
+    # filesystem is read-only and the gateway writes its state here.
+    volumes:
+      - ./volumes/gateway:/data
+
     # --- Networking ---
-    # No proxy-public: the gateway is the only HTTP-facing component. The
-    # SSH port below is this service's own direct host publish.
+    # proxy-public for the Traefik router to port 80. The proxied console is
+    # hard-wired to the host name `ui` (port 8080): keep TRAEFIK_NETWORK this
+    # stack's own edge network, where no other container answers to `ui`.
+    # The SSH port below is this service's own direct host publish; HTTP is
+    # not published on the host.
     networks:
+      - proxy-public
       - app-internal
       - published   # for the published port: an internal-only network publishes none
 
@@ -192,17 +219,32 @@ services:
       # A raw TCP listener: Traefik's HTTP router cannot carry SSH.
       - "${SHELLHUB_BIND:?Set SHELLHUB_BIND in .env}:${SHELLHUB_SSH_PORT}:2222"
 
+    # Upstream's own healthcheck alias: the gateway answers /healthz only on
+    # this host name.
+    extra_hosts:
+      - "healthcheck.internal:127.0.0.1"
+
+    # --- Traefik ---
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${TRAEFIK_NETWORK}"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
+
     # --- Health & Observability ---
-    # Verified against upstream's own compose file.
+    # Upstream's own check: the API on 8080, then the embedded gateway.
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8080/api/healthcheck"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/healthcheck && curl -fsS http://healthcheck.internal/healthz || exit 1"]
       interval: 30s
       start_period: 15s
       timeout: 5s
       retries: 5
 
   # --------------------------------------------------------
-  # UI (web frontend, internal only — the gateway fronts it)
+  # UI (web frontend, internal only — the server's gateway fronts it)
   # --------------------------------------------------------
   ui:
     image: shellhubio/ui:${SHELLHUB_VERSION}
@@ -239,76 +281,6 @@ services:
 
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "-T", "5", "http://127.0.0.1:8080/health"]
-      interval: 30s
-      start_period: 15s
-      timeout: 5s
-      retries: 5
-
-  # --------------------------------------------------------
-  # GATEWAY (reverse proxy to server + ui — this is what Traefik fronts)
-  # --------------------------------------------------------
-  shellhub-gateway:
-    image: shellhubio/gateway:${SHELLHUB_VERSION}
-    container_name: ${CONTAINER_NAME_GATEWAY}
-    restart: unless-stopped
-    depends_on:
-      - server
-      - ui
-
-    security_opt:
-      - no-new-privileges:true
-    cap_drop:
-      - ALL
-    read_only: true
-    tmpfs:
-      - /tmp
-      - /var/cache/nginx
-      - /var/run
-
-    memswap_limit: 128m
-    deploy:
-      resources:
-        limits:
-          memory: 128m
-          pids: 50
-        reservations:
-          memory: 32m
-
-    environment:
-      SHELLHUB_DOMAIN: ${APP_TRAEFIK_HOST}
-      SHELLHUB_PROXY: ${SHELLHUB_PROXY}
-      SHELLHUB_PROXY_TRUSTED_IPS: ${SHELLHUB_PROXY_TRUSTED_IPS}
-      SHELLHUB_EDITION: ${SHELLHUB_EDITION}
-      SHELLHUB_AUTO_SSL: ${SHELLHUB_AUTO_SSL}
-      SHELLHUB_DATABASE: postgres
-      SHELLHUB_LOG_LEVEL: ${SHELLHUB_LOG_LEVEL}
-      SHELLHUB_LOG_FORMAT: ${SHELLHUB_LOG_FORMAT}
-      TZ: ${TZ}
-
-    networks:
-      - proxy-public
-      - app-internal
-
-    # Verified against upstream's own compose: the gateway (Caddy) routes on
-    # the Host header, matching SHELLHUB_DOMAIN — a plain request to
-    # 127.0.0.1 with no matching Host does not hit a configured route. This
-    # alias is upstream's own healthcheck workaround, not invented here.
-    extra_hosts:
-      - "healthcheck.internal:127.0.0.1"
-
-    # --- Traefik ---
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=${TRAEFIK_NETWORK}"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.rule=Host(`${APP_TRAEFIK_HOST}`)"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.entrypoints=websecure"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls=true"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.tls.options=${APP_TRAEFIK_TLS_OPTION}@file"
-      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}.middlewares=${APP_TRAEFIK_HEADERS}@file,${APP_TRAEFIK_ACCESS}@file,${APP_TRAEFIK_LIMIT}@file,${APP_TRAEFIK_AUTH}"
-      - "traefik.http.services.${COMPOSE_PROJECT_NAME}.loadbalancer.server.port=80"
-
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "-T", "5", "http://healthcheck.internal/healthz"]
       interval: 30s
       start_period: 15s
       timeout: 5s

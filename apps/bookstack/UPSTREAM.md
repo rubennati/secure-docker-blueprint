@@ -49,6 +49,18 @@
   backup from the checklist first. Sources:
   https://github.com/BookStackApp/BookStack/releases and
   https://www.bookstackapp.com/blog/bookstack-release-v26-09/
+- Moved from `version-v26.09.2` to `version-v26.09.3` on 2026-11-23 (BookStack v26.09.3 released
+  2026-11-11; the LSIO build `v26.09.3-ls300` of 2026-11-20). `APP_TAG` carries the digest
+  `sha256:5e44313f320a8a6f92f171b1beca4748f3e0a5110a4f4c19047cb4b4e43695a2`. A security release
+  with no published advisory ID: images and drawings attached to a draft or trashed page the
+  user cannot see could be opened and changed; a user's personal page draft could become
+  visible to others; converting a book or chapter could delete content in the recycle bin for
+  good; attachment endpoints revealed whether a page the user cannot see exists. All four reach
+  any instance with more than one account. No breaking change, no new variable, no database
+  migration: an instance upgraded from v26.09.2 with a book and a page keeps both through the
+  API, `artisan migrate` reports nothing to migrate (local stack, 2026-11-23). Sources:
+  https://github.com/BookStackApp/BookStack/releases/tag/v26.09.3,
+  https://www.bookstackapp.com/blog/bookstack-release-v26-09-3/
 - Moved `mariadb` from `11.4` to `12.3.3`, the current LTS line, on 2026-11-05. Support: BookStack requires "MySQL >= 8.0 or
   MariaDB >= 10.6" with no upper bound
   (https://www.bookstackapp.com/docs/admin/installation/).

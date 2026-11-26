@@ -60,6 +60,47 @@ Minimum RAM: ~4 GB (Elasticsearch grabs 512 MB heap alone).
 
 ## Version notes
 
+- Moved to `7.2.3-0017` on 2026-11-23, the newest build of 7.2.3 (released
+  2026-11-11, build of 2026-11-20); the next tags are `7.3.0-alpha` and
+  `7.4.0-alpha`. 7.2.3 fixes 43 advisories published 2026-11-11 (2 critical, 10 high,
+  24 medium, 7 low; https://github.com/zammad/zammad/security/advisories). Critical:
+  GHSA-pv63-rf47-cj6r (the first-administrator endpoints stayed open during a data
+  migration from another helpdesk, unauthenticated; reaches an instance set up by
+  import), GHSA-9x94-gcq4-jjgw (with S/MIME or PGP on, encrypted or signed incoming
+  mail could carry control headers that change ticket owner, group, state and
+  customer; unauthenticated sender). High: GHSA-4749-hj8h-f4jf (account takeover through
+  a client-sent `Remote-User` header in SSO; the image's nginx now clears it),
+  GHSA-p4pq-8gjh-48qm (session identifier in GraphQL session and login responses),
+  GHSA-fp8g-qv44-765v (revoked and refreshed OAuth2 tokens stayed usable),
+  GHSA-w4xf-rp7v-r2j2 (agents read arbitrary articles through online notifications),
+  GHSA-8rq7-c8hj-x7v8 (user profile data to customers through the ticket form),
+  GHSA-mhh7-rcch-rc7w (Onigmo memory corruption from admin-configured patterns, Ruby
+  3.4.12), and four that need a partial administrator: GHSA-6xm8-wjgv-5q6g,
+  GHSA-gffj-jpc4-76hv, GHSA-qqr9-58h5-hxc4, GHSA-hfxg-m8hr-mv3q. Unauthenticated
+  medium ones: GHSA-83r6-vc9v-gmh2 (WebSocket denial of service),
+  GHSA-j6cg-mj99-x45f (memory exhaustion through crafted image attachments),
+  GHSA-5c98-82w4-qvv6 (CSRF on the realtime update endpoint). Behind `access-vpn` the
+  unauthenticated web paths reach only clients inside the VPN; the mail paths reach
+  every instance with a mail channel. Breaking changes added to the 7.2 section of
+  `BREAKING_CHANGES.md`: the customer ticket search matches only customer-visible
+  data; `GET /auth/sso` answers `401` when `REMOTE_USER`, `Remote-User` and
+  `X-Forwarded-User` name different logins; settings that name a backend class accept
+  only their own backend (`422` otherwise); 79 settings, among them the
+  Elasticsearch and import settings, now need the full `admin` permission, so roles
+  and API tokens holding only `admin.*` sub-permissions get `403` on them; templates
+  (triggers, macros, text modules, signatures, scheduler jobs, AI tools, link
+  templates) resolve `#{config.*}` only for settings sent to the frontend and reach
+  only ticket, article, user, organization and group data; `PUT
+  /api/v1/settings/{id}` applies only `state_current.value` and `PUT
+  /api/v1/online_notifications/{id}` only `seen`. Five migrations run in `init`
+  (among them `RestrictAccessToInternalSettings` and `SettingBackendClassValidation`).
+  Upgrade tested on the local file: an installation on `7.2.2-0045` with an admin, an
+  API token and a ticket, then `7.2.3-0017`: the migrations ran without error, the
+  ticket was read and found by the search through the API, password login answered
+  `200`, the anonymous request `403`. Elasticsearch stays at 9.5.6 and was not part of
+  that run. Sources: https://github.com/zammad/zammad/blob/7.2.3/CHANGELOG.md,
+  https://github.com/zammad/zammad/blob/7.2.3/BREAKING_CHANGES.md,
+  https://github.com/zammad/zammad/security/advisories
 - Moved to `7.2.2-0045` on 2026-11-08, a rebuild of the same 7.2.2 release
   (the suffix is the package build); the upgrade works: started over
   an installation created on `7.2.2-0038` with a ticket in it, which was present

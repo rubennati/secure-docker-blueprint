@@ -44,12 +44,12 @@ more often than it applies:
 
 | Class | Meaning | In this repository |
 |---|---|---|
-| `osi` | OSI-approved | 70 |
+| `osi` | OSI-approved | 71 |
 | `mixed` | open core, or genuinely dual-licensed | 8 |
-| `source-available` | source published, use restricted | 5 |
+| `source-available` | source published, use restricted | 4 |
 | `proprietary` | neither | 1 |
 
-The five source-available ones are named here, since each restricts something a
+The four source-available ones are named here, since each restricts something a
 self-hoster might assume they may do:
 
 - **`core/dockhand`** — BSL 1.1. Free for personal, internal business,
@@ -63,8 +63,6 @@ self-hoster might assume they may do:
 - **`apps/hemmelig`** — O'Saasy License Agreement, an MIT-derived licence that
   is not OSI-approved. Self-hosting is unrestricted; reselling it as a
   competing SaaS is not.
-- **`core/orion-belt`** — Apache-2.0 with the Commons Clause, which bars selling
-  the software itself.
 
 None of these is a reason to avoid the software. They are a reason not to build
 a business on reselling it without reading the licence first.

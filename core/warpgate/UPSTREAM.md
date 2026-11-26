@@ -17,7 +17,7 @@
 
 ## What we use
 
-- `ghcr.io/warp-tech/warpgate:0.30.4`, single container, no separate database
+- `ghcr.io/warp-tech/warpgate:0.30.6`, single container, no separate database
 - The image's own embedded SQLite for users, sessions and the audit log
 - The image's own `warpgate healthcheck` subcommand
 
@@ -70,6 +70,24 @@ stack, not assumed from the README:
   GHSA-hhq8-x2xc-95qx, GHSA-fxfw-2m4j-xmc8, GHSA-r7rf-j762-2xxv (0.30.4).
   GHSA-r7rf-j762-2xxv advises an explicit TLS mode (enabled or disabled)
   instead of "Preferred" on MySQL and PostgreSQL targets.
+- Moved from `0.30.4` to `0.30.6` on 2026-11-23 (0.30.5 and 0.30.6 released
+  2026-11-19), two security patches with no breaking change and no compose change.
+  0.30.5: GHSA-vv47-j2gq-5g6g (high) — an unauthenticated login request with an
+  oversized body exhausted memory and aborted the process; request bodies are now
+  size-limited and read within a deadline (an oversized login body now gets `413`).
+  It reaches this stack from wherever the admin UI router admits clients — with
+  `access-vpn`, the VPN. GHSA-x5mm-vfrh-x55p (moderate) — Kubernetes write requests
+  with a YAML body were proxied without an audit entry. 0.30.6: GHSA-6mq2-fpwv-cm4w
+  (high) — an HTTP target bound to its own domain could still be opened on the
+  Warpgate domain via `?warpgate-target=` and call the Warpgate API as the visiting
+  user; GHSA-xm63-rjwf-r3g8 (moderate) — SSH port forwards opened while a session
+  awaited approval were not recorded; GHSA-qw79-rh95-853p (moderate) — VNC,
+  Kubernetes, SSH and PostgreSQL targets could make Warpgate allocate unbounded
+  memory. The three target advisories reach a deployment only where such targets are
+  configured and not fully trusted. Sources:
+  https://github.com/warp-tech/warpgate/releases/tag/v0.30.5,
+  https://github.com/warp-tech/warpgate/releases/tag/v0.30.6,
+  https://github.com/warp-tech/warpgate/security/advisories
 
 ## Upgrade checklist
 

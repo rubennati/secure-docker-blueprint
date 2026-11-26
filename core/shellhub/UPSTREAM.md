@@ -5,7 +5,7 @@
 ## Source
 
 - **Upstream GitHub:** https://github.com/shellhub-io/shellhub
-- **Image registry:** `shellhubio/server`, `shellhubio/ui`, `shellhubio/gateway` (Docker Hub)
+- **Image registry:** `shellhubio/server`, `shellhubio/ui` (Docker Hub; `shellhubio/gateway` up to v0.29.x)
 - **Docs:** https://docs.shellhub.io/
 - **Self-host compose reference:** `docker-compose.yml` +
   `docker-compose.postgres.yml` in the upstream repo
@@ -21,9 +21,9 @@
 
 ## What we use
 
-- `shellhubio/server`, `shellhubio/ui`, `shellhubio/gateway`, all at the
-  same version, matching upstream's single-`${SHELLHUB_VERSION}` model
-- `postgres:18.6` and `valkey/valkey:9.1.3-alpine`. Upstream's own
+- `shellhubio/server` (with the embedded gateway since v0.30.0) and
+  `shellhubio/ui`, both at the same version, matching upstream's single-`${SHELLHUB_VERSION}` model
+- `postgres:18.7` and `valkey/valkey:9.1.4-alpine`. Upstream's own
   `docker-compose.postgres.yml` still pins `postgres:18.0`; this stack runs the
   newest 18.x patch release instead (see Version notes)
 
@@ -34,10 +34,12 @@
 | `SHELLHUB_TELEMETRY=false` on `server` | Since v0.28.0 the server sends a start event and a daily usage report to `telemetry.shellhub.io` by default; a self-hosted access tool should not call out unasked |
 | Postgres mounted at `/var/lib/postgresql`, not `.../data` | Verified against a live container: Postgres 18 changed its expected layout to a single mount with a version-named subdirectory underneath; the `.../data` path every other Postgres 16 stack in this repository uses fails outright on 18 |
 | `cap_add: SETUID, SETGID` on Valkey | Verified against a live container: its entrypoint drops from root via `setpriv`, which fails without these — the same failure mode `apps/_reference` documents for Postgres/Redis |
-| `SHELLHUB_PROXY=true` + `SHELLHUB_PROXY_TRUSTED_IPS` set, `SHELLHUB_AUTO_SSL=false` | Puts Traefik in front instead of the gateway's own ACME client — both are real upstream env vars for exactly this |
+| Service key `shellhub-server`, Traefik labels on its port 80, no host publish of 80/443, `SHELLHUB_AUTO_SSL=false` | Traefik terminates TLS and fronts the embedded gateway instead of the gateway's own ACME client and published ports |
+| `SHELLHUB_PROXY=false`, `SHELLHUB_PROXY_TRUSTED_IPS` set to the Docker address pools | `SHELLHUB_PROXY` turns on the PROXY protocol, which Traefik does not send; the trusted list lets the Traefik hop name the client in `X-Forwarded-For` (tested: a forwarded address from a trusted hop is the recorded client, `X-Real-IP` is ignored) |
+| `XDG_DATA_HOME=/data`, `XDG_CONFIG_HOME=/tmp` on `shellhub-server` | Verified: under `read_only: true` the embedded Caddy cannot create `/root/.local` and `/root/.config` (config autosave error, no instance ID) |
 | SSH rendezvous port moved from upstream's default 22 to 2222 | Avoids colliding with the host's own SSH daemon |
 | Docker Secrets for the SSH host key and API keypair | Native upstream support, verified in the official compose (`PRIVATE_KEY`/`PUBLIC_KEY`/`SSH_HOST_KEY_FILE` already point at `/run/secrets/*`) |
-| Plain env var for the Postgres password on the `server`/`gateway` side | Verified: `SHELLHUB_POSTGRES_PASSWORD` has no `_FILE` alternative upstream, even though Postgres itself does — the database side uses `POSTGRES_PASSWORD_FILE`, the consuming side cannot |
+| Plain env var for the Postgres password on the `server` side | Verified: `SHELLHUB_POSTGRES_PASSWORD` has no `_FILE` alternative upstream, even though Postgres itself does — the database side uses `POSTGRES_PASSWORD_FILE`, the consuming side cannot |
 
 ## What was actually verified, and how
 
@@ -96,6 +98,50 @@
   CRITICAL findings 1 -> 0. Valkey 9.1.3 is a patch release; no configuration
   change. 9.2 exists only as a release candidate.
   Source: https://github.com/valkey-io/valkey/releases/tag/9.1.3
+
+- Moved from `v0.29.3` to `v0.31.1` on 2026-11-23 (v0.30.0 released 2026-11-09,
+  v0.31.0 and v0.31.1 on 2026-11-19). Advisories: GHSA-wp29-95m3-w5pc (medium,
+  fixed in v0.30.0) — cross-namespace authorization bypass that let a user invite
+  members into a namespace they do not administer. v0.31.0 carries the fixes of
+  the November audit without advisory IDs: `ssh -o SetEnv=…` values are no longer
+  stored in session events (a migration deletes the stored `env` events, scanning
+  `session_events` once on start), `GET /sessions/{uid}` returns exec commands only to
+  administrators and owners, email changes need the password, wrong passwords in
+  web-terminal re-authentication and `PATCH /api/users` count toward the lockout,
+  the console refuses framing, SFTP refuses accounts with a restricted login shell,
+  and SSH key approval writes the key only after the terminal code matches.
+  `PATCH /api/users/{id}/password` is removed (use `PATCH /api/users` with
+  `password` and `current_password`). Breaking changes and what they mean here:
+  v0.30.0 moves the gateway into the server process — the `gateway` service is
+  gone, and the server, now on the shared Traefik network, is the service
+  `shellhub-server` (container name unchanged); it serves the web UI and API on its port 80 (Traefik's target now)
+  and keeps the gateway's state in `/data` (`./volumes/gateway`); with
+  `SHELLHUB_AUTO_SSL=false` there is no certificate store to carry over. The
+  forwarded client address is trusted only from `SHELLHUB_PROXY_TRUSTED_IPS`,
+  whose upstream default changed from everyone to empty; `SHELLHUB_PROXY` means
+  the PROXY protocol on the gateway's listener and is now `false` here, since
+  Traefik does not send it. v0.31.0 reads only `X-Forwarded-For` (right to left,
+  first hop outside the trusted list), not `X-Real-IP` — Traefik appends the client
+  to `X-Forwarded-For`; `SHELLHUB_BIND_ADDRESS` now defaults to every address,
+  IPv6 included, but this stack does not use it and publishes only the SSH port
+  on `SHELLHUB_BIND`; agents v0.31.0 and later refuse a plain `http://` server
+  address unless `SHELLHUB_ALLOW_INSECURE_SERVER=true` — agents of this stack
+  reach the server through Traefik over `https://`, and a Docker agent that
+  updated itself to v0.31.0 on `http://` stays in a restart loop until its
+  container is recreated (v0.31.1 carries the setting over on self-update).
+  Upgrade on an existing host: back up `./volumes/postgres`; in `.env` set
+  `SHELLHUB_PROXY=false` and `SHELLHUB_PROXY_TRUSTED_IPS="172.16.0.0/12
+  192.168.0.0/16"` (or the edge network's subnet) and drop
+  `CONTAINER_NAME_GATEWAY`; `mkdir -p volumes/gateway && sudo chown 0:0
+  volumes/gateway`; `docker compose down --remove-orphans` removes the old
+  `server` and gateway containers, then `docker compose up -d`. Tested on a v0.29.3 data set (user and namespace kept,
+  migrations completed, console and API through the server's port 80, only the SSH
+  port published). The images are published for amd64 only. Sources:
+  https://github.com/shellhub-io/shellhub/releases/tag/v0.30.0,
+  https://github.com/shellhub-io/shellhub/releases/tag/v0.31.0,
+  https://github.com/shellhub-io/shellhub/releases/tag/v0.31.1,
+  https://github.com/shellhub-io/shellhub/security/advisories,
+  https://docs.shellhub.io/selfhosted/upgrade
 
 ## Upgrade checklist
 

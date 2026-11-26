@@ -19,7 +19,7 @@
 ## What we use
 
 - Official `ghcr.io/goauthentik/server` image, same image for `server` and `worker` (different `command`)
-- `postgres:18.6-alpine` as primary database
+- `postgres:18.7-alpine` as primary database
 - `redis:8.10.3-alpine` as session cache + Celery broker
 - Native `file://` secret loading (no entrypoint wrapper needed)
 
@@ -41,7 +41,7 @@
 ## Version / tag notes
 
 - Authentik releases use date-based versioning: `YYYY.MM.patch`. Majors (`2024.x` → `2025.x`) can include schema migrations.
-- `postgres:18.6-alpine` — safe to update within Postgres 18. A new major is not automatic (dump/restore or `pg_upgrade` required).
+- `postgres:18.7-alpine` — safe to update within Postgres 18. A new major is not automatic (dump/restore or `pg_upgrade` required).
 - `redis:8.10.3-alpine` — safe to update within 8.x.
 - Moved to `2026.8.5` on 2026-11-05. Breaking in 2026.8: forwarded request headers
   (`X-Forwarded-Proto`, `-Host`, `-For`) are honoured only from a trusted proxy
