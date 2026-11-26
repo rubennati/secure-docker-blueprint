@@ -90,7 +90,7 @@ The security baseline is not a column: the checkers enforce it for every stack. 
 | [`apps/opencanary`](apps/opencanary/) | `0.9.10` · 2026-09-21 | = Pin | [9 · 272](apps/opencanary/README.md#open-findings) | [2026-11-08](apps/opencanary/UPSTREAM.md) |
 | [`apps/opnform`](apps/opnform/) | `2.8.6` · 2026-11-19 | = Pin | [1 · 33](apps/opnform/README.md#open-findings) | [2026-11-08](apps/opnform/UPSTREAM.md) · with restore · ran `2.8.4` |
 | [`apps/paperless-gpt`](apps/paperless-gpt/) | `v0.31.0` · 2026-10-14 | = Pin | [0 · 6](apps/paperless-gpt/README.md#open-findings) | [2026-11-08](apps/paperless-gpt/UPSTREAM.md) |
-| [`apps/paperless-ngx`](apps/paperless-ngx/) | `3.5.1` · 2026-11-18 | = Pin | [7 · 316](apps/paperless-ngx/README.md#open-findings) | [2026-11-08](apps/paperless-ngx/UPSTREAM.md) · with restore · ran `3.4.2` |
+| [`apps/paperless-ngx`](apps/paperless-ngx/) | `3.5.1` · 2026-11-18 | = Pin | [6 · 313](apps/paperless-ngx/README.md#open-findings) | [2026-11-08](apps/paperless-ngx/UPSTREAM.md) · with restore · ran `3.4.2` |
 | [`apps/photoprism`](apps/photoprism/) | `261029` · 2026-10-29 | = Pin | [6 · 129](apps/photoprism/README.md#open-findings) | [2026-11-08](apps/photoprism/UPSTREAM.md) |
 | [`apps/photoview`](apps/photoview/) | `2.4.0` · 2024-06-23 | = Pin · ⚠️ no release since 2024-06-23 | [5 · 53](apps/photoview/README.md#open-findings) | [2026-11-08](apps/photoview/UPSTREAM.md) |
 | [`apps/privatebin`](apps/privatebin/) | `2.1.1` · 2026-11-04 | = Pin | 0 · 0 | [2026-11-08](apps/privatebin/UPSTREAM.md) |

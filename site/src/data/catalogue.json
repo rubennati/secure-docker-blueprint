@@ -1539,7 +1539,7 @@
   "apps/paperless-ngx": {
     "archived": false,
     "checked": "2026-11-26",
-    "critical": 7,
+    "critical": 6,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Documents and e-signature",
@@ -1554,7 +1554,7 @@
       "summary": "5 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 316,
+    "high": 313,
     "last_release": "2026-11-18",
     "name": "Paperless-ngx",
     "newest": null,
@@ -1929,7 +1929,7 @@
     },
     "gap": null,
     "high": 27,
-    "last_release": "2026-11-24",
+    "last_release": "2026-11-26",
     "name": "Tymeslot",
     "newest": null,
     "newest_date": null,

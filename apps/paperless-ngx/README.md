@@ -275,17 +275,13 @@ plain text unless it is given `--passphrase`; it says so in its output.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `apache/tika:3.3.3.1` | — | 1 · 3 | — |
+| `apache/tika:3.4.0.0` | — | — | — |
 | `ghcr.io/paperless-ngx/paperless-ngx:3.5.1` | 2 · 63 | 1 · 20 | — |
 | `gotenberg/gotenberg:8.40.0` | 2 · 221 | — | — |
 | `postgres:18.7` | 0 · 1 | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 
 <!-- findings:end -->
-
-The Tika image, `apache/tika:3.3.3.1`, carries 1 CRITICAL finding with a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). Tika 3.4.0.0 carries none, but 3.4 caps a multipart attachment at 50 MB and lowers the zip-bomb limits, so a large document Paperless hands to Tika could be refused. Tika stays at 3.3.3.1 until that limit is measured with Paperless or Paperless moves (`UPSTREAM.md`).
-
-**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on.
 
 The Paperless image, `paperless-ngx:3.5.1`, carries 3: the MariaDB client libraries from its Debian base (CVE-2026-44172, CVE-2026-49261) and NLTK (CVE-2026-128138, a sandbox bypass through JAR files).
 
