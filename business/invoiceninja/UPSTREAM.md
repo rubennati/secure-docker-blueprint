@@ -22,7 +22,7 @@
 | Invoice Ninja | `5.13.56` | Latest release 2026-11-20 |
 | MySQL | `8.4` | LTS — upstream target DB |
 | Redis | `8.10-alpine` | |
-| Nginx | `1.31.9-alpine-slim` | |
+| Nginx | `1.31.10-alpine-slim` | |
 
 ## What We Use From Upstream
 
@@ -174,6 +174,9 @@ docker compose up -d
   https://github.com/invoiceninja/invoiceninja/releases/tag/v5.13.54,
   https://github.com/invoiceninja/invoiceninja/releases/tag/v5.13.55,
   https://github.com/invoiceninja/invoiceninja/releases/tag/v5.13.56
+- nginx `1.31.10` (2026-11-23) fixes CVE-2026-132779, excessive CPU use with
+  `ssl_early_data`. This nginx terminates no TLS, so it does not reach this stack; the pin
+  moves to the newest release. Source: https://nginx.org/en/security_advisories.html
 - nginx `1.31.9` (2026-11-18) is a security release: CVE-2026-125283 (buffer overflow with
   `try_files` and `alias` together), CVE-2026-123007 (HTTP/2 flow-control window overflow),
   CVE-2026-123633 and CVE-2026-121810 (use-after-free in HTTP/2 and HTTP/3 when

@@ -55,7 +55,7 @@ Key design choices:
   timezone-cache use-after-free advisories CVE-2026-126714, CVE-2026-115560,
   CVE-2026-129481 and CVE-2026-129496), on Alpine 3.24.4, which also removes
   `brotli-libs` 1.2.0 (CVE-2026-111497). The bundled-compose nginx `1.30.7`
-  does not apply here; this stack runs its own `nginx:1.31.9`. No OpnForm GHSA
+  does not apply here; this stack runs its own `nginx:1.31.10`. No OpnForm GHSA
   is published. 2.8.6 also returns less personal data through MCP. 2.8.5 adds
   the nullable `failure_streak` column to `form_integrations`; the API
   entrypoint runs the migration at start, and integrations now pause after
@@ -105,11 +105,14 @@ Key design choices:
   8.3.36 for CVE-2026-109618 and CVE-2026-109619 and disables PHP session upload
   progress; 2.7.0 hardens password resets, credential revocation, OAuth/OIDC,
   domain ownership and file signing. No GHSA is published.
+- nginx `1.31.10` (2026-11-23) fixes CVE-2026-132779, excessive CPU use with
+  `ssl_early_data`. This nginx terminates no TLS, so it does not reach this stack; the pin
+  moves to the newest release. Source: https://nginx.org/en/security_advisories.html
 - nginx `1.31.9` (2026-11-18) is a security release: CVE-2026-125283 (buffer overflow with
   `try_files` and `alias` together), CVE-2026-123007 (HTTP/2 flow-control window overflow),
   CVE-2026-123633 and CVE-2026-121810 (use-after-free in HTTP/2 and HTTP/3 when
   `worker_connections` run out), CVE-2026-123634 (`resolver`), CVE-2026-113425 (mail proxy),
-  CVE-2026-120967 and CVE-2026-120993 (stream module, PROXY protocol v2). Pinned to `1.31.9` since 2026-11-23; this nginx sits behind
+  CVE-2026-120967 and CVE-2026-120993 (stream module, PROXY protocol v2). Pinned to `1.31.10` since 2026-11-26 (below); this nginx sits behind
   Traefik and speaks HTTP/1.1. No
   configuration in this repository combines `alias` with `try_files`; `nginx -t` passes on
   the 1.31.9 image. Source: https://nginx.org/en/CHANGES

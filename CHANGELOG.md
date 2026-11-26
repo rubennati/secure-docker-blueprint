@@ -8,10 +8,11 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
-## [0.9.10] — 2026-11-23 — Security releases of November 2026
+## [0.9.10] — 2026-11-26 — Security releases of November 2026
 
-Traefik v3.7.19 closes a path-parameter bypass of path-based access policies;
-every host should take it first. 42 further stacks move to the release that
+Traefik v3.7.20 closes a path-parameter bypass of path-based access policies and
+two memory exhaustions through compression; every host should take it first.
+42 further stacks move to the release that
 fixes their advisories, and PostgreSQL, Valkey, MongoDB, Silo and Elasticsearch
 move to their security releases in every stack that pins them. Each move was
 upgraded on existing data with the stack's local compose file: migrations ran,
@@ -36,18 +37,22 @@ PostgreSQL (no `pgautoupgrade` image for 18.7 yet).
 
 ### Security
 
-- **Traefik `v3.7.19`: path-based access policies hold for paths with path parameters** (`core/traefik`). v3.7.18 fixes five advisories, four of which reach this blueprint:
+- **Traefik `v3.7.20`: path-based access policies hold for paths with path parameters, and compression cannot exhaust memory** (`core/traefik`). v3.7.18 fixes five advisories, four of which reach this blueprint:
   - GHSA-cp28-5662-543f (high): Traefik routed `/cache/files/..;x/admin` as a path under `/cache/files/` and forwarded it unchanged, so a router that opens one path of a closed host also matched requests for the rest of it. A backend that strips path parameters then served `/admin` past `access-vpn`. Traefik now resolves such a segment before routing: under 3.7.17 the request reached the backend through the `access-public` router, under 3.7.19 the closed main router answers 403. Paths with `;` or `..` inside a name, an encoded `%3B` and OnlyOffice's `/<version>-<hash>/web-apps/` reach the backend unchanged.
   - GHSA-x5pf-cqh3-2gv8 (high): unauthenticated memory exhaustion through the Compress middleware, which sits on the `websecure` entrypoint in front of every router.
   - GHSA-p956-6gvv-mxqp (high): ForwardAuth NTLM bypass through `Proxy-Authorization`, for deployments with the Authentik forward-auth switch on.
   - GHSA-rr42-h8r2-f28g (medium): pre-authentication CPU amplification in BasicAuth, for the six stacks with a `basicAuth` middleware of their own. Passwords longer than 1024 bytes are now refused.
   - GHSA-ccgh-9g52-6vwg (high) is in the ingress-nginx provider, which the blueprint does not use. v3.7.19 adds dependency updates only.
 
-  The rendered configuration loads under 3.7.19 with the same log lines as under 3.7.17. **Upgrade:** set `TRAEFIK_IMAGE=traefik:v3.7.19` in `core/traefik/.env`, run `render.sh` and `validate.sh`, then `docker compose pull && docker compose up -d`. Every router is down for the few seconds the container takes to restart.
+  v3.7.20 fixes three more:
+  - GHSA-3rh5-223h-cpwr (high): the Compress middleware's Brotli writer held megabytes per response in flight, unbounded, for any client sending `Accept-Encoding: br` — the same exposure as the zstd one above, in front of every router.
+  - GHSA-42x2-976f-ph52 (medium) and GHSA-9657-c2gv-wjpj (medium) need a Docker provider password, the Knative or HTTP provider, or client-certificate TLS options; the blueprint uses none of them.
 
-- **Invoice Ninja `5.13.56` with PHP 8.5.13** (`business/invoiceninja`). The image of 5.13.53 carries PHP 8.5.12; 5.13.56 carries 8.5.13, the PHP security release of 2026-11-19: use-after-free and a TOCTOU race in session handling, use-after-free in the backtrace after a fatal error, PHP-FPM request smuggling, a use-after-free in FPM's epoll loop and a PHAR signature bypass. 5.13.54 to 5.13.56 tighten validation and authorisation checks and fix bugs. An installation upgraded from 5.13.53 with data runs no migration, and login, the invoice list, the quote PDF and the live preview work after the upgrade. The optional Redis username and key prefix of 5.13.55 are not needed: the stack runs its own Redis. **Upgrade:** take a database dump (README → *Backup*), set `APP_TAG=5.13.56` and `NGINX_TAG=1.31.9-alpine-slim` in `.env`, then `docker compose pull && docker compose up -d`.
+  The rendered configuration loads under 3.7.20 with the same log lines as under 3.7.17, and `br`, `zstd` and `gzip` responses are still compressed. **Upgrade:** set `TRAEFIK_IMAGE=traefik:v3.7.20` in `core/traefik/.env`, run `render.sh` and `validate.sh`, then `docker compose pull && docker compose up -d`. Every router is down for the few seconds the container takes to restart.
 
-- **nginx `1.31.9` wherever a stack pins nginx** (`business/invoiceninja`, `apps/nextcloud`, `apps/opnform`, `apps/_reference`, `development/static-site`). The release of 2026-11-18 fixes CVE-2026-125283 (buffer overflow with `try_files` and `alias`), CVE-2026-123007 (HTTP/2 flow control), CVE-2026-123633 and CVE-2026-121810 (use-after-free in HTTP/2 and HTTP/3), CVE-2026-123634 (`resolver`), CVE-2026-113425 (mail proxy), CVE-2026-120967 and CVE-2026-120993 (stream module). Each of these nginx instances sits behind Traefik and speaks HTTP/1.1, and no configuration here combines `alias` with `try_files`; each configuration passes `nginx -t` on the new image. `nginx-unprivileged` (`apps/_reference`, the static-site recipes) now comes from `ghcr.io/nginx/nginx-unprivileged`: Docker Hub had neither 1.31.8 nor 1.31.9 a week after the release. **Upgrade:** set `NGINX_TAG` in the stack's `.env` (`1.31.9-alpine-slim`, OpnForm `1.31.9`), then `docker compose pull && docker compose up -d`; an own static site rebuilds its image.
+- **Invoice Ninja `5.13.56` with PHP 8.5.13** (`business/invoiceninja`). The image of 5.13.53 carries PHP 8.5.12; 5.13.56 carries 8.5.13, the PHP security release of 2026-11-19: use-after-free and a TOCTOU race in session handling, use-after-free in the backtrace after a fatal error, PHP-FPM request smuggling, a use-after-free in FPM's epoll loop and a PHAR signature bypass. 5.13.54 to 5.13.56 tighten validation and authorisation checks and fix bugs. An installation upgraded from 5.13.53 with data runs no migration, and login, the invoice list, the quote PDF and the live preview work after the upgrade. The optional Redis username and key prefix of 5.13.55 are not needed: the stack runs its own Redis. **Upgrade:** take a database dump (README → *Backup*), set `APP_TAG=5.13.56` and `NGINX_TAG=1.31.10-alpine-slim` in `.env`, then `docker compose pull && docker compose up -d`.
+
+- **nginx `1.31.10` wherever a stack pins nginx** (`business/invoiceninja`, `apps/nextcloud`, `apps/opnform`, `apps/_reference`, `development/static-site`). The release 1.31.9 of 2026-11-18 fixes CVE-2026-125283 (buffer overflow with `try_files` and `alias`), CVE-2026-123007 (HTTP/2 flow control), CVE-2026-123633 and CVE-2026-121810 (use-after-free in HTTP/2 and HTTP/3), CVE-2026-123634 (`resolver`), CVE-2026-113425 (mail proxy), CVE-2026-120967 and CVE-2026-120993 (stream module). Each of these nginx instances sits behind Traefik and speaks HTTP/1.1, and no configuration here combines `alias` with `try_files`; each configuration passes `nginx -t` on the new image. `nginx-unprivileged` (`apps/_reference`, the static-site recipes) now comes from `ghcr.io/nginx/nginx-unprivileged`: Docker Hub had neither 1.31.8 nor 1.31.9 a week after the release. 1.31.10 (2026-11-23) adds the fix for CVE-2026-132779 (CPU use with `ssl_early_data`), which no nginx here reaches because none terminates TLS. **Upgrade:** set `NGINX_TAG` in the stack's `.env` (`1.31.10-alpine-slim`, OpnForm `1.31.10`), then `docker compose pull && docker compose up -d`; an own static site rebuilds its image.
 
 - **The CrowdSec bouncer key is out of the configuration every account can read** (`core/traefik/`).
   `render.sh` wrote the key into `config/dynamic/crowdsec.yml` with mode 644, in a

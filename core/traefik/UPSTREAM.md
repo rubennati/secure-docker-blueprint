@@ -51,6 +51,26 @@
 
 ## Version / tag notes
 
+- **Moved to `v3.7.20` on 2026-11-26** (released 2026-11-23). Three advisories:
+  - GHSA-3rh5-223h-cpwr (high): the Brotli writer of the Compress middleware held megabytes
+    of state per response in flight, unbounded, and any client selects Brotli with
+    `Accept-Encoding: br` — the Brotli counterpart of GHSA-x5pf-cqh3-2gv8.
+    `compress@file` sits on the `websecure` entrypoint in front of every router, so it
+    reaches every installation. v3.7.20 bounds that memory; `br`, `zstd` and `gzip` are
+    still negotiated as before (measured; the memory bound itself was not load-tested).
+  - GHSA-42x2-976f-ph52 (medium): the Docker and Swarm provider `password`, the Knative
+    `token` and the HTTP provider `headers` were not redacted from DEBUG logs, support
+    dumps and usage statistics. Does not reach this blueprint: the Docker provider talks to
+    the socket proxy without a password, and neither Knative nor the HTTP provider is used.
+  - GHSA-9657-c2gv-wjpj (medium): a router whose rule spells a host with a trailing dot
+    escaped the TLS-option conflict detection and could serve a host protected by
+    client-certificate options. Does not reach this blueprint: no TLS option here asks for
+    client certificates, and the routers come from one operator.
+  The rendered configuration loads under 3.7.20 with the same log lines as under 3.7.19,
+  and the path-parameter probe of 3.7.19 gives the same answers. v3.8.0 was released the
+  same day; the pin stays on the 3.7 line for this patch release.
+  Sources: https://github.com/traefik/traefik/releases/tag/v3.7.20,
+  https://github.com/traefik/traefik/security/advisories/GHSA-3rh5-223h-cpwr
 - **Moved to `v3.7.19` on 2026-11-23.** v3.7.18 (2026-11-10) fixes five advisories, four of
   which reach this blueprint:
   - GHSA-cp28-5662-543f (high): `sanitizePath` left a dot-segment carrying a path parameter
@@ -147,7 +167,7 @@
 
 A minor bump inside v3 still changes request handling. Read the per-version migration
 notes, not only the release notes — https://doc.traefik.io/traefik/migrate/v3/ carries a
-section per patch release. Between 3.6 and 3.7.19 these apply to this blueprint:
+section per patch release. Between 3.6 and 3.7.20 these apply to this blueprint:
 
 | Version | Change | What it touches here |
 |---|---|---|

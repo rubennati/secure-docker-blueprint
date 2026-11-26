@@ -2,9 +2,9 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-11-23
+**Last updated:** 2026-11-26
 
-- **Phase:** pre-1.0. Latest tag `v0.9.10` (2026-11-23), which is where `main`
+- **Phase:** pre-1.0. Latest tag `v0.9.10` (2026-11-26), which is where `main`
   stands; what `dev` carries beyond it is `git rev-list --count v0.9.10..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
@@ -101,8 +101,8 @@
   port comes only with the firewall-bouncer overlay; `DAC_READ_SEARCH` is in the
   capability baseline (DEC-047 addendum). Docs, stack READMEs and the website
   agree; the site starts with five stacks and has a Monitoring section.
-- **Released: v0.9.10 (2026-11-23) — security releases of November 2026.** Traefik
-  v3.7.19 (path-parameter bypass of path-based access policies), 42 further stacks
+- **Released: v0.9.10 (2026-11-26) — security releases of November 2026.** Traefik
+  v3.7.20 (path-parameter bypass of path-based access policies, compression memory exhaustion), 42 further stacks
   and PostgreSQL, Valkey, MongoDB, Silo and Elasticsearch at their security
   releases, each upgraded on data locally; no host run. Not moved: MariaDB (tags
   not on Docker Hub) and LibrePhotos' PostgreSQL (no `pgautoupgrade` 18.7).

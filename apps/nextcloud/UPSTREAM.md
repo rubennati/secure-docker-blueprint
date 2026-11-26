@@ -110,11 +110,14 @@ If fpm-alpine + nginx causes issues:
   CVE-2026-42530, CVE-2026-42055, CVE-2026-48142, CVE-2026-42533, CVE-2026-60005,
   CVE-2026-56434, CVE-2026-90439, CVE-2026-15176, CVE-2026-93479, CVE-2026-95101,
   CVE-2026-97629, CVE-2026-97205.
+- nginx `1.31.10` (2026-11-23) fixes CVE-2026-132779, excessive CPU use with
+  `ssl_early_data`. This nginx terminates no TLS, so it does not reach this stack; the pin
+  moves to the newest release. Source: https://nginx.org/en/security_advisories.html
 - nginx `1.31.9` (2026-11-18) is a security release: CVE-2026-125283 (buffer overflow with
   `try_files` and `alias` together), CVE-2026-123007 (HTTP/2 flow-control window overflow),
   CVE-2026-123633 and CVE-2026-121810 (use-after-free in HTTP/2 and HTTP/3 when
   `worker_connections` run out), CVE-2026-123634 (`resolver`), CVE-2026-113425 (mail proxy),
-  CVE-2026-120967 and CVE-2026-120993 (stream module, PROXY protocol v2). The front is pinned to `1.31.9-alpine-slim` since
+  CVE-2026-120967 and CVE-2026-120993 (stream module, PROXY protocol v2). The front is pinned to `1.31.10-alpine-slim` (below) since
   2026-11-23; it sits behind Traefik and speaks HTTP/1.1. No
   configuration in this repository combines `alias` with `try_files`; `nginx -t` passes on
   the 1.31.9 image. Source: https://nginx.org/en/CHANGES
