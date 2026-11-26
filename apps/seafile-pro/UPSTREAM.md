@@ -35,7 +35,7 @@
 | Caddy → Traefik labels | Blueprint uses Traefik, not Caddy |
 | Traefik priority=1 on main router, priority=100 on sub-services | Prevents main router from catching /thumbnail, /notification, /sdoc-server paths |
 | `APP_TRAEFIK_LIMIT=limit-sync` | The sync client runs three upload and three download threads and issues one request per block, through the main router. Above the 125 requests per second of `limit-standard` a sync of many small files is answered `429` and fails; `limit-sync` allows 1000 |
-| `seafile-net` → `app-internal` + `proxy-public` | Blueprint network schema |
+| `seafile-net` → `app-internal` (internal) + `proxy-public`, and `app-egress` for ClamAV and Seafile AI | Blueprint network schema; only the two services that need the internet get a way out |
 | Passwords and keys as Docker Secrets, exported by `config/secrets-env.sh` | Seafile reads them from the environment only, without a `_FILE` variant; the wrapper exports them in front of each service, and `my_init` passes them on |
 | Container names → variables | Blueprint standard |
 | Image names hardcoded, tags as variables | Blueprint standard |
@@ -257,6 +257,17 @@ If you need Elasticsearch instead of SeaSearch:
 - SeaSearch stays at `1.0.8`: `1.0.9` was pushed on 2026-11-24 without release notes,
   and `1.0-latest`, the tag Seafile's compose files name, still points to 1.0.8.
   Move when upstream promotes it.
+- **`app-internal` is internal since 2026-11-26**, as in `apps/seafile`. It was a plain
+  bridge because ClamAV and Seafile AI reach the internet over it; that gave the
+  database, Redis, SeaSearch and the metadata server a way out as well, and
+  disconnecting the edge network did not cut the stack off. ClamAV and Seafile AI
+  now join a second network, `app-egress` (`<project>-egress`), that no other
+  service joins. Checked: ClamAV 1.5.5 loads its signatures over `app-egress`,
+  answers on `app-internal` and finds the EICAR test string sent from there; a
+  container on `app-internal` alone resolves no outside name. **Upgrade:** the
+  network's `internal` flag changes, so Compose recreates it — run
+  `docker compose down` and `docker compose up -d` in a maintenance window rather than
+  a bare `up -d` under a running stack.
 
 ## Upgrade checklist
 

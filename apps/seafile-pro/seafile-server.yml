@@ -232,11 +232,14 @@ networks:
     name: ${TRAEFIK_NETWORK}
     external: true
 
-  # Not internal: ClamAV fetches its signatures and Seafile AI reaches its LLM
-  # provider over this network, the only one they join. Every file of this stack
-  # defines it the same way.
+  # Internal, as in apps/seafile: the database, Redis and the side services
+  # reach nothing outside the host. ClamAV (signature updates) and Seafile AI
+  # (its LLM provider) join app-egress as well, in their own files. Every file
+  # of this stack defines app-internal the same way — two definitions of one
+  # network make Compose recreate it under a running stack.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
 
 # --------------------------------------------------------
 # SECRETS

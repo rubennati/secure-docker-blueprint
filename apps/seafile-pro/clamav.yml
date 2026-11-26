@@ -32,7 +32,12 @@ services:
 
     networks:
       - app-internal
+      - app-egress     # freshclam fetches the signature database
 
 networks:
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+  # Outbound only: a plain bridge that no other service of this stack joins.
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
