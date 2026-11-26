@@ -282,9 +282,17 @@ plain text unless it is given `--passphrase`; it says so in its output.
 
 <!-- findings:end -->
 
-The pinned Tika image, `apache/tika:3.3.3.0`, ships with 1 CRITICAL vulnerability that has a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). The fix is only in Tika 4, which Paperless-ngx does not yet support, so Tika stays on the newest 3.x release.
+The Tika image, `apache/tika:3.3.3.1`, carries 1 CRITICAL finding with a published fix, in Apache CXF (CVE-2026-49875, external entity resolution). Tika 3.4.0.0 carries none, but 3.4 caps a multipart attachment at 50 MB and lowers the zip-bomb limits, so a large document Paperless hands to Tika could be refused. Tika stays at 3.3.3.1 until that limit is measured with Paperless or Paperless moves (`UPSTREAM.md`).
 
-**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on. Move to Tika 4 once Paperless-ngx supports it.
+**Risk:** Tika sits on the internal network with no outbound route, which blocks the out-of-band data leak this flaw relies on.
+
+The Paperless image, `paperless-ngx:3.5.1`, carries 3: the MariaDB client libraries from its Debian base (CVE-2026-44172, CVE-2026-49261) and NLTK (CVE-2026-128138, a sandbox bypass through JAR files).
+
+**Risk:** the MariaDB findings concern the server; the image only carries the client, which this stack does not use with PostgreSQL. NLTK's flaw needs a crafted JAR handed to its Java tools, which Paperless does not call.
+
+Gotenberg 8.40.0, the last release of 8, carries 2 in Chromium (CVE-2026-118333, CVE-2026-118337). Paperless does not support Gotenberg 9.
+
+**Risk:** Gotenberg renders the mail and office documents Paperless consumes, on the internal network; a crafted document is the path. Consume only from trusted sources.
 
 The PostgreSQL image, `postgres`, carries one CRITICAL finding, CVE-2025-68121, in the Go runtime of `gosu`, the helper that drops root privileges at start. Every current image of this line ships the same gosu build, and its maintainer has not rebuilt it with a fixed Go.
 

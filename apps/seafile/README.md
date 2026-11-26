@@ -541,16 +541,9 @@ Then request a thumbnail in the browser and confirm it does not return 403.
 
 <!-- findings:end -->
 
-SeaDoc 2.0.11 and the thumbnail server 13.0.29, the newest images for Seafile 13,
-bundle PyJWT 2.10.1 (CVE-2026-102268); SeaDoc also bundles `proxy-addr` 2.0.7
-(CVE-2026-90711). MariaDB 10.11 carries one finding in its `gosu` start-up helper
-(CVE-2025-68121, Go TLS), as does every newer MariaDB line.
+SeaDoc 2.0.14 carries 5 CRITICAL findings with published fixes, all in `linux-libc-dev`, the kernel headers of its Ubuntu base (CVE-2026-63825, CVE-2026-64523, CVE-2026-68426, CVE-2026-90162, CVE-2026-93221). The PyJWT and `proxy-addr` findings of 2.0.11 are gone. The thumbnail server 13.0.29, the newest for Seafile 13, still bundles PyJWT 2.10.1 (CVE-2026-102268) and carries 39 findings in its base system. MariaDB 10.11 carries one finding in its `gosu` start-up helper (CVE-2025-68121, Go TLS), as does every newer MariaDB line.
 
-**Risk:** the PyJWT flaw concerns tokens signed with a public key, while Seafile
-signs with a shared secret, so it is most likely not reached (not verified in
-code). `proxy-addr` can let a client spoof the IP address that is logged. `gosu`
-only drops privileges at start and opens no TLS connection. The fixes arrive
-with newer Seafile component images.
+**Risk:** kernel headers are build files; the container runs on the host's kernel, not on them. The PyJWT flaw concerns tokens signed with a public key, while Seafile signs with a shared secret, so it is most likely not reached (not verified in code). `gosu` only drops privileges at start and opens no TLS connection. The thumbnail server's base findings clear with a newer image.
 
 ## Details
 

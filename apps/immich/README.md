@@ -269,13 +269,13 @@ curl -L https://github.com/simulot/immich-go/releases/latest/download/immich-go_
 
 <!-- findings:end -->
 
-The Immich server image, `immich-server:v3.3.6`, carries 5 CRITICAL findings that have published fixes: brotli from its Debian base and the Node packages handlebars, `proxy-addr` and `tar`. The machine-learning image, `immich-machine-learning:v3.3.6`, carries 7, five of them in Pillow 12.3.0, plus anyio and certifi. v3.3.6 is the newest stable release.
+The server image, `immich-server:v3.4.2`, carries 2 CRITICAL findings with published fixes: OpenEXR 3.1 from its Debian base (CVE-2026-42216, CVE-2026-42217, malformed EXR files). The machine-learning image, `immich-machine-learning:v3.4.2`, carries 2: anyio (CVE-2026-63374, TLS name checks) and certifi (GHSA-6q48-6c7w-9gw2, root certificates with compromised intermediates). v3.4.2 is the newest release; the Pillow, handlebars, `proxy-addr` and `tar` findings of v3.3.6 are gone.
 
-**Risk:** the machine-learning service decodes uploaded photos with Pillow, so allow uploads only from trusted users. The server's findings need admin-set templates, unusual proxy settings or crafted archives. Watch for v3.4.0.
+**Risk:** OpenEXR is reached when an uploaded EXR image is decoded, so allow uploads only from trusted users. The machine-learning service downloads its models over TLS; anyio and certifi matter on that path, not for uploads.
 
-The Immich database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1`, carries 4 CRITICAL findings: Perl 5.36 from its Debian 12 base (CVE-2026-13221, CVE-2026-42496, CVE-2026-8376) and the `gosu` Go runtime (CVE-2025-68121). Every current Immich PostgreSQL build, on any supported major, ships the same packages.
+The database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1` at the 14.25 digest, carries 1 CRITICAL finding: the `gosu` Go runtime (CVE-2025-68121). The Perl findings of the 14.23 digest are gone. PostgreSQL 14 itself is out of support since 14.25; README → *Upgrading PostgreSQL*.
 
-**Risk:** PostgreSQL does not run Perl on user data, and gosu makes no network connection. Keep the database on the internal network and watch for a rebuilt image.
+**Risk:** gosu only drops privileges at start and makes no network connection. Keep the database on the internal network.
 
 ## Details
 

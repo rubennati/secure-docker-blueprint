@@ -199,16 +199,9 @@ docker compose up -d
 
 <!-- findings:end -->
 
-The findings of the community edition apply here too: PyJWT CVE-2026-102268 and
-`proxy-addr` CVE-2026-90711 in SeaDoc 2.0.11, PyJWT in the thumbnail server
-13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The optional
-Seafile AI image 13.0.10 carries 21 CRITICAL vulnerabilities, among them LiteLLM
-authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13
-build of it exists, and Seafile 14 is not yet stable.
+The findings of the community edition apply here too: the kernel headers in SeaDoc 2.0.14, PyJWT CVE-2026-102268 and the base system of the thumbnail server 13.0.29, and the `gosu` helper in MariaDB 10.11 (CVE-2025-68121). The Pro server image, `seafile-pro-mc:13.0.30`, carries the same 5 kernel-header findings as SeaDoc; the community image of the same release carries none. The optional Seafile AI image 13.0.10 carries 22 CRITICAL findings, among them LiteLLM authentication bypasses and Pillow image-decoding overflows; no newer Seafile 13 build of it exists, and Seafile 14 is not yet stable. ClamAV 1.5.5 carries none.
 
-**Risk:** as in `apps/seafile` for the core images. Seafile AI is off by default
-and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave
-it off unless you need it, and watch for a stable Seafile 14.
+**Risk:** as in `apps/seafile` for the core images; kernel headers are not run. Seafile AI is off by default and not part of `COMPOSE_FILE`; once enabled, its findings are reachable. Leave it off unless you need it, and watch for a stable Seafile 14.
 
 ## Details
 

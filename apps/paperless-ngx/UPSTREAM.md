@@ -131,7 +131,9 @@
   multipart attachment at 50 MB by default (`maxAttachmentBytes`, CVE-2026-54225) and
   lowers the zip-bomb and embedding-depth limits, so a large document Paperless
   hands to Tika would be refused; Paperless's own compose still ships 3.3.1.0. Move
-  when upstream Paperless moves, or with a measured limit.
+  when upstream Paperless moves, or with a measured limit. The hold has a price:
+  3.3.3.1 carries CVE-2026-49875 (Apache CXF, CRITICAL), and a Trivy scan of
+  `3.4.0.0` on 2026-11-26 found no CRITICAL finding with a published fix.
 - Gotenberg stays at `8.40.0`, the last release of 8: Gotenberg 9 (2026-11-05)
   renames the PDF routes and fields Paperless calls, and Paperless does not support
   it (paperless-ngx issue 14839, closed as not planned for now).
