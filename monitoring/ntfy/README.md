@@ -120,6 +120,31 @@ to `access-vpn` as well — then nothing is public, and nothing else changes.
 One topic per concern beats one topic for everything — a grant is per topic, so a
 publisher that only reports backups cannot read the rest.
 
+### Publishers on the same host
+
+Publishing is on the operator router, `access-vpn`. A container on the same host
+that calls the public name arrives at Traefik from a Docker address, not from the
+VPN, and is refused with `403` — the monitor and the receiver on one host cannot
+reach each other that way. Publish over ntfy's edge network instead, to the
+container by name, with a token:
+
+```text
+http://ntfy-app:80/<topic>          Authorization: Bearer tk_…
+```
+
+The publishing stack joins this stack's edge network (`TRAEFIK_NETWORK`, by default
+`ntfy-edge`) with an opt-in file: `monitoring/gatus/ntfy.yml` and
+`core/dockhand/ntfy.yml` ship one, and their READMEs show the provider settings
+(Gatus: "Notifications", Dockhand: "Notifications"). Another stack follows the same
+pattern — one service joined to the external network `ntfy-edge`, as
+`apps/nextcloud/office.yml` does for an office server. The publisher then reaches
+ntfy and Traefik, nothing else.
+
+Setting `TRAEFIK_NETWORK=proxy-public` on both stacks works too, but puts both on
+the network every member of which reaches every other
+(`docs/standards/networking.md`). A publisher on another host uses the public name
+over the VPN.
+
 ## Backup
 
 | | |

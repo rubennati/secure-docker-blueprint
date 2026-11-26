@@ -13,7 +13,7 @@ Three services:
 | Service | Image | Purpose |
 |---------|-------|---------|
 | `dockhand` | `fnsys/dockhand` | Dockhand web UI + Git poller + Compose orchestrator |
-| `db` | `postgres:16.15-alpine` | Persistent state (stacks, users, Git repos config) |
+| `db` | `postgres:16.16-alpine` | Persistent state (stacks, users, Git repos config) |
 | `socket-proxy` | `tecnativa/docker-socket-proxy` | Filtered Docker API access — Dockhand never talks to the Docker socket directly |
 
 Dockhand reaches the Docker daemon via `DOCKER_HOST=tcp://socket-proxy:2375`. The proxy enforces which API endpoints are allowed — see `.env.example` / `docker-compose.yml` for the permission set.
@@ -56,13 +56,44 @@ docker compose up -d
 
 As shipped: `access-vpn`, `limit-standard`, `headers-standard`, and the deployment's TLS option (`TLS_DEFAULT_OPTION` in `core/traefik/.env`). Adjust in `.env` if a different setup is needed.
 
-## Adding the local environment
+`ORIGIN` is set to `https://<APP_TRAEFIK_HOST>` in the compose file: the address the
+browser uses, which the container behind Traefik cannot see. Passkey sign-in needs it.
+
+## Authentication
 
 A new instance starts **without authentication** — `/api/auth/session` answers
-`{"authenticated":false,"authEnabled":false}` (v1.0.57),
-and whoever reaches the route manages every connected Docker host. Until
-authentication is turned on in Dockhand's settings, the access policy is the only gate:
-keep `access-vpn`.
+`{"authenticated":false,"authEnabled":false}` (v1.0.57, v1.0.59), the API answers
+without a login, and whoever reaches the route manages every connected Docker host.
+Turn authentication on at the first start, before adding an environment:
+
+1. *Settings → Authentication → Users → Add user*: the first account, with a password
+   from the password manager. Dockhand refuses to turn authentication on while no
+   user exists.
+2. *Settings → Authentication*: switch *Authentication* on. The next page load asks for
+   the login.
+3. Second factor, from Dockhand's manual: TOTP under *Profile → Security*, with the
+   backup codes kept in the password manager; or a passkey, once an admin allows
+   passkey sign-in under *Settings → Authentication*. A passkey replaces the password
+   and the TOTP code.
+
+Check, from the operator's network:
+
+```bash
+curl -s https://dockhand.example.com/api/auth/session
+# {"authenticated":false,"authEnabled":true}
+curl -s -o /dev/null -w '%{http_code}\n' https://dockhand.example.com/api/containers
+# 401
+```
+
+Both were measured on v1.0.59 after the two steps above; before them, the session
+answers `authEnabled:false` and the API `200`.
+
+**The access policy is the only gate only while Dockhand shares no network with
+another container.** On the stack's own edge network Traefik alone reaches port 3000.
+On `proxy-public`, every container on that network reaches Dockhand directly, past
+`access-vpn`; with `ntfy.yml`, ntfy does. Turn authentication on before either.
+
+## Adding the local environment
 
 On the first visit, Dockhand asks you to add an environment. For the Docker daemon on the host where Dockhand itself runs, enter:
 
@@ -78,6 +109,47 @@ On the first visit, Dockhand asks you to add an environment. For the Docker daem
 Dockhand reaches the Docker API through the filtered socket proxy on the internal `dockhand-internal` network. Plain HTTP is safe here because the proxy is never reachable from the host or the internet — only from containers on that network.
 
 Click "Test connection" → should turn green → "Add". The environment appears in the sidebar with full stack management (containers, volumes, networks, Git-based deploys).
+
+## Notifications
+
+*Settings → Notifications → Add channel*, type *Webhooks*, one URL per line. Which
+events each environment sends is set per environment.
+
+**ntfy on the same host.** ntfy's publishing router is `access-vpn`; Dockhand calling
+the public name from its container arrives from a Docker address and is refused with
+`403`. Join Dockhand to ntfy's edge network with the opt-in `ntfy.yml`, after
+authentication is on:
+
+```bash
+# .env
+NTFY_NETWORK=ntfy-edge
+COMPOSE_FILE=docker-compose.yml:ntfy.yml
+```
+
+and point the channel at the container by name, with the token as ntfy's `auth`
+parameter — the base64 of `Bearer tk_…`, without padding:
+
+```bash
+printf 'Bearer %s' 'tk_…' | base64 | tr -d '=\n' | tr '+/' '-_'
+```
+
+```text
+ntfy://ntfy-app:80/<topic>?auth=<the output above>
+```
+
+The token belongs to an ntfy user with write access to that topic only
+(`monitoring/ntfy/README.md`, Setup). *Test* in the dialog sends a message; it arrived
+on v1.0.59 with ntfy v2.38.2, and without `auth` ntfy answered `403`. The URL carries
+the token, so it sits in Dockhand's database and in its backups; a token that leaks is
+revoked on the ntfy side (`ntfy token remove`).
+
+**ntfy on another host.** `ntfys://ntfy.example.com/<topic>?auth=…` over HTTPS. The
+request has to arrive over the VPN — Dockhand's host on the tailnet, and the name
+resolving to the ntfy host's tailnet address — or the operator router refuses it.
+
+`TRAEFIK_NETWORK=proxy-public` on both stacks with `ntfy://ntfy-app:80/…` works as
+well, but every container on `proxy-public` then reaches Dockhand directly; the
+opt-in file limits that to ntfy.
 
 ## Verify
 
