@@ -31,6 +31,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 cp .env.example .env
 mkdir -p config volumes/data
 cp config.example.yaml config/config.yaml
+chmod 600 config/config.yaml
 # Edit config.yaml — add your endpoints + alerting channels
 
 docker compose up -d
@@ -44,10 +45,51 @@ Gatus auto-reloads on config changes — just `vim config/config.yaml` + save, n
 
 ## Security Model
 
-- **YAML config is the source of truth** — version-control your `config.yaml` (but NOT with embedded secrets — use `${ENV_VAR}` references).
-- **Secret references** — `config.yaml` supports `${NAME}` that Gatus reads from its environment. Pass sensitive alert-webhook URLs via `.env` or a `.env.secrets` sourced into the compose environment.
+- **`config.yaml` is the source of truth and the secret file.** Alert tokens, webhook URLs and SMTP passwords are written into it as values. The file is owner-only (`chmod 600`), gitignored (`config/config.yaml`), and mounted read-only; Gatus runs as root in its container and reads it. Keep it in the encrypted backup, not in a public repository.
+- **No secret in the environment.** Gatus expands `${NAME}` in `config.yaml` from its own environment, and this stack passes nothing but `TZ`, the config path and the log level into it. A `${NAME}` reference therefore expands to an empty string, and a value in `.env` never reaches the container. Passing secrets through `environment:` would work, but would show them in `docker inspect`; Gatus has no `_FILE` variant ([`UPSTREAM.md`](UPSTREAM.md)).
 - **Default access `access-vpn`, with `limit-standard` and `headers-standard`** — the UI and `/api/v1/endpoints/statuses` expose all target URLs, conditions, and alerting destinations. Switch to public only after redaction review.
 - **`read_only: true` + tmpfs /tmp** — the container has no writable root FS.
+
+## Notifications
+
+Gatus sends an alert through a provider in the `alerting:` block of `config.yaml`;
+an endpoint names the provider under `alerts:`. `config.example.yaml` has an ntfy
+example.
+
+**ntfy on the same host.** `monitoring/ntfy` publishes on its operator router,
+which is `access-vpn`. Gatus calling the public name from its container arrives
+from a Docker address, not from the VPN, and is refused with `403`. Join Gatus to
+ntfy's edge network with the opt-in `ntfy.yml` and publish to the container by name:
+
+```bash
+# .env
+NTFY_NETWORK=ntfy-edge
+COMPOSE_FILE=docker-compose.yml:ntfy.yml
+```
+
+```yaml
+# config/config.yaml
+alerting:
+  ntfy:
+    url: "http://ntfy-app:80"
+    topic: "gatus"
+    token: "tk_…"          # an ntfy user with write access to the topic
+```
+
+Create the user and token on the ntfy side (`monitoring/ntfy/README.md`, Setup):
+one user for Gatus, write access to its topic only. Gatus gains a path to ntfy and
+to Traefik on that network, and nothing else; setting `TRAEFIK_NETWORK=proxy-public`
+on both stacks would work too, but puts both on the network every member of which
+reaches every other.
+
+**ntfy on another host.** `url: "https://ntfy.example.com"` with the same token. The
+request has to arrive over the VPN — the host running Gatus on the tailnet, and the
+name resolving to the ntfy host's tailnet address — or the operator router refuses
+it.
+
+**Check:** after a change to `config.yaml`, `docker compose logs gatus-app` shows the
+reload without an error; an endpoint pointed at an address that fails delivers its
+alert after `failure-threshold` checks.
 
 ## Integration patterns
 

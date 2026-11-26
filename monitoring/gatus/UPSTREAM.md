@@ -27,6 +27,8 @@
 | **`security_opt: no-new-privileges:true`** | Baseline hardening |
 | **Config mounted as read-only (`:ro`)** | Container should not modify its own config |
 | **`access-vpn` default access** | Status page may expose internal service topology |
+| **Secrets written into `config/config.yaml`, which is `600`, gitignored and mounted `:ro`; nothing secret in `environment:`** | Gatus expands `${NAME}` from its environment and has no `_FILE` variant. A value in `environment:` would show in `docker inspect`; the config file is the one file Gatus already reads |
+| **Opt-in `ntfy.yml` joins Gatus to ntfy's edge network** | ntfy's publishing router is `access-vpn`; a container calling the public name on the same host is refused with `403`. Checked 2026-11-26 with Gatus v5.38.0 and ntfy v2.38.2: an alert reached the topic through `http://ntfy-app:80` with a token; without the file the name does not resolve, without the token ntfy answers `403` |
 
 ## Configuration
 
