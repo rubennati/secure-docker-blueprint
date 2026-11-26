@@ -185,7 +185,7 @@ backup as `db_pwd.txt`. Full architecture:
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/windmill-labs/windmill:1.864.1` | 1 · 66 | 0 · 5 | 0 · 4 |
+| `ghcr.io/windmill-labs/windmill:1.864.1` | 1 · 65 | 0 · 5 | 0 · 4 |
 | `postgres:18.7` | 0 · 1 | — | 1 · 25 |
 
 <!-- findings:end -->

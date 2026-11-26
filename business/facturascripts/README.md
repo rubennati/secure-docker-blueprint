@@ -151,7 +151,7 @@ and run `docker compose up -d`.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `facturascripts/facturascripts:2026.72` | 2 · 66 | — | — |
+| `facturascripts/facturascripts:2026.72` | 2 · 65 | — | — |
 | `mariadb:11.4.13` | — | — | 1 · 25 |
 
 <!-- findings:end -->

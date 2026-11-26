@@ -127,7 +127,7 @@ than an error.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `lycheeorg/lychee:v7.13.0` | 1 · 100 | — | — |
+| `lycheeorg/lychee:v7.13.0` | 1 · 99 | — | — |
 | `mariadb:12.3.3` | — | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 

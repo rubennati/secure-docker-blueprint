@@ -124,7 +124,7 @@ policy before assuming the defaults in `backup/borgmatic/` fit this stack.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `mariadb:12.3.3` | — | — | 1 · 25 |
-| `matomo:5.14.2-apache` | 2 · 67 | — | — |
+| `matomo:5.14.2-apache` | 2 · 66 | — | — |
 
 <!-- findings:end -->
 

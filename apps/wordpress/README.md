@@ -289,7 +289,7 @@ generated on first start, so a restore that regenerates them logs everyone out.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `mariadb:12.3.3` | — | — | 1 · 25 |
-| `wordpress:7.1.4-php8.3-apache` | 2 · 66 | — | — |
+| `wordpress:7.1.4-php8.3-apache` | 2 · 65 | — | — |
 
 <!-- findings:end -->
 
