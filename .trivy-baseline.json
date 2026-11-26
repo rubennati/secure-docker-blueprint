@@ -49,16 +49,16 @@
       "stacks": [
         "business/erpnext"
       ],
-      "reason": "v16.60.0 (2026-11-19) is the newest v16 image; it is built on Debian 13.7 packages from before the MariaDB 11.8.8 client update.",
-      "risk": "Eight of the findings sit in frappe's node_modules build tooling (loader-utils, shell-quote, the Go runtime inside esbuild), used to build assets, not by the running web, worker or socket.io processes (not verified line by line). CVE-2026-44172 and CVE-2026-49261 sit in the MariaDB client library Debian 13 ships (fixed in 11.8.8, not yet in the image); ERPNext uses it to talk to its own MariaDB on the stack's internal network, so a hostile database server would be needed to reach it (not checked further).",
+      "reason": "v16.60.0 is the newest v16 image; the tag was rebuilt after 2026-11-19 on Debian 13 packages that carry Chromium 156.0.8078.79, before Debian's 156.0.8078.108.",
+      "risk": "Six findings sit in frappe's node_modules build tooling (loader-utils, shell-quote, the Go runtime inside esbuild), used to build assets, not by the running web, worker or socket.io processes (not verified line by line). Chromium (CVE-2026-118333, CVE-2026-118337) is the headless browser Frappe uses to render print formats to PDF; it renders the stack's own documents, so reaching it needs content an authenticated user can place in a print format or document (not checked further).",
       "cves": [
         "CVE-2022-37601",
         "CVE-2023-24538",
         "CVE-2023-24540",
         "CVE-2024-24790",
         "CVE-2025-68121",
-        "CVE-2026-44172",
-        "CVE-2026-49261",
+        "CVE-2026-118333",
+        "CVE-2026-118337",
         "CVE-2026-9277"
       ]
     },

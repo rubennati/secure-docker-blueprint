@@ -2,7 +2,7 @@
   "stacks": {
     "apps/adminer": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -21,8 +21,8 @@
         "adminer:6.3.0-standalone"
       ],
       "last_release": "2026-11-20",
-      "newest": "6.3.0-standalone",
-      "newest_date": "2026-11-03",
+      "newest": "6.3.1-standalone",
+      "newest_date": "2026-11-20",
       "newest_date_source": "release",
       "pinned": "6.3.0-standalone",
       "pinned_date": "2026-11-03",
@@ -30,11 +30,11 @@
       "quiet": false,
       "reason": null,
       "repo": "vrana/adminer",
-      "status": "current"
+      "status": "behind"
     },
     "apps/agentgateway": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -61,7 +61,7 @@
     },
     "apps/bookstack": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -100,10 +100,10 @@
     },
     "apps/caldiy": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 266,
+        "high": 267,
         "images": {
           "ghcr.io/rubennati/cal.diy:v6.2.0-9@sha256:bd6c53d80dcce24c2112c2878947d261f6bc825bda9fe93bf18e7e673d2f3034": {
             "libraries": [
@@ -116,7 +116,7 @@
             ],
             "system": [
               1,
-              155
+              156
             ]
           },
           "postgres:18.7": {
@@ -153,15 +153,15 @@
     },
     "apps/calnode": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 3,
-        "high": 54,
+        "high": 53,
         "images": {
           "ghcr.io/calnode/calnode:0.14.0": {
             "programs": [
               3,
-              54
+              53
             ]
           }
         },
@@ -185,15 +185,15 @@
     },
     "apps/calrs": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 1,
+        "high": 2,
         "images": {
           "ghcr.io/olivierlambert/calrs:1.23.3": {
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -217,21 +217,21 @@
     },
     "apps/ciso-assistant": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 56,
+        "high": 91,
         "images": {
           "ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2": {
             "system": [
               1,
-              31
+              66
             ]
           },
           "ghcr.io/intuitem/ciso-assistant-community/frontend:v4.2.2": {
             "system": [
               0,
-              1
+              2
             ]
           },
           "postgres:16.16": {
@@ -267,7 +267,7 @@
     },
     "apps/collabora": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -294,7 +294,7 @@
     },
     "apps/dashy": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -321,15 +321,19 @@
     },
     "apps/defectdojo": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 31,
+        "high": 46,
         "images": {
           "defectdojo/defectdojo-django:3.5.202": {
             "libraries": [
               0,
               5
+            ],
+            "system": [
+              0,
+              15
             ]
           },
           "defectdojo/defectdojo-nginx:3.5.202": {
@@ -359,9 +363,9 @@
         "postgres:18.7-alpine",
         "valkey/valkey:9.1.4-alpine"
       ],
-      "last_release": "2026-11-20",
-      "newest": "3.5.202",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-24",
+      "newest": "3.5.300",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "3.5.202",
       "pinned_date": "2026-11-20",
@@ -369,11 +373,11 @@
       "quiet": false,
       "reason": null,
       "repo": "DefectDojo/django-DefectDojo",
-      "status": "current"
+      "status": "behind"
     },
     "apps/dependency-track": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -413,10 +417,10 @@
     },
     "apps/dfir-iris": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 31,
-        "high": 1019,
+        "high": 1055,
         "images": {
           "ghcr.io/dfir-iris/iriswebapp_app:v2.4.29": {
             "libraries": [
@@ -425,7 +429,7 @@
             ],
             "system": [
               18,
-              856
+              891
             ]
           },
           "ghcr.io/dfir-iris/iriswebapp_db:v2.4.29": {
@@ -441,7 +445,7 @@
           "rabbitmq:3.13.7-management-alpine": {
             "system": [
               1,
-              34
+              35
             ]
           }
         },
@@ -467,10 +471,10 @@
     },
     "apps/dify": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 45,
-        "high": 748,
+        "high": 749,
         "images": {
           "langgenius/dify-api:1.20.0": {
             "libraries": [
@@ -499,7 +503,7 @@
             ],
             "system": [
               3,
-              28
+              29
             ]
           },
           "langgenius/dify-web:1.20.0": {
@@ -554,7 +558,7 @@
     },
     "apps/docker-mailserver": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 22,
@@ -586,7 +590,7 @@
     },
     "apps/docling-serve": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 25,
@@ -604,9 +608,9 @@
       "images": [
         "ghcr.io/docling-project/docling-serve-cpu:v1.38.2"
       ],
-      "last_release": "2026-10-27",
-      "newest": "v1.38.2",
-      "newest_date": "2026-10-27",
+      "last_release": "2026-11-26",
+      "newest": "v1.40.0",
+      "newest_date": "2026-11-26",
       "newest_date_source": "release",
       "pinned": "v1.38.2",
       "pinned_date": "2026-10-27",
@@ -614,19 +618,19 @@
       "quiet": false,
       "reason": null,
       "repo": "docling-project/docling-serve",
-      "status": "current"
+      "status": "behind"
     },
     "apps/easyappointments": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 5,
-        "high": 107,
+        "high": 142,
         "images": {
           "alextselegidis/easyappointments:1.6.1": {
             "system": [
               4,
-              82
+              117
             ]
           },
           "mariadb:11.4.13": {
@@ -657,7 +661,7 @@
     },
     "apps/euro-office": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 5,
@@ -689,10 +693,10 @@
     },
     "apps/ghost": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 84,
+        "high": 45,
         "images": {
           "ghost:6.78.0-alpine": {
             "libraries": [
@@ -712,10 +716,6 @@
             "programs": [
               1,
               25
-            ],
-            "system": [
-              0,
-              39
             ]
           }
         },
@@ -731,9 +731,9 @@
         "ghcr.io/tryghost/activitypub-migrations:1.2.21",
         "ghcr.io/tryghost/activitypub:1.2.21"
       ],
-      "last_release": "2026-11-17",
-      "newest": "6.78.0-alpine",
-      "newest_date": "2026-11-17",
+      "last_release": "2026-11-24",
+      "newest": "6.79.0-alpine",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "6.78.0-alpine",
       "pinned_date": "2026-11-17",
@@ -741,19 +741,19 @@
       "quiet": false,
       "reason": null,
       "repo": "TryGhost/Ghost",
-      "status": "current"
+      "status": "behind"
     },
     "apps/greenmail": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 2,
+        "high": 3,
         "images": {
           "greenmail/standalone:2.1.15": {
             "system": [
               1,
-              2
+              3
             ]
           }
         },
@@ -777,7 +777,7 @@
     },
     "apps/heimdall": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -809,7 +809,7 @@
     },
     "apps/hemmelig": {
       "archived": true,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 7,
         "high": 31,
@@ -845,7 +845,7 @@
     },
     "apps/heyform": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 14,
         "high": 144,
@@ -880,9 +880,9 @@
         "valkey/valkey:9.1.4-alpine",
         "heyform/community-edition:v3.0.6"
       ],
-      "last_release": "2026-11-16",
-      "newest": "v3.0.7",
-      "newest_date": "2026-11-16",
+      "last_release": "2026-11-23",
+      "newest": "v3.0.8",
+      "newest_date": "2026-11-23",
       "newest_date_source": "release",
       "pinned": "v3.0.6",
       "pinned_date": "2026-11-01",
@@ -894,12 +894,17 @@
     },
     "apps/homarr": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 0,
+        "high": 1,
         "images": {
-          "ghcr.io/homarr-labs/homarr:v2.14.0": {}
+          "ghcr.io/homarr-labs/homarr:v2.14.0": {
+            "system": [
+              0,
+              1
+            ]
+          }
         },
         "unscanned": []
       },
@@ -921,7 +926,7 @@
     },
     "apps/homepage": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 9,
@@ -953,10 +958,10 @@
     },
     "apps/httpbin": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
-        "high": 28,
+        "high": 29,
         "images": {
           "ghcr.io/psf/httpbin:0.10.4": {
             "libraries": [
@@ -965,7 +970,7 @@
             ],
             "system": [
               3,
-              19
+              20
             ]
           }
         },
@@ -989,10 +994,10 @@
     },
     "apps/immich": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 18,
-        "high": 150,
+        "high": 165,
         "images": {
           "ghcr.io/immich-app/immich-machine-learning:v3.3.6": {
             "libraries": [
@@ -1001,7 +1006,7 @@
             ],
             "system": [
               0,
-              2
+              3
             ]
           },
           "ghcr.io/immich-app/immich-server:v3.3.6": {
@@ -1011,7 +1016,7 @@
             ],
             "system": [
               3,
-              50
+              65
             ]
           },
           "ghcr.io/immich-app/postgres:14-vectorchord1.1.1@sha256:b38cad4a8bdb716d19b07e5afb4a6e2ed9e7f8a5a93f428aae35f495c72d3498": {
@@ -1027,7 +1032,7 @@
           "valkey/valkey:9.1.4": {
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -1054,7 +1059,7 @@
     },
     "apps/it-tools": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
         "high": 27,
@@ -1086,10 +1091,10 @@
     },
     "apps/librephotos": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 28,
+        "high": 43,
         "images": {
           "pgautoupgrade/pgautoupgrade:18.6-trixie": {
             "programs": [
@@ -1098,7 +1103,7 @@
             ],
             "system": [
               0,
-              1
+              16
             ]
           },
           "reallibrephotos/librephotos-frontend:1.6.0": {
@@ -1110,7 +1115,7 @@
           "reallibrephotos/librephotos-proxy:1.6.0": {
             "system": [
               0,
-              1
+              16
             ]
           },
           "reallibrephotos/librephotos:1.6.0": {
@@ -1147,7 +1152,7 @@
     },
     "apps/litellm": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -1171,9 +1176,9 @@
         "postgres:18.7",
         "ghcr.io/berriai/litellm-non_root:v1.108.15@sha256:58f6d7c22857e2a755a3d3aee8d55d1662524a2a29b8035d58eafbbf45d88274"
       ],
-      "last_release": "2026-11-21",
-      "newest": "v1.108.15",
-      "newest_date": "2026-11-21",
+      "last_release": "2026-11-25",
+      "newest": "v1.108.17",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "v1.108.15",
       "pinned_date": "2026-11-21",
@@ -1181,19 +1186,19 @@
       "quiet": false,
       "reason": null,
       "repo": "BerriAI/litellm",
-      "status": "current"
+      "status": "behind"
     },
     "apps/lycheeorg": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 90,
+        "high": 125,
         "images": {
           "lycheeorg/lychee:v7.13.0": {
             "system": [
               1,
-              65
+              100
             ]
           },
           "mariadb:12.3.3": {
@@ -1226,7 +1231,7 @@
     },
     "apps/mailpit": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -1253,15 +1258,15 @@
     },
     "apps/mailserver-jeboehm": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 118,
+        "high": 95,
         "images": {
           "ghcr.io/jeboehm/mailserver-filter:8.1.2": {
             "system": [
               0,
-              1
+              2
             ]
           },
           "ghcr.io/jeboehm/mailserver-mda:8.1.2": {
@@ -1296,10 +1301,6 @@
             "programs": [
               1,
               25
-            ],
-            "system": [
-              0,
-              39
             ]
           },
           "redis:8.10.3-alpine": {}
@@ -1316,9 +1317,9 @@
         "mysql:9.7.4",
         "redis:8.10.3-alpine"
       ],
-      "last_release": "2026-11-22",
-      "newest": "8.1.10",
-      "newest_date": "2026-11-22",
+      "last_release": "2026-11-24",
+      "newest": "8.1.12",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "8.1.2",
       "pinned_date": "2026-11-07",
@@ -1330,10 +1331,10 @@
     },
     "apps/monicahq": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
-        "high": 48,
+        "high": 49,
         "images": {
           "mariadb:11.4.13": {
             "programs": [
@@ -1345,6 +1346,10 @@
             "libraries": [
               3,
               23
+            ],
+            "system": [
+              0,
+              1
             ]
           }
         },
@@ -1369,7 +1374,7 @@
     },
     "apps/n8n": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 16,
@@ -1387,9 +1392,9 @@
       "images": [
         "n8nio/n8n:2.48.7@sha256:fabce3e9678a07d2dde83bd8f5124017f3ec457d0a3fc6b63bb4cec465d63861"
       ],
-      "last_release": "2026-11-20",
-      "newest": "2.48.7",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-26",
+      "newest": "2.49.7",
+      "newest_date": "2026-11-26",
       "newest_date_source": "release",
       "pinned": "2.48.7",
       "pinned_date": "2026-11-20",
@@ -1397,11 +1402,11 @@
       "quiet": false,
       "reason": null,
       "repo": "n8n-io/n8n",
-      "status": "current"
+      "status": "behind"
     },
     "apps/nextcloud": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 66,
@@ -1422,7 +1427,7 @@
               40
             ]
           },
-          "nginx:1.31.9-alpine-slim": {},
+          "nginx:1.31.10-alpine-slim": {},
           "redis:8.10.3-alpine": {}
         },
         "unscanned": []
@@ -1432,11 +1437,11 @@
         "mariadb:12.3.3",
         "redis:8.10.3-alpine",
         "nextcloud:35.0.2-fpm-alpine",
-        "nginx:1.31.9-alpine-slim"
+        "nginx:1.31.10-alpine-slim"
       ],
       "last_release": "2026-06-11",
       "newest": "35.0.3-fpm-alpine",
-      "newest_date": "2026-11-19",
+      "newest_date": "2026-11-24",
       "newest_date_source": "image",
       "pinned": "35.0.2-fpm-alpine",
       "pinned_date": "2026-11-06",
@@ -1448,7 +1453,7 @@
     },
     "apps/nocodb": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -1461,9 +1466,9 @@
       "images": [
         "nocodb/nocodb:2026.10.2"
       ],
-      "last_release": "2026-11-19",
-      "newest": "2026.10.2",
-      "newest_date": "2026-11-19",
+      "last_release": "2026-11-26",
+      "newest": "2026.11.0",
+      "newest_date": "2026-11-26",
       "newest_date_source": "release",
       "pinned": "2026.10.2",
       "pinned_date": "2026-11-19",
@@ -1471,11 +1476,11 @@
       "quiet": false,
       "reason": null,
       "repo": "nocodb/nocodb",
-      "status": "current"
+      "status": "behind"
     },
     "apps/obot": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -1520,7 +1525,7 @@
     },
     "apps/ollama": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -1542,9 +1547,9 @@
       "images": [
         "ollama/ollama:0.40.15"
       ],
-      "last_release": "2026-11-10",
-      "newest": "0.40.17",
-      "newest_date": "2026-11-10",
+      "last_release": "2026-11-24",
+      "newest": "0.40.18",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "0.40.15",
       "pinned_date": "2026-11-03",
@@ -1556,7 +1561,7 @@
     },
     "apps/onlyoffice": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -1588,10 +1593,10 @@
     },
     "apps/open-webui": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 7,
-        "high": 73,
+        "high": 108,
         "images": {
           "ghcr.io/open-webui/open-webui:v0.13.0": {
             "libraries": [
@@ -1600,7 +1605,7 @@
             ],
             "system": [
               3,
-              44
+              79
             ]
           }
         },
@@ -1610,7 +1615,7 @@
       "images": [
         "ghcr.io/open-webui/open-webui:v0.13.0"
       ],
-      "last_release": "2026-11-17",
+      "last_release": "2026-11-25",
       "newest": "v0.13.0",
       "newest_date": "2026-11-03",
       "newest_date_source": "release",
@@ -1624,10 +1629,10 @@
     },
     "apps/opencanary": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 9,
-        "high": 271,
+        "high": 272,
         "images": {
           "thinkst/opencanary:0.9.10": {
             "libraries": [
@@ -1640,7 +1645,7 @@
             ],
             "system": [
               7,
-              249
+              250
             ]
           }
         },
@@ -1664,7 +1669,7 @@
     },
     "apps/opnform": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -1681,7 +1686,7 @@
               6
             ]
           },
-          "nginx:1.31.9": {
+          "nginx:1.31.10": {
             "system": [
               0,
               1
@@ -1707,7 +1712,7 @@
         "redis:8.10.3-alpine",
         "jhumanj/opnform-api:2.8.6",
         "jhumanj/opnform-client:2.8.6",
-        "nginx:1.31.9"
+        "nginx:1.31.10"
       ],
       "last_release": "2026-11-19",
       "newest": "2.8.6",
@@ -1723,7 +1728,7 @@
     },
     "apps/paperless-gpt": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -1759,10 +1764,10 @@
     },
     "apps/paperless-ngx": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
-        "critical": 5,
-        "high": 97,
+        "critical": 7,
+        "high": 317,
         "images": {
           "apache/tika:3.3.3.0": {
             "libraries": [
@@ -1785,13 +1790,13 @@
             ],
             "system": [
               2,
-              48
+              64
             ]
           },
           "gotenberg/gotenberg:8.40.0": {
             "system": [
-              0,
-              1
+              2,
+              221
             ]
           },
           "postgres:18.7": {
@@ -1830,10 +1835,10 @@
     },
     "apps/photoprism": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 6,
-        "high": 128,
+        "high": 129,
         "images": {
           "mariadb:12.3.3": {
             "programs": [
@@ -1844,7 +1849,7 @@
           "photoprism/photoprism:261029": {
             "system": [
               5,
-              103
+              104
             ]
           }
         },
@@ -1869,10 +1874,10 @@
     },
     "apps/photoview": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 5,
-        "high": 54,
+        "high": 53,
         "images": {
           "mariadb:12.3.3": {
             "programs": [
@@ -1883,7 +1888,7 @@
           "photoview/photoview:2.4.0": {
             "programs": [
               5,
-              54
+              53
             ]
           }
         },
@@ -1908,17 +1913,12 @@
     },
     "apps/privatebin": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
-        "critical": 4,
-        "high": 5,
+        "critical": 0,
+        "high": 0,
         "images": {
-          "privatebin/nginx-fpm-alpine:2.1.1": {
-            "system": [
-              4,
-              5
-            ]
-          }
+          "privatebin/nginx-fpm-alpine:2.1.1": {}
         },
         "unscanned": []
       },
@@ -1940,15 +1940,15 @@
     },
     "apps/qdrant": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 1,
+        "high": 2,
         "images": {
           "qdrant/qdrant:v1.20.2-unprivileged": {
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -1972,7 +1972,7 @@
     },
     "apps/seafile": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 42,
         "high": 772,
@@ -2050,8 +2050,8 @@
         "seafileltd/thumbnail-server:13.0.29"
       ],
       "last_release": "2024-02-27",
-      "newest": "14.0.9",
-      "newest_date": "2026-10-13",
+      "newest": "14.0.11",
+      "newest_date": "2026-11-26",
       "newest_date_source": "image",
       "pinned": "13.0.29",
       "pinned_date": "2026-11-04",
@@ -2063,7 +2063,7 @@
     },
     "apps/seafile-pro": {
       "archived": null,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 62,
         "high": 1518,
@@ -2140,7 +2140,7 @@
           "seafileltd/seasearch:1.0.8": {
             "programs": [
               0,
-              13
+              14
             ],
             "system": [
               0,
@@ -2175,8 +2175,8 @@
         "seafileltd/thumbnail-server:13.0.29"
       ],
       "last_release": null,
-      "newest": "14.0.10",
-      "newest_date": "2026-11-10",
+      "newest": "14.0.11",
+      "newest_date": "2026-11-25",
       "newest_date_source": "image",
       "pinned": "13.0.29",
       "pinned_date": "2026-11-04",
@@ -2188,7 +2188,7 @@
     },
     "apps/shlink": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
         "high": 37,
@@ -2242,15 +2242,15 @@
     },
     "apps/stalwart": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 1,
+        "high": 16,
         "images": {
           "stalwartlabs/stalwart:v1.1.1": {
             "system": [
               0,
-              1
+              16
             ]
           }
         },
@@ -2260,9 +2260,9 @@
       "images": [
         "stalwartlabs/stalwart:v1.1.1"
       ],
-      "last_release": "2026-11-16",
-      "newest": "v1.1.1",
-      "newest_date": "2026-11-16",
+      "last_release": "2026-11-26",
+      "newest": "v1.2.1",
+      "newest_date": "2026-11-26",
       "newest_date_source": "release",
       "pinned": "v1.1.1",
       "pinned_date": "2026-11-16",
@@ -2270,11 +2270,11 @@
       "quiet": false,
       "reason": null,
       "repo": "stalwartlabs/stalwart",
-      "status": "current"
+      "status": "behind"
     },
     "apps/threat-dragon": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
         "high": 30,
@@ -2310,15 +2310,15 @@
     },
     "apps/tymeslot": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 61,
+        "high": 76,
         "images": {
           "luka1thb/tymeslot:1.41.0-slim@sha256:a78d0ec93a01cb1ab5149b39f5be1c9dd367fc1e03e485cb1dea87ff2ca47dcb": {
             "system": [
               0,
-              35
+              50
             ]
           },
           "postgres:18.7-alpine": {
@@ -2339,9 +2339,9 @@
         "postgres:18.7-alpine",
         "luka1thb/tymeslot:1.41.0-slim@sha256:a78d0ec93a01cb1ab5149b39f5be1c9dd367fc1e03e485cb1dea87ff2ca47dcb"
       ],
-      "last_release": "2026-11-22",
-      "newest": "1.48.1-slim",
-      "newest_date": "2026-11-22",
+      "last_release": "2026-11-24",
+      "newest": "1.49.0-slim",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "1.41.0-slim",
       "pinned_date": "2026-11-05",
@@ -2353,19 +2353,15 @@
     },
     "apps/unifi": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 12,
-        "high": 57,
+        "high": 56,
         "images": {
           "lscr.io/linuxserver/unifi-network-application:10.6.109": {
             "libraries": [
               11,
               27
-            ],
-            "system": [
-              0,
-              1
             ]
           },
           "mongo:8.0.38": {
@@ -2386,12 +2382,12 @@
         "mongo:8.0.38",
         "lscr.io/linuxserver/unifi-network-application:10.6.109"
       ],
-      "last_release": "2026-11-18",
+      "last_release": "2026-11-25",
       "newest": "10.6.109",
-      "newest_date": "2026-11-18",
+      "newest_date": "2026-11-25",
       "newest_date_source": "release",
       "pinned": "10.6.109",
-      "pinned_date": "2026-11-18",
+      "pinned_date": "2026-11-25",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
@@ -2400,10 +2396,10 @@
     },
     "apps/vaultwarden": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 3,
-        "high": 73,
+        "high": 88,
         "images": {
           "mariadb:12.3.3": {
             "programs": [
@@ -2414,7 +2410,7 @@
           "vaultwarden/server:1.37.5": {
             "system": [
               2,
-              48
+              63
             ]
           }
         },
@@ -2439,7 +2435,7 @@
     },
     "apps/velociraptor": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -2471,7 +2467,7 @@
     },
     "apps/vllm": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 5,
         "high": 137,
@@ -2507,7 +2503,7 @@
     },
     "apps/whoami": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 16,
@@ -2539,10 +2535,10 @@
     },
     "apps/wikijs": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 6,
-        "high": 135,
+        "high": 170,
         "images": {
           "ghcr.io/requarks/wiki:3.6.0": {
             "libraries": [
@@ -2551,7 +2547,7 @@
             ],
             "system": [
               5,
-              91
+              126
             ]
           },
           "postgres:18.7-alpine": {
@@ -2572,9 +2568,9 @@
         "postgres:18.7-alpine",
         "ghcr.io/requarks/wiki:3.6.0"
       ],
-      "last_release": "2026-11-22",
-      "newest": "3.6.0",
-      "newest_date": "2026-11-22",
+      "last_release": "2026-11-23",
+      "newest": "3.6.1",
+      "newest_date": "2026-11-23",
       "newest_date_source": "release",
       "pinned": "3.6.0",
       "pinned_date": "2026-11-22",
@@ -2582,14 +2578,14 @@
       "quiet": false,
       "reason": null,
       "repo": "requarks/wiki",
-      "status": "current"
+      "status": "behind"
     },
     "apps/windmill": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 63,
+        "high": 98,
         "images": {
           "ghcr.io/windmill-labs/windmill:1.864.1": {
             "libraries": [
@@ -2602,7 +2598,7 @@
             ],
             "system": [
               1,
-              31
+              66
             ]
           },
           "postgres:18.7": {
@@ -2623,9 +2619,9 @@
         "postgres:18.7",
         "ghcr.io/windmill-labs/windmill:1.864.1"
       ],
-      "last_release": "2026-11-22",
-      "newest": "1.882.0",
-      "newest_date": "2026-11-22",
+      "last_release": "2026-11-25",
+      "newest": "1.885.0",
+      "newest_date": "2026-11-25",
       "newest_date_source": "release",
       "pinned": "1.864.1",
       "pinned_date": "2026-11-06",
@@ -2637,10 +2633,10 @@
     },
     "apps/wordpress": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 3,
-        "high": 56,
+        "high": 91,
         "images": {
           "mariadb:12.3.3": {
             "programs": [
@@ -2651,7 +2647,7 @@
           "wordpress:7.1.4-php8.3-apache": {
             "system": [
               2,
-              31
+              66
             ]
           }
         },
@@ -2676,7 +2672,7 @@
     },
     "apps/yopass": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -2696,9 +2692,9 @@
         "memcached:1.6.45-alpine",
         "jhaals/yopass:16.2.0"
       ],
-      "last_release": "2026-11-18",
-      "newest": "16.2.0",
-      "newest_date": "2026-11-18",
+      "last_release": "2026-11-25",
+      "newest": "16.3.0",
+      "newest_date": "2026-11-25",
       "newest_date_source": "release",
       "pinned": "16.2.0",
       "pinned_date": "2026-11-18",
@@ -2706,11 +2702,11 @@
       "quiet": false,
       "reason": null,
       "repo": "jhaals/yopass",
-      "status": "current"
+      "status": "behind"
     },
     "backup/borgmatic": {
       "archived": null,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -2733,15 +2729,15 @@
     },
     "backup/kopia": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 58,
+        "high": 57,
         "images": {
           "kopia/kopia:0.23.1": {
             "programs": [
               2,
-              55
+              54
             ],
             "system": [
               0,
@@ -2769,7 +2765,7 @@
     },
     "backup/rclone-web": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -2796,15 +2792,15 @@
     },
     "backup/urbackup": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
-        "high": 18,
+        "high": 33,
         "images": {
           "uroni/urbackup-server:2.5.x@sha256:fd218c45192fad0d7df7989da2c991264eec0a37a85e33499db419b203e9745f": {
             "system": [
               4,
-              18
+              33
             ]
           }
         },
@@ -2828,15 +2824,15 @@
     },
     "business/akaunting": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
-        "high": 147,
+        "high": 182,
         "images": {
           "akaunting/akaunting:3.3.0-v@sha256:6c5e9864dfe7f2e0b7c2f0b616d6d9933f69f6ae090c546629149f96885d2dcf": {
             "system": [
               3,
-              122
+              157
             ]
           },
           "mariadb:11.4.13": {
@@ -2867,7 +2863,7 @@
     },
     "business/chatwoot": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -2908,10 +2904,10 @@
     },
     "business/documenso": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 47,
+        "high": 48,
         "images": {
           "documenso/documenso:v2.21.1": {
             "libraries": [
@@ -2920,7 +2916,7 @@
             ],
             "system": [
               0,
-              4
+              5
             ]
           },
           "postgres:16.16-alpine": {
@@ -2955,7 +2951,7 @@
     },
     "business/dolibarr": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
         "high": 155,
@@ -2984,7 +2980,7 @@
         "mariadb:12.3.3",
         "dolibarr/dolibarr:24.0.2"
       ],
-      "last_release": "2026-11-11",
+      "last_release": "2026-11-25",
       "newest": "24.0.3",
       "newest_date": "2026-11-11",
       "newest_date_source": "release",
@@ -2998,10 +2994,10 @@
     },
     "business/erpnext": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 8,
-        "high": 122,
+        "high": 315,
         "images": {
           "frappe/erpnext:v16.60.0": {
             "libraries": [
@@ -3014,7 +3010,7 @@
             ],
             "system": [
               2,
-              12
+              205
             ]
           },
           "mariadb:11.8.9": {
@@ -3035,10 +3031,10 @@
       ],
       "last_release": "2026-11-20",
       "newest": "v16.60.0",
-      "newest_date": "2026-11-19",
+      "newest_date": "2026-11-23",
       "newest_date_source": "image",
       "pinned": "v16.60.0",
-      "pinned_date": "2026-11-19",
+      "pinned_date": "2026-11-23",
       "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
@@ -3047,15 +3043,15 @@
     },
     "business/facturascripts": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 3,
-        "high": 56,
+        "high": 91,
         "images": {
           "facturascripts/facturascripts:2026.72": {
             "system": [
               2,
-              31
+              66
             ]
           },
           "mariadb:11.4.13": {
@@ -3086,10 +3082,10 @@
     },
     "business/invoiceninja": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
-        "high": 86,
+        "high": 81,
         "images": {
           "invoiceninja/invoiceninja-debian:5.13.56": {
             "libraries": [
@@ -3098,7 +3094,7 @@
             ],
             "system": [
               2,
-              13
+              47
             ]
           },
           "mysql:8.4.13": {
@@ -3109,13 +3105,9 @@
             "programs": [
               1,
               25
-            ],
-            "system": [
-              0,
-              39
             ]
           },
-          "nginx:1.31.9-alpine-slim": {},
+          "nginx:1.31.10-alpine-slim": {},
           "redis:8.10.3-alpine": {}
         },
         "unscanned": []
@@ -3123,13 +3115,13 @@
       "image": "invoiceninja/invoiceninja-debian:5.13.56",
       "images": [
         "invoiceninja/invoiceninja-debian:5.13.56",
-        "nginx:1.31.9-alpine-slim",
+        "nginx:1.31.10-alpine-slim",
         "mysql:8.4.13",
         "redis:8.10.3-alpine"
       ],
-      "last_release": "2026-11-20",
-      "newest": "5.13.56",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-24",
+      "newest": "5.14.0",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "5.13.56",
       "pinned_date": "2026-11-20",
@@ -3137,16 +3129,21 @@
       "quiet": false,
       "reason": null,
       "repo": "invoiceninja/dockerfiles",
-      "status": "current"
+      "status": "behind"
     },
     "business/kimai": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 25,
+        "high": 59,
         "images": {
-          "kimai/kimai2:2.72.1": {},
+          "kimai/kimai2:2.72.1": {
+            "system": [
+              0,
+              34
+            ]
+          },
           "mariadb:11.4.13": {
             "programs": [
               1,
@@ -3161,9 +3158,9 @@
         "mariadb:11.4.13",
         "kimai/kimai2:2.72.1"
       ],
-      "last_release": "2026-11-20",
-      "newest": "2.72.1",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-23",
+      "newest": "2.73.0",
+      "newest_date": "2026-11-23",
       "newest_date_source": "release",
       "pinned": "2.72.1",
       "pinned_date": "2026-11-20",
@@ -3171,14 +3168,14 @@
       "quiet": false,
       "reason": null,
       "repo": "kimai/kimai",
-      "status": "current"
+      "status": "behind"
     },
     "business/leantime": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 3,
-        "high": 74,
+        "high": 36,
         "images": {
           "leantime/leantime:3.16.0": {
             "libraries": [
@@ -3198,10 +3195,6 @@
             "programs": [
               1,
               25
-            ],
-            "system": [
-              0,
-              39
             ]
           }
         },
@@ -3213,7 +3206,7 @@
         "leantime/leantime:3.16.0"
       ],
       "last_release": "2026-11-23",
-      "newest": "3.16.0",
+      "newest": "3.17.0",
       "newest_date": "2026-11-23",
       "newest_date_source": "release",
       "pinned": "3.16.0",
@@ -3222,11 +3215,11 @@
       "quiet": false,
       "reason": null,
       "repo": "leantime/leantime",
-      "status": "current"
+      "status": "behind"
     },
     "business/listmonk": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
         "high": 54,
@@ -3273,10 +3266,10 @@
     },
     "business/matomo": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 3,
-        "high": 57,
+        "high": 92,
         "images": {
           "mariadb:12.3.3": {
             "programs": [
@@ -3287,7 +3280,7 @@
           "matomo:5.14.2-apache": {
             "system": [
               2,
-              32
+              67
             ]
           }
         },
@@ -3298,9 +3291,9 @@
         "mariadb:12.3.3",
         "matomo:5.14.2-apache"
       ],
-      "last_release": "2026-11-16",
-      "newest": "5.14.3-apache",
-      "newest_date": "2026-11-16",
+      "last_release": "2026-11-23",
+      "newest": "6.0.0-apache",
+      "newest_date": "2026-11-23",
       "newest_date_source": "release",
       "pinned": "5.14.2-apache",
       "pinned_date": "2026-10-22",
@@ -3312,16 +3305,20 @@
     },
     "business/openproject": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 30,
+        "high": 46,
         "images": {
           "memcached:1.6.45-alpine": {},
           "openproject/openproject:17.9.8-slim": {
             "libraries": [
               1,
               4
+            ],
+            "system": [
+              0,
+              16
             ]
           },
           "postgres:18.7-alpine": {
@@ -3357,10 +3354,10 @@
     },
     "business/opensign": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 34,
-        "high": 1171,
+        "high": 1173,
         "images": {
           "mongo:8.0.38": {
             "libraries": [
@@ -3379,7 +3376,7 @@
             ],
             "system": [
               29,
-              1104
+              1105
             ]
           },
           "opensign/opensignserver:main@sha256:49819bc883aa5b0053106f2d60d49334231c723cc37c01a304a9322e46bfc06f": {
@@ -3389,7 +3386,7 @@
             ],
             "system": [
               29,
-              1091
+              1093
             ]
           }
         },
@@ -3415,10 +3412,10 @@
     },
     "business/plane": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 121,
+        "high": 122,
         "images": {
           "makeplane/plane-admin:v1.5.0": {
             "programs": [
@@ -3469,7 +3466,7 @@
           "rabbitmq:3.13.7-management-alpine": {
             "system": [
               1,
-              34
+              35
             ]
           },
           "valkey/valkey:7.2.16-alpine": {}
@@ -3489,9 +3486,9 @@
         "makeplane/plane-admin:v1.5.0",
         "makeplane/plane-proxy:v1.5.0"
       ],
-      "last_release": "2026-11-16",
-      "newest": "v1.5.0",
-      "newest_date": "2026-11-16",
+      "last_release": "2026-11-25",
+      "newest": "v1.5.1",
+      "newest_date": "2026-11-25",
       "newest_date_source": "release",
       "pinned": "v1.5.0",
       "pinned_date": "2026-11-16",
@@ -3499,20 +3496,20 @@
       "quiet": false,
       "reason": null,
       "repo": "makeplane/plane",
-      "status": "current"
+      "status": "behind"
     },
     "business/plausible": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 51,
+        "high": 52,
         "images": {
           "clickhouse/clickhouse-server:26.10.3.7-alpine": {},
           "ghcr.io/plausible/community-edition:v3.2.1": {
             "system": [
               0,
-              25
+              26
             ]
           },
           "postgres:18.7-alpine": {
@@ -3535,8 +3532,8 @@
         "ghcr.io/plausible/community-edition:v3.2.1"
       ],
       "last_release": null,
-      "newest": "v3.2.1",
-      "newest_date": "2026-05-15",
+      "newest": "v3.2.2",
+      "newest_date": "2026-11-23",
       "newest_date_source": "image",
       "pinned": "v3.2.1",
       "pinned_date": "2026-05-15",
@@ -3544,11 +3541,11 @@
       "quiet": false,
       "reason": null,
       "repo": "plausible/community-edition",
-      "status": "current"
+      "status": "behind"
     },
     "business/solidinvoice": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -3580,7 +3577,7 @@
     },
     "business/twenty": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 72,
@@ -3615,9 +3612,9 @@
         "postgres:16.16",
         "redis:8.10.3-alpine"
       ],
-      "last_release": "2026-11-22",
-      "newest": "v2.61.0",
-      "newest_date": "2026-11-22",
+      "last_release": "2026-11-24",
+      "newest": "v2.63.0",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "v2.56.1",
       "pinned_date": "2026-11-05",
@@ -3629,7 +3626,7 @@
     },
     "business/vikunja": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -3665,7 +3662,7 @@
     },
     "business/zammad": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 59,
@@ -3684,6 +3681,10 @@
             "libraries": [
               0,
               4
+            ],
+            "system": [
+              0,
+              15
             ]
           },
           "memcached:1.6.45": {
@@ -3715,8 +3716,8 @@
         "docker.elastic.co/elasticsearch/elasticsearch:9.5.6"
       ],
       "last_release": null,
-      "newest": "7.2.3-0017",
-      "newest_date": "2026-11-20",
+      "newest": "7.3.0-0006",
+      "newest_date": "2026-11-26",
       "newest_date_source": "image",
       "pinned": "7.2.3-0017",
       "pinned_date": "2026-11-20",
@@ -3724,11 +3725,11 @@
       "quiet": false,
       "reason": null,
       "repo": "zammad/zammad",
-      "status": "current"
+      "status": "behind"
     },
     "core/acme-certs": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -3755,7 +3756,7 @@
     },
     "core/authelia": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 27,
@@ -3800,10 +3801,10 @@
     },
     "core/authentik": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 90,
+        "high": 105,
         "images": {
           "alpine:3.24.3": {},
           "ghcr.io/goauthentik/server:2026.8.5": {
@@ -3813,7 +3814,7 @@
             ],
             "system": [
               1,
-              37
+              52
             ]
           },
           "postgres:18.7-alpine": {
@@ -3837,9 +3838,9 @@
         "redis:8.10.3-alpine",
         "ghcr.io/goauthentik/server:2026.8.5"
       ],
-      "last_release": "2026-11-20",
-      "newest": "2026.8.6",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-25",
+      "newest": "2026.8.7",
+      "newest_date": "2026-11-25",
       "newest_date_source": "release",
       "pinned": "2026.8.5",
       "pinned_date": "2026-10-21",
@@ -3851,7 +3852,7 @@
     },
     "core/crowdsec": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 10,
@@ -3887,7 +3888,7 @@
     },
     "core/dnsmasq": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -3914,7 +3915,7 @@
     },
     "core/dockhand": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -3959,7 +3960,7 @@
     },
     "core/hawser": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 3,
@@ -3977,9 +3978,9 @@
       "images": [
         "ghcr.io/finsys/hawser:0.2.53"
       ],
-      "last_release": "2026-10-30",
-      "newest": "0.2.53",
-      "newest_date": "2026-10-30",
+      "last_release": "2026-11-26",
+      "newest": "0.2.54",
+      "newest_date": "2026-11-26",
       "newest_date_source": "release",
       "pinned": "0.2.53",
       "pinned_date": "2026-10-30",
@@ -3987,14 +3988,14 @@
       "quiet": false,
       "reason": null,
       "repo": "Finsys/hawser",
-      "status": "current"
+      "status": "behind"
     },
     "core/headscale": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 3,
+        "high": 4,
         "images": {
           "ghcr.io/juanfont/headscale:v0.29.7": {
             "programs": [
@@ -4003,7 +4004,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -4027,7 +4028,7 @@
     },
     "core/host-watchdog": {
       "archived": null,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -4050,15 +4051,15 @@
     },
     "core/infisical": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
-        "high": 27,
+        "high": 43,
         "images": {
           "infisical/infisical:v0.167.7": {
             "system": [
               0,
-              1
+              16
             ]
           },
           "postgres:18.7-alpine": {
@@ -4071,7 +4072,12 @@
               1
             ]
           },
-          "redis:7.4.12-alpine": {}
+          "redis:7.4.12-alpine": {
+            "system": [
+              0,
+              1
+            ]
+          }
         },
         "unscanned": []
       },
@@ -4081,9 +4087,9 @@
         "redis:7.4.12-alpine",
         "infisical/infisical:v0.167.7"
       ],
-      "last_release": "2026-11-20",
-      "newest": "v0.167.14",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-25",
+      "newest": "v0.167.16",
+      "newest_date": "2026-11-25",
       "newest_date_source": "release",
       "pinned": "v0.167.7",
       "pinned_date": "2026-11-08",
@@ -4095,10 +4101,10 @@
     },
     "core/jumpserver": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 5,
-        "high": 120,
+        "high": 155,
         "images": {
           "jumpserver/jms_all:v5.2.1": {
             "libraries": [
@@ -4111,7 +4117,7 @@
             ],
             "system": [
               3,
-              43
+              78
             ]
           }
         },
@@ -4121,7 +4127,7 @@
       "images": [
         "jumpserver/jms_all:v5.2.1"
       ],
-      "last_release": "2026-11-20",
+      "last_release": "2026-11-26",
       "newest": "v5.2.1",
       "newest_date": "2026-11-20",
       "newest_date_source": "release",
@@ -4135,7 +4141,7 @@
     },
     "core/keycloak": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 27,
@@ -4178,7 +4184,7 @@
     },
     "core/orion-belt": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -4216,7 +4222,7 @@
     },
     "core/portainer": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4250,7 +4256,7 @@
     },
     "core/portainer-agent": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4282,7 +4288,7 @@
     },
     "core/shellhub": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -4324,7 +4330,7 @@
     },
     "core/step-ca": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
         "high": 70,
@@ -4360,10 +4366,10 @@
     },
     "core/teleport": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 2,
+        "high": 3,
         "images": {
           "public.ecr.aws/gravitational/teleport-distroless:18.11.9": {
             "programs": [
@@ -4372,7 +4378,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -4383,8 +4389,8 @@
         "public.ecr.aws/gravitational/teleport-distroless:18.11.9"
       ],
       "last_release": "2026-11-16",
-      "newest": "18.11.13",
-      "newest_date": "2026-11-20",
+      "newest": "19.0.1",
+      "newest_date": "2026-11-24",
       "newest_date_source": "image",
       "pinned": "18.11.9",
       "pinned_date": "2026-11-08",
@@ -4396,7 +4402,7 @@
     },
     "core/traefik": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4407,35 +4413,40 @@
               7
             ]
           },
-          "traefik:v3.7.19": {}
+          "traefik:v3.7.20": {}
         },
         "unscanned": []
       },
-      "image": "traefik:v3.7.19",
+      "image": "traefik:v3.7.20",
       "images": [
         "tecnativa/docker-socket-proxy:v0.5.0",
-        "traefik:v3.7.19"
+        "traefik:v3.7.20"
       ],
-      "last_release": "2026-11-13",
-      "newest": "v3.7.19",
-      "newest_date": "2026-11-13",
+      "last_release": "2026-11-23",
+      "newest": "v3.8.0",
+      "newest_date": "2026-11-23",
       "newest_date_source": "release",
-      "pinned": "v3.7.19",
-      "pinned_date": "2026-11-13",
+      "pinned": "v3.7.20",
+      "pinned_date": "2026-11-23",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "traefik/traefik",
-      "status": "current"
+      "status": "behind"
     },
     "core/warpgate": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 0,
+        "high": 1,
         "images": {
-          "ghcr.io/warp-tech/warpgate:0.30.6": {}
+          "ghcr.io/warp-tech/warpgate:0.30.6": {
+            "system": [
+              0,
+              1
+            ]
+          }
         },
         "unscanned": []
       },
@@ -4457,7 +4468,7 @@
     },
     "core/zot": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -4489,7 +4500,7 @@
     },
     "monitoring/beszel": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 8,
@@ -4535,7 +4546,7 @@
     },
     "monitoring/beszel-agent": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 8,
@@ -4574,7 +4585,7 @@
     },
     "monitoring/changedetection": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 6,
@@ -4606,7 +4617,7 @@
     },
     "monitoring/checkmate": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 4,
         "high": 52,
@@ -4657,10 +4668,10 @@
     },
     "monitoring/ciao": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 5,
-        "high": 27,
+        "high": 28,
         "images": {
           "brotandgames/ciao:1.12.0": {
             "libraries": [
@@ -4669,7 +4680,7 @@
             ],
             "system": [
               3,
-              15
+              16
             ]
           }
         },
@@ -4693,7 +4704,7 @@
     },
     "monitoring/gatus": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 5,
@@ -4725,7 +4736,7 @@
     },
     "monitoring/gotify": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
         "high": 31,
@@ -4757,7 +4768,7 @@
     },
     "monitoring/grafana-prometheus": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4787,9 +4798,9 @@
         "ghcr.io/google/cadvisor:v0.60.6",
         "prom/node-exporter:v1.12.1"
       ],
-      "last_release": "2026-11-10",
-      "newest": "13.3.1",
-      "newest_date": "2026-11-10",
+      "last_release": "2026-11-24",
+      "newest": "13.3.2",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "13.3.1",
       "pinned_date": "2026-11-10",
@@ -4797,14 +4808,14 @@
       "quiet": false,
       "reason": null,
       "repo": "grafana/grafana",
-      "status": "current"
+      "status": "behind"
     },
     "monitoring/healthchecks": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 2,
-        "high": 54,
+        "high": 69,
         "images": {
           "healthchecks/healthchecks:v5.0.3": {
             "libraries": [
@@ -4813,7 +4824,7 @@
             ],
             "system": [
               2,
-              48
+              63
             ]
           }
         },
@@ -4837,7 +4848,7 @@
     },
     "monitoring/langfuse": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 1,
         "high": 29,
@@ -4879,9 +4890,9 @@
         "redis:8.10.3-alpine",
         "pgsty/silo:RELEASE.2026-11-12T00-00-00Z"
       ],
-      "last_release": "2026-11-19",
-      "newest": "4.83.0",
-      "newest_date": "2026-11-19",
+      "last_release": "2026-11-24",
+      "newest": "4.86.0",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "4.83.0",
       "pinned_date": "2026-11-19",
@@ -4889,11 +4900,11 @@
       "quiet": false,
       "reason": null,
       "repo": "langfuse/langfuse",
-      "status": "current"
+      "status": "behind"
     },
     "monitoring/ntfy": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -4906,9 +4917,9 @@
       "images": [
         "binwiederhier/ntfy:v2.38.1"
       ],
-      "last_release": "2026-11-16",
-      "newest": "v2.38.1",
-      "newest_date": "2026-11-16",
+      "last_release": "2026-11-24",
+      "newest": "v2.38.2",
+      "newest_date": "2026-11-24",
       "newest_date_source": "release",
       "pinned": "v2.38.1",
       "pinned_date": "2026-11-16",
@@ -4916,14 +4927,14 @@
       "quiet": false,
       "reason": null,
       "repo": "binwiederhier/ntfy",
-      "status": "current"
+      "status": "behind"
     },
     "monitoring/scrutiny": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 0,
-        "high": 50,
+        "high": 65,
         "images": {
           "ghcr.io/analogj/scrutiny:v0.10.0-web": {
             "programs": [
@@ -4932,7 +4943,7 @@
             ],
             "system": [
               0,
-              2
+              17
             ]
           },
           "influxdb:2.9.1@sha256:e4572d094ac3272f06528ea904ce6b4cb3bb19be2db3b3b1acbd27ba5c3a73e2": {
@@ -4966,10 +4977,10 @@
     },
     "monitoring/uptime-kuma": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
-        "critical": 6,
-        "high": 69,
+        "critical": 8,
+        "high": 273,
         "images": {
           "louislam/uptime-kuma:2.5.12": {
             "libraries": [
@@ -4979,6 +4990,10 @@
             "programs": [
               2,
               30
+            ],
+            "system": [
+              2,
+              204
             ]
           }
         },
@@ -5002,7 +5017,7 @@
     },
     "monitoring/zabbix": {
       "archived": false,
-      "checked": "2026-11-23",
+      "checked": "2026-11-26",
       "findings": {
         "critical": 9,
         "high": 90,
