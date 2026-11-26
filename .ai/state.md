@@ -2,14 +2,14 @@
 
 > If this file conflicts with git (branch, commits, tags), trust git.
 
-**Last updated:** 2026-11-09
+**Last updated:** 2026-11-26
 
-- **Phase:** pre-1.0. Latest tag `v0.9.9` (2026-11-09), which is where `main`
-  stands; what `dev` carries beyond it is `git rev-list --count v0.9.9..dev`, and
+- **Phase:** pre-1.0. Latest tag `v0.9.10` (2026-11-26), which is where `main`
+  stands; what `dev` carries beyond it is `git rev-list --count v0.9.10..dev`, and
   it is not repeated here. Work happens on a
   short-lived branch and reaches `dev` through a pull request; `dev` reaches
   `main` the same way. Both branches reject a direct push.
-- **Last completed:** the stack refresh, released as v0.9.9 — see
+- **Last completed:** the security releases of November 2026, released as v0.9.10 — see
   `CHANGELOG.md`. Actionable items are GitHub Issues; [`tasks.md`](tasks.md) holds
   only what no issue owns.
 - **Earlier:** the stabilization programme (PRs #115, #119, #124, #125, #126, then
@@ -101,6 +101,11 @@
   port comes only with the firewall-bouncer overlay; `DAC_READ_SEARCH` is in the
   capability baseline (DEC-047 addendum). Docs, stack READMEs and the website
   agree; the site starts with five stacks and has a Monitoring section.
+- **Released: v0.9.10 (2026-11-26) — security releases of November 2026.** Traefik
+  v3.7.20 (path-parameter bypass of path-based access policies, compression memory exhaustion), 42 further stacks
+  and PostgreSQL, Valkey, MongoDB, Silo and Elasticsearch at their security
+  releases, each upgraded on data locally; no host run. Not moved: MariaDB (tags
+  not on Docker Hub) and LibrePhotos' PostgreSQL (no `pgautoupgrade` 18.7).
 - **Current milestone:** v0.10.0 — Measured resource limits. Whether
   it stays a release is open (D4 in the audit): the measurement needs the same
   host session as the verification backlog.

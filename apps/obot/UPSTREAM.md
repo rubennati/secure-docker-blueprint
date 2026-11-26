@@ -25,8 +25,8 @@ a refresh.
 
 ## What we use
 
-- `ghcr.io/obot-platform/obot:v0.28.0`, one container.
-- `postgres:18.6-alpine`, which **replaces the PostgreSQL the image bundles**.
+- `ghcr.io/obot-platform/obot:v0.28.2`, one container.
+- `postgres:18.7-alpine`, which **replaces the PostgreSQL the image bundles**.
 - `tecnativa/docker-socket-proxy:v0.5.0` between obot and the Docker daemon.
 
 ## What we changed and why
@@ -105,6 +105,36 @@ cannot reach this host's own services unless that is changed.
 
 ## Version notes
 
+- Moved to `v0.28.2` on 2026-11-23 (released 2026-11-19), across `v0.28.1`
+  (2026-11-13). Fixes the advisories published 2026-11-20: critical
+  GHSA-cp2w-pc8v-r54p (a user who renamed themselves to `anonymous` could
+  connect to MCP servers they were not granted; needs a signed-in account
+  not provisioned through SCIM), high GHSA-jwgp-hqmv-m4p6 (cross-site
+  request forgery from another origin on the same site: every other stack
+  served under the same parent domain counts, so this reaches the blueprint's
+  one-domain layout), high GHSA-gjv5-3gxw-g748 (a user could capture another
+  user's OAuth sign-in to a remote MCP server), medium GHSA-89qx-gch8-6rcw
+  (URL template values could move a remote MCP server to another host and
+  send it the admin-set header values) and medium GHSA-4h4x-wccp-crrx (open
+  redirect in the UI's trailing-slash handling; needs no account). Breaking
+  (`v0.28.2`): the `vision`, `image-generation` and `text-embedding` default
+  model aliases are removed; clients that send one of them as the model
+  name in LLM gateway requests switch to a concrete gateway model name
+  first. Usernames can no longer be changed through the API; they come from
+  the authentication provider or SCIM. `v0.28.1` migrates supported v0.27
+  model-provider settings into the LLM gateway and restores the legacy
+  provider-specific endpoints (deprecated; use `/api/llm-proxy/v1`).
+  Upstream advises existing installations to skip `v0.28.0`; a host already
+  on `v0.28.0` reviews every Profile under **LLM Gateway > Profiles** after
+  the move (bindings, default-alias references, wildcards) and sets again
+  what is not migrated: disabled-model settings, custom display names,
+  custom aliases and cost overrides. Database migrations run on start. No
+  variable, port or healthcheck changes; the new optional
+  `OBOT_SERVER_DISABLE_MCPAUDIT_LOG` is not set here —
+  https://github.com/obot-platform/obot/releases/tag/v0.28.2,
+  https://github.com/obot-platform/obot/releases/tag/v0.28.1,
+  https://github.com/obot-platform/obot/issues/8509,
+  https://github.com/obot-platform/obot/security/advisories.
 - Moved to `v0.28.0` on 2026-11-08; a new installation
   works at this tag. 0.28.0 routes every model through one LLM gateway (`/api/llm-
   proxy/v1`) and adds Keycloak and OneLogin as authentication providers.
@@ -141,6 +171,6 @@ cannot reach this host's own services unless that is changed.
 curl -s https://raw.githubusercontent.com/obot-platform/obot/main/README.md | grep -A12 'docker run'
 
 # What the entrypoint does with OBOT_SERVER_DSN, and every server flag
-docker run --rm --entrypoint sh ghcr.io/obot-platform/obot:v0.28.0 -c 'cat "$(command -v run.sh)"'
-docker run --rm --entrypoint obot ghcr.io/obot-platform/obot:v0.28.0 server --help
+docker run --rm --entrypoint sh ghcr.io/obot-platform/obot:v0.28.2 -c 'cat "$(command -v run.sh)"'
+docker run --rm --entrypoint obot ghcr.io/obot-platform/obot:v0.28.2 server --help
 ```

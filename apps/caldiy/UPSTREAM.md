@@ -42,8 +42,8 @@ Consume **only** a reviewed tag or digest from `release` — never `latest`.
 
 ## What we use
 
-- `ghcr.io/rubennati/cal.diy:v6.2.0-6` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
-- `postgres:18.6` as primary backend
+- `ghcr.io/rubennati/cal.diy:v6.2.0-9` — built from the `rubennati/cal.diy` (cal.forte) fork's `release` branch
+- `postgres:18.7` as primary backend
 - `redis:8.10.3-alpine` for session cache and job queue (required by upstream)
 - Custom entrypoint (`config/entrypoint.sh`) injects all secrets from Docker Secret files
   at runtime — Cal.diy has no native `_FILE` support for any of its secrets
@@ -78,6 +78,35 @@ Cal.com, Inc. announced in 2026 that they split their codebase:
 For a self-hosting blueprint that explicitly targets OSS-first deployments, Cal.diy is the honest option for users who want a fully OSS path and accept the "non-production" framing.
 
 ## Version notes
+
+- Moved from fork release `v6.2.0-6` to `v6.2.0-9` on 2026-11-23 (released
+  2026-11-12), pulled by digest as before: amd64 `sha256:bd6c53d8…`, arm64
+  `v6.2.0-9-arm` `sha256:d446cd81…`; `v6.2.0-6` becomes the rollback pin. There
+  is no `v6.2.0-7` image; a `v6.2.0-8` tag exists from an interrupted
+  publication run, without arm64 image, release record or provenance, and must
+  not be deployed. The release fixes the guest-email blocklist bypass
+  (`BLACKLISTED_GUEST_EMAILS` entries after whitespace, in another case or with
+  a `+tag` did not match) and replacement-pattern injection in custom event
+  names (`$&`, `` $` ``, `$'`, `$$` in attendee names, host names or booking
+  answers rewrote the title); both reach a public booking page. It takes the
+  dependency fixes of Next.js 16.4.3, `@sentry/nextjs` 10.75.2, `handlebars`
+  4.7.10, `next-auth` 4.24.15, `proxy-addr` 2.0.8, `shell-quote` 1.11.0,
+  `trigger.dev` 4.5.9 and patched `axios`, `follow-redirects`, `protobufjs`,
+  `node-forge`, `form-data`, `hono`, `multer`, `vite`, `js-yaml`,
+  `systeminformation` and `tar`, and moves the runtime from Node.js 20 (no
+  security fixes since 2026-04-30) to Node.js 22. No fork GHSA is published.
+  The fork states that HIGH findings on unpinned transitive packages stay
+  open, PBAC is still a deny-only placeholder and Teams stay inactive.
+  Breaking for operators: `BLACKLISTED_GUEST_EMAILS` now matches as written, so
+  entries that never took effect start blocking — this stack does not set it;
+  tooling that execs into the container runs on Node.js 22. No schema,
+  configuration or compose change. Upgraded on data from `v6.2.0-6` (local
+  file, arm64 images): Prisma found its 595 migrations with none pending, the
+  owner created by the setup API logged in, the event type and its public
+  booking page (`200`) were kept, a second setup answered `No setup needed.`;
+  the start logged `Error adding google credentials to DB`, which concerns the
+  unset Google integration. The amd64 image was not run here. Sources:
+  https://github.com/rubennati/cal.diy/releases/tag/v6.2.0-9
 
 - Moved `postgres` from `17.11` to `18.6` on 2026-11-05. PostgreSQL 18 support: the README requires PostgreSQL 13 or newer
   (https://github.com/calcom/cal.diy); upstream's compose uses the untagged

@@ -19,7 +19,8 @@ what was not: [Verification performed](#verification-performed-2026-09-18).
 
 ## What we use
 
-- Official image, pinned tag: `vllm/vllm-openai:v0.33.0`. The figures in this
+- Official image, pinned tag: `vllm/vllm-openai:v0.34.0` (10.04 GB compressed
+  for `amd64`, CUDA 13.0.2, the same entrypoint and architecture list). The figures in this
   item were read for `v0.30.0`: CUDA 13.0.2, `amd64`
   and `arm64`, 8.73 GB compressed for `amd64`. Read from the registry
   (`docker buildx imagetools inspect`), **never pulled or run here**: it is
@@ -28,7 +29,7 @@ what was not: [Verification performed](#verification-performed-2026-09-18).
   `/vllm-workspace`, no exposed ports declared, `NVIDIA_VISIBLE_DEVICES=all`,
   `TORCH_CUDA_ARCH_LIST=7.5 8.0 8.6 8.9 9.0 10.0 12.0`.
 - Local validation ran `vllm/vllm-openai-cpu:v0.30.0` (2.28 GB compressed);
-  `.env.local.example` pins `v0.33.0`, the same release line and entrypoint as
+  `.env.local.example` pins `v0.34.0`, the same release line and entrypoint as
   the validated image: root by default, Python 3.12, with `curl`,
   `wget` and `bash`. It reports `0.30.0+cpu`.
 - Configuration is by `vllm serve` arguments and `VLLM_*` variables. The API
@@ -131,6 +132,29 @@ larger than 0.5B, concurrent requests, and the local compose file's first-start
 duration on other hardware.
 
 ## Version notes
+
+- Moved from `v0.33.0` to `v0.34.0` on 2026-11-23 (released 2026-11-16), the
+  CUDA and the CPU image together. Fixes GHSA-xgh8-qwjh-q853 (medium):
+  `/v1/systemone` accepted a chat template from the request although
+  `--trust-request-chat-template` was not passed; this stack does not pass it,
+  so any holder of the API key could reach it until now. Also fixes a ReDoS in
+  the validation-error sanitizer. Breaking changes and what they mean here:
+  Model Runner V1 is removed and `VLLM_USE_V2_MODEL_RUNNER=0` now fails at
+  start (not set here); the default `--block-size` is 64 instead of 16 (not
+  set here); `fp_quant` checkpoints, Marlin W4A8 (`VLLM_MARLIN_INPUT_DTYPE`) and
+  the Keye-VL models are removed (none used by the default model); ROCm 7.2
+  images are gone (this stack uses CUDA 13.0). The KV cache is now sized from
+  the memory free after warmup and `gpu_memory_utilization` defaults to 1.0;
+  upstream advises leaving it unset unless the GPU is shared. This stack keeps
+  passing `VLLM_GPU_MEMORY_UTILIZATION` (0.90), which still caps vLLM's share
+  of each GPU; raise it or remove the argument on a GPU vLLM has to itself.
+  `huggingface_hub >= 2.0.0` is required and ships in the image. The image's
+  `NVIDIA_REQUIRE_CUDA`, user and entrypoint are unchanged; it grew from 8.7
+  to 10 GB compressed. `docker compose config` resolves both files with the new
+  pin; the images were not pulled or run here (no GPU; the CPU image was not
+  pulled for disk space). Sources:
+  https://github.com/vllm-project/vllm/releases/tag/v0.34.0,
+  https://github.com/vllm-project/vllm/security/advisories/GHSA-xgh8-qwjh-q853
 
 - Moved to `v0.33.0` on 2026-11-05 (image pushed 2026-11-02); v0.31.0 and v0.32.0 lie between. The git tag
   and the Docker Hub images exist; upstream's GitHub release entry still

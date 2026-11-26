@@ -1,7 +1,7 @@
 # ShellHub — local
 #
 #   cp .env.local.example .env.local
-#   mkdir -p volumes/local/postgres
+#   mkdir -p volumes/local/postgres volumes/local/gateway
 #   ssh-keygen -t rsa -b 4096 -m PEM -f volumes/local/ssh_private_key -N ""
 #   openssl genrsa -out volumes/local/api_private_key 4096
 #   openssl rsa -in volumes/local/api_private_key -pubout -out volumes/local/api_public_key
@@ -69,15 +69,20 @@ services:
       POSTGRES_DATABASE: shellhub
       SHELLHUB_SSH_PORT: 2222
       SHELLHUB_DOMAIN: localhost
+      SHELLHUB_GATEWAY: "true"
+      SHELLHUB_PROXY: "false"
       SHELLHUB_TELEMETRY: "false"
     secrets:
       - local_api_private_key
       - local_api_public_key
       - local_ssh_private_key
+    volumes:
+      - ./volumes/local/gateway:/data
     networks:
       - shellhub-local
     ports:
       - "127.0.0.1:2222:2222"
+      - "127.0.0.1:8080:80"
 
   ui-local:
     image: shellhubio/ui:${SHELLHUB_VERSION}
@@ -86,25 +91,10 @@ services:
     environment:
       SHELLHUB_EDITION: community
     networks:
-      - shellhub-local
-
-  gateway-local:
-    image: shellhubio/gateway:${SHELLHUB_VERSION}
-    container_name: shellhub-local-gateway
-    restart: unless-stopped
-    depends_on:
-      - server-local
-      - ui-local
-    environment:
-      SHELLHUB_DOMAIN: localhost
-      SHELLHUB_PROXY: "false"
-      SHELLHUB_EDITION: community
-      SHELLHUB_AUTO_SSL: "false"
-      SHELLHUB_DATABASE: postgres
-    networks:
-      - shellhub-local
-    ports:
-      - "127.0.0.1:8080:80"
+      shellhub-local:
+        # The server's embedded gateway proxies the console to `ui:8080`.
+        aliases:
+          - ui
 
 networks:
   shellhub-local:

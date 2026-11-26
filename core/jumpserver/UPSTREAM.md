@@ -23,7 +23,7 @@
 
 ## What we use
 
-- `jumpserver/jms_all:v5.1.1` — the vendor's own all-in-one image,
+- `jumpserver/jms_all:v5.2.1` — the vendor's own all-in-one image,
   bundling core (Django), koko (SSH gateway, and from v5 also the graphical
   sessions through its bundled guacd), chen (database web client), kael (AI
   services), lina/luna (web UI), PostgreSQL, Redis and nginx under one
@@ -141,4 +141,32 @@ same version.
   https://github.com/jumpserver/jumpserver/releases/tag/v5.1.1,
   https://github.com/jumpserver/Dockerfile/tree/v5.1.1/allinone,
   https://github.com/jumpserver/installer/blob/v5.1.1/scripts/7_upgrade.sh,
+  https://github.com/jumpserver/jumpserver/security/advisories
+- Moved from `v5.1.1` to `v5.2.1` on 2026-11-23 (v5.2.0 released 2026-11-19, v5.2.1
+  on 2026-11-20). No GHSA or CVE is published for the range;
+  GHSA-vr35-wj7g-3mr2 (dynamic lookup filtering, medium) still lists no patched
+  release. v5.2.0 lists security enhancements: access-control policies applied to
+  scheduled jobs at execution time, a dedicated SSH Ansible executor with safeguards
+  against playbook path traversal and restrictions on symlinks, bundled configuration
+  files and plugins, stricter API parameter validation and organisation and role
+  permission checks, existing SSH keys disabled after a key reset, verification codes
+  kept out of task views and logs, database protocol packet validation and TLS
+  verification, FreeRDP updated for protocol-parsing and memory-safety issues, and
+  HTTPS certificate validation on by default in the desktop client (not used with
+  the all-in-one image, which serves the web interface only). v5.2.1 fixes LDAP logins
+  failing on username case, asset-tree pagination behind an HTTPS reverse proxy, and
+  a Celery/Core time-zone mismatch in scheduled tasks. Upgrade notes and what applies
+  here: the bundled PostgreSQL 18.7 and Redis 8.10.3 and the automatic PostgreSQL
+  10–17 migration belong to the installer's multi-container deployment; the
+  `jms_all` image is built from the same Dockerfile as v5.1.1 on Debian trixie and
+  keeps PostgreSQL 17 (17.12 in v5.2.1, the cluster in `pgdata` starts unchanged).
+  The Chen database backend is rewritten in Go; Kael, the EE ticket and workflow
+  migration and JDMC do not apply to this Community Edition stack. A new uniqueness
+  constraint on user email addresses gives every duplicate but one a temporary
+  `.invalid` address and notifies the administrators — check the user list after
+  the upgrade. The schema migrates on start. No compose change. The image is
+  published for amd64 only, as before. Sources:
+  https://github.com/jumpserver/jumpserver/releases/tag/v5.2.0,
+  https://github.com/jumpserver/jumpserver/releases/tag/v5.2.1,
+  https://github.com/jumpserver/Dockerfile/tree/v5.2.1/allinone,
   https://github.com/jumpserver/jumpserver/security/advisories

@@ -18,8 +18,8 @@
 
 ## What we use
 
-- `ghcr.io/velocidex/velociraptor-server:0.77.3` — the image tag omits the
-  `v` prefix the Git release tag (`v0.77.3`) carries; a `v`-prefixed image
+- `ghcr.io/velocidex/velociraptor-server:0.77.4` — the image tag omits the
+  `v` prefix the Git release tag (`v0.77.4`) carries; a `v`-prefixed image
   tag does not exist
 
 ## Docker-based server support since 0.77 — verified, not assumed from the prompt
@@ -74,6 +74,32 @@ corrected in this stack (a specific version tag, and a generated secret).
   datastore pair.
 
 ## Version notes
+
+- Moved from `0.77.3` to `0.77.4` on 2026-11-23 (released 2026-11-23). The
+  release's Security section lists six fixes without GHSA or CVE IDs (no
+  advisory for 0.77.4 is published yet): a child org reads only the secrets
+  shared with it, no longer the root org's; an impersonating artifact can only
+  impersonate the user who created it; the filestore gRPC API requires
+  `DATASTORE_ACCESS` and the `yarax`, `cache`, `memoize` and `process_tracker`
+  plugins check permissions; file accessors verify path prefixes and the server
+  rejects out-of-range values in client responses; the GUI HTML sanitizer's
+  attribute matcher is tightened; PGP is removed (GO-2026-5932, the
+  unmaintained `golang.org/x/crypto/openpgp`). All of them sit behind a GUI or
+  API login or an enrolled client, so on this stack they reach only an
+  authenticated user or a client this server enrolled. Breaking:
+  `pk_encrypt()`, `pk_decrypt()`, `Server.Utils.CreateCollector` and the offline
+  collector no longer accept PGP — use X509 or a password; collectors built with
+  a PGP key must be rebuilt. `Windows.Events.FailedLogBeforeSuccess` is removed;
+  hunts or notebooks that call it fail. This stack's files use neither. No
+  datastore migration or configuration change is stated. The image is still
+  amd64 only, but 0.77.4 is published as a manifest list with that one entry,
+  so an arm64 machine no longer falls back to emulation on its own:
+  `docker-compose.local.yml` names `platform: linux/amd64`. Upgraded on data
+  from 0.77.3 (local file, amd64 under emulation): a reader user added under
+  0.77.3 and the admin both logged in to the GUI API after the move, a wrong
+  password answered `401`, the client frontend served its certificate. Source:
+  https://github.com/Velocidex/velociraptor/releases/tag/v0.77.4,
+  https://pkg.go.dev/vuln/GO-2026-5932.
 
 - Moved to `0.77.3` on 2026-10-31 (released 2026-10-05).
   Upstream says the release addresses the CVEs of the 0.77.3 cycle without naming

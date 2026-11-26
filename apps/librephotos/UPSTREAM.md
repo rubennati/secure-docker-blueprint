@@ -36,6 +36,7 @@
 | **`data=` path renamed to individual bind mounts** (`./volumes/protected_media`, `./volumes/logs`, `./volumes/cache`, `./volumes/db`) | Inbox used a single `${data}` root variable that mixed DB and media; separating them makes backups and permissions cleaner |
 | **`shm_size: 256mb` on `db`** | Upstream's compose sets it from 1.5.0; with Docker's default 64 MB `/dev/shm`, large libraries fail with "could not resize shared memory segment" |
 | **`UPDATE_CHECK: "false"` on the backend** | From 1.5.0 the backend asks GitHub daily for a newer release; pins move through this repository |
+| **`ERROR_REPORTING_MAINTAINERS_DSN: ""` on the backend** | From 1.6.0 an admin can send error reports to the maintainers' GlitchTip on `errors.niaz.omg.lol`; empty removes that destination, reports stay on the server or go to the operator's own `SENTRY_DSN` |
 | **Access `access-vpn`, `limit-standard` and `headers-standard` defaults** | Closed by default; open the route (`access-public`) for clients outside the VPN |
 
 ## Version / tag notes
@@ -98,6 +99,31 @@
   the `pg_dump` from the upgrade checklist before the tag changes in either
   case, and restore it into the new cluster if the upgrade does not find the
   data. Downgrade is only a restore of that dump.
+- Moved to `1.6.0` on 2026-11-23 (released 2026-11-09); backend, frontend
+  and proxy exist at `1.6.0` for linux/amd64 and linux/arm64. Fixes high
+  GHSA-9r2w-8q26-2fcw (a staff account that is not a superuser could edit a
+  superuser's account and take it over), medium GHSA-9j7w-vxf9-x93c (the
+  mobile sync feed ignored the owner's sharing switches, such as location
+  and rating, for direct-share recipients) and medium GHSA-57r4-v566-3rcw
+  (share recipients kept access to photos the owner later hid, trashed or
+  removed). All three need an account on the instance. The 1.5.0 and 1.5.1
+  backend images sent ONNX Runtime usage telemetry (model names and hashes,
+  hardware, timings, a device id) to Microsoft by default; 1.6.0 turns it
+  off. New: the backend keeps scrubbed error reports in its database
+  (migration `0224_error_report`) and sends them only when an admin picks a
+  destination in a one-time dialog; upstream's built-in destination for
+  "Share with the LibrePhotos maintainers" is a GlitchTip project on
+  `errors.niaz.omg.lol`, which `ERROR_REPORTING_MAINTAINERS_DSN: ""` in both
+  compose files removes, so the remaining choices are off and the
+  operator's own `SENTRY_DSN`. Four database migrations (`0221` to `0224`)
+  run on start. No variable is renamed or removed, the healthcheck path and
+  ports are unchanged, and `pgautoupgrade` stays at `18.6-trixie`. After the
+  update, upstream recommends **Account menu > Library > Things > Find
+  things again for all photos** once (hours on a large library); admins see
+  a one-time thank-you dialog, and Rewind opens once between 20 December and
+  6 January (both can be turned off in the site settings) —
+  https://github.com/LibrePhotos/librephotos/releases/tag/1.6.0,
+  https://github.com/LibrePhotos/librephotos/security/advisories.
 
 ## Upgrade checklist
 

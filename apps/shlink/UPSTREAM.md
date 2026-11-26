@@ -16,10 +16,10 @@
 
 ## What we use
 
-- `ghcr.io/shlinkio/shlink:5.1.8` — the server, RoadRunner with PHP workers.
+- `ghcr.io/shlinkio/shlink:5.1.9` — the server, RoadRunner with PHP workers.
 - `ghcr.io/shlinkio/shlink-web-client:4.9.0` — the browser interface, static
   files behind nginx. Optional; the API works without it.
-- `postgres:18.6-alpine`. Shlink's own default is SQLite, which upstream states
+- `postgres:18.7-alpine`. Shlink's own default is SQLite, which upstream states
   is not supported for production.
 
 ## What we changed and why
@@ -67,6 +67,23 @@ README.
 
 ## Version notes
 
+- Moved from `5.1.8` to `5.1.9` on 2026-11-23 (released 2026-11-21). The one
+  change is the image's PHP, `8.5.12` → `8.5.13`, the PHP security release of
+  2026-11-19 (17 advisories, eight of them critical or high and reachable from
+  PHP code in a running application: use-after-free in the timezone cache, in
+  magic-method backtraces and after the last fatal error, session-file and
+  session-serializer handling, mixed-case `HTTPS`/`FTPS` URLs sent in plaintext,
+  folded HTTP response headers, a PHAR signature downgrade). The PHP-FPM and
+  PHP-CGI advisories do not reach this image: Shlink runs on RoadRunner. The
+  image base moves to Alpine 3.24.4, which also carries `brotli-libs` 1.2.1 and
+  so removes CVE-2026-111497. Changed, added, removed and deprecated read
+  "nothing"; no variable or migration. Upgraded on data from 5.1.8: the short
+  URL and its visits were kept and `/rest/health` reports `5.1.9`. Sources:
+  https://github.com/shlinkio/shlink/releases/tag/v5.1.9,
+  https://github.com/shlinkio/shlink/issues/2705,
+  https://www.php.net/ChangeLog-8.php#8.5.13,
+  https://github.com/php/php-src/security-advisories
+
 - Moved to `5.1.8` on 2026-10-31 (released 2026-10-21). The
   one change is the image base, Alpine 3.24, so PHP security updates arrive
   again, among them CVE-2026-109618 and CVE-2026-109619. Changed, added, removed
@@ -93,6 +110,6 @@ README.
 curl -s https://raw.githubusercontent.com/shlinkio/shlink/main/docker-compose.yml
 
 # The environment variables this version reads, with their defaults
-docker run --rm --entrypoint sh ghcr.io/shlinkio/shlink:5.1.8 -c \
+docker run --rm --entrypoint sh ghcr.io/shlinkio/shlink:5.1.9 -c \
   'grep -rhoE "^ *case [A-Z_]+" $(grep -rl "enum EnvVars" module | head -1)'
 ```

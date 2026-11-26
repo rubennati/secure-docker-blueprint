@@ -53,6 +53,28 @@ any stack on proxy-public ────────→ mailpit :1025  (SMTP)
   New in v1.33.0 and off unless set: a Subject prefix for relay and forward, and
   an Rspamd spam check. `MP_ALLOWED_HOSTS` and the other `MP_*` settings here
   are unchanged. https://github.com/axllent/mailpit/releases
+- Moved to `v1.34.0` on 2026-11-23 (released 2026-11-17). It fixes GHSA-v887-64wg-qqc9 (medium):
+  one message with an unparseable media type carrying an RFC 2231 parameter crashed the SMTP
+  server, without authentication, from v1.33.1 on. It reaches this stack: port 1025 accepts any
+  login from every container on `proxy-public`, so one sending stack could stop the sink for
+  all. The release also hardens message, header, search, thumbnail and
+  webhook handling against memory and CPU exhaustion. Breaking, checked against this stack:
+  - Flags and variables deprecated for two years are removed (`MP_DATA_FILE`,
+    `MP_UI_SSL_*`, `MP_SMTP_SSL_*`, `MP_SMTP_TLS_REQUIRED`, `MP_DISABLE_HTML_CHECK`,
+    `MP_STRICT_RFC_HEADERS` and others) and a relay config with `recipient-allowlist` stops the
+    start until renamed to `allowed-recipients`. Every `MP_*` variable this stack sets still
+    exists, and it ships no relay config.
+  - Ports, `return-path`, `--max-age`, integer variables and empty credentials are checked at
+    start and refused if invalid; `MP_MAX_MESSAGES` is an integer, `MP_UI_AUTH_FILE` a
+    populated htpasswd file.
+  - The send API answers `400`, `413` and `503` in new cases; a message carries at most 100
+    tags.
+  With the database, the UI password file, an empty `MP_LABEL` and `MP_ALLOWED_HOSTS` set as
+  in production, a message stored on v1.33.1 is still listed on v1.34.0, the API without the
+  password answers `401`, and a message with an RFC 2231 media-type parameter is accepted
+  (local stack with an override, 2026-11-23). Sources:
+  https://github.com/axllent/mailpit/releases/tag/v1.34.0,
+  https://github.com/axllent/mailpit/security/advisories/GHSA-v887-64wg-qqc9
 
 ## Upgrade checklist
 

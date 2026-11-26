@@ -35,6 +35,9 @@ services:
       STALWART_PUBLIC_URL: http://localhost:8080
       # Set by ops/setup.sh for the first start, empty afterwards.
       STALWART_RECOVERY_ADMIN: ${STALWART_RECOVERY_ADMIN:-}
+      # Set to true for one start after an upgrade that adds permissions to the
+      # default roles (the release notes say when), empty afterwards.
+      STALWART_UPDATE_ROLE_PERMISSIONS: ${STALWART_UPDATE_ROLE_PERMISSIONS:-}
       TZ: ${TZ}
 
     # --- Storage ---

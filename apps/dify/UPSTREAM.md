@@ -16,15 +16,15 @@
 
 ## What we use
 
-Upstream's Docker Compose deployment (`docker/docker-compose.yaml`, tag `1.19.0`),
+Upstream's Docker Compose deployment (`docker/docker-compose.yaml`, tag `1.20.0`),
 PostgreSQL profile, pgvector as the vector store, minus what is listed below:
 
-- `langgenius/dify-api:1.19.0` (three services: `MODE=api`, `worker`, `beat`),
-  `langgenius/dify-web:1.19.0`, `langgenius/dify-plugin-daemon:0.6.14-local`,
+- `langgenius/dify-api:1.20.0` (three services: `MODE=api`, `worker`, `beat`),
+  `langgenius/dify-web:1.20.0`, `langgenius/dify-plugin-daemon:0.6.15-local`,
   `langgenius/dify-sandbox:0.2.15`
 - `ubuntu/squid:6.6-24.04_edge` — upstream uses `:latest`; a versioned tag of the
   same image
-- `postgres:15.19-alpine` (upstream: `15-alpine`), `pgvector/pgvector:0.8.7-pg16`
+- `postgres:15.20-alpine` (upstream: `15-alpine`), `pgvector/pgvector:0.8.7-pg16`
   (upstream: `pg16`), `redis:8.10.3-alpine` (upstream: `6-alpine`)
 - pgvector, not Weaviate: upstream supports both, and pgvector is one more
   PostgreSQL rather than a different product. No other stack (Qdrant included) is
@@ -227,6 +227,42 @@ the model backend:
   runtime of the image's `gosu`, which every current PostgreSQL image ships (see the
   README). The hardcoded tag in `docker-compose.local.yml` moves too. Source:
   https://www.postgresql.org/docs/release/15.19/
+- Moved to `1.20.0` (api, worker, web) and `PLUGIN_TAG` to `0.6.15-local` on
+  2026-11-23 (released 2026-11-18); upstream's 1.20.0 compose pins exactly
+  these, and `SANDBOX_TAG` stays at `0.2.15`, unchanged upstream. Security
+  fixes in 1.20.0: inline SVG previews are sandboxed and expired file links
+  are renewed only after the original signature verifies; node-retry details
+  are redacted from public streams; OAuth callbacks cannot be reused;
+  member-role permissions are enforced and vector deletion is scoped to the
+  target dataset (langgenius/dify#46505, #46517, #46001, #46053, #45586);
+  Node.js 24.22.3 in the runtime images. CVE-2026-116591 (GHSA-fpmh-frq8-7rj8,
+  high, `klauspost/compress` zstd panic) is fixed in `dify-agent-runtime`,
+  which belongs to the Agent Backend and Local sandbox that this stack does
+  not run, so it does not reach it; upstream lists no GHSA for Dify itself.
+  Six Alembic revisions run at the api start (`53c10126d551` to
+  `f8b6e2c4a901`: personal access tokens, file-scan tables, Evaluation
+  tables, also on the Community Edition); no manual backfill. Stop the whole
+  stack before starting the new images, as for 1.19.0, and back up the
+  three databases, `storage`, `plugin_daemon` and the secrets first. Changed
+  defaults: `OPENAPI_ENABLED` is now `true`, so `/openapi/v1/*` (already
+  routed here) accepts the personal access tokens a signed-in user creates
+  on the **Account** page; set `OPENAPI_ENABLED: "false"` in `x-dify-env` to
+  keep it off. `NEXT_PUBLIC_ENABLE_HITL_IM` is now `true`: the approval UI
+  for Slack, Teams and other IM channels appears, but its callback path
+  `/callbacks/human-input/v2/im/` is not routed to the api here, so IM
+  approvals do not arrive; email delivery does not use that path. The api image
+  carries DeepEval; `DEEPEVAL_DISABLE_DOTENV` and
+  `DEEPEVAL_TELEMETRY_OPT_OUT` are set to `1` in both compose files, as in
+  upstream's env files, which this stack does not load. The retired
+  `shared.env`, the new `urls.env` and the removed OpenShell and
+  `EXPERIMENTAL_ENABLE_VINEXT` settings concern upstream's env files and
+  services not used here. The new Celery queues `human_input_delivery` and
+  `human_input_contact_sync` are in the image's default worker queue list.
+  The local file's `worker-beat` now has the storage mount and the
+  `/tmp` schedule file that the production file already carried; without
+  them 1.20.0's beat stops with Errno 30 on the read-only root —
+  https://github.com/langgenius/dify/releases/tag/1.20.0,
+  https://github.com/langgenius/dify-plugin-daemon/releases/tag/0.6.15.
 
 ## Upgrade checklist
 

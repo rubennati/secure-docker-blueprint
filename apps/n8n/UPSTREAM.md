@@ -46,6 +46,31 @@
 
 ## Version notes
 
+- Moved to `2.48.7` on 2026-11-23 (released 2026-11-20, upstream's `stable`
+  and `latest` channel; 2.48.0 to 2.48.3 were GitHub pre-releases, 2.48.4 is
+  the first stable 2.48). Pinned by the digest of the multi-arch index
+  (linux/amd64, linux/arm64),
+  `sha256:fabce3e9678a07d2dde83bd8f5124017f3ec457d0a3fc6b63bb4cec465d63861`.
+  Fixes four advisories published 2026-11-13 (fixed in 2.47.6 and 2.48.3):
+  high GHSA-q8rc-7m84-mfvj (CVE-2026-130167) — a user with a custom instance
+  role holding user-management permissions could take over the owner account;
+  it needs the licensed custom-roles feature. Medium GHSA-h59h-rf6m-7jp5 —
+  activating a workflow did not check that the publisher may use the trigger
+  nodes' credentials; medium GHSA-g333-hr44-g82p — the AWS Bedrock nodes'
+  custom runtime endpoint bypassed SSRF protection; medium
+  GHSA-c772-hjfp-gfc2 — unencoded IDs in several nodes' request paths could
+  reach other endpoints of the same service. The last three reach any
+  instance with more than one member. The image's Alpine `brotli-libs` is
+  now `1.2.1-r0`, so CVE-2026-111497 and its baseline exception are gone.
+  No breaking change in `packages/cli/BREAKING-CHANGES.md` touches this
+  stack (the new entries are for the n8n Packages preview); port 5678,
+  `/healthz` and the environment are unchanged, so the compose files keep
+  their configuration. 2.48.5 gives fresh installs a random instance ID.
+  Database migrations run on first start (SQLite schema changes from 2.46.7),
+  so back up `volumes/data/` before. 3.x (3.3.0) is still a GitHub
+  pre-release —
+  https://github.com/n8n-io/n8n/security/advisories,
+  https://github.com/n8n-io/n8n/releases.
 - Moved to `2.46.7` on 2026-11-09 (released the same day, upstream's `stable`
   channel; not a pre-release). One fix: resume attempts
   for waiting and queued executions are limited (n8n-io/n8n#42862). Pinned by

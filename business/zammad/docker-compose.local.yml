@@ -27,6 +27,10 @@ x-shared: &zammad-shared
     NGINX_SERVER_NAME: localhost
     NGINX_SERVER_SCHEME: http
     NGINX_CLIENT_MAX_BODY_SIZE: "50M"
+    # nginx finds the backends by these names; the image's defaults,
+    # zammad-railsserver and zammad-websocket, are not resolvable here.
+    ZAMMAD_RAILSSERVER_HOST: railsserver
+    ZAMMAD_WEBSOCKET_HOST: websocket
   restart: unless-stopped
   security_opt:
     - no-new-privileges:true

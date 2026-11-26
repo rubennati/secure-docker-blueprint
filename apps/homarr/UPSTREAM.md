@@ -51,6 +51,22 @@ Restore appdata tarball, revert `APP_TAG`.
 
 ## Version notes
 
+- Moved from `v2.12.0` to `v2.14.0` on 2026-11-23 (released 2026-11-20). The
+  move is for the image's runtime: 2.14.0 bundles NGINX `1.30.7`, Redis `8.8.4`,
+  Next.js `16.4.6` and Node.js `24.22.3`, each named in the notes as a security
+  update, plus patched XML-parser, redirect-handler, query-string, Glob,
+  Minimatch and Seroval dependencies. No Homarr GHSA is published for the 2.13 or
+  2.14 line. Neither 2.13.0, 2.13.1 nor 2.14.0 names a breaking change, a removed
+  variable or a migration step; the database migrates in place at start, as
+  before. The upgrade notice about backing up `pb_data` applies only to a
+  self-hosted Workshop, which this stack does not run. New in 2.13: board tabs,
+  a widget editor and a changelog shown to administrators after an update; new
+  in 2.14: header widgets and notifications, Workshop themes, a guided Custom
+  Widget editor, and Homey Pro and Yuvomi integrations. Rollback means restoring the
+  pre-upgrade `./volumes/appdata/`. Sources:
+  <https://github.com/homarr-labs/homarr/releases/tag/v2.13.0>,
+  <https://github.com/homarr-labs/homarr/releases/tag/v2.13.1>,
+  <https://github.com/homarr-labs/homarr/releases/tag/v2.14.0>.
 - Moved to `v2.12.0` on 2026-11-08. A minor
   release; its notes name no breaking change. A new instance answers `/` with a
   redirect to the setup wizard at `/init`.

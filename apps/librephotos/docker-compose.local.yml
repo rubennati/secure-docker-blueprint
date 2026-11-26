@@ -39,6 +39,7 @@ services:
     environment:
       FEATURE_REVERSE_GEOCODING: "false"
       UPDATE_CHECK: "false"
+      ERROR_REPORTING_MAINTAINERS_DSN: ""
       TZ: ${TZ}
       SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env.local}
       BACKEND_HOST: backend

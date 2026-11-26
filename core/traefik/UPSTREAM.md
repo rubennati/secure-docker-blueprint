@@ -51,6 +51,60 @@
 
 ## Version / tag notes
 
+- **Moved to `v3.7.20` on 2026-11-26** (released 2026-11-23). Three advisories:
+  - GHSA-3rh5-223h-cpwr (high): the Brotli writer of the Compress middleware held megabytes
+    of state per response in flight, unbounded, and any client selects Brotli with
+    `Accept-Encoding: br` — the Brotli counterpart of GHSA-x5pf-cqh3-2gv8.
+    `compress@file` sits on the `websecure` entrypoint in front of every router, so it
+    reaches every installation. v3.7.20 bounds that memory; `br`, `zstd` and `gzip` are
+    still negotiated as before (measured; the memory bound itself was not load-tested).
+  - GHSA-42x2-976f-ph52 (medium): the Docker and Swarm provider `password`, the Knative
+    `token` and the HTTP provider `headers` were not redacted from DEBUG logs, support
+    dumps and usage statistics. Does not reach this blueprint: the Docker provider talks to
+    the socket proxy without a password, and neither Knative nor the HTTP provider is used.
+  - GHSA-9657-c2gv-wjpj (medium): a router whose rule spells a host with a trailing dot
+    escaped the TLS-option conflict detection and could serve a host protected by
+    client-certificate options. Does not reach this blueprint: no TLS option here asks for
+    client certificates, and the routers come from one operator.
+  The rendered configuration loads under 3.7.20 with the same log lines as under 3.7.19,
+  and the path-parameter probe of 3.7.19 gives the same answers. v3.8.0 was released the
+  same day; the pin stays on the 3.7 line for this patch release.
+  Sources: https://github.com/traefik/traefik/releases/tag/v3.7.20,
+  https://github.com/traefik/traefik/security/advisories/GHSA-3rh5-223h-cpwr
+- **Moved to `v3.7.19` on 2026-11-23.** v3.7.18 (2026-11-10) fixes five advisories, four of
+  which reach this blueprint:
+  - GHSA-cp28-5662-543f (high): `sanitizePath` left a dot-segment carrying a path parameter
+    (`/..;x/`) unresolved, so Traefik routed and applied middlewares on one path and the
+    backend could resolve another. The shape exists here wherever a path router opens part
+    of a host whose main router is closed — `apps/onlyoffice/file-host-paths.yml`, the
+    Seafile OnlyOffice callback, Collabora's `/cool/convert-to`: under 3.7.17,
+    `/cache/files/..;x/admin` matched the `access-public` router and reached the backend
+    unchanged; under 3.7.19 it is resolved to `/admin` before routing and the closed main
+    router answers 403. A backend that strips path parameters (servlet containers) turned
+    that into a bypass; which of the backends here do was not tested — the release closes
+    it at Traefik for all of them. A `;` inside a name (`a;b.txt`), `..` inside a name
+    (`x..y`, `..file;v=1`), an encoded `%3B` and OnlyOffice's `/<version>-<hash>/web-apps/`
+    paths reach the backend unchanged. Only a segment that is exactly `..`, `.` or empty
+    before its `;` is now resolved (`/foo/;bar/baz` → `/foo/baz`).
+  - GHSA-x5pf-cqh3-2gv8 (high): the Compress middleware held about 18 MiB of zstd encoder
+    state per open response, an unauthenticated memory exhaustion. `compress@file` sits on
+    the `websecure` entrypoint, in front of every router.
+  - GHSA-p956-6gvv-mxqp (high): ForwardAuth NTLM bypass through `Proxy-Authorization`, an
+    incomplete fix of GHSA-hrpp-p4fc-wwf8. Reaches deployments with
+    `AUTHENTIK_FORWARD_AUTH_ENABLED=true` (`authentik.yml.tmpl`).
+  - GHSA-rr42-h8r2-f28g (medium): BasicAuth hashed passwords of any length with MD5-crypt,
+    about 1857 times the CPU per request, before authentication. Reaches the stacks with a
+    `basicAuth` middleware of their own (homepage, dashy, heimdall, ollama, paperless-gpt,
+    scrutiny). Passwords longer than 1024 bytes are now refused with 401.
+  - GHSA-ccgh-9g52-6vwg (high) is in the ingress-nginx provider, which this blueprint does
+    not use.
+  v3.7.19 (2026-11-13) only bumps quic-go, klauspost/compress and x/crypto. The rendered
+  configuration (model, TLS profiles, system routers, redirects) loads under 3.7.19 with the
+  same log lines as under 3.7.17: the `aliasHeadersStrategy` warning per entrypoint and the
+  encoded-characters notice, nothing else. The CrowdSec plugin was not loaded in that run.
+  Sources: https://github.com/traefik/traefik/releases/tag/v3.7.18,
+  https://github.com/traefik/traefik/releases/tag/v3.7.19,
+  https://doc.traefik.io/traefik/v3.7/migrate/v3/#v3718
 - **Pinned to the exact release `v3.7.17` since 2026-11-02**, the release verified on a host. Until then the pin was the 3.7 minor line, `traefik:v3.7`, which
   can resolve to a newer patch with no change in this repository — the drift
   `docs/standards/status-model.md` does not count as verified. A patch release is now
@@ -113,10 +167,12 @@
 
 A minor bump inside v3 still changes request handling. Read the per-version migration
 notes, not only the release notes — https://doc.traefik.io/traefik/migrate/v3/ carries a
-section per patch release. Between 3.6 and 3.7.13 these apply to this blueprint:
+section per patch release. Between 3.6 and 3.7.20 these apply to this blueprint:
 
 | Version | Change | What it touches here |
 |---|---|---|
+| 3.7.18 | a `..`, `.` or empty segment with path parameters is resolved like a plain dot-segment (`/foo/..;x/bar` → `/bar`) | routing now sees the path the backend resolves; legitimate paths with `;` or `..` inside a name are unchanged (measured 2026-11-23) |
+| 3.7.18 | BasicAuth refuses passwords longer than 1024 bytes with 401, not configurable | stacks with their own `basicAuth` middleware |
 | 3.7.13 | `Upgrade: h2c` and `HTTP2-Settings` are no longer forwarded; use the `h2c://` scheme | any backend negotiating cleartext HTTP/2 |
 | 3.7.13 | rootless request targets rejected with 400 (RFC 9112) | clients sending non-conforming targets |
 | 3.7.12 | `underscoreHeadersStrategy` deprecated in favour of `aliasHeadersStrategy` (`keep` default, `delete`, `reject`) | neither is set in `traefik.yml.tmpl`. **3.7.12+ logs a warning per entrypoint at every start while the option is unset** — `aliasHeadersStrategy is not configured: the request headers whose name aliases another header name … are forwarded`. Expected at the default; the option and its values are documented in the template |

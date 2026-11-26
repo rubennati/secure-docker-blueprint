@@ -78,6 +78,34 @@ If you prefer `tecnativa/docker-socket-proxy`, replace the image and consult its
   built on. The LinuxServer builds 3.4.5 to 3.4.7 list
   no changes of their own, only the package update, so the permission variables are
   unchanged. Source: https://github.com/linuxserver/docker-socket-proxy/releases
+- Moved `portainer/portainer-ce` from `2.45.3` to `2.45.4` on 2026-11-23 (released
+  2026-11-18), a security patch on the 2.45 LTS line. Advisories fixed, high:
+  GHSA-26fg-hrxq-h6v4 (Compose `profiles` and `include` bypassed the environment
+  security settings for non-administrators), GHSA-9xr4-r82x-p44j (Compose
+  `use_api_socket` bypassed "Hide bind mounts"), GHSA-45qw-5wc8-pw8v (cached ECR token
+  in registry API responses), GHSA-xfw5-xx3q-mch6 (a read-only user could send a GitOps
+  source's stored Git credentials to a host of their choice), GHSA-m2rf-p268-843w
+  (stack updates against an environment the user cannot access); medium:
+  GHSA-83xv-v98x-cc83, GHSA-7pww-qg5m-5vpv, GHSA-hjgg-rj83-gwfx, GHSA-34v4-j95q-vx5r,
+  GHSA-2fmf-33r2-5vqg, GHSA-6c57-xm2f-23fg (stack list, Git redeploy, Swarm
+  force-update, network join, network connect and WebSocket attach/exec crossing
+  access control). All need a signed-in non-administrator account: with the
+  administrator as the only account they do not reach this stack, and every account
+  signs in through the `access-vpn` route. Breaking changes: a non-administrator's stack or container that uses a
+  Docker network the user has no access to now fails to start or update ("forbidden to
+  join this network") — grant the user or team access to that network or have an
+  administrator deploy the stack; testing a GitOps source with changed settings needs
+  write access to it; in-app updates pull the exact version tag (this stack pins the tag
+  in `.env` and does not use in-app updates); `curl` is gone from the kubectl shell
+  image (Kubernetes only, not used here). The database migrates from 2.45.3 to 2.45.4
+  on first start. No compose change. The agent in `core/portainer-agent/` moves to
+  `2.45.4` in the same step. Sources:
+  https://github.com/portainer/portainer/releases/tag/2.45.4,
+  https://github.com/portainer/portainer/security/advisories
+- Moved `lscr.io/linuxserver/socket-proxy` from `3.4.7` to `3.4.8` on 2026-11-23
+  (LinuxServer build `3.4.8-r0-ls107` of 2026-11-19), the HAProxy 3.4.8 package
+  update with no change of its own and no advisory; the permission variables are
+  unchanged. Source: https://github.com/linuxserver/docker-socket-proxy/releases
 
 ## Upgrade checklist
 

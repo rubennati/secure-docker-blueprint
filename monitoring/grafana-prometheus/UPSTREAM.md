@@ -24,7 +24,7 @@ CNCF project.
 
 ## What we use
 
-- `grafana/grafana:13.3.0` — the only routed service.
+- `grafana/grafana:13.3.1` — the only routed service.
 - `prom/prometheus:v3.15.1` — internal network only, no router, no host port.
 - Two opt-in overlays: `prom/node-exporter:v1.12.1` for host metrics and
   `ghcr.io/google/cadvisor:v0.60.6` for per-container metrics.
@@ -92,11 +92,34 @@ Grafana's four outbound behaviours are off: usage reporting, update checks,
 plugin update checks and the news feed. Installing a plugin from the catalogue
 still reaches grafana.com, which is what a plugin catalogue is.
 
+One behaviour stays on: at every start Grafana 13 installs its preinstalled
+plugins from grafana.com in the background, about 18 of them, among them the
+Prometheus data source this stack needs (Grafana 13 no longer bundles it), and
+with `preinstall_auto_update` on it moves them to newer versions. Measured on
+13.3.0 and 13.3.1 on 2026-11-23.
+
 Prometheus, node_exporter and cAdvisor make no outbound call of their own.
 Prometheus reaches exactly the targets in `config/prometheus.yml`.
 
 ## Version notes
 
+- Grafana moved to `13.3.1` on 2026-11-23 (released 2026-11-10, a security
+  release; 13.2.6, 13.1.10 and 13.0.13 carry the same fixes). Fixes high
+  CVE-2026-102589 (GHSA-wpfw-6m34-pc8h: instances sharing one
+  `[rendering] renderer_token` accept each other's renderer keys; reaches
+  only instances with an image renderer and `renderAuthJWT`, which this
+  stack does not run), high CVE-2026-111024 (GHSA-6773-qqrh-gh33: Viewers and
+  Editors could bypass folder permissions on Git Sync managed resources),
+  medium CVE-2026-110992 (GHSA-frmg-qqp2-4cmv), CVE-2026-13721
+  (GHSA-h56x-gr36-fv6h) and CVE-2026-14242 (GHSA-qfwg-v76j-m6gm), three more
+  Git Sync permission flaws — all four need Git Sync provisioning, which is
+  not configured here — and medium CVE-2026-107509 (GHSA-m4q8-hj9q-f2mg: a
+  Viewer can exhaust Grafana's memory with one SQL Expression query; reaches
+  any account). No breaking change; the image, port, healthcheck and
+  environment are unchanged. Prometheus `v3.16.0`, node_exporter `v1.13.1`
+  and cAdvisor `v0.61.1` are newer but list no security fix, so their pins
+  stay — https://github.com/grafana/grafana/releases/tag/v13.3.1,
+  https://grafana.com/security/security-advisories/.
 - Grafana moved to `13.3.0` on 2026-11-05; the
   findings above were measured on `13.2.2`. The one breaking change listed is
   the `config.ini` section `marketplace`, renamed `plugins_marketplace`; this
@@ -138,7 +161,7 @@ Prometheus reaches exactly the targets in `config/prometheus.yml`.
 
 ```bash
 # Every Grafana setting and its default
-docker run --rm --entrypoint sh grafana/grafana:13.3.0 -c 'cat /usr/share/grafana/conf/defaults.ini' | head -80
+docker run --rm --entrypoint sh grafana/grafana:13.3.1 -c 'cat /usr/share/grafana/conf/defaults.ini' | head -80
 
 # Prometheus' flags, including the negative forms
 docker run --rm prom/prometheus:v3.15.1 --help

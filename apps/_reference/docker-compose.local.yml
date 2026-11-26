@@ -34,7 +34,7 @@ services:
       start_period: 15s
 
   app:
-    image: nginxinc/nginx-unprivileged:${APP_TAG}
+    image: ghcr.io/nginx/nginx-unprivileged:${APP_TAG}
     container_name: reference-local-app
     restart: unless-stopped
     depends_on:

@@ -29,9 +29,9 @@ RabbitMQ and Silo (a MinIO fork). Upstream's own shape, with the pins changed:
 
 | | Upstream's Community Edition compose | Here |
 |---|---|---|
-| Object store | `pgsty/silo:RELEASE.2026-09-16T00-00-00Z` | `pgsty/silo:RELEASE.2026-10-26T00-00-00Z` |
-| PostgreSQL | `postgres:15.7-alpine` (2024) | `postgres:15.19-alpine` |
-| Valkey | `valkey/valkey:7.2.11-alpine` | `valkey/valkey:7.2.14-alpine` |
+| Object store | `pgsty/silo:RELEASE.2026-09-16T00-00-00Z` | `pgsty/silo:RELEASE.2026-11-12T00-00-00Z` |
+| PostgreSQL | `postgres:15.7-alpine` (2024) | `postgres:15.20-alpine` |
+| Valkey | `valkey/valkey:7.2.11-alpine` | `valkey/valkey:7.2.16-alpine` |
 | RabbitMQ | `rabbitmq:3.13.6-management-alpine` (2024) | `rabbitmq:3.13.7-management-alpine` |
 
 Upstream's compose names `pgsty/silo` for the object store since v1.4.3; this
@@ -47,7 +47,7 @@ file pins the newest Silo release, the same tag `monitoring/langfuse` uses. See
 | No published ports | Upstream's proxy publishes 80 and 443. Traefik fronts the bundled proxy instead, which keeps the object store and the four interfaces off `proxy-public` |
 | Network aliases on the internal network | Measured below |
 | `user:` on the backend, live, Valkey and the object store | Every Plane image declares root |
-| `cap_add` per service rather than none | Measured below — three different images need three different sets |
+| `cap_add` only on the proxy | Measured below — its Caddy binary carries a file capability. From v1.5.0 web and admin are Caddy and space is Node, and none of the three needs a capability (measured 2026-11-23) |
 | `CORS_ALLOWED_ORIGINS` set to the host | Upstream leaves it empty |
 | `CERT_*` deliberately unset | Measured below |
 
@@ -75,10 +75,10 @@ up; the migrator ran the schema and exited.
   the kernel refuses the exec itself: `exec /usr/bin/caddy: operation not
   permitted`, naming neither the file's capability nor the reason. `cap_add:
   NET_BIND_SERVICE` is what makes it start.
-- **The web and admin images are nginx** and their entrypoint chowns
-  `/var/cache/nginx` before dropping to uid 101 — `chown(...) failed
+- **The web and admin images were nginx up to v1.4.3** and their entrypoint
+  chowned `/var/cache/nginx` before dropping to uid 101 — `chown(...) failed
   (Operation not permitted)` without `CHOWN`, `DAC_OVERRIDE`, `SETGID`,
-  `SETUID`.
+  `SETUID`. From v1.5.0 both are Caddy and need none of them; see Version notes.
 - **The backend runs as root and `/code` is world-writable** (`drwxrwxrwx`),
   which is how it gets away with it. Running it as uid 1000 works and is what
   this stack does; running it as root with `cap_drop: ALL` does **not**,
@@ -124,6 +124,47 @@ stack since the withdrawal started empty.
 
 ## Version notes
 
+- Moved to `v1.5.0` (2026-11-16) on 2026-11-23, all six images together. 19
+  advisories fixed in 1.5.0 (https://github.com/makeplane/plane/security/advisories),
+  5 high: GHSA-9xw4-p247-rjgx (`PUT` on projects, work items and modules fell through
+  to a handler that only checked sign-in, so any account could rewrite them and move
+  a project into its own workspace), GHSA-26x6-rcfm-vmf9 (a workspace member could
+  make a secret project public and join it), GHSA-hvx3-58mp-5fpx (read and comment
+  on work items in other workspaces), GHSA-h4w5-vhxc-265g (read, change and delete
+  other workspaces' published boards), GHSA-82hp-5m7w-qqqm (download, copy and
+  restore files of other projects); 14 medium: GHSA-9382-fr89-xp7w,
+  GHSA-4ww6-7fp7-m5q8, GHSA-w7fx-v6rg-mrgr, GHSA-6xvg-x5h6-69p8,
+  GHSA-9m3q-w2rr-h96c, GHSA-vhwc-995m-8fhx, GHSA-hfwx-f8q3-r2xf,
+  GHSA-3m9w-xfj8-69g3, GHSA-wq96-4xjj-j4qg, GHSA-vfqm-7rh7-84hq,
+  GHSA-r68c-48rr-m67f, GHSA-h4p4-mwfg-qh82, GHSA-xvc5-m5jf-gvpj,
+  GHSA-4jpp-964m-27cr. All need a signed-in account or API token, so they reach
+  every instance with more than one user or workspace. The release also requires a
+  matching OAuth `state`, refuses `next_path` redirects to other hosts, marks the
+  session and CSRF cookies `Secure` when `WEB_URL` is https, rate-limits sign-in by
+  client IP and checks page access on every live-collaboration connection.
+  Breaking changes and what they mean here: the admin and web images serve with Caddy
+  on port 3000 instead of nginx, and space was already Node, so the `cap_add` that
+  the nginx entrypoint needed (`CHOWN`, `DAC_OVERRIDE`, `SETGID`, `SETUID`) is gone
+  from all three — measured: all three healthy with `cap_drop: ALL` and no
+  `cap_add`. Browser writes with a session cookie are refused unless their `Origin`
+  is the instance host, `WEB_URL` or a CORS or CSRF trusted origin; this stack sets
+  `WEB_URL` and `CORS_ALLOWED_ORIGINS` to the host name (measured: same origin `200`,
+  `Origin: http://evil.example` `403 CSRF Failed: origin not allowed`); API-key
+  clients send no `Origin` and are not affected. The live server checks page access
+  through the API on every connection, so live and API run from the same tag, which
+  `APP_TAG` already ensures. PostHog is removed (`POSTHOG_*` are no longer read).
+  The external API ignores `created_by` and `created_at` in request bodies and answers
+  `404` for sub-resources of a missing work item. `rediss://` now verifies the
+  certificate (this stack uses plain `redis://` on the internal network). New
+  optional `NUM_PROXIES` for the API's rate-limit client IP is left unset: DRF then
+  keys on the whole `X-Forwarded-For`, which Traefik writes and the bundled proxy
+  extends. Three migrations (`db.0123` to `db.0125`) run in the migrator. Upgrade
+  tested on the local file: `v1.4.3` with a workspace, project and work item, then
+  `v1.5.0`: the three migrations applied, the work item read back through the API,
+  `/`, `/god-mode/`, `/spaces/` and `/api/instances/` answered `200`, password sign-in
+  through `/auth/sign-in/` worked. Sources:
+  https://github.com/makeplane/plane/releases/tag/v1.5.0,
+  https://github.com/makeplane/plane/security/advisories
 - Moved to `v1.4.3` on 2026-10-31 (released 2026-10-28), all six images together. No breaking change, variable, migration or image order is
   labelled; the REST API now answers a validation error for assignees or labels
   outside the project instead of dropping them. The release fixes access-control
@@ -149,8 +190,8 @@ stack since the withdrawal started empty.
 
 ```bash
 # Upstream's Community Edition compose — the one setup.sh downloads
-curl -sL https://github.com/makeplane/plane/releases/download/v1.4.3/docker-compose.yml
+curl -sL https://github.com/makeplane/plane/releases/download/v1.5.0/docker-compose.yml
 
 # The proxy's Caddyfile, with upstream's service names in it
-docker run --rm --entrypoint sh makeplane/plane-proxy:v1.4.3 -c 'cat /etc/caddy/Caddyfile'
+docker run --rm --entrypoint sh makeplane/plane-proxy:v1.5.0 -c 'cat /etc/caddy/Caddyfile'
 ```

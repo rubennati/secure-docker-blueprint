@@ -62,6 +62,41 @@ The official ghost-docker setup uses Caddy as an internal webserver. This bluepr
 
 ## Version notes
 
+- Moved to `6.78.0-alpine` on 2026-11-23 (released 2026-11-17), across
+  6.76.0 and 6.77.0. Fixes the advisories published 2026-11-13: high
+  GHSA-fxxr-gqx3-p253 (the login brute-force protection could be bypassed
+  with concurrent requests, and some endpoints had no rate limit; 6.76.0);
+  medium GHSA-8jqq-qq46-c657 (owner role assignment through a content
+  import), GHSA-9wp5-gvxp-8wv6 (denial of service through a crafted Revue
+  import), GHSA-9c5c-w94h-xp32 (deleted and hidden comments readable through
+  Members API filters), GHSA-86pw-gh6f-cpmg (contributors could overwrite
+  media thumbnails), GHSA-vh3j-4gg7-7vjw (revenue data readable by staff
+  users; all 6.76.0), GHSA-299g-j426-ff48 (denial of service through an
+  async helper ID in theme data), GHSA-q58f-57cg-xfw5 (private-site access
+  code brute force with forged session cookies; reaches only sites in
+  private mode), GHSA-994c-84qf-j7q9 (members-only content in the Content
+  API's plaintext and excerpt fields; all 6.77.0); low GHSA-p6x5-mfv9-84qx
+  (imported media fetched over plain HTTP, 6.76.0). The login, import and
+  staff advisories need a route to Ghost Admin, which `access-vpn` limits to
+  VPN clients; the Content API one reaches anyone who can open the site. No
+  breaking change, variable or manual step is listed; 6.76.0 and 6.77.0
+  raise the minimum Node.js versions, which the image carries. Database
+  migrations run on start (6.76 to 6.78 on MySQL). The ActivityPub overlay
+  moves from `1.2.2` to `1.2.21` (published 2026-11-19, the tag upstream's
+  ghost-docker compose pins), fixing high GHSA-m8hx-4frq-9vf8 (the Update
+  handler could change other accounts' profiles, fixed in 1.2.11) and
+  medium GHSA-768x-c64h-7pr2 (a remote server could make the site's account
+  follow it, fixed in 1.2.20); both reach a site with the overlay enabled
+  whose ActivityPub router other servers can reach, which federation needs.
+  Five schema migrations (000080 to 000084) come with it; the
+  `activitypub-migrate` one-shot runs them before the service starts. The images move to Node 26 on Alpine and the migrations image
+  from Debian to Alpine; entrypoint, command, port 8080 and the
+  `MYSQL_*` variables are unchanged, so `ops/` and the overlay keep their
+  configuration. 1.2.21 is also published for linux/arm64 —
+  https://github.com/TryGhost/Ghost/releases,
+  https://github.com/TryGhost/Ghost/security/advisories,
+  https://github.com/TryGhost/ActivityPub/security/advisories,
+  https://github.com/TryGhost/ghost-docker/blob/main/compose.yml.
 - Moved to `6.75.0-alpine` on 2026-11-05. No
   breaking change, variable or manual step is listed from 6.64.0 to 6.75.0;
   migrations run on start. 6.66.0 was not published to npm (its content ships

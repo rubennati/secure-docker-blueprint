@@ -18,7 +18,7 @@
 ## What we use
 
 - Official `fnsys/dockhand` image, pinned tag
-- `postgres:16.15-alpine` as backend database
+- `postgres:16.16-alpine` as backend database
 - `tecnativa/docker-socket-proxy` with a restricted permission set for Docker API access
 
 ## What we changed and why
@@ -52,6 +52,23 @@
   of a stack between local and git management, nodemailer and undici updated.
   No Hawser version requirement is stated.
   https://github.com/Finsys/dockhand/releases/tag/v1.0.57
+- Moved from `v1.0.57` to `v1.0.59` on 2026-11-23 (v1.0.58 released 2026-11-16,
+  v1.0.59 on 2026-11-22). No breaking change, new required variable or migration
+  step; the schema migrations run on start. Fixed in v1.0.58: GHSA-rw9p-wgwm-pp4v
+  (medium) — the SSRF guard on notification and webhook URLs checked only literal IP
+  addresses, so a host name resolving to a private range passed; GHSA-m325-jpjj-xwrw
+  (medium) — the SMTP host in the notification settings was not validated, allowing
+  probes of the internal network and cloud metadata. Both need an account that can
+  edit notification settings; with `access-vpn` that account sits behind the VPN.
+  v1.0.58 also ships docker-compose 5.7.0 and an updated restic for CVE-2026-116591,
+  stops writing `.env` contents of stack deploys to the log, and no longer answers
+  `403` when the UI is opened by an address other than `ORIGIN` (this stack sets no
+  `ORIGIN`). v1.0.59 adds permission and environment-variable hardening in settings
+  and compose validation, and updates Node.js to 24.22.3 and docker-compose to
+  5.7.1-r1. v1.0.58 adds `DISABLE_FRAME_PROTECTION` (off by default; leave it off).
+  https://github.com/Finsys/dockhand/releases/tag/v1.0.58,
+  https://github.com/Finsys/dockhand/releases/tag/v1.0.59,
+  https://github.com/Finsys/dockhand/security/advisories
 
 ## Upgrade checklist
 
@@ -65,7 +82,7 @@
 
 ## Related images to keep in sync
 
-- `postgres:16.15-alpine` — upgrade within minor versions is safe; major upgrades (15 → 16) require a manual `pg_upgrade` procedure, not covered here
+- `postgres:16.16-alpine` — upgrade within minor versions is safe; major upgrades (15 → 16) require a manual `pg_upgrade` procedure, not covered here
 - `tecnativa/docker-socket-proxy` — safe to update within the same major version
 
 ## Useful commands

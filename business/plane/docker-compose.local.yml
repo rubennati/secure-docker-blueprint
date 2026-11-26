@@ -461,14 +461,8 @@ services:
     container_name: plane-local-web
     restart: unless-stopped
     <<: *hardening
-    cap_add:
-      # nginx's entrypoint chowns /var/cache/nginx as root before dropping to
-      # uid 101. Without these it exits on
-      # `chown("/var/cache/nginx/client_temp", 101) failed`.
-      - CHOWN
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
+    # No cap_add: from v1.5.0 web and admin are Caddy on :3000 and space is
+    # Node, none of which changes ownership or binds a port below 1024.
     depends_on:
       plane-api:
         condition: service_healthy
@@ -494,14 +488,8 @@ services:
     container_name: plane-local-space
     restart: unless-stopped
     <<: *hardening
-    cap_add:
-      # nginx's entrypoint chowns /var/cache/nginx as root before dropping to
-      # uid 101. Without these it exits on
-      # `chown("/var/cache/nginx/client_temp", 101) failed`.
-      - CHOWN
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
+    # No cap_add: from v1.5.0 web and admin are Caddy on :3000 and space is
+    # Node, none of which changes ownership or binds a port below 1024.
     depends_on:
       plane-api:
         condition: service_healthy
@@ -527,14 +515,8 @@ services:
     container_name: plane-local-admin
     restart: unless-stopped
     <<: *hardening
-    cap_add:
-      # nginx's entrypoint chowns /var/cache/nginx as root before dropping to
-      # uid 101. Without these it exits on
-      # `chown("/var/cache/nginx/client_temp", 101) failed`.
-      - CHOWN
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
+    # No cap_add: from v1.5.0 web and admin are Caddy on :3000 and space is
+    # Node, none of which changes ownership or binds a port below 1024.
     depends_on:
       plane-api:
         condition: service_healthy
