@@ -27,7 +27,7 @@ the check ended with.
 
 | Stack | Role | Criticality | Hosts | Version checked | New version | Security fix | Breaking change | Lab upgrade test |
 |---|---|---|---|---|---|---|---|---|
-| `core/traefik` | reverse proxy, TLS, access middlewares | very high | 4 | v3.8.0 | yes, from v3.7.20 | yes, the three advisories of 3.7.20 | none for this configuration; checked against the 3.8 migration notes | yes — routing, access, headers and the CrowdSec plugin identical to 3.7.20 |
+| `core/traefik` | reverse proxy, TLS, access middlewares | very high | 4 | v3.8.0 | yes, from v3.7.20 | none new — 3.8.0 carries the fixes 3.7.20 brought | none for this configuration; checked against the 3.8 migration notes | yes — routing, access, headers and the CrowdSec plugin identical to 3.7.20 |
 | `core/crowdsec` | intrusion detection, bouncer for Traefik | very high | 2 | v1.8.2 | no | — | — | — |
 | `core/dockhand` | container management, with PostgreSQL and the socket proxy | very high | 1 | v1.0.59, PostgreSQL 16.16, socket proxy v0.5.0 | no | — | — | — |
 | `core/hawser` | Dockhand agent on a managed host | very high | 3 | 0.2.54 | yes, from 0.2.53 | no | none stated | no — needs a Dockhand server; the release notes were read |
@@ -38,8 +38,8 @@ the check ended with.
 | `apps/seafile` | file sync, MariaDB | very high | 2 | 13.0.30, SeaDoc 2.0.14, MariaDB 10.11.19 | yes, from 13.0.29 | yes | none | yes — library and file kept |
 | `apps/seafile-pro` | file sync, Professional Edition | very high | 1 | 13.0.30, ClamAV 1.5.5, SeaSearch 1.0.8 | yes | yes, Seafile and ClamAV | `app-internal` becomes internal: `down`, then `up -d` | yes — Seafile with the Community Edition image of the same release; ClamAV and the network on Pro |
 | `apps/onlyoffice` | document editing for Seafile | high | 2 | 10.0.0 | no | — | — | — |
-| `apps/tymeslot` | scheduling | high | 1 | 1.49.0 | yes, from 1.41.0 | — | 1.43 Stripe Connect (payments only), 1.44 `TRUSTED_PROXIES` | yes — 35 migrations on data, user kept |
-| `apps/paperless-ngx` | document management | very high | 2 | 3.5.1, Tika 3.3.3.1 | yes, from 3.4.2 | yes | 3.5 admits only `PAPERLESS_URL`'s host; the healthcheck was adapted | yes — migrations ran, documents kept, new upload consumed |
+| `apps/tymeslot` | scheduling | high | 1 | 1.49.0 | yes, from 1.41.0 | no advisory | 1.43 Stripe Connect (payments only), 1.44 `TRUSTED_PROXIES` | yes — 35 migrations on data, user kept |
+| `apps/paperless-ngx` | document management | very high | 2 | 3.5.1, Tika 3.3.3.1 | yes, from 3.4.2 | no advisory in 3.5.x | 3.5 admits only `PAPERLESS_URL`'s host; the healthcheck was adapted | yes — migrations ran, documents kept, new upload consumed |
 | `apps/immich` | photo library | very high | 1 | v3.4.2, Valkey 9.2.1, PostgreSQL 14.25 | yes, from v3.3.6 | yes | none; PostgreSQL 14 is end of life, the move to 18 is its own step | yes — asset kept; the PostgreSQL 14 → 18 move rehearsed with the README steps |
 | `apps/photoprism` | public photo gallery, MariaDB | high | 1 | 261029, MariaDB 12.3.3 | no; MariaDB 12.3.3 rebuilt on Docker Hub | MariaDB 12.3.4 not on Docker Hub yet | — | — |
 | `apps/whoami` | routing test | medium | 3 | v1.12.0 | no | — | — | — |
