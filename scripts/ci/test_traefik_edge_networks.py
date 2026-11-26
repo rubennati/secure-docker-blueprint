@@ -6,7 +6,9 @@ a Compose file COMPOSE_FILE applies next to docker-compose.yml: Traefik joins an
 creates each network, the stack declares it external. Unset stops the render,
 empty means the shared network; a name Compose would refuse, a duplicate or one
 of the stack's own networks is refused before Compose sees it, and validate.sh
-refuses a rendered file that disagrees with the list.
+refuses a rendered file that disagrees with the list. EDGE_NETWORKS_IPV6, a
+subset, gives those networks IPv6; validate.sh reports an existing network whose
+IPv6 setting differs as pending, since recreating it needs the stack stopped.
 
 Run:
     python3 scripts/ci/test_traefik_edge_networks.py
@@ -104,9 +106,11 @@ class EdgeNetworks(unittest.TestCase):
         self.assertNotEqual(v.returncode, 0)
         self.assertIn("edge-networks.yml lists [nextcloud-edge ] but EDGE_NETWORKS says [other-edge ]", v.stdout)
 
-    def validate_against(self, traefik_nets, routed):
-        """validate.sh with a stub docker: Traefik joins `traefik_nets`, and the
-        routed containers label the networks in `routed` ({name: network})."""
+    def validate_against(self, traefik_nets, routed, ipv6=None):
+        """validate.sh with a stub docker: Traefik joins `traefik_nets`, the
+        routed containers label the networks in `routed` ({name: network}), and
+        the networks in `ipv6` ({network: "true"|"false"}) exist with that setting."""
+        net_cases = "".join(f"*{n}*) echo {v} ;; " for n, v in (ipv6 or {}).items())
         (self.root / "docker-compose.yml").unlink()  # the published-address checks stay NOT VERIFIED
         stub_bin = self.root.parent / "bin"
         stub_bin.mkdir(exist_ok=True)
@@ -117,6 +121,7 @@ case "$1" in
   info) exit 0 ;;
   ps) echo routed ;;
   inspect) case "$*" in *traefik-core-fixture*) echo "{traefik_nets} " ;; *) printf '%s\\n' "{lines}" ;; esac ;;
+  network) case "$*" in {net_cases}*) ;; esac ;;
   compose) [ "$2" = version ] && echo 2.40.0 ;;
 esac
 exit 0
@@ -152,9 +157,41 @@ exit 0
         self.assertEqual(v.returncode, 1, v.stdout)
         self.assertIn("a network Traefik does not join and", v.stdout)
 
+    def test_ipv6_is_rendered_for_the_listed_subset_only(self):
+        data, out = self.rendered(dict(VALID_ENV, EDGE_NETWORKS="immich-edge whoami-edge", EDGE_NETWORKS_IPV6="immich-edge"))
+        self.assertEqual(data["networks"]["immich-edge"], {"name": "immich-edge", "driver": "bridge", "enable_ipv6": True})
+        self.assertEqual(data["networks"]["whoami-edge"], {"name": "whoami-edge", "driver": "bridge"})
+        self.assertIn("2 edge network(s), 1 with IPv6", out)
+
+    def test_ipv6_for_a_network_not_in_the_list_or_twice_is_refused(self):
+        for v6, message in (("other-edge", "is not in EDGE_NETWORKS"), ("a-edge a-edge", "listed twice")):
+            r = self.render(dict(VALID_ENV, EDGE_NETWORKS="a-edge", EDGE_NETWORKS_IPV6=v6))
+            self.assertNotEqual(r.returncode, 0, v6)
+            self.assertIn(message, r.stdout + r.stderr)
+
+    def test_unset_ipv6_list_renders_ipv4_only(self):
+        data, _ = self.rendered(dict(VALID_ENV, EDGE_NETWORKS="a-edge"))
+        self.assertNotIn("enable_ipv6", data["networks"]["a-edge"])
+
+    def test_validate_refuses_a_rendered_ipv6_set_that_disagrees_with_the_list(self):
+        self.rendered(dict(VALID_ENV, EDGE_NETWORKS="a-edge", EDGE_NETWORKS_IPV6="a-edge"))
+        self._env(dict(VALID_ENV, EDGE_NETWORKS="a-edge", EDGE_NETWORKS_IPV6=""))
+        v = self.validate()
+        self.assertNotEqual(v.returncode, 0)
+        self.assertIn("gives IPv6 to [a-edge ] but EDGE_NETWORKS_IPV6 says []", v.stdout)
+
+    def test_an_existing_network_with_the_other_ipv6_setting_is_pending(self):
+        self.rendered(dict(VALID_ENV, EDGE_NETWORKS="immich-edge whoami-edge", EDGE_NETWORKS_IPV6="immich-edge"))
+        v = self.validate_against("proxy-public immich-edge whoami-edge", {"immich": "immich-edge", "whoami": "whoami-edge"},
+                                  ipv6={"immich-edge": "false", "whoami-edge": "false"})
+        self.assertEqual(v.returncode, 0, v.stdout)
+        self.assertIn("PENDING: immich-edge exists with IPv6 false, EDGE_NETWORKS_IPV6 asks for true", v.stdout)
+        self.assertNotIn("whoami-edge exists", v.stdout)
+
     def test_the_example_ships_the_variable_and_applies_the_file(self):
         text = (TRAEFIK / ".env.example").read_text(encoding="utf-8")
         self.assertIn('\nEDGE_NETWORKS=""\n', text)
+        self.assertIn('\nEDGE_NETWORKS_IPV6=""\n', text)
         self.assertIn("\nCOMPOSE_FILE=docker-compose.yml:network-dual-stack.yml:config/published-ports.yml:config/edge-networks.yml\n", text)
         self.assertIn("config/edge-networks.yml", (TRAEFIK / ".gitignore").read_text(encoding="utf-8"))
 

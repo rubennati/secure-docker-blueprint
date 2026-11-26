@@ -94,6 +94,41 @@ An installation from before `EDGE_NETWORKS` existed runs
 `COMPOSE_FILE` to `core/traefik/.env`, which changes nothing until a network is
 listed.
 
+## IPv6 on an edge network
+
+An edge network is IPv4 only. Traefik dials every backend over IPv4, and a
+client's address reaches the application in headers, not as a network source, so
+the request path needs no IPv6. What does is the way out: an edge network is not
+internal, and for most stacks it is the only network that leaves the host. A
+stack on its edge network alone reaches no IPv6 destination — an IPv6-only mail
+server, an API, an update source — where on the dual-stack `proxy-public` it did.
+
+`EDGE_NETWORKS_IPV6` in `core/traefik/.env` names the edge networks that carry IPv6
+as well; each has to be in `EDGE_NETWORKS`. `render.sh` adds `enable_ipv6: true` to
+them, and Docker allocates the subnet — a ULA `/64`, or one from an IPv6 entry in
+the daemon's `default-address-pools`. The way out over IPv6 needs `ip6tables`, which
+Docker enables by default since Engine 27.
+
+**Turning it on or off recreates the network**, and Compose cannot recreate a
+network a container is attached to. Run `docker compose up -d` in `core/traefik`
+with the stack still on the network, and Compose disconnects Traefik, fails on the
+stack's endpoint and leaves Traefik stopped — every stack is down until the next
+`up -d`. So, in this order:
+
+1. `docker compose down` in the stack.
+2. `core/traefik/.env`: the network into (or out of) `EDGE_NETWORKS_IPV6`, then
+   `bash ops/scripts/render.sh` and `docker compose up -d` in `core/traefik`.
+   Traefik is recreated with the network; every stack is interrupted for a few
+   seconds.
+3. `docker compose up -d` in the stack.
+4. `bash ops/scripts/validate.sh --strict`: it compares each existing edge network's
+   IPv6 setting with the list and reports a difference as pending.
+
+Checked 2026-11-26 on Docker Engine 29.5 with its default pools: the recreated
+network carried an IPv4 subnet and a ULA `/64`, and the stack reached Traefik over
+both. The failure above was reproduced in the same run. IPv6 to the internet was
+not measured: the lab had no IPv6 uplink.
+
 ## Stacks that reach each other
 
 A stack that another stack calls by service name — a mail sink every stack sends
