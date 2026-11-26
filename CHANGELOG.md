@@ -43,7 +43,9 @@ before an application move. In this order:
    `up -d`.
 7. **Paperless-ngx 3.5.1.** Take the new compose file together with the tag: 3.5
    refuses the old healthcheck's request, and the container turns unhealthy. A
-   second hostname goes into `PAPERLESS_ALLOWED_HOSTS`.
+   second hostname goes into `PAPERLESS_ALLOWED_HOSTS`. Tika 3.4 refuses an Office
+   file over 50 MiB; to keep larger ones, set `TIKA_MAX_ATTACHMENT_BYTES` in `.env`
+   and run `docker compose up -d --force-recreate tika`.
 8. **Tymeslot 1.49.0.** Behind a CDN, set `TRUSTED_PROXIES` to its ranges.
    Payments (off by default) need the Stripe Connect settings of 1.43.
 9. **Immich v3.4.2.** Pull and run `up -d`, then reindex as in step 3. The new
@@ -85,6 +87,14 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
 - **ClamAV `1.5.5`** (`apps/seafile-pro`). Ten CVEs in the parsers, among them
   out-of-bounds writes in the LZX and UPX/PE unpackers, which any uploaded file can
   reach.
+- **Apache Tika `3.4.0.0`** (`apps/paperless-ngx`). Fixes CVE-2026-49875, CRITICAL, in
+  Apache CXF.
+  - A multipart upload over 50 MiB is now refused. Paperless sends every Office file
+    that way: a 49 MiB docx was consumed, a 55 MiB docx failed with "Could not parse …
+    with tika server". Mails are not affected; only their HTML body reaches Tika.
+  - `TIKA_MAX_ATTACHMENT_BYTES` raises the cap (default 52428800, `-1` removes it). At
+    200 MiB a 150 MiB docx passed inside Tika's 1G memory limit.
+  - The embedding depth Paperless gets text from rises from 9 to 20 levels.
 - **ntfy `v2.38.2`** (`monitoring/ntfy`). A security release: go-smtp's CRLF
   requirement, every `X-Forwarded-For` line read, wildcard reservations and the tier
   reservation limit. Cached messages survive the upgrade.
@@ -158,12 +168,11 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
     for an unknown host, the redirect, the security headers and compression.
   - The CrowdSec plugin loads under 3.8.0.
   - The 3.8 migration notes name nothing this configuration uses.
-- **Paperless-ngx `3.5.1`, Tika `3.3.3.1`** (`apps/paperless-ngx`).
+- **Paperless-ngx `3.5.1`** (`apps/paperless-ngx`).
   - 3.5 admits only `PAPERLESS_URL`'s host and `localhost`. The healthcheck now sends
     `Host: localhost`.
   - Migrations 0028–0030 rebuild the tag tree. Documents, text and tags were there
     afterwards, and a new upload was consumed.
-  - Tika stays below 3.4, whose 50 MB attachment cap would refuse large documents.
   - Gotenberg stays at 8.40.0, the last release of 8: Paperless does not support 9.
 - **Tymeslot `1.49.0`** (`apps/tymeslot`). 35 migrations ran on data and the user was
   kept.

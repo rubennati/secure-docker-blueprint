@@ -126,14 +126,28 @@
   documents, their text and the tags were there afterwards, and a new upload was
   consumed. New: `PAPERLESS_SESSION_CLEANUP_TASK_CRON` (default `0 3 * * *`) prunes
   expired sessions; bulk edits run asynchronously. No advisory in 3.5.x.
-- Apache Tika moved to `3.3.3.1` on 2026-11-26, a rebuild of Tika 3.3.3 (the fourth
-  number is the image build). Held below **3.4.0** (released 2026-11-23): 3.4 caps a
-  multipart attachment at 50 MB by default (`maxAttachmentBytes`, CVE-2026-54225) and
-  lowers the zip-bomb and embedding-depth limits, so a large document Paperless
-  hands to Tika would be refused; Paperless's own compose still ships 3.3.1.0. Move
-  when upstream Paperless moves, or with a measured limit. The hold has a price:
-  3.3.3.1 carries CVE-2026-49875 (Apache CXF, CRITICAL), and a Trivy scan of
-  `3.4.0.0` on 2026-11-26 found no CRITICAL finding with a published fix.
+- Apache Tika moved to `3.4.0.0` on 2026-11-26 (Tika 3.4.0, 2026-11-20; the fourth
+  number is the image build; change notes:
+  https://github.com/apache/tika/blob/3.4.0/CHANGES.txt). It fixes CVE-2026-49875
+  (Apache CXF, CRITICAL), which `3.3.3.1` carries; Paperless's own compose still
+  ships 3.3.1.0. What changes for Paperless, which sends every Office file as
+  multipart to `/tika/form/text` and a mail's HTML body as a plain PUT to `/tika`:
+  - **Attachment cap.** A multipart upload over 50 MiB is refused with 413
+    (`maxAttachmentBytes`, CVE-2026-54225). The 3.3.3 notes announce the cap as
+    well, but `3.3.3.1` took a 55 MiB file. Through Paperless with 3.4: a 49 MiB
+    docx is consumed, a 55 MiB docx fails with "Could not parse … with tika
+    server", a mail with a 55 MiB attachment is consumed (the attachment never
+    reaches Tika). `TIKA_MAX_ATTACHMENT_BYTES` (default 52428800, `-1` removes
+    it) sets the cap through a server config the compose file writes; with
+    200 MiB a 150 MiB docx passed inside the 1G memory limit. Compose does not
+    recreate Tika when only the value changes: `docker compose up -d
+    --force-recreate tika`.
+  - **Embedding depth** on `/tika/form/text` rises from 9 to 20 levels: a docx
+    nested 25 deep gave text from 10 levels under 3.3.3.1 and from 21 under 3.4.
+  - **Zip-bomb ratio** rises from 100 to 1000, measured across the whole
+    document.
+  - Tika's server needs Java 17; the image brings it.
+  Small docx, xlsx and a mail were consumed as before.
 - Gotenberg stays at `8.40.0`, the last release of 8: Gotenberg 9 (2026-11-05)
   renames the PDF routes and fields Paperless calls, and Paperless does not support
   it (paperless-ngx issue 14839, closed as not planned for now).

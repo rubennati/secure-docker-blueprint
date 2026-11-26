@@ -16,7 +16,7 @@ Five services:
 | `db` | `postgres:18.6` | Primary data store (documents, tags, correspondents, users) |
 | `redis` | `redis:8.10.3-alpine` | Celery broker + worker heartbeat |
 | `gotenberg` | `gotenberg/gotenberg` | Converts HTML/Office documents to PDF |
-| `tika` | `apache/tika` | Text extraction from scanned PDFs, Office files, emails |
+| `tika` | `apache/tika` | Text extraction from Office files and mail bodies |
 
 Paperless-ngx drives OCR, classification, and archiving itself; it delegates format conversion to Gotenberg and text extraction to Tika.
 
@@ -264,6 +264,7 @@ plain text unless it is given `--passphrase`; it says so in its output.
 - **First OCR of a large document is slow.** Tesseract loads language data lazily; subsequent OCR on the same language is cached and fast.
 - **A mail account's connection test answers 500** instead of a message when the IMAP server cannot be reached — unknown host, closed port, TLS on a plain port (3.1.3).
 - **Notes are not found by full-text search** — a note's text gave no hit, also after `document_index reindex` (3.1.3, two instances).
+- **Tika refuses an Office file over 50 MiB.** The task log shows "Could not parse … with tika server" and the document is not added. Mails are not affected: only their HTML body reaches Tika. Set `TIKA_MAX_ATTACHMENT_BYTES` in `.env` (`-1` removes the cap), then `docker compose up -d --force-recreate tika` — a changed value alone does not recreate the container. Measured with 3.4.0.0: 49 MiB consumed, 55 MiB refused, 150 MiB passed at a 200 MiB cap inside the 1G memory limit; a large file with much text needs more memory than that padded test file did.
 - **Gotenberg's PID limit bounds Chromium.** At 100 PIDs Chromium could not start: every e-mail and HTML document failed with 503 while both health endpoints answered 200. 300 is the measured peak (149) with room.
 
 ## Open findings

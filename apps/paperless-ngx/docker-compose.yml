@@ -168,13 +168,18 @@ services:
       - app-internal
 
   # --------------------------------------------------------
-  # TIKA (text extraction from scanned PDFs / images)
+  # TIKA (text extraction from Office files and mail bodies)
   # --------------------------------------------------------
   tika:
     # --- Identity ---
     image: apache/tika:${TIKA_TAG}
     container_name: ${CONTAINER_NAME_TIKA}
     restart: unless-stopped
+    # Server config: only the attachment cap (TIKA_MAX_ATTACHMENT_BYTES).
+    command: ["-c", "/tika-config.xml"]
+    configs:
+      - source: tika-config
+        target: /tika-config.xml
 
     # --- Security ---
     security_opt:
@@ -192,9 +197,9 @@ services:
           memory: 128M
 
     # --- Health & Observability ---
-    # healthcheck: none — the image has no shell, so there is nothing for
-    # healthcheck.test to run. Confirmed with
-    # `docker run --rm --entrypoint sh <image>`.
+    # healthcheck: none — the image has a shell but no curl or wget, so
+    # there is nothing to ask the server with. Confirmed with
+    # `docker run --rm --entrypoint sh <image> -c 'command -v curl wget'`.
 
     # --- Networking ---
     networks:
@@ -343,6 +348,21 @@ networks:
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
     internal: true
+
+# --------------------------------------------------------
+# CONFIGS
+# --------------------------------------------------------
+configs:
+  tika-config:
+    content: |
+      <?xml version="1.0" encoding="UTF-8"?>
+      <properties>
+        <server>
+          <params>
+            <maxAttachmentBytes>${TIKA_MAX_ATTACHMENT_BYTES:-52428800}</maxAttachmentBytes>
+          </params>
+        </server>
+      </properties>
 
 # --------------------------------------------------------
 # SECRETS
