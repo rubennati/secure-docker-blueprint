@@ -14,7 +14,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 1,
+    "high": 7,
     "last_release": "2026-11-20",
     "name": "Adminer",
     "newest": "6.3.1-standalone",
@@ -78,7 +78,7 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 26,
+    "high": 32,
     "last_release": "2026-11-11",
     "name": "BookStack",
     "newest": null,
@@ -97,7 +97,7 @@
   "apps/caldiy": {
     "archived": false,
     "checked": "2026-11-27",
-    "critical": 2,
+    "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Publishing, forms and scheduling",
@@ -112,7 +112,7 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 267,
+    "high": 269,
     "last_release": "2026-03-01",
     "name": "Cal.diy",
     "newest": null,
@@ -289,8 +289,8 @@
     "high": 0,
     "last_release": "2026-11-22",
     "name": "Dashy",
-    "newest": "4.10.2",
-    "newest_date": "2026-11-26",
+    "newest": "4.10.3",
+    "newest_date": "2026-11-27",
     "path": "apps/dashy",
     "pinned_date": "2026-11-22",
     "quiet": false,
@@ -320,7 +320,7 @@
       "summary": "6 services · 1 one-shot · PostgreSQL + Valkey"
     },
     "gap": null,
-    "high": 46,
+    "high": 52,
     "last_release": "2026-11-24",
     "name": "DefectDojo",
     "newest": "3.5.300",
@@ -353,7 +353,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": 26,
+    "high": 32,
     "last_release": "2026-11-18",
     "name": "Dependency-Track",
     "newest": null,
@@ -386,7 +386,7 @@
       "summary": "4 services · RabbitMQ"
     },
     "gap": null,
-    "high": 1054,
+    "high": 1056,
     "last_release": "2026-08-10",
     "name": "DFIR-IRIS",
     "newest": null,
@@ -432,7 +432,7 @@
       "summary": "10 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 749,
+    "high": 756,
     "last_release": "2026-11-18",
     "name": "Dify",
     "newest": null,
@@ -544,7 +544,7 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 141,
+    "high": 142,
     "last_release": "2026-10-19",
     "name": "Easy!Appointments",
     "newest": null,
@@ -670,7 +670,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 1,
+    "high": 7,
     "last_release": "2026-11-20",
     "name": "Heimdall",
     "newest": null,
@@ -701,7 +701,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 31,
+    "high": 32,
     "last_release": "2026-09-25",
     "name": "Hemmelig",
     "newest": null,
@@ -892,7 +892,7 @@
       "summary": "4 services · PostgreSQL + Redis + Valkey"
     },
     "gap": null,
-    "high": 126,
+    "high": 127,
     "last_release": "2026-11-18",
     "name": "Immich",
     "newest": null,
@@ -996,7 +996,7 @@
     },
     "gap": null,
     "high": 26,
-    "last_release": "2026-11-26",
+    "last_release": "2026-11-27",
     "name": "LiteLLM",
     "newest": "v1.108.19",
     "newest_date": "2026-11-26",
@@ -1111,7 +1111,7 @@
       "summary": "7 services · MySQL + Redis"
     },
     "gap": null,
-    "high": 95,
+    "high": 101,
     "last_release": "2026-11-24",
     "name": "mailserver",
     "newest": "8.1.12",
@@ -1192,7 +1192,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 16,
+    "high": 22,
     "last_release": "2026-11-27",
     "name": "n8n",
     "newest": "2.49.8",
@@ -1226,7 +1226,7 @@
       "summary": "5 services · MariaDB + Redis"
     },
     "gap": null,
-    "high": 66,
+    "high": 72,
     "last_release": "2026-06-11",
     "name": "Nextcloud",
     "newest": "35.0.3-fpm-alpine",
@@ -1313,7 +1313,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": 33,
+    "high": 39,
     "last_release": "2026-11-19",
     "name": "obot",
     "newest": null,
@@ -1345,10 +1345,10 @@
     },
     "gap": null,
     "high": 2,
-    "last_release": "2026-11-24",
+    "last_release": "2026-11-26",
     "name": "Ollama",
-    "newest": "0.40.18",
-    "newest_date": "2026-11-24",
+    "newest": "0.40.19",
+    "newest_date": "2026-11-26",
     "path": "apps/ollama",
     "pinned_date": "2026-11-03",
     "quiet": false,
@@ -1437,7 +1437,7 @@
   "apps/opencanary": {
     "archived": false,
     "checked": "2026-11-27",
-    "critical": 9,
+    "critical": 10,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Security operations",
@@ -1449,7 +1449,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 272,
+    "high": 275,
     "last_release": "2026-09-21",
     "name": "OpenCanary",
     "newest": null,
@@ -1483,11 +1483,11 @@
       "summary": "7 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 33,
+    "high": 39,
     "last_release": "2026-11-27",
     "name": "OpnForm",
-    "newest": null,
-    "newest_date": null,
+    "newest": "2.8.7",
+    "newest_date": "2026-11-27",
     "path": "apps/opnform",
     "pinned_date": "2026-11-19",
     "quiet": false,
@@ -1496,7 +1496,7 @@
     "tested": "2026-11-08",
     "tested_version": "2.8.4",
     "upstream": "https://opnform.com/",
-    "upstream_status": "current",
+    "upstream_status": "behind",
     "version": "2.8.6"
   },
   "apps/paperless-gpt": {
@@ -1632,7 +1632,7 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 53,
+    "high": 54,
     "last_release": "2024-06-23",
     "name": "Photoview",
     "newest": null,
@@ -1663,7 +1663,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 0,
+    "high": 6,
     "last_release": "2026-11-04",
     "name": "PrivateBin",
     "newest": null,
@@ -1749,7 +1749,7 @@
   "apps/seafile-pro": {
     "archived": false,
     "checked": "2026-11-27",
-    "critical": 61,
+    "critical": 62,
     "decision_facts": {
       "commercial_model": {
         "checked": "2026-09-21",
@@ -1777,7 +1777,7 @@
       "summary": "11 services · Elasticsearch + MariaDB + Redis"
     },
     "gap": null,
-    "high": 1481,
+    "high": 1483,
     "last_release": null,
     "name": "Seafile Pro",
     "newest": "14.0.11",
@@ -1816,7 +1816,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": 37,
+    "high": 43,
     "last_release": "2026-11-21",
     "name": "Shlink",
     "newest": null,
@@ -1928,21 +1928,21 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": 27,
-    "last_release": "2026-11-26",
+    "high": 33,
+    "last_release": "2026-11-27",
     "name": "Tymeslot",
-    "newest": "1.50.0-slim",
-    "newest_date": "2026-11-26",
+    "newest": null,
+    "newest_date": null,
     "path": "apps/tymeslot",
-    "pinned_date": "2026-11-24",
+    "pinned_date": "2026-11-27",
     "quiet": false,
     "restored": true,
     "role": "Meeting scheduling with booking pages, calendar sync and video links",
     "tested": "2026-11-08",
     "tested_version": "1.41.0",
     "upstream": "https://hub.docker.com/r/luka1thb/tymeslot",
-    "upstream_status": "behind",
-    "version": "1.49.0-slim"
+    "upstream_status": "current",
+    "version": "1.51.0-slim"
   },
   "apps/unifi": {
     "archived": false,
@@ -2126,7 +2126,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": 169,
+    "high": 175,
     "last_release": "2026-11-23",
     "name": "Wiki.js",
     "newest": "3.6.1",
@@ -2166,10 +2166,10 @@
     },
     "gap": null,
     "high": 97,
-    "last_release": "2026-11-26",
+    "last_release": "2026-11-27",
     "name": "Windmill",
-    "newest": "1.886.0",
-    "newest_date": "2026-11-26",
+    "newest": "1.887.0",
+    "newest_date": "2026-11-27",
     "path": "apps/windmill",
     "pinned_date": "2026-11-06",
     "quiet": false,
@@ -2405,7 +2405,7 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 181,
+    "high": 182,
     "last_release": "2026-11-20",
     "name": "Akaunting",
     "newest": "3.3.2-v",
@@ -2450,7 +2450,7 @@
       "summary": "4 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 26,
+    "high": 27,
     "last_release": "2026-11-20",
     "name": "Chatwoot",
     "newest": null,
@@ -2495,7 +2495,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": 48,
+    "high": 54,
     "last_release": "2026-11-13",
     "name": "Documenso",
     "newest": "v2.22.0",
@@ -2514,7 +2514,7 @@
   "business/dolibarr": {
     "archived": false,
     "checked": "2026-11-27",
-    "critical": 2,
+    "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Business operations",
@@ -2528,11 +2528,11 @@
       "summary": "2 services · MariaDB"
     },
     "gap": null,
-    "high": 155,
+    "high": 157,
     "last_release": "2026-11-25",
     "name": "Dolibarr",
-    "newest": "24.0.3",
-    "newest_date": "2026-11-11",
+    "newest": "24.0.4",
+    "newest_date": "2026-11-25",
     "path": "business/dolibarr",
     "pinned_date": "2026-11-11",
     "quiet": false,
@@ -2655,10 +2655,10 @@
     },
     "gap": null,
     "high": 81,
-    "last_release": "2026-11-24",
+    "last_release": "2026-11-27",
     "name": "Invoice Ninja",
-    "newest": "5.14.0",
-    "newest_date": "2026-11-24",
+    "newest": "5.14.1",
+    "newest_date": "2026-11-27",
     "path": "business/invoiceninja",
     "pinned_date": "2026-11-20",
     "quiet": false,
@@ -2749,7 +2749,7 @@
       "summary": "2 services · MySQL"
     },
     "gap": null,
-    "high": 36,
+    "high": 42,
     "last_release": "2026-11-23",
     "name": "Leantime",
     "newest": "3.17.0",
@@ -2782,7 +2782,7 @@
       "summary": "2 services · 2 one-shot · PostgreSQL"
     },
     "gap": null,
-    "high": 54,
+    "high": 60,
     "last_release": "2026-11-10",
     "name": "Listmonk",
     "newest": null,
@@ -2873,7 +2873,7 @@
       "summary": "6 services · Memcached + PostgreSQL"
     },
     "gap": null,
-    "high": 46,
+    "high": 52,
     "last_release": "2026-11-19",
     "name": "OpenProject CE",
     "newest": null,
@@ -2892,7 +2892,7 @@
   "business/opensign": {
     "archived": false,
     "checked": "2026-11-27",
-    "critical": 34,
+    "critical": 35,
     "decision_facts": {},
     "decision_facts_checked": null,
     "domain": "Documents and e-signature",
@@ -2906,7 +2906,7 @@
       "summary": "3 services · MongoDB"
     },
     "gap": null,
-    "high": 1173,
+    "high": 1176,
     "last_release": "2026-11-20",
     "name": "OpenSign",
     "newest": null,
@@ -2960,7 +2960,7 @@
       "summary": "13 services · PostgreSQL + RabbitMQ + Redis + Valkey + object storage"
     },
     "gap": null,
-    "high": 122,
+    "high": 128,
     "last_release": "2026-11-25",
     "name": "Plane",
     "newest": "v1.5.1",
@@ -3011,7 +3011,7 @@
       "summary": "3 services · ClickHouse + PostgreSQL"
     },
     "gap": null,
-    "high": 52,
+    "high": 58,
     "last_release": null,
     "name": "Plausible Community Edition",
     "newest": "v3.2.2",
@@ -3088,10 +3088,10 @@
     },
     "gap": null,
     "high": 72,
-    "last_release": "2026-11-24",
+    "last_release": "2026-11-27",
     "name": "Twenty",
-    "newest": "v2.64.1",
-    "newest_date": "2026-11-26",
+    "newest": "v2.65.1",
+    "newest_date": "2026-11-27",
     "path": "business/twenty",
     "pinned_date": "2026-11-05",
     "quiet": false,
@@ -3132,7 +3132,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": 26,
+    "high": 32,
     "last_release": "2026-11-05",
     "name": "Vikunja",
     "newest": null,
@@ -3168,10 +3168,10 @@
       "summary": "9 services · Elasticsearch + Memcached + PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 59,
+    "high": 64,
     "last_release": null,
     "name": "Zammad",
-    "newest": "7.3.0-0010",
+    "newest": "7.3.0-0011",
     "newest_date": "2026-11-27",
     "path": "business/zammad",
     "pinned_date": "2026-11-20",
@@ -3233,7 +3233,7 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 27,
+    "high": 33,
     "last_release": "2026-09-17",
     "name": "Authelia",
     "newest": null,
@@ -3279,7 +3279,7 @@
       "summary": "4 services · 1 one-shot · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 105,
+    "high": 111,
     "last_release": "2026-11-25",
     "name": "Authentik",
     "newest": "2026.8.7",
@@ -3391,7 +3391,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": 33,
+    "high": 39,
     "last_release": "2026-11-22",
     "name": "Dockhand",
     "newest": null,
@@ -3535,7 +3535,7 @@
       "summary": "3 services · PostgreSQL + Redis"
     },
     "gap": null,
-    "high": 43,
+    "high": 49,
     "last_release": "2026-11-25",
     "name": "Infisical",
     "newest": "v0.167.16",
@@ -3611,7 +3611,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": 27,
+    "high": 33,
     "last_release": "2026-11-05",
     "name": "Keycloak",
     "newest": null,
@@ -3650,7 +3650,7 @@
       "summary": "2 services · PostgreSQL"
     },
     "gap": null,
-    "high": 26,
+    "high": 32,
     "last_release": "2026-11-15",
     "name": "Orion Belt",
     "newest": null,
@@ -4036,7 +4036,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 6,
+    "high": 7,
     "last_release": "2026-11-19",
     "name": "changedetection.io",
     "newest": "0.70.4",
@@ -4086,7 +4086,7 @@
       "summary": "2 services · MongoDB"
     },
     "gap": null,
-    "high": 52,
+    "high": 53,
     "last_release": "2026-11-19",
     "name": "Checkmate",
     "newest": "v4.1.0",
@@ -4326,8 +4326,8 @@
     "high": 29,
     "last_release": "2026-11-26",
     "name": "Langfuse",
-    "newest": null,
-    "newest_date": null,
+    "newest": "4.88.0",
+    "newest_date": "2026-11-26",
     "path": "monitoring/langfuse",
     "pinned_date": "2026-11-19",
     "quiet": false,
@@ -4336,7 +4336,7 @@
     "tested": "2026-11-08",
     "tested_version": "4.76.0",
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
-    "upstream_status": "undetermined",
+    "upstream_status": "behind",
     "version": "4.83.0"
   },
   "monitoring/ntfy": {
@@ -4361,10 +4361,10 @@
     },
     "gap": null,
     "high": 0,
-    "last_release": "2026-11-24",
+    "last_release": "2026-11-27",
     "name": "ntfy",
-    "newest": null,
-    "newest_date": null,
+    "newest": "v2.38.3",
+    "newest_date": "2026-11-27",
     "path": "monitoring/ntfy",
     "pinned_date": "2026-11-24",
     "quiet": false,
@@ -4373,7 +4373,7 @@
     "tested": "2026-11-08",
     "tested_version": "2.37.2",
     "upstream": "https://ntfy.sh",
-    "upstream_status": "current",
+    "upstream_status": "behind",
     "version": "2.38.2"
   },
   "monitoring/scrutiny": {
@@ -4408,7 +4408,7 @@
       "summary": "2 services"
     },
     "gap": null,
-    "high": 65,
+    "high": 66,
     "last_release": "2026-11-01",
     "name": "Scrutiny",
     "newest": null,
@@ -4439,7 +4439,7 @@
       "summary": "1 service"
     },
     "gap": null,
-    "high": 273,
+    "high": 274,
     "last_release": "2026-11-17",
     "name": "Uptime Kuma",
     "newest": null,
@@ -4489,7 +4489,7 @@
       "summary": "3 services · PostgreSQL"
     },
     "gap": null,
-    "high": 90,
+    "high": 96,
     "last_release": "2026-11-05",
     "name": "Zabbix",
     "newest": null,

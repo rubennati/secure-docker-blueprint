@@ -114,7 +114,7 @@ client on the host. Bring it up after the database, check, and take it down agai
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `adminer:6.3.0-standalone` | 0 · 1 | — | — |
+| `adminer:6.3.0-standalone` | 0 · 7 | — | — |
 
 <!-- findings:end -->
 

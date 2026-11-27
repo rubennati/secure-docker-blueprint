@@ -112,7 +112,7 @@ For the general SQLite restore procedure and verification checklist, see
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `louislam/uptime-kuma:2.5.12` | 2 · 204 | 4 · 39 | 2 · 30 |
+| `louislam/uptime-kuma:2.5.12` | 2 · 205 | 4 · 39 | 2 · 30 |
 
 <!-- findings:end -->
 

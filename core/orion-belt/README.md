@@ -159,7 +159,7 @@ For the general PostgreSQL restore procedure and verification checklist, see
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `ghcr.io/orion-belt-dev/orion-belt-server:1.5.0` | — | — | — |
-| `postgres:16.16-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:16.16-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

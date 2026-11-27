@@ -141,7 +141,7 @@ Confirm on the first deploy:
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `documenso/documenso:v2.21.1` | 0 · 5 | 0 · 17 | — |
-| `postgres:16.16-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:16.16-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

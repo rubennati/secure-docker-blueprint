@@ -178,8 +178,8 @@ Without a working mail config, signature request emails do not go out and the fl
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `mongo:8.0.38` | — | 0 · 3 | 1 · 26 |
-| `opensign/opensign:main@sha256:093910c698c1…` | 29 · 1105 | 1 · 22 | — |
-| `opensign/opensignserver:main@sha256:49819bc883aa…` | 29 · 1093 | 1 · 34 | — |
+| `opensign/opensign:main@sha256:093910c698c1…` | 30 · 1108 | 1 · 22 | — |
+| `opensign/opensignserver:main@sha256:49819bc883aa…` | 30 · 1096 | 1 · 34 | — |
 
 <!-- findings:end -->
 

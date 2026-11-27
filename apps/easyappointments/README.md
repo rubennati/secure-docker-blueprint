@@ -145,7 +145,7 @@ to be seen. Reconcile against the notification mail before resuming operation.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `alextselegidis/easyappointments:1.6.1` | 4 · 116 | — | — |
+| `alextselegidis/easyappointments:1.6.1` | 4 · 117 | — | — |
 | `mariadb:11.4.13` | — | — | 1 · 25 |
 
 <!-- findings:end -->

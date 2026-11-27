@@ -118,7 +118,7 @@ Confirm on the first deploy:
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `infisical/infisical:v0.167.7` | 0 · 16 | — | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 | `redis:7.4.12-alpine` | 0 · 1 | — | — |
 
 <!-- findings:end -->

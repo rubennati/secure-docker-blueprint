@@ -139,7 +139,7 @@ configure.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/dgtlmoon/changedetection.io:0.70.2` | — | 1 · 6 | — |
+| `ghcr.io/dgtlmoon/changedetection.io:0.70.2` | 0 · 1 | 1 · 6 | — |
 
 <!-- findings:end -->
 

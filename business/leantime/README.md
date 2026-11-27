@@ -156,7 +156,7 @@ secrets, start the database, load the dump, then start the application.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `leantime/leantime:3.16.0` | 0 · 1 | 1 · 2 | — |
+| `leantime/leantime:3.16.0` | 0 · 7 | 1 · 2 | — |
 | `mysql:9.7.4` | — | 1 · 8 | 1 · 25 |
 
 <!-- findings:end -->

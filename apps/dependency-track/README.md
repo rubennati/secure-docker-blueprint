@@ -156,7 +156,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 |---|---|---|---|
 | `dependencytrack/apiserver:5.2.2` | — | — | — |
 | `dependencytrack/frontend:5.2.2` | — | — | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

@@ -136,7 +136,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `hemmeligapp/hemmelig:v7.6.1` | 5 · 13 | 2 · 18 | — |
+| `hemmeligapp/hemmelig:v7.6.1` | 5 · 14 | 2 · 18 | — |
 
 <!-- findings:end -->
 

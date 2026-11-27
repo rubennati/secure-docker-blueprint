@@ -170,7 +170,7 @@ Restore: put the volumes back owned by `1000:1000`, restore the secrets and
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `ghcr.io/analogj/scrutiny:v0.10.0-web` | 0 · 17 | — | 0 · 1 |
-| `influxdb:2.9.1@sha256:e4572d094ac3…` | — | — | 0 · 48 |
+| `influxdb:2.9.1@sha256:e4572d094ac3…` | 0 · 1 | — | 0 · 48 |
 
 Not scanned: `ghcr.io/analogj/scrutiny:v0.10.0-collector`.
 

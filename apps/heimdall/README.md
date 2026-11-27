@@ -91,7 +91,7 @@ dashboard, so the cost of losing it is measured in the hour it took to build.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `lscr.io/linuxserver/heimdall:2.8.4` | 0 · 1 | — | — |
+| `lscr.io/linuxserver/heimdall:2.8.4` | 0 · 7 | — | — |
 
 <!-- findings:end -->
 

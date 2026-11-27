@@ -156,7 +156,7 @@ For event-driven flows (new subscriber → CRM row, unsubscribe → alert):
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `listmonk/listmonk:v6.2.0` | 0 · 3 | — | 1 · 47 |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

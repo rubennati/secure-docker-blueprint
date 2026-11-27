@@ -238,7 +238,7 @@ every active session — recoverable, but users are logged out without explanati
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

@@ -923,7 +923,7 @@ If this appears, OnlyOffice is the bottleneck. Disabling OnlyOffice previews res
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `mariadb:12.3.3` | — | — | 1 · 25 |
-| `nextcloud:35.0.2-fpm-alpine` | 0 · 40 | 0 · 1 | — |
+| `nextcloud:35.0.2-fpm-alpine` | 0 · 46 | 0 · 1 | — |
 | `nginx:1.31.10-alpine-slim` | — | — | — |
 | `redis:8.10.3-alpine` | — | — | — |
 

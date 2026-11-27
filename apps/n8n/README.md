@@ -112,7 +112,7 @@ excluding the directory.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `n8nio/n8n:2.48.7@sha256:fabce3e9678a…` | — | 0 · 16 | — |
+| `n8nio/n8n:2.48.7@sha256:fabce3e9678a…` | 0 · 6 | 0 · 16 | — |
 
 <!-- findings:end -->
 

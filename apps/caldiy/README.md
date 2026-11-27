@@ -233,7 +233,7 @@ For the emergency rotation procedure and ongoing monitoring, see [docs/ops-runbo
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/rubennati/cal.diy:v6.2.0-9@sha256:bd6c53d80dcc…` | 1 · 156 | 0 · 85 | 1 · 25 |
+| `ghcr.io/rubennati/cal.diy:v6.2.0-9@sha256:bd6c53d80dcc…` | 2 · 158 | 0 · 85 | 1 · 25 |
 | `postgres:18.7` | 0 · 1 | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 

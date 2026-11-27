@@ -177,7 +177,7 @@ configured — `None` by default, which means they are readable in the database.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `ghcr.io/obot-platform/obot:v0.28.2` | — | — | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 | `tecnativa/docker-socket-proxy:v0.5.0` | 0 · 7 | — | — |
 
 <!-- findings:end -->
