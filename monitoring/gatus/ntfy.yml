@@ -1,0 +1,25 @@
+# --------------------------------------------------------
+# NTFY NETWORK — opt-in, with monitoring/ntfy on the same host
+# --------------------------------------------------------
+# Gatus publishes its alerts to ntfy. ntfy's publishing router is access-vpn;
+# a request from a container to the public name arrives from a Docker address,
+# not from the VPN, and is refused with 403. On edge networks (DEC-075) the two
+# stacks share no network, so this file joins Gatus to ntfy's edge network:
+# Gatus then reaches the ntfy container by name, on port 80, with a token
+# (config.example.yaml, alerting.ntfy). Gatus gains a path to ntfy and to
+# Traefik, which it reaches through the public name anyway; ntfy gains none
+# to Gatus beyond what Traefik already has.
+#
+#   NTFY_NETWORK=ntfy-edge                # monitoring/ntfy's TRAEFIK_NETWORK
+#   COMPOSE_FILE=docker-compose.yml:ntfy.yml
+#
+# The network is created by Traefik when EDGE_NETWORKS lists it; start ntfy first.
+services:
+  gatus-app:
+    networks:
+      - ntfy
+
+networks:
+  ntfy:
+    name: ${NTFY_NETWORK:?Set NTFY_NETWORK in .env (monitoring/ntfy's TRAEFIK_NETWORK)}
+    external: true

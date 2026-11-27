@@ -16,7 +16,7 @@
 - **Domain:** Infrastructure
 - **Role:** Reverse proxy: TLS, access policies and security headers in front of every other service
 - **Last verified:** 2026-11-01 (v3.7.17, socket-proxy v0.5.0) — dual-stack `direct` profile: ACME DNS-01 wildcard, the published ports per family with the IPv6 DNAT on `proxy-public`, the access policies from outside over IPv4 and IPv6, edge networks moved and back, the v0.9.5 `.env` migrated and rolled back in both shapes, the CrowdSec bouncer and AppSec at the entrypoint (docs/labs/ingress/2026-11-01-results.md). The pin names this release since 2026-11-02
-- **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
+- **Support window:** upstream policy since 3.6 is six months of support from a minor's GA date, with the last minor of a major supported for two years after the next major — https://doc.traefik.io/traefik/deprecation/releases/. 3.7 went GA 2026-05-05; 3.8 went GA 2026-11-23 and is the current line. **3.6 left security support on 2026-08-16** and 2.11 on 2026-09-07; neither is a pin target. Check this date before the next bump, not the version number alone.
 
 ## What we use
 
@@ -51,6 +51,25 @@
 
 ## Version / tag notes
 
+- **Moved to `v3.8.0` on 2026-11-26** (released 2026-11-23, the first release of
+  the 3.8 line; https://github.com/traefik/traefik/releases/tag/v3.8.0,
+  https://doc.traefik.io/traefik/v3.8/migrate/v3/). It carries the same three
+  advisories as v3.7.20 below, so the move adds no security fix — it moves the
+  installation onto the line upstream now supports. The migration notes of 3.8.0
+  are Kubernetes and Gateway API apart from four points: BasicAuth's 1024-byte
+  password limit and the dot-segment resolution with path parameters (both already
+  in 3.7.18, see the checklist table), `**.example.com` in `Host`/`HostSNI` (ACME
+  issues no certificate for it; no rule here uses it) and `peerCertURI` deprecated
+  for `peerCertSANs` (not set here). Nothing listed for the Docker provider,
+  headers, `ipAllowList`, `rateLimit`, `compress` or the static configuration; no
+  data migration. New and opt-in: ACME `reusePrivateKey`, per-router
+  `respondingTimeouts`, buffering switches, a tap middleware. Measured with the
+  rendered configuration of this tree, before and after: the same log lines at
+  start (the alias-headers and encoded-characters warnings), the same answers —
+  200 through `access-public`, 403 on the dashboard under `access-vpn`, 404 for an
+  unknown host, 301 on port 80 — the same security headers, Brotli still
+  negotiated, `/foo/..;x/` still resolved; plugin v1.7.1 loads and reads its key
+  from the secret.
 - **Moved to `v3.7.20` on 2026-11-26** (released 2026-11-23). Three advisories:
   - GHSA-3rh5-223h-cpwr (high): the Brotli writer of the Compress middleware held megabytes
     of state per response in flight, unbounded, and any client selects Brotli with
@@ -167,10 +186,12 @@
 
 A minor bump inside v3 still changes request handling. Read the per-version migration
 notes, not only the release notes — https://doc.traefik.io/traefik/migrate/v3/ carries a
-section per patch release. Between 3.6 and 3.7.20 these apply to this blueprint:
+section per patch release. Between 3.6 and 3.8.0 these apply to this blueprint:
 
 | Version | Change | What it touches here |
 |---|---|---|
+| 3.8.0 | `**.example.com` matches nested subdomains in `Host`/`HostSNI`; ACME refuses such names | no rule here uses `**` |
+| 3.8.0 | `peerCertURI` on a ServersTransport deprecated for `peerCertSANs` | not set in `servers-transports.yml` |
 | 3.7.18 | a `..`, `.` or empty segment with path parameters is resolved like a plain dot-segment (`/foo/..;x/bar` → `/bar`) | routing now sees the path the backend resolves; legitimate paths with `;` or `..` inside a name are unchanged (measured 2026-11-23) |
 | 3.7.18 | BasicAuth refuses passwords longer than 1024 bytes with 401, not configurable | stacks with their own `basicAuth` middleware |
 | 3.7.13 | `Upgrade: h2c` and `HTTP2-Settings` are no longer forwarded; use the `h2c://` scheme | any backend negotiating cleartext HTTP/2 |

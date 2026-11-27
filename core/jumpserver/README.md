@@ -140,7 +140,7 @@ shape; neither path is exercised yet.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `jumpserver/jms_all:v5.2.1` | 3 · 78 | 0 · 31 | 2 · 46 |
+| `jumpserver/jms_all:v5.2.1` | 3 · 77 | 0 · 31 | 2 · 46 |
 
 <!-- findings:end -->
 

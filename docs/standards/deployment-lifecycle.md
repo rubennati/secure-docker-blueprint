@@ -56,10 +56,11 @@ already runs keeps the driver and options it was created with until it is recrea
 `docker compose up -d --force-recreate` in the stack directory — so on an existing host
 the limit arrives stack by stack, not at the daemon restart.
 
-`live-restore` is a separate decision about the daemon, not about logging: with it,
-containers keep running while the daemon itself restarts or is upgraded. The operator
-site's server setup recommends it; it is recorded in `.ai/decisions.md` and belongs in
-the same file, as its own line.
+`live-restore` is a separate decision about the daemon, not about logging, and belongs
+in the same file as its own line, `"live-restore": true`: with it, containers keep
+running while the daemon itself restarts or is updated within one minor release. Its
+limits, and the update policy for Docker's packages, are in
+[`docs/host-baseline.md`](../host-baseline.md) (SHOULD 4, *Docker and VPN packages*).
 
 **The host itself** — updates, accounts, SSH, the provider filter, the second way in, the
 VPN — is outside the blueprint; [`docs/host-baseline.md`](../host-baseline.md) is the
@@ -75,8 +76,9 @@ internet reaches is measured from another machine with `scripts/exposure-test.sh
 `validate.sh --strict` requires that measurement's marker for a public binding
 ([`core/traefik/docs/host-firewall.md`](../../core/traefik/docs/host-firewall.md), [DEC-078](../../.ai/decisions.md#dec-078)).
 
-**Not yet standardised here:** unattended upgrades, the account the stacks run under,
-and kernel or `sysctl` expectations. A deployment works without them being written
+**Not yet standardised here:** the account the stacks run under, and kernel or `sysctl`
+expectations. Automatic updates of Docker's and the VPN's packages are decided in
+[`docs/host-baseline.md`](../host-baseline.md#docker-and-vpn-packages). A deployment works without them being written
 down; it is simply not this repository that says what they should be.
 
 ## 2 — Choose a release and the stacks

@@ -55,12 +55,17 @@ services:
 
     networks:
       - app-internal
+      - app-egress     # the LLM provider is outside the host
 
 networks:
   # Same definition as seafile-server.yml: Compose merges the files, and two
   # definitions of one network make it recreate the network of a running stack.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true
+  # Outbound only: a plain bridge that no other service of this stack joins.
+  app-egress:
+    name: ${COMPOSE_PROJECT_NAME}-egress
 
 secrets:
   SEAFILE_AI_LLM_KEY:

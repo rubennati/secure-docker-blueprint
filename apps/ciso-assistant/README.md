@@ -131,7 +131,7 @@ is already taken`; the restored account is kept.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2` | 1 · 66 | — | — |
+| `ghcr.io/intuitem/ciso-assistant-community/backend:v4.2.2` | 1 · 65 | — | — |
 | `ghcr.io/intuitem/ciso-assistant-community/frontend:v4.2.2` | 0 · 2 | — | — |
 | `postgres:16.16` | 0 · 1 | — | 1 · 25 |
 

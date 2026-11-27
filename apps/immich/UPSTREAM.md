@@ -82,6 +82,34 @@
   has to finish the migration to VectorChord on the old image and an Immich
   2.x release first. Sources: https://github.com/immich-app/immich/blob/v3.3.6/docker/docker-compose.yml,
   https://docs.immich.app/administration/postgres-standalone/
+- Moved to `v3.4.2` on 2026-11-26, server and machine learning together (v3.4.0
+  2026-11-10, v3.4.2 2026-11-18; https://github.com/immich-app/immich/releases).
+  Security fixes in v3.4.0: GHSA-7j23-rprg-3g5q (high, OAuth state cookie → account
+  takeover), GHSA-qcp2-7vph-gq64, GHSA-c9h4-ccvj-j2h2, GHSA-xm8q-2hq2-gpxg,
+  GHSA-v7v2-63g5-gwf7, GHSA-p632-vh57-j6x4 (CLI); the web app's Content Security
+  Policy drops `unsafe-inline`. No deployment change; migrations run at start. On
+  data from v3.3.6 the account and an uploaded asset were there afterwards and the
+  original downloaded. The upstream-status check read v3.3.6 as newest — GHCR's tag
+  list was not compared — so this release was found by reading the releases page.
+- Valkey moved to `9.2.1` on 2026-11-26 (9.2.0 GA 2026-11-18, 9.2.1 2026-11-25). Skip
+  9.2.0: it refuses to start when a loaded TLS certificate is outside its validity
+  period. 9.2 rejects a bare `(` as a score bound, renames `bgsave-default-method` to
+  `forkless-policy` and counts active expiry as a change; Immich uses none of these.
+  The RDB file of 9.1.4 loaded and the job queue answered.
+- **PostgreSQL 14 is the database image's major, and stays for now.** Immich supports
+  PostgreSQL 14 to 19 (`>= 14, < 20`), VectorChord `>= 0.3, < 2.0`; its own compose
+  still ships 14. PostgreSQL 14 reached the end of its five years of support with
+  14.25 on 2026-11-12 (https://www.postgresql.org/support/versioning/), so the move
+  is due — but it is a dump and restore, not a tag change, and is its own step:
+  README → *Upgrading PostgreSQL*.
+- `DB_TAG` digest moved to
+  `sha256:a363c71004f469d61b049703935da4725f90db793ba2efa7e451e6313f0e8dac` on
+  2026-11-26: the same `14-vectorchord1.1.1` tag, now PostgreSQL 14.25 with the
+  security release of 2026-11-12. The previous digest carried 14.23 — a digest pin
+  does not follow a rebuilt tag, so the PostgreSQL batch of 2026-11-26 passed it
+  by. A restart on the new digest is the whole upgrade within 14; data written
+  under 14.23 opened under 14.25. Afterwards `reindexdb --all --concurrently`, as
+  for every PostgreSQL of that release.
 
 ## Upgrade checklist
 

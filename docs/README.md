@@ -11,6 +11,7 @@ history, and a later change does not rewrite them.
 |---|---|
 | [`architecture.md`](architecture.md) | The networking model, the categories, the application contract and the boundaries between components |
 | [`standards/`](standards/) | The rules every stack is checked against — Compose, env, secrets, networking, Traefik, restore, the deployment lifecycle |
+| [`in-use.md`](in-use.md) | The stacks that run on real hosts, their criticality, the last release check per stack, and the host component targets |
 | [`host-baseline.md`](host-baseline.md) | The Docker host the blueprint assumes, by role, with what was tested |
 | [`security-coverage.md`](security-coverage.md) | Security controls counted from the compose files (generated) |
 | [`sovereignty/`](sovereignty/) | Data egress, the edge in front of a server, and licence and jurisdiction per product |

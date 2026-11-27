@@ -195,7 +195,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/dfir-iris/iriswebapp_app:v2.4.29` | 18 · 891 | 7 · 71 | — |
+| `ghcr.io/dfir-iris/iriswebapp_app:v2.4.29` | 18 · 890 | 7 · 71 | — |
 | `ghcr.io/dfir-iris/iriswebapp_db:v2.4.29` | 2 · 28 | — | 4 · 56 |
 | `rabbitmq:3.13.7-management-alpine` | 1 · 35 | — | — |
 

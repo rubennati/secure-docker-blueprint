@@ -30,6 +30,8 @@
 | `POSTGRES_INITDB_ARGS: --data-checksums` | Extra integrity checks on the PostgreSQL data files |
 | `read_only: true` + `tmpfs` on socket proxy | Defense in depth — the proxy container has no writable root filesystem |
 | `access-vpn`, `limit-standard` | Admin tool, VPN-only |
+| `ORIGIN: https://${APP_TRAEFIK_HOST}` (since 2026-11-26) | Behind Traefik the container sees plain HTTP. Dockhand's manual: passkey sign-in needs `ORIGIN` (since 1.0.52) and is hidden without it, and the cross-site check trusts it. Checked 2026-11-26 on v1.0.59: with and without it, a form `POST` carrying the public origin passes the cross-site check and one from another origin is refused with `403`; the passkey sign-in itself was not exercised. With `ORIGIN` set, a form from `http://localhost:3000` is refused too, so the local compose file leaves it out |
+| Opt-in `ntfy.yml` joins Dockhand to ntfy's edge network | ntfy's publishing router is `access-vpn`, and a container on the same host calling the public name is refused with `403`. Checked 2026-11-26 on v1.0.59 with ntfy v2.38.2: the channel test with `ntfy://ntfy-app:80/<topic>?auth=<token>` arrived; without `auth` ntfy answered `403` |
 
 ## Version / tag notes
 

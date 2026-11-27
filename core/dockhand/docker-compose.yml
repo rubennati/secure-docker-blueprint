@@ -168,6 +168,10 @@ services:
       DATA_DIR: /app/data
       GIT_REPOS_DIR: /app/data/git-repos
       DOCKER_HOST: tcp://socket-proxy:2375
+      # The public address, scheme and host only. Behind Traefik the container
+      # sees plain HTTP; ORIGIN tells Dockhand what the browser sees. Passkeys
+      # need it, and the cross-site check refuses a form from any other origin.
+      ORIGIN: https://${APP_TRAEFIK_HOST}
       PUID: ${APP_PUID}
       PGID: ${APP_PGID}
       TZ: ${TZ}

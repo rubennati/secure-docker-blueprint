@@ -22,16 +22,6 @@
         "CVE-2026-99083"
       ]
     },
-    "apache/tika": {
-      "stacks": [
-        "apps/paperless-ngx"
-      ],
-      "reason": "3.3.3.0 is the newest Tika 3.x; the fix is in Tika 4, which Paperless-ngx does not support (paperless-ngx/paperless-ngx#14579, closed not planned).",
-      "risk": "The CXF flaw is an out-of-band XML external entity; whether Tika's REST endpoints reach the affected classes was not checked. Tika sits on an internal network with no outbound route, which blocks the out-of-band leak.",
-      "cves": [
-        "CVE-2026-49875"
-      ]
-    },
     "brotandgames/ciao": {
       "stacks": [
         "monitoring/ciao"

@@ -1,0 +1,28 @@
+# --------------------------------------------------------
+# NTFY NETWORK — opt-in, with monitoring/ntfy on the same host
+# --------------------------------------------------------
+# Dockhand sends its notifications to ntfy. ntfy's publishing router is
+# access-vpn; a request from a container to the public name arrives from a
+# Docker address, not from the VPN, and is refused with 403. On edge networks
+# (DEC-075) the two stacks share no network, so this file joins Dockhand to
+# ntfy's edge network: Dockhand reaches the ntfy container by name, on port
+# 80, with a token (README, "Notifications").
+#
+# The other direction matters more here: ntfy, and anything that takes it
+# over, now reaches Dockhand on port 3000 without passing Traefik, so the
+# access policy is no longer the only gate. Turn on Dockhand's authentication
+# before using this file (README, "Authentication").
+#
+#   NTFY_NETWORK=ntfy-edge                # monitoring/ntfy's TRAEFIK_NETWORK
+#   COMPOSE_FILE=docker-compose.yml:ntfy.yml
+#
+# The network is created by Traefik when EDGE_NETWORKS lists it; start ntfy first.
+services:
+  dockhand:
+    networks:
+      - ntfy
+
+networks:
+  ntfy:
+    name: ${NTFY_NETWORK:?Set NTFY_NETWORK in .env (monitoring/ntfy's TRAEFIK_NETWORK)}
+    external: true

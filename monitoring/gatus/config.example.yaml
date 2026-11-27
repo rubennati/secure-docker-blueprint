@@ -1,7 +1,8 @@
 # -----------------------------------------------------------------------------
 # Gatus — configuration example
 # -----------------------------------------------------------------------------
-# Copy to config.yaml and adjust. Gatus auto-reloads on file change.
+# Copy to config/config.yaml, chmod 600, and adjust. Gatus auto-reloads on file
+# change.
 # Full reference: https://github.com/TwiN/gatus
 # -----------------------------------------------------------------------------
 
@@ -26,15 +27,31 @@ ui:
 #     password-bcrypt-base64: "..."   # htpasswd -nbBC 10 "" "password" | awk -F: '{print $2}' | base64
 
 # --- Alerting (configure at least one channel before adding alerts to endpoints) ---
+# config.yaml is the secret file of this stack: a token or webhook URL is written
+# here as its value, and the file is kept owner-only (chmod 600), out of Git, and
+# mounted read-only. A ${NAME} reference reads Gatus's environment, and this
+# stack passes no secret into it: the reference would expand to nothing.
 # alerting:
+#   # ntfy (monitoring/ntfy). On the same host, through ntfy.yml: Gatus joins
+#   # ntfy's edge network and publishes to the container by name; the public
+#   # name would arrive at ntfy's operator router from a container address and
+#   # be refused (403). On another host: https://ntfy.example.com, reached over
+#   # the VPN. The token belongs to an ntfy user with write access to the topic.
+#   ntfy:
+#     url: "http://ntfy-app:80"
+#     topic: "gatus"
+#     token: "tk_replace_with_the_publisher_token"
+#     priority: 4
+#     default-alert:
+#       failure-threshold: 3
+#       success-threshold: 2
+#       send-on-resolved: true
 #   discord:
-#     webhook-url: "${DISCORD_WEBHOOK_URL}"
-#   slack:
-#     webhook-url: "${SLACK_WEBHOOK_URL}"
+#     webhook-url: "https://discord.com/api/webhooks/replace/me"
 #   email:
 #     from: "alerts@example.com"
 #     username: "alerts@example.com"
-#     password: "${SMTP_PASSWORD}"
+#     password: "replace-with-the-smtp-password"
 #     host: "smtp.example.com"
 #     port: 587
 #     to: "oncall@example.com"
@@ -63,9 +80,7 @@ endpoints:
   #     - "[STATUS] == 200"
   #     - "[BODY].title != ''"
   #   alerts:
-  #     - type: discord
-  #       failure-threshold: 3
-  #       send-on-resolved: true
+  #     - type: ntfy        # takes default-alert from the alerting block
 
   # DNS probe
   # - name: dns-a-record

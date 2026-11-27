@@ -108,7 +108,7 @@ again — or keep `cache/embedding` in the backup.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/open-webui/open-webui:v0.13.0` | 3 · 79 | 4 · 29 | — |
+| `ghcr.io/open-webui/open-webui:v0.13.0` | 3 · 78 | 4 · 29 | — |
 
 <!-- findings:end -->
 

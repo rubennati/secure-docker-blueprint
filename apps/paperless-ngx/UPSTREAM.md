@@ -113,6 +113,44 @@
   https://github.com/redis/redis/releases/tag/8.0.0,
   https://github.com/redis/redis/releases/tag/8.10.3,
   https://github.com/redis/docker-library-redis/blob/release/8.10/alpine/docker-entrypoint.sh
+- Moved to `3.5.1` on 2026-11-26 (3.5.0 released 2026-11-17, 3.5.1 2026-11-18;
+  https://github.com/paperless-ngx/paperless-ngx/releases). **Breaking: allowed hosts.**
+  With `PAPERLESS_URL` set — this stack sets it to `https://${APP_TRAEFIK_HOST}` —
+  3.5 admits only that host and `localhost`; before, any host was admitted. A
+  request by IP address or by another name is answered 400. The healthcheck asked
+  for `http://127.0.0.1:8000/` and turned the container unhealthy under 3.5.1; it now
+  sends `Host: localhost`. Requests through Traefik carry the configured name and
+  are unaffected. A deployment reached under a second name lists it in
+  `PAPERLESS_ALLOWED_HOSTS`. Migrations `documents.0028` to `0030` replace the tag
+  tree (django-treenode → adjacency list) and run at start; on data from 3.4.2 the
+  documents, their text and the tags were there afterwards, and a new upload was
+  consumed. New: `PAPERLESS_SESSION_CLEANUP_TASK_CRON` (default `0 3 * * *`) prunes
+  expired sessions; bulk edits run asynchronously. No advisory in 3.5.x.
+- Apache Tika moved to `3.4.0.0` on 2026-11-26 (Tika 3.4.0, 2026-11-20; the fourth
+  number is the image build; change notes:
+  https://github.com/apache/tika/blob/3.4.0/CHANGES.txt). It fixes CVE-2026-49875
+  (Apache CXF, CRITICAL), which `3.3.3.1` carries; Paperless's own compose still
+  ships 3.3.1.0. What changes for Paperless, which sends every Office file as
+  multipart to `/tika/form/text` and a mail's HTML body as a plain PUT to `/tika`:
+  - **Attachment cap.** A multipart upload over 50 MiB is refused with 413
+    (`maxAttachmentBytes`, CVE-2026-54225). The 3.3.3 notes announce the cap as
+    well, but `3.3.3.1` took a 55 MiB file. Through Paperless with 3.4: a 49 MiB
+    docx is consumed, a 55 MiB docx fails with "Could not parse … with tika
+    server", a mail with a 55 MiB attachment is consumed (the attachment never
+    reaches Tika). `TIKA_MAX_ATTACHMENT_BYTES` (default 52428800, `-1` removes
+    it) sets the cap through a server config the compose file writes; with
+    200 MiB a 150 MiB docx passed inside the 1G memory limit. Compose does not
+    recreate Tika when only the value changes: `docker compose up -d
+    --force-recreate tika`.
+  - **Embedding depth** on `/tika/form/text` rises from 9 to 20 levels: a docx
+    nested 25 deep gave text from 10 levels under 3.3.3.1 and from 21 under 3.4.
+  - **Zip-bomb ratio** rises from 100 to 1000, measured across the whole
+    document.
+  - Tika's server needs Java 17; the image brings it.
+  Small docx, xlsx and a mail were consumed as before.
+- Gotenberg stays at `8.40.0`, the last release of 8: Gotenberg 9 (2026-11-05)
+  renames the PDF routes and fields Paperless calls, and Paperless does not support
+  it (paperless-ngx issue 14839, closed as not planned for now).
 
 ## Upgrade checklist
 

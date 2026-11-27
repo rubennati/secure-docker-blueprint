@@ -59,7 +59,7 @@ it now, while nothing is running.
    ```bash
    sudo tee /etc/docker/daemon.json >/dev/null <<'EOF'
    {
-     "log-driver": "json-file",
+     "log-driver": "local",
      "log-opts": { "max-size": "10m", "max-file": "3" },
      "ipv6": true,
      "ip6tables": true,
@@ -78,15 +78,19 @@ it now, while nothing is running.
 
 </Steps>
 
-The `log-opts` bound container logs — without them they grow until the disk is full.
+The `local` log driver compresses and rotates container logs; the `log-opts` hold
+each container to three files of 10 MB. `docker compose logs` reads them as before.
+A container keeps the driver it was created with, so set this before the first
+stack starts.
 
 `live-restore` keeps containers running when the Docker daemon itself stops or
 restarts, which is what updating the Docker packages does. Without it, every such
 update restarts every container on the machine at once, and that simultaneous
 start-up is its own kind of load.
 
-What it does not do: it does not survive a reboot, it does not help across a major
-daemon version change — upstream supports it for patch releases only — and it is no
+What it does not do: it does not survive a reboot, it does not help across a move
+to another minor or major release — upstream supports it for patch releases only,
+29.10.0 to 29.10.1 but not 29.9 to 29.10 — and it is no
 substitute for the resource limits each service carries. What it removes is one
 avoidable restart.
 

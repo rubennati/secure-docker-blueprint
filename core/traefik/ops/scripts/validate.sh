@@ -348,6 +348,33 @@ edge_pending=0
       echo "ERROR: config/edge-networks.yml lists [${rendered_edges}] but EDGE_NETWORKS says [${wanted_edges}] — run render.sh."
       exit 1
     fi
+    # the networks rendered with IPv6: the line after "    driver: bridge" of each
+    rendered_v6="$(awk '/^  [A-Za-z0-9][A-Za-z0-9_.-]*:$/ {n=$1; sub(":","",n)} /^    enable_ipv6: true$/ {print n}' "${ROOT_DIR}/config/edge-networks.yml" | sort | tr '\n' ' ' || true)"
+    wanted_v6="$(printf '%s\n' ${EDGE_NETWORKS_IPV6:-} | grep . | sort | tr '\n' ' ' || true)"
+    if [ "${rendered_v6}" != "${wanted_v6}" ]; then
+      echo "ERROR: config/edge-networks.yml gives IPv6 to [${rendered_v6}] but EDGE_NETWORKS_IPV6 says [${wanted_v6}] — run render.sh."
+      exit 1
+    fi
+  fi
+  for edge in ${EDGE_NETWORKS_IPV6:-}; do
+    case " ${EDGE_NETWORKS} " in *" ${edge} "*) ;; *)
+      echo "ERROR: EDGE_NETWORKS_IPV6: '${edge}' is not in EDGE_NETWORKS."; exit 1 ;;
+    esac
+  done
+  # A network that exists with the other IPv6 setting is not changed by
+  # 'docker compose up -d' while a stack is attached: Compose disconnects Traefik,
+  # fails on the stack's endpoint and leaves Traefik stopped. Say so before.
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    for edge in ${EDGE_NETWORKS}; do
+      have_v6="$(docker network inspect -f '{{.EnableIPv6}}' "${edge}" 2>/dev/null || true)"
+      [ -n "${have_v6}" ] || continue
+      case " ${EDGE_NETWORKS_IPV6:-} " in *" ${edge} "*) want_v6=true ;; *) want_v6=false ;; esac
+      [ "${have_v6}" = "${want_v6}" ] && continue
+      echo "PENDING: ${edge} exists with IPv6 ${have_v6}, EDGE_NETWORKS_IPV6 asks for ${want_v6}. The network has to be"
+      echo "         recreated: 'docker compose down' in the stack on it first, then 'docker compose up -d' here,"
+      echo "         then in the stack (docs/edge-networks.md, \"IPv6 on an edge network\")."
+      edge_pending=1
+    done
   fi
   if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
     traefik_nets=" $(docker inspect -f '{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' "${TRAEFIK_CONTAINER_NAME}" 2>/dev/null || true)"

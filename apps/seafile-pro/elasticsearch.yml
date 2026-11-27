@@ -52,3 +52,4 @@ networks:
   # definitions of one network make it recreate the network of a running stack.
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

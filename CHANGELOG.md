@@ -8,6 +8,194 @@ See also: [ROADMAP.md](ROADMAP.md) for what is coming next, and per-app CHANGELO
 
 ## [Unreleased]
 
+The stacks that run on real hosts move to their newest stable releases, each
+upgraded on existing data with its local compose file. They are now listed in
+`docs/in-use.md`, and no release is tagged until each of them has been checked.
+The host baseline decides how Docker's own packages are updated, and adds
+`live-restore` and an update runbook. No host run is part of this change.
+
+### Upgrading a host from v0.9.9
+
+Read v0.9.10's notes as well: a v0.9.9 host skipped them. Back up each database
+before an application move. In this order:
+
+1. **The Docker host.** Add `"live-restore": true` to `/etc/docker/daemon.json`, then
+   run `systemctl reload docker`; no container restarts. Take Docker's repository out
+   of `Unattended-Upgrade::Origins-Pattern`. Remove any `Requires=` or `BindsTo=` on
+   `tailscaled` from `docker.service`. `scripts/overview.sh --host` reports all three,
+   along with the Docker and Tailscale updates still pending. Bring the Engine to the
+   same release as the other hosts in a maintenance window
+   (`docs/host-baseline.md`, *Updating Docker on a host*).
+2. **Traefik** to `v3.8.0`. If the CrowdSec bouncer is on, move its key first:
+   v0.9.10, *The CrowdSec bouncer key*. Then set `TRAEFIK_IMAGE`, run `render.sh` and
+   `validate.sh`, and run `docker compose pull && docker compose up -d`. Every router
+   is down for the few seconds of the restart.
+3. **Every stack with a PostgreSQL pin** moved in v0.9.10. After the restart run
+   `docker compose exec <db> reindexdb -U <user> --all --concurrently`. Here that
+   means Dockhand (16.16), Paperless-ngx (18.7) and Immich (14.25, step 9).
+4. **Dockhand.** If authentication is still off, turn it on first (README,
+   *Authentication*): `/api/auth/session` must answer `"authEnabled":true`. Then run
+   `docker compose up -d`; the container is recreated with `ORIGIN`.
+5. **Gatus.** Values in `.env` never reached the container. Write the alert tokens
+   and webhook URLs into `config/config.yaml` itself, then `chmod 600` it.
+6. **Seafile Pro.** `app-internal` becomes internal, so Compose has to recreate the
+   network. Run `docker compose down`, then `docker compose up -d`, not a bare
+   `up -d`.
+7. **Paperless-ngx 3.5.1.** Take the new compose file together with the tag: 3.5
+   refuses the old healthcheck's request, and the container turns unhealthy. A
+   second hostname goes into `PAPERLESS_ALLOWED_HOSTS`. Tika 3.4 refuses an Office
+   file over 50 MiB; to keep larger ones, set `TIKA_MAX_ATTACHMENT_BYTES` in `.env`
+   and run `docker compose up -d --force-recreate tika`.
+8. **Tymeslot 1.49.0.** Behind a CDN, set `TRUSTED_PROXIES` to its ranges.
+   Payments (off by default) need the Stripe Connect settings of 1.43.
+9. **Immich v3.4.2.** Pull and run `up -d`, then reindex as in step 3. The new
+   `DB_TAG` digest is PostgreSQL 14.25. The move off PostgreSQL 14 is a separate
+   step: README, *Upgrading PostgreSQL*.
+10. **Hawser, ntfy, Seafile, Vaultwarden, Photoprism.** Run
+    `docker compose pull && docker compose up -d`. For Vaultwarden and Photoprism
+    this pulls the MariaDB 12.3.3 rebuild, the update Dockhand reports. For Seafile
+    it pulls the 10.11.19 rebuild.
+
+CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
+
+### Security
+
+- **Immich `v3.4.2`, Valkey `9.2.1`, PostgreSQL `14.25`** (`apps/immich`).
+  - v3.4.0 fixes GHSA-7j23-rprg-3g5q (high, an OAuth state cookie leading to account
+    takeover) and five further advisories. Its Content Security Policy drops
+    `unsafe-inline`.
+  - The `DB_TAG` digest had stayed on PostgreSQL 14.23, because a digest pin does not
+    follow a rebuilt tag, so v0.9.10's PostgreSQL batch missed it. It is now 14.25.
+  - Valkey skips 9.2.0, which refuses to start with a TLS certificate outside its
+    validity.
+  - PostgreSQL 14 reached its end of life with 14.25. The README gains *Upgrading
+    PostgreSQL*: dump, a new data directory on `18-vectorchord1.1.1`, restore, and the
+    way back. It was rehearsed on data: the restore exited 0, and the assets, metadata,
+    users and the vector extensions were there afterwards. It stays a separate step,
+    not part of this pin batch.
+- **Seafile and Seafile Pro `13.0.30`, SeaDoc `2.0.14`** (`apps/seafile`,
+  `apps/seafile-pro`).
+  - Seafile closes a shared Markdown image endpoint that could expose files outside
+    the share.
+  - It closes WOPI writes without an edit check.
+  - It closes an OnlyOffice save callback without JWT validation. That is the path
+    `onlyoffice-callback.yml` opens publicly.
+  - It also fixes several medium checks.
+  - SeaDoc fixes SQL injection, path tampering and SSRF in download links.
+  - Seafile 14 stays out while every 14.0 release is labelled beta. Its upgrade steps
+    are listed in `UPSTREAM.md`.
+- **ClamAV `1.5.5`** (`apps/seafile-pro`). Ten CVEs in the parsers, among them
+  out-of-bounds writes in the LZX and UPX/PE unpackers, which any uploaded file can
+  reach.
+- **Apache Tika `3.4.0.0`** (`apps/paperless-ngx`). Fixes CVE-2026-49875, CRITICAL, in
+  Apache CXF.
+  - A multipart upload over 50 MiB is now refused. Paperless sends every Office file
+    that way: a 49 MiB docx was consumed, a 55 MiB docx failed with "Could not parse …
+    with tika server". Mails are not affected; only their HTML body reaches Tika.
+  - `TIKA_MAX_ATTACHMENT_BYTES` raises the cap (default 52428800, `-1` removes it). At
+    200 MiB a 150 MiB docx passed inside Tika's 1G memory limit.
+  - The embedding depth Paperless gets text from rises from 9 to 20 levels.
+- **ntfy `v2.38.2`** (`monitoring/ntfy`). A security release: go-smtp's CRLF
+  requirement, every `X-Forwarded-For` line read, wildcard reservations and the tier
+  reservation limit. Cached messages survive the upgrade.
+- **Seafile Pro's `app-internal` is internal** (`apps/seafile-pro`). It was a plain
+  bridge, which gave the database, Redis, SeaSearch and the metadata server a way to
+  the internet.
+  - ClamAV and Seafile AI now reach the internet through their own `app-egress`
+    network.
+  - Checked: ClamAV loads its signatures through `app-egress` and finds the EICAR
+    string sent over `app-internal`.
+  - A container on `app-internal` alone resolves no outside name.
+
+### Added
+
+- **`docs/in-use.md`: the stacks in use, checked before every release.** For each
+  stack it lists:
+  - its role, criticality and number of hosts
+  - for each release: a new version, a security fix, a breaking change, a lab
+    upgrade test
+  - the version and date of the last check
+
+  It also gives minimum and target versions for Docker Engine, containerd, the Compose
+  plugin and Tailscale. The Release Chain (`docs/maintenance.md`,
+  `.ai/domains/release.md`) does not tag while a row is older than the release.
+- **`scripts/overview.sh --host` reports the Docker and VPN packages.** It shows:
+  - installed versions below their minimum
+  - `live-restore` off
+  - a `docker.service` bound to `tailscaled`
+  - the updates `apt` has pending for `docker-ce`, `containerd.io`, the Compose and
+    Buildx plugins and Tailscale
+
+  All of these are hints; the exit status does not change.
+- **`docs/host-baseline.md`: Docker updates, `live-restore` and an update runbook.**
+  - Docker's packages update together in a maintenance window, not through
+    `unattended-upgrades`: at least monthly, and within a week of a security release.
+    An Engine update restarts the daemon. `live-restore` covers patch releases only.
+    A partial automatic update leaves the Engine on a containerd it was not released
+    with.
+  - The VPN client may update automatically, as long as `docker.service` does not
+    require it.
+  - `live-restore` joins SHOULD 4, with its limits: patch releases only, no reboot,
+    no changed daemon options, no Swarm services, and a 64 KB log buffer while the
+    daemon is down.
+  - The runbook covers the checks before the update, the update itself and the
+    checks after it. It also shows how to find the event when every container
+    stopped at once. `deployment-lifecycle.md` §1 and the operator site's server
+    setup point to it.
+- **Optional IPv6 per edge network** (`core/traefik`). `EDGE_NETWORKS_IPV6` is a
+  subset of `EDGE_NETWORKS` and gives those networks IPv6, for a stack that has to
+  reach IPv6 destinations through its edge network.
+  - Changing the list recreates the network, so the stack on it has to be stopped
+    first. With the stack still attached, Compose disconnects Traefik, fails, and
+    leaves Traefik stopped. This was reproduced in a lab.
+  - `docs/edge-networks.md` gives the order to follow.
+  - `validate.sh` reports a difference between an existing network and the list as
+    pending.
+- **ntfy from the same host** (`monitoring/gatus/ntfy.yml`, `core/dockhand/ntfy.yml`).
+  ntfy's publishing router is `access-vpn`. A container that calls its public name
+  from the same host is refused with `403`.
+  - The opt-in files join the publisher to ntfy's edge network, so it publishes to
+    `ntfy-app:80` by name with a token.
+  - Gatus's alert and Dockhand's channel test arrived in a lab. Without the file the
+    name does not resolve. Without the token ntfy answers `403`.
+  - `monitoring/ntfy/README.md` describes the pattern for any publisher.
+
+### Changed
+
+- **Traefik `v3.8.0`** (`core/traefik`). 3.8 has been the current line since
+  2026-11-23. It brings no security fix beyond 3.7.20's.
+  - In a lab, 3.7.20 and 3.8.0 answered identically: public and VPN routes, `404`
+    for an unknown host, the redirect, the security headers and compression.
+  - The CrowdSec plugin loads under 3.8.0.
+  - The 3.8 migration notes name nothing this configuration uses.
+- **Paperless-ngx `3.5.1`** (`apps/paperless-ngx`).
+  - 3.5 admits only `PAPERLESS_URL`'s host and `localhost`. The healthcheck now sends
+    `Host: localhost`.
+  - Migrations 0028–0030 rebuild the tag tree. Documents, text and tags were there
+    afterwards, and a new upload was consumed.
+  - Gotenberg stays at 8.40.0, the last release of 8: Paperless does not support 9.
+- **Tymeslot `1.49.0`** (`apps/tymeslot`). 35 migrations ran on data and the user was
+  kept.
+- **Hawser `0.2.54`** (`core/hawser`). Proxy environment variables and the managed
+  `.env` removal.
+- **Dockhand sets `ORIGIN: https://${APP_TRAEFIK_HOST}`** (`core/dockhand`). The
+  README gains:
+  - *Authentication*: a user first, then the switch.
+  - The check from outside: the session reports `authEnabled:true` and the API answers
+    `401`. Both were measured on v1.0.59.
+  - When the access policy stops being the only gate: as soon as Dockhand shares a
+    network with another container.
+  - *Notifications*.
+
+### Fixed
+
+- **Gatus secrets never reached the container** (`monitoring/gatus`). The README said
+  a `${NAME}` in `config.yaml` reads its value from `.env`. Gatus expands it from its
+  own environment, and the compose file passes no secret into it, so the reference
+  expanded to nothing. `config/config.yaml` is now the secret file: owner-only,
+  gitignored and mounted read-only. `config.example.yaml` has an ntfy example.
+- **Dockhand's README named PostgreSQL 16.15**; the pin is 16.16.
+
 ## [0.9.10] — 2026-11-26 — Security releases of November 2026
 
 Traefik v3.7.20 closes a path-parameter bypass of path-based access policies and

@@ -300,6 +300,18 @@ for edge in ${EDGE_NETWORKS}; do
   seen_edges="${seen_edges}${edge} "
 done
 n_edges=$(printf '%s\n' ${EDGE_NETWORKS} | grep -c . || true)
+# EDGE_NETWORKS_IPV6, optional: the edge networks that also carry IPv6 — for a
+# stack whose only way out is its edge network and which has to reach IPv6
+# destinations. Each name has to be in EDGE_NETWORKS; Docker allocates the IPv6
+# subnet (a ULA /64, or from an IPv6 default-address-pool).
+seen_v6=" "
+for edge in ${EDGE_NETWORKS_IPV6:-}; do
+  case "${seen_edges}" in *" ${edge} "*) ;; *)
+    echo "ERROR: EDGE_NETWORKS_IPV6: '${edge}' is not in EDGE_NETWORKS — list the network there first."; exit 1 ;;
+  esac
+  case "${seen_v6}" in *" ${edge} "*) echo "ERROR: EDGE_NETWORKS_IPV6: '${edge}' is listed twice."; exit 1 ;; esac
+  seen_v6="${seen_v6}${edge} "
+done
 
 # ---------------------------------------------------------------------------
 # Wildcard certificates. ACME_WILDCARD_DOMAIN, quoted and space-separated, names
@@ -447,9 +459,11 @@ render_edge_networks() {
   for edge in ${EDGE_NETWORKS}; do printf '%s\n' "      ${edge}: {}"; done
   printf '%s\n' "networks:"
   for edge in ${EDGE_NETWORKS}; do
-    # IPv4 only, like app-internal: Traefik dials a backend over IPv4 and no
-    # client address is carried on this network.
+    # IPv4 only by default, like app-internal: Traefik dials a backend over IPv4
+    # and no client address is carried on this network. A network named in
+    # EDGE_NETWORKS_IPV6 carries IPv6 as well, for the stack's own way out.
     printf '%s\n' "  ${edge}:" "    name: ${edge}" "    driver: bridge"
+    case " ${EDGE_NETWORKS_IPV6:-} " in *" ${edge} "*) printf '%s\n' "    enable_ipv6: true" ;; esac
   done
 }
 
@@ -730,7 +744,7 @@ for f in "${TPL_DIR}/dynamic/"*.yml.tmpl; do
 done
 
 render_edge_networks | place "${CFG_DIR}/edge-networks.yml"
-echo " -> edge-networks.yml (${n_edges} edge network(s))"
+echo " -> edge-networks.yml (${n_edges} edge network(s), $(printf '%s\n' ${EDGE_NETWORKS_IPV6:-} | grep -c . || true) with IPv6)"
 render_published_ports | place "${CFG_DIR}/published-ports.yml"
 echo " -> published-ports.yml (IPv4: ${BIND_V4_EFFECTIVE:-not published}, IPv6: ${BIND_V6_EFFECTIVE:-not published})"
 

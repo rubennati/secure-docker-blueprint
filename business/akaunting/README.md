@@ -167,7 +167,7 @@ new key every time.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `akaunting/akaunting:3.3.0-v@sha256:6c5e9864dfe7…` | 3 · 157 | — | — |
+| `akaunting/akaunting:3.3.0-v@sha256:6c5e9864dfe7…` | 3 · 156 | — | — |
 | `mariadb:11.4.13` | — | — | 1 · 25 |
 
 <!-- findings:end -->

@@ -120,6 +120,11 @@ Upstream reference:
   after its snapshot fails with error 1020 instead of overwriting it; the new
   server default collation `utf8mb4_uca1400_ai_ci` does not touch the existing
   database, whose tables keep the collation it was created with.
+- **MariaDB `12.3.3` stays** (2026-11-26). 12.3.4 (2026-11-16) is released but not on
+  Docker Hub; `12.3.3` was rebuilt there on 2026-11-20, and that new digest of the
+  same tag is the update Dockhand and similar tools report. `docker compose pull`
+  takes it. Move the pin when the `12.3.4` tag appears
+  (https://mariadb.org/mariadb/all-releases/).
 
 ## Upgrade checklist
 

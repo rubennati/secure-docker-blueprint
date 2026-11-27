@@ -85,3 +85,4 @@ networks:
     external: true
   app-internal:
     name: ${COMPOSE_PROJECT_NAME}-internal
+    internal: true

@@ -44,6 +44,7 @@ Four models describe documentation in this repository, each answering one questi
 | Per-app setup | `<app>/README.md` | Category README one-liner only |
 | Per-app config options | `<app>/CONFIG.md` (where it exists) | No duplication |
 | Per-app upstream info | `<app>/UPSTREAM.md` | — |
+| Which stacks run on real hosts, how critical each is, when each was last checked; the host component targets | `docs/in-use.md` | The Release Chain requires it before a tag; `host-baseline.md` owns the update policy for those components |
 | AI entry point and rule precedence | `AGENTS.md` | `CLAUDE.md`, `.github/copilot-instructions.md`, `.cursor/rules/00-project.mdc` — pointers only, never a rule of their own |
 | Working context for AI sessions | `.ai/` | Mirrors the owners above in condensed form; `.ai/domains/*.md` restate `docs/standards/` and lose to them on any disagreement |
 
@@ -208,10 +209,11 @@ Run the full Consistency Chain first, then:
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
 | 4 | `upstream-status.json` | Run the image scan by `workflow_dispatch` on `dev`, copy `upstream-status.json` from its `stack-status` artifact to the repository root and run `python3 scripts/ci/lifecycle-report.py --write`. The release then carries the pins, upstream releases and findings as of its own date |
 | 5 | `LIFECYCLE.md` | Read the stacks whose pin moved since their last test: is any likely broken by a dependency update? |
-| 6 | Secret scan | Run CI by `workflow_dispatch` on `dev`: gitleaks scans the whole history. A finding is removed, or listed by fingerprint in `.gitleaksignore` with its reason, before the tag |
-| 7 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
-| 8 | `dev` | After the release pull request into `main` is merged, merge `main` back into `dev` through a pull request. `main` requires a pull request branch to be up to date with it, and without this the next release pull request from `dev` shows as out of date because of the previous release's merge commit |
-| 9 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
+| 6 | [`in-use.md`](in-use.md) | **Every stack in use checked for this release** — new version, security fix, breaking change, lab upgrade test — with the version checked and the date. No tag while a row is older than the release |
+| 7 | Secret scan | Run CI by `workflow_dispatch` on `dev`: gitleaks scans the whole history. A finding is removed, or listed by fingerprint in `.gitleaksignore` with its reason, before the tag |
+| 8 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
+| 9 | `dev` | After the release pull request into `main` is merged, merge `main` back into `dev` through a pull request. `main` requires a pull request branch to be up to date with it, and without this the next release pull request from `dev` shows as out of date because of the previous release's merge commit |
+| 10 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 
 ---
 

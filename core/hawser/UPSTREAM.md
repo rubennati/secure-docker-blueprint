@@ -74,6 +74,13 @@ docker exec hawser-app wget -qO- http://127.0.0.1:2376/_hawser/health
   here yet; 0.2.49 adds `MAX_MESSAGE_SIZE_MB`; 0.2.52 passes `DOCKER_CONFIG` and
   `TMPDIR` through to compose and changes the systemd unit of the host install,
   which does not apply to the container. No advisory.
+- Moved to `0.2.54` on 2026-11-26 (released 2026-11-26,
+  https://github.com/Finsys/hawser/releases/tag/v0.2.54). The release honours
+  `HTTPS_PROXY`/`HTTP_PROXY` for the edge connection, removes a managed `.env` from the
+  host once Dockhand stops sending it, and fixes an Ansible install warning. No
+  configuration change, no advisory. Dockhand names no minimum Hawser version; it
+  gates single features by agent version (a build needs 0.2.51 or newer), which this
+  pin meets. Dockhand v1.0.59 is the matching control side.
 
 ## Upgrade checklist
 
