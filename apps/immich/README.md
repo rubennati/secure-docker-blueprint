@@ -10,7 +10,7 @@ Project, source, licence and origin: [`UPSTREAM.md`](UPSTREAM.md).
 |---------|-------|---------|
 | `immich-app` | `ghcr.io/immich-app/immich-server:v3.4.2` | Web UI + REST API + upload handler |
 | `machine-learning` | `ghcr.io/immich-app/immich-machine-learning:v3.4.2` | CLIP embeddings, face detection, object recognition |
-| `db` | `ghcr.io/immich-app/postgres:14-vectorchord1.1.1` (digest-pinned) | Postgres with vector extensions for similarity search |
+| `db` | `ghcr.io/immich-app/postgres:18-vectorchord1.1.1` (digest-pinned) | Postgres with vector extensions for similarity search |
 | `redis` | `valkey/valkey:9.2.1` | Background job queue (Bull/BullMQ) |
 
 ## Try it locally
@@ -146,7 +146,7 @@ with every row count and the originals intact. The upstream page's `pg_dumpall
 --clean` dump stops it at once — `DROP DATABASE cannot run inside a transaction
 block`. The `postgresql_databases` entry under Backup runs the server's own client
 through `docker exec`; the host's client 17 stopped on `transaction_timeout` against
-this PostgreSQL 14, the container's did not (2026-11-08: 73 tables,
+PostgreSQL 14, the container's did not (2026-11-08: 73 tables,
 233,636 rows identical).
 
 Two preconditions upstream states, both of which invalidate a restore if missed:
@@ -158,11 +158,13 @@ Two preconditions upstream states, both of which invalidate a restore if missed:
 
 ## Upgrading PostgreSQL
 
-The database image ships PostgreSQL 14, the major Immich's own compose still uses.
-PostgreSQL 14 left support with 14.25 on 2026-11-12. Immich runs on 14 to 19, and
-`ghcr.io/immich-app/postgres` publishes `18-vectorchord1.1.1` with the same extension
-version and the same data path (`PGDATA=/var/lib/postgresql/data`), so the volume
-line stays. A new major cannot open the old data directory: the move is a dump and
+The stack ships PostgreSQL 18. An installation started on PostgreSQL 14 stays there
+until it moves: its `.env` keeps the 14 digest. Set to 18 before the move, the
+database does not start (`holds no PostgreSQL 18 cluster, but it is not empty: 14`)
+and leaves the 14 data as it was. PostgreSQL 14 left support with 14.25 on 2026-11-12,
+so move. Immich runs on 14 to 19 (its own compose still ships 14), and
+`18-vectorchord1.1.1` carries the same extension version and the same data path
+(`PGDATA=/var/lib/postgresql/data`), so the volume line stays. The move is a dump and
 a restore into an empty directory, with the procedure of *Restore* above.
 
 1. Back up as under *Backup*, the library included.
@@ -192,10 +194,11 @@ the 14 digest again and start. Delete `volumes/postgres-14` only once the new ma
 has run through a backup and a restore of its own.
 
 Checked on data from v3.4.2: the restore exits 0 under `ON_ERROR_STOP`, the server
-starts on 18.7, accounts, assets and their metadata are there and an original
-downloads. VectorChord stays at
-1.1.1, so no `REINDEX` is due. The machine-learning container was not part of the
-run; its embeddings live in the same database and move with it.
+starts on 18.7, accounts, assets and their metadata are there, an original
+downloads byte for byte and a new upload is stored. VectorChord stays at 1.1.1, so
+no `REINDEX` is due. A fresh installation on 18 starts, migrates and stores an
+upload the same way. The machine-learning container was not part of the run; its
+embeddings live in the same database and move with it.
 
 ## Known Issues
 
@@ -273,7 +276,7 @@ The server image, `immich-server:v3.4.2`, carries 2 CRITICAL findings with publi
 
 **Risk:** OpenEXR is reached when an uploaded EXR image is decoded, so allow uploads only from trusted users. The machine-learning service downloads its models over TLS; anyio and certifi matter on that path, not for uploads.
 
-The database image, `ghcr.io/immich-app/postgres:14-vectorchord1.1.1` at the 14.25 digest, carries 1 CRITICAL finding: the `gosu` Go runtime (CVE-2025-68121). The Perl findings of the 14.23 digest are gone. PostgreSQL 14 itself is out of support since 14.25; README → *Upgrading PostgreSQL*.
+The database image, `ghcr.io/immich-app/postgres:18-vectorchord1.1.1` (PostgreSQL 18.7), carries 1 CRITICAL finding: the `gosu` Go runtime (CVE-2025-68121), as every PostgreSQL image of this kind does. An installation still on the 14 image runs a PostgreSQL without support since 14.25; README → *Upgrading PostgreSQL*.
 
 **Risk:** gosu only drops privileges at start and makes no network connection. Keep the database on the internal network.
 
