@@ -35,7 +35,7 @@
 | **`read_only: true` + tmpfs on redis** | Hardening consistent with Paperless-ngx |
 | **Container names standardized** — `immich-app/db/redis/ml` instead of `immich_server/immich_postgres/…` | Blueprint naming convention |
 | **`DB_TAG` / `APP_TAG` / `REDIS_TAG` as variables** | Blueprint pinning convention |
-| **Postgres image on a newer VectorChord than upstream's compose** | `14-vectorchord1.1.1` instead of `14-vectorchord0.4.3-pgvectors0.2.0`, for the CVE fixes in its base image; digest-pinned like upstream. See Version notes |
+| **Postgres image on a newer VectorChord than upstream's compose** | `18-vectorchord1.1.1` instead of `14-vectorchord0.4.3-pgvectors0.2.0`: PostgreSQL 18, because 14 is out of support, and VectorChord 1.1.1 for the CVE fixes in its base image; digest-pinned like upstream. See Version notes |
 | **`access-vpn`, `limit-standard` and `headers-standard` as shipped** | The first visitor creates the admin account; open the route (`access-public`) after that for sharing outside the VPN |
 
 ## Version notes
@@ -96,12 +96,19 @@
   period. 9.2 rejects a bare `(` as a score bound, renames `bgsave-default-method` to
   `forkless-policy` and counts active expiry as a change; Immich uses none of these.
   The RDB file of 9.1.4 loaded and the job queue answered.
-- **PostgreSQL 14 is the database image's major, and stays for now.** Immich supports
-  PostgreSQL 14 to 19 (`>= 14, < 20`), VectorChord `>= 0.3, < 2.0`; its own compose
-  still ships 14. PostgreSQL 14 reached the end of its five years of support with
-  14.25 on 2026-11-12 (https://www.postgresql.org/support/versioning/), so the move
-  is due — but it is a dump and restore, not a tag change, and is its own step:
-  README → *Upgrading PostgreSQL*.
+- **PostgreSQL 18 is the database image's major since 2026-11-27**
+  (`18-vectorchord1.1.1`, digest
+  `sha256:f7388adc1e3414800a71506528917f4f5615249f5fe7a872b1e1431e01b72ad7`,
+  PostgreSQL 18.7). Immich supports PostgreSQL 14 to 19 (`>= 14, < 20`), VectorChord
+  `>= 0.3, < 2.0`; its own compose still ships 14. PostgreSQL 14 reached the end of
+  its five years of support with 14.25 on 2026-11-12
+  (https://www.postgresql.org/support/versioning/). 19 is not the target: it reached
+  GA on 2026-11-19 and the image publishes no 19 tag. An existing installation moves
+  by dump and restore (README → *Upgrading PostgreSQL*); an 18 image set on a 14 data
+  directory stops with "holds no PostgreSQL 18 cluster, but it is not empty: 14" and
+  leaves it as it was. On data from v3.4.2 the move restored with exit 0, the asset
+  downloaded byte for byte, a new upload was stored; a fresh installation on 18
+  migrated and stored an upload. VectorChord stays 1.1.1, so no `REINDEX`.
 - `DB_TAG` digest moved to
   `sha256:a363c71004f469d61b049703935da4725f90db793ba2efa7e451e6313f0e8dac` on
   2026-11-26: the same `14-vectorchord1.1.1` tag, now PostgreSQL 14.25 with the

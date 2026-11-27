@@ -32,7 +32,7 @@ before an application move. In this order:
    is down for the few seconds of the restart.
 3. **Every stack with a PostgreSQL pin** moved in v0.9.10. After the restart run
    `docker compose exec <db> reindexdb -U <user> --all --concurrently`. Here that
-   means Dockhand (16.16), Paperless-ngx (18.7) and Immich (14.25, step 9).
+   means Dockhand (16.16), Paperless-ngx (18.7) and Immich (step 9).
 4. **Dockhand.** If authentication is still off, turn it on first (README,
    *Authentication*): `/api/auth/session` must answer `"authEnabled":true`. Then run
    `docker compose up -d`; the container is recreated with `ORIGIN`.
@@ -48,9 +48,13 @@ before an application move. In this order:
    and run `docker compose up -d --force-recreate tika`.
 8. **Tymeslot 1.49.0.** Behind a CDN, set `TRUSTED_PROXIES` to its ranges.
    Payments (off by default) need the Stripe Connect settings of 1.43.
-9. **Immich v3.4.2.** Pull and run `up -d`, then reindex as in step 3. The new
-   `DB_TAG` digest is PostgreSQL 14.25. The move off PostgreSQL 14 is a separate
-   step: README, *Upgrading PostgreSQL*.
+9. **Immich v3.4.2.** Set `APP_TAG` and `REDIS_TAG`, pull and run `up -d`. The
+   database stays on PostgreSQL 14 until it moves: first set `DB_TAG` to the 14.25
+   digest,
+   `14-vectorchord1.1.1@sha256:a363c71004f469d61b049703935da4725f90db793ba2efa7e451e6313f0e8dac`,
+   and reindex as in step 3, then move to 18 by the README's *Upgrading
+   PostgreSQL* — a dump and restore, not a tag change. Do not put the 18 digest into
+   `.env` without that procedure: the database will not start.
 10. **Hawser, ntfy, Seafile, Vaultwarden, Photoprism.** Run
     `docker compose pull && docker compose up -d`. For Vaultwarden and Photoprism
     this pulls the MariaDB 12.3.3 rebuild, the update Dockhand reports. For Seafile
@@ -60,7 +64,7 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
 
 ### Security
 
-- **Immich `v3.4.2`, Valkey `9.2.1`, PostgreSQL `14.25`** (`apps/immich`).
+- **Immich `v3.4.2`, Valkey `9.2.1`, PostgreSQL `18.7`** (`apps/immich`).
   - v3.4.0 fixes GHSA-7j23-rprg-3g5q (high, an OAuth state cookie leading to account
     takeover) and five further advisories. Its Content Security Policy drops
     `unsafe-inline`.
@@ -68,11 +72,15 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
     follow a rebuilt tag, so v0.9.10's PostgreSQL batch missed it. It is now 14.25.
   - Valkey skips 9.2.0, which refuses to start with a TLS certificate outside its
     validity.
-  - PostgreSQL 14 reached its end of life with 14.25. The README gains *Upgrading
-    PostgreSQL*: dump, a new data directory on `18-vectorchord1.1.1`, restore, and the
-    way back. It was rehearsed on data: the restore exited 0, and the assets, metadata,
-    users and the vector extensions were there afterwards. It stays a separate step,
-    not part of this pin batch.
+  - PostgreSQL 14 reached its end of life with 14.25, so the database image moves to
+    `18-vectorchord1.1.1` (PostgreSQL 18.7, the same VectorChord 1.1.1). A fresh
+    installation starts on 18. An existing one keeps its 14 digest in `.env` until it
+    moves by the README's *Upgrading PostgreSQL*: dump, a new data directory, restore,
+    and the way back. Set to 18 before that, the database refuses the 14 data
+    directory and leaves it as it was.
+  - The move was run on data from v3.4.2: the restore exited 0, accounts, assets and
+    metadata were there, an original downloaded byte for byte and a new upload was
+    stored.
 - **Seafile and Seafile Pro `13.0.30`, SeaDoc `2.0.14`** (`apps/seafile`,
   `apps/seafile-pro`).
   - Seafile closes a shared Markdown image endpoint that could expose files outside
