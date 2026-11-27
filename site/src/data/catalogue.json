@@ -1,7 +1,7 @@
 {
   "apps/adminer": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -32,7 +32,7 @@
   },
   "apps/agentgateway": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -63,7 +63,7 @@
   },
   "apps/bookstack": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -96,7 +96,7 @@
   },
   "apps/caldiy": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -130,7 +130,7 @@
   },
   "apps/calnode": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -161,7 +161,7 @@
   },
   "apps/calrs": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -192,7 +192,7 @@
   },
   "apps/ciso-assistant": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -242,7 +242,7 @@
   },
   "apps/collabora": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -273,7 +273,7 @@
   },
   "apps/dashy": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -304,7 +304,7 @@
   },
   "apps/defectdojo": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -338,7 +338,7 @@
   },
   "apps/dependency-track": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -371,7 +371,7 @@
   },
   "apps/dfir-iris": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 31,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -404,7 +404,7 @@
   },
   "apps/dify": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 45,
     "decision_facts": {
       "commercial_model": {
@@ -450,7 +450,7 @@
   },
   "apps/docker-mailserver": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -498,7 +498,7 @@
   },
   "apps/docling-serve": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -529,7 +529,7 @@
   },
   "apps/easyappointments": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 5,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -562,7 +562,7 @@
   },
   "apps/euro-office": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -593,7 +593,7 @@
   },
   "apps/ghost": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -626,7 +626,7 @@
   },
   "apps/greenmail": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -657,7 +657,7 @@
   },
   "apps/heimdall": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -688,7 +688,7 @@
   },
   "apps/hemmelig": {
     "archived": true,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 7,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -719,7 +719,7 @@
   },
   "apps/heyform": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 14,
     "decision_facts": {
       "commercial_model": {
@@ -770,7 +770,7 @@
   },
   "apps/homarr": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -801,7 +801,7 @@
   },
   "apps/homepage": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -832,7 +832,7 @@
   },
   "apps/httpbin": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",
@@ -863,7 +863,7 @@
   },
   "apps/immich": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 5,
     "decision_facts": {
       "commercial_model": {
@@ -910,7 +910,7 @@
   },
   "apps/it-tools": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -941,7 +941,7 @@
   },
   "apps/librephotos": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -974,7 +974,7 @@
   },
   "apps/litellm": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "use_restrictions": {
@@ -998,8 +998,8 @@
     "high": 26,
     "last_release": "2026-11-26",
     "name": "LiteLLM",
-    "newest": "v1.108.17",
-    "newest_date": "2026-11-24",
+    "newest": "v1.108.19",
+    "newest_date": "2026-11-26",
     "path": "apps/litellm",
     "pinned_date": "2026-11-21",
     "quiet": false,
@@ -1013,7 +1013,7 @@
   },
   "apps/lycheeorg": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1047,7 +1047,7 @@
   },
   "apps/mailpit": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1078,7 +1078,7 @@
   },
   "apps/mailserver-jeboehm": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -1129,7 +1129,7 @@
   },
   "apps/monicahq": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1162,7 +1162,7 @@
   },
   "apps/n8n": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -1193,10 +1193,10 @@
     },
     "gap": null,
     "high": 16,
-    "last_release": "2026-11-26",
+    "last_release": "2026-11-27",
     "name": "n8n",
-    "newest": "2.49.7",
-    "newest_date": "2026-11-26",
+    "newest": "2.49.8",
+    "newest_date": "2026-11-27",
     "path": "apps/n8n",
     "pinned_date": "2026-11-20",
     "quiet": false,
@@ -1210,7 +1210,7 @@
   },
   "apps/nextcloud": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",
@@ -1244,7 +1244,7 @@
   },
   "apps/nocodb": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -1281,7 +1281,7 @@
   },
   "apps/obot": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -1331,7 +1331,7 @@
   },
   "apps/ollama": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1362,7 +1362,7 @@
   },
   "apps/onlyoffice": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1393,7 +1393,7 @@
   },
   "apps/open-webui": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 7,
     "decision_facts": {
       "commercial_model": {
@@ -1436,7 +1436,7 @@
   },
   "apps/opencanary": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 9,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1467,7 +1467,7 @@
   },
   "apps/opnform": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1484,7 +1484,7 @@
     },
     "gap": null,
     "high": 33,
-    "last_release": "2026-11-19",
+    "last_release": "2026-11-27",
     "name": "OpnForm",
     "newest": null,
     "newest_date": null,
@@ -1501,7 +1501,7 @@
   },
   "apps/paperless-gpt": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -1538,7 +1538,7 @@
   },
   "apps/paperless-ngx": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 6,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1572,7 +1572,7 @@
   },
   "apps/photoprism": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 6,
     "decision_facts": {
       "commercial_model": {
@@ -1617,7 +1617,7 @@
   },
   "apps/photoview": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 5,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1650,7 +1650,7 @@
   },
   "apps/privatebin": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1681,7 +1681,7 @@
   },
   "apps/qdrant": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1714,7 +1714,7 @@
   },
   "apps/seafile": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 41,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1748,7 +1748,7 @@
   },
   "apps/seafile-pro": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 61,
     "decision_facts": {
       "commercial_model": {
@@ -1795,7 +1795,7 @@
   },
   "apps/shlink": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "use_restrictions": {
@@ -1834,7 +1834,7 @@
   },
   "apps/stalwart": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -1882,7 +1882,7 @@
   },
   "apps/threat-dragon": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1913,7 +1913,7 @@
   },
   "apps/tymeslot": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1931,8 +1931,8 @@
     "high": 27,
     "last_release": "2026-11-26",
     "name": "Tymeslot",
-    "newest": null,
-    "newest_date": null,
+    "newest": "1.50.0-slim",
+    "newest_date": "2026-11-26",
     "path": "apps/tymeslot",
     "pinned_date": "2026-11-24",
     "quiet": false,
@@ -1941,12 +1941,12 @@
     "tested": "2026-11-08",
     "tested_version": "1.41.0",
     "upstream": "https://hub.docker.com/r/luka1thb/tymeslot",
-    "upstream_status": "current",
+    "upstream_status": "behind",
     "version": "1.49.0-slim"
   },
   "apps/unifi": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 12,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -1979,7 +1979,7 @@
   },
   "apps/vaultwarden": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2012,7 +2012,7 @@
   },
   "apps/velociraptor": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2043,7 +2043,7 @@
   },
   "apps/vllm": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 5,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2074,7 +2074,7 @@
   },
   "apps/whoami": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2105,7 +2105,7 @@
   },
   "apps/wikijs": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 6,
     "decision_facts": {
       "use_restrictions": {
@@ -2144,7 +2144,7 @@
   },
   "apps/windmill": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "edition_gating": {
@@ -2166,10 +2166,10 @@
     },
     "gap": null,
     "high": 97,
-    "last_release": "2026-11-25",
+    "last_release": "2026-11-26",
     "name": "Windmill",
-    "newest": "1.885.0",
-    "newest_date": "2026-11-25",
+    "newest": "1.886.0",
+    "newest_date": "2026-11-26",
     "path": "apps/windmill",
     "pinned_date": "2026-11-06",
     "quiet": false,
@@ -2183,7 +2183,7 @@
   },
   "apps/wordpress": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 3,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2216,7 +2216,7 @@
   },
   "apps/yopass": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2274,7 +2274,7 @@
   },
   "backup/kopia": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "use_restrictions": {
@@ -2311,7 +2311,7 @@
   },
   "backup/rclone-web": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-21",
@@ -2342,7 +2342,7 @@
   },
   "backup/urbackup": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2373,7 +2373,7 @@
   },
   "business/akaunting": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {
       "commercial_model": {
@@ -2423,7 +2423,7 @@
   },
   "business/chatwoot": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "edition_gating": {
@@ -2468,7 +2468,7 @@
   },
   "business/documenso": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -2513,7 +2513,7 @@
   },
   "business/dolibarr": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2546,7 +2546,7 @@
   },
   "business/erpnext": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 8,
     "decision_facts": {
       "commercial_model": {
@@ -2578,7 +2578,7 @@
     "last_release": "2026-11-20",
     "name": "ERPNext",
     "newest": "v16.61.0",
-    "newest_date": "2026-11-26",
+    "newest_date": "2026-11-27",
     "path": "business/erpnext",
     "pinned_date": "2026-11-23",
     "quiet": false,
@@ -2592,7 +2592,7 @@
   },
   "business/facturascripts": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 3,
     "decision_facts": {
       "commercial_model": {
@@ -2632,7 +2632,7 @@
   },
   "business/invoiceninja": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {
       "use_restrictions": {
@@ -2672,7 +2672,7 @@
   },
   "business/kimai": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -2717,7 +2717,7 @@
   },
   "business/leantime": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 3,
     "decision_facts": {
       "commercial_model": {
@@ -2767,7 +2767,7 @@
   },
   "business/listmonk": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2800,7 +2800,7 @@
   },
   "business/matomo": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 3,
     "decision_facts": {
       "commercial_model": {
@@ -2845,7 +2845,7 @@
   },
   "business/openproject": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -2891,7 +2891,7 @@
   },
   "business/opensign": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 34,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -2924,7 +2924,7 @@
   },
   "business/plane": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -2978,7 +2978,7 @@
   },
   "business/plausible": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -3029,7 +3029,7 @@
   },
   "business/solidinvoice": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3060,7 +3060,7 @@
   },
   "business/twenty": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "edition_gating": {
@@ -3105,7 +3105,7 @@
   },
   "business/vikunja": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -3150,7 +3150,7 @@
   },
   "business/zammad": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3171,8 +3171,8 @@
     "high": 59,
     "last_release": null,
     "name": "Zammad",
-    "newest": "7.3.0-0009",
-    "newest_date": "2026-11-26",
+    "newest": "7.3.0-0010",
+    "newest_date": "2026-11-27",
     "path": "business/zammad",
     "pinned_date": "2026-11-20",
     "quiet": false,
@@ -3186,7 +3186,7 @@
   },
   "core/acme-certs": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3217,7 +3217,7 @@
   },
   "core/authelia": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": "2026-09-26",
@@ -3251,7 +3251,7 @@
   },
   "core/authentik": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "commercial_model": {
@@ -3297,7 +3297,7 @@
   },
   "core/crowdsec": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3328,7 +3328,7 @@
   },
   "core/dnsmasq": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3359,7 +3359,7 @@
   },
   "core/dockhand": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -3409,7 +3409,7 @@
   },
   "core/hawser": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3440,7 +3440,7 @@
   },
   "core/headscale": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -3513,7 +3513,7 @@
   },
   "core/infisical": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "use_restrictions": {
@@ -3553,7 +3553,7 @@
   },
   "core/jumpserver": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 5,
     "decision_facts": {
       "commercial_model": {
@@ -3596,7 +3596,7 @@
   },
   "core/keycloak": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3629,7 +3629,7 @@
   },
   "core/orion-belt": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "use_restrictions": {
@@ -3668,7 +3668,7 @@
   },
   "core/portainer": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -3711,7 +3711,7 @@
   },
   "core/portainer-agent": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3742,7 +3742,7 @@
   },
   "core/shellhub": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3776,7 +3776,7 @@
   },
   "core/step-ca": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {
       "commercial_model": {
@@ -3819,7 +3819,7 @@
   },
   "core/teleport": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -3856,7 +3856,7 @@
   },
   "core/traefik": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -3899,7 +3899,7 @@
   },
   "core/warpgate": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3930,7 +3930,7 @@
   },
   "core/zot": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3961,7 +3961,7 @@
   },
   "monitoring/beszel": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -3992,7 +3992,7 @@
   },
   "monitoring/beszel-agent": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4023,7 +4023,7 @@
   },
   "monitoring/changedetection": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4054,7 +4054,7 @@
   },
   "monitoring/checkmate": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 4,
     "decision_facts": {
       "commercial_model": {
@@ -4104,7 +4104,7 @@
   },
   "monitoring/ciao": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 5,
     "decision_facts": {
       "use_restrictions": {
@@ -4141,7 +4141,7 @@
   },
   "monitoring/gatus": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4172,7 +4172,7 @@
   },
   "monitoring/gotify": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {
       "use_restrictions": {
@@ -4209,7 +4209,7 @@
   },
   "monitoring/grafana-prometheus": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -4257,7 +4257,7 @@
   },
   "monitoring/healthchecks": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 2,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4288,7 +4288,7 @@
   },
   "monitoring/langfuse": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 1,
     "decision_facts": {
       "commercial_model": {
@@ -4326,8 +4326,8 @@
     "high": 29,
     "last_release": "2026-11-26",
     "name": "Langfuse",
-    "newest": "4.88.0",
-    "newest_date": "2026-11-26",
+    "newest": null,
+    "newest_date": null,
     "path": "monitoring/langfuse",
     "pinned_date": "2026-11-19",
     "quiet": false,
@@ -4336,12 +4336,12 @@
     "tested": "2026-11-08",
     "tested_version": "4.76.0",
     "upstream": "https://github.com/langfuse/langfuse/pkgs/container/langfuse",
-    "upstream_status": "behind",
+    "upstream_status": "undetermined",
     "version": "4.83.0"
   },
   "monitoring/ntfy": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "use_restrictions": {
@@ -4378,7 +4378,7 @@
   },
   "monitoring/scrutiny": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 0,
     "decision_facts": {
       "commercial_model": {
@@ -4426,7 +4426,7 @@
   },
   "monitoring/uptime-kuma": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 8,
     "decision_facts": {},
     "decision_facts_checked": null,
@@ -4457,7 +4457,7 @@
   },
   "monitoring/zabbix": {
     "archived": false,
-    "checked": "2026-11-26",
+    "checked": "2026-11-27",
     "critical": 9,
     "decision_facts": {
       "commercial_model": {
