@@ -196,7 +196,6 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
   gitignored and mounted read-only. `config.example.yaml` has an ntfy example.
 - **Dockhand's README named PostgreSQL 16.15**; the pin is 16.16.
 
-
 ## [0.9.10] — 2026-11-26 — Security releases of November 2026
 
 Traefik v3.7.20 closes a path-parameter bypass of path-based access policies and
