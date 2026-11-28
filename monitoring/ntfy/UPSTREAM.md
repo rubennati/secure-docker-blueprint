@@ -110,6 +110,16 @@ See the [ntfy config reference](https://docs.ntfy.sh/config/) for the full list.
   cover, and a tier with a reservation limit of 0 reserves nothing (0 meant
   unlimited). No `server.yml` key changes. Messages cached under v2.38.1 are served
   after the upgrade, and publishing works.
+- Moved to `v2.38.3` on 2026-11-28 (released 2026-11-27), a security release
+  (https://github.com/binwiederhier/ntfy/releases/tag/v2.38.3): web push endpoints are
+  checked against the parsed host, so an endpoint that only looks like an allowed push
+  service is refused, stored ones of that kind are removed, and redirects are no
+  longer followed (GHSA-j5px-666m-5p3f, GHSA-h4w9-5cmv-92hv). Before, anyone who could
+  read a topic could make the server send requests to hosts of their choosing — with
+  web push on, which needs its keys in `server.yml`; the example leaves it off. Adds
+  `experimental-firebase-limit`, which matters only with Firebase (not used here). No
+  other `server.yml` change. Messages cached under v2.38.2 are served after the
+  upgrade, and publishing works.
 
 ## Upgrade checklist
 

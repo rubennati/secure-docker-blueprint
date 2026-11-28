@@ -34,8 +34,9 @@ before an application move. In this order:
    `docker compose exec <db> reindexdb -U <user> --all --concurrently`. Here that
    means Dockhand (16.16), Paperless-ngx (18.7) and Immich (step 9).
 4. **Dockhand.** If authentication is still off, turn it on first (README,
-   *Authentication*): `/api/auth/session` must answer `"authEnabled":true`. Then run
-   `docker compose up -d`; the container is recreated with `ORIGIN`.
+   *Authentication*): `/api/auth/session` must answer `"authEnabled":true`. Then set
+   `APP_TAG=v1.0.60` and run `docker compose pull && docker compose up -d`; the
+   container is recreated with `ORIGIN`.
 5. **Gatus.** Values in `.env` never reached the container. Write the alert tokens
    and webhook URLs into `config/config.yaml` itself, then `chmod 600` it.
 6. **Seafile Pro.** `app-internal` becomes internal, so Compose has to recreate the
@@ -103,9 +104,11 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
   - `TIKA_MAX_ATTACHMENT_BYTES` raises the cap (default 52428800, `-1` removes it). At
     200 MiB a 150 MiB docx passed inside Tika's 1G memory limit.
   - The embedding depth Paperless gets text from rises from 9 to 20 levels.
-- **ntfy `v2.38.2`** (`monitoring/ntfy`). A security release: go-smtp's CRLF
-  requirement, every `X-Forwarded-For` line read, wildcard reservations and the tier
-  reservation limit. Cached messages survive the upgrade.
+- **ntfy `v2.38.3`** (`monitoring/ntfy`). Two security releases. v2.38.2: go-smtp's
+  CRLF requirement, every `X-Forwarded-For` line read, wildcard reservations and the
+  tier reservation limit. v2.38.3: web push endpoints are checked by their parsed
+  host, so a topic reader can no longer make the server call a host of their choosing
+  (web push is off in the example). Cached messages survive the upgrade.
 - **Seafile Pro's `app-internal` is internal** (`apps/seafile-pro`). It was a plain
   bridge, which gave the database, Redis, SeaSearch and the metadata server a way to
   the internet.
@@ -187,6 +190,9 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
   setting this stack uses.
 - **Hawser `0.2.54`** (`core/hawser`). Proxy environment variables and the managed
   `.env` removal.
+- **Dockhand `v1.0.60`** (`core/dockhand`). No schema migration. A stack recreate no
+  longer restarts every container afterwards. The user and authentication were kept,
+  and the API still answers `401` without a login.
 - **Dockhand sets `ORIGIN: https://${APP_TRAEFIK_HOST}`** (`core/dockhand`). The
   README gains:
   - *Authentication*: a user first, then the switch.
