@@ -13,7 +13,10 @@ in GitHub Issues. This file holds direction only.
 
 ## Direction
 
-Pre-1.0 tags are set when a natural milestone is reached, not on a fixed cadence.
+Pre-1.0 minor versions mark a milestone below once it is reached. Patch versions
+come out of the monthly maintenance round when it changed something an operator
+would take, and out of turn for a security fix
+([`docs/maintenance.md`](docs/maintenance.md#maintenance-round)).
 The single criterion for v1.0 is: **could someone fork this and run it without
 needing my mental model?**
 

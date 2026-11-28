@@ -173,6 +173,17 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
 
 ### Changed
 
+- **Releases come from a monthly maintenance round** (`docs/maintenance.md`,
+  `docs/in-use.md`, `ROADMAP.md`, `SECURITY.md`).
+  - Pins move once a month, at a cut-off on the first Monday, in one pull request
+    with one image scan. An upstream release published later waits for the next
+    round.
+  - A CRITICAL or HIGH flaw reachable in the shipped configuration of a stack in
+    `docs/in-use.md` is fixed out of turn.
+  - A round that changed something an operator would take ends in a patch tag; a
+    month without such a change has none. A minor version marks a milestone of
+    `ROADMAP.md`.
+  - Every tag gets a Release page with its CHANGELOG section.
 - **Traefik `v3.8.0`** (`core/traefik`). 3.8 has been the current line since
   2026-11-23. It brings no security fix beyond 3.7.20's.
   - In a lab, 3.7.20 and 3.8.0 answered identically: public and VPN routes, `404`
