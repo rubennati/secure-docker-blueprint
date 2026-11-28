@@ -117,7 +117,7 @@ the archive, restore the `1000:1000` ownership on `volumes/storage`, and run
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `chatwoot/chatwoot:v4.20.1` | — | 0 · 1 | — |
-| `pgvector/pgvector:0.8.7-pg16` | — | — | 1 · 25 |
+| `pgvector/pgvector:0.8.7-pg16` | 0 · 1 | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 
 <!-- findings:end -->

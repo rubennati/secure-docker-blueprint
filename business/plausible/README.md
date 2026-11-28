@@ -183,7 +183,7 @@ numbers or numbers with no dashboard.
 |---|---|---|---|
 | `clickhouse/clickhouse-server:26.10.3.7-alpine` | — | — | — |
 | `ghcr.io/plausible/community-edition:v3.2.1` | 0 · 26 | — | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

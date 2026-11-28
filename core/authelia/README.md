@@ -211,7 +211,7 @@ For the general PostgreSQL restore procedure, see
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `authelia/authelia:4.39.28` | — | — | 0 · 5 |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 
 <!-- findings:end -->

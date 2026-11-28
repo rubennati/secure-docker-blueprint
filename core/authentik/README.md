@@ -382,7 +382,7 @@ Two files outside the database are required for a working restore:
 |---|---|---|---|
 | `alpine:3.24.3` | — | — | — |
 | `ghcr.io/goauthentik/server:2026.8.5` | 1 · 52 | 0 · 27 | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 
 <!-- findings:end -->

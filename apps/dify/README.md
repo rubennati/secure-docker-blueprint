@@ -165,12 +165,12 @@ into existing, empty databases.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `langgenius/dify-api:1.20.0` | — | 0 · 13 | — |
+| `langgenius/dify-api:1.20.0` | 0 · 1 | 0 · 13 | — |
 | `langgenius/dify-plugin-daemon:0.6.15-local` | 39 · 664 | — | 0 · 1 |
 | `langgenius/dify-sandbox:0.2.15` | 3 · 29 | 2 · 4 | 0 · 39 |
 | `langgenius/dify-web:1.20.0` | — | 0 · 6 | — |
-| `pgvector/pgvector:0.8.7-pg16` | — | — | 1 · 25 |
-| `postgres:15.20-alpine` | 0 · 1 | — | 1 · 25 |
+| `pgvector/pgvector:0.8.7-pg16` | 0 · 1 | — | 1 · 25 |
+| `postgres:15.20-alpine` | 0 · 7 | — | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |
 | `ubuntu/squid:6.6-24.04_edge` | — | — | — |
 

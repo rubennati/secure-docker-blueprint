@@ -208,7 +208,7 @@ None currently documented.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `fnsys/dockhand:v1.0.59` | — | — | — |
-| `postgres:16.16-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:16.16-alpine` | 0 · 7 | — | 1 · 25 |
 | `tecnativa/docker-socket-proxy:v0.5.0` | 0 · 7 | — | — |
 
 <!-- findings:end -->

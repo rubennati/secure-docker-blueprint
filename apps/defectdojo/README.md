@@ -126,8 +126,8 @@ be decrypted.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `defectdojo/defectdojo-django:3.5.202` | 0 · 15 | 0 · 5 | — |
-| `defectdojo/defectdojo-nginx:3.5.202` | 0 · 1 | — | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `defectdojo/defectdojo-nginx:3.5.202` | 0 · 7 | — | — |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 | `valkey/valkey:9.1.4-alpine` | — | — | — |
 
 <!-- findings:end -->

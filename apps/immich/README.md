@@ -267,7 +267,7 @@ curl -L https://github.com/simulot/immich-go/releases/latest/download/immich-go_
 |---|---|---|---|
 | `ghcr.io/immich-app/immich-machine-learning:v3.4.2` | 0 · 3 | 2 · 12 | — |
 | `ghcr.io/immich-app/immich-server:v3.4.2` | 2 · 65 | 0 · 15 | 0 · 11 |
-| `ghcr.io/immich-app/postgres:18-vectorchord1.1.1@sha256:f7388adc1e34…` | — | — | 1 · 25 |
+| `ghcr.io/immich-app/postgres:18-vectorchord1.1.1@sha256:f7388adc1e34…` | 0 · 1 | — | 1 · 25 |
 | `valkey/valkey:9.2.1` | 0 · 1 | — | — |
 
 <!-- findings:end -->

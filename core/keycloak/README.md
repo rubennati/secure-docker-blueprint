@@ -204,7 +204,7 @@ For the general PostgreSQL restore procedure and verification checklist, see
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 | `quay.io/keycloak/keycloak:26.8.2` | — | 0 · 1 | — |
 
 <!-- findings:end -->

@@ -191,7 +191,7 @@ docker compose up -d
 | `redis:8.10.3-alpine` | — | — | — |
 | `seafileltd/notification-server:13.0.29` | 0 · 1 | — | — |
 | `seafileltd/sdoc-server:2.0.14` | 5 · 132 | — | — |
-| `seafileltd/seafile-ai:13.0.10` | 11 · 754 | 11 · 80 | — |
+| `seafileltd/seafile-ai:13.0.10` | 12 · 757 | 11 · 80 | — |
 | `seafileltd/seafile-md-server:13.0.28` | 0 · 2 | — | 0 · 25 |
 | `seafileltd/seafile-pro-mc:13.0.30` | 5 · 132 | 0 · 17 | 0 · 1 |
 | `seafileltd/seasearch:1.0.8` | 0 · 2 | — | 0 · 14 |

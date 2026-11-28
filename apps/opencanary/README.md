@@ -162,7 +162,7 @@ docker compose -f docker-compose.local.yml --env-file .env.local down
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `thinkst/opencanary:0.9.10` | 7 · 250 | 1 · 17 | 1 · 5 |
+| `thinkst/opencanary:0.9.10` | 8 · 253 | 1 · 17 | 1 · 5 |
 
 <!-- findings:end -->
 

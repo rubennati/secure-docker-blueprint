@@ -166,9 +166,9 @@ the server and the interface.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `postgres:17.12-alpine` | 0 · 1 | — | 1 · 25 |
-| `zabbix/zabbix-server-pgsql:alpine-8.0.0` | 0 · 55 | — | — |
-| `zabbix/zabbix-web-nginx-pgsql:alpine-8.0.0` | 8 · 45 | 0 · 4 | — |
+| `postgres:17.12-alpine` | 0 · 7 | — | 1 · 25 |
+| `zabbix/zabbix-server-pgsql:alpine-8.0.0` | 0 · 61 | — | — |
+| `zabbix/zabbix-web-nginx-pgsql:alpine-8.0.0` | 8 · 51 | 0 · 4 | — |
 
 <!-- findings:end -->
 

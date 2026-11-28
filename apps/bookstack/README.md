@@ -127,7 +127,7 @@ broken images — technically recovered, practically not.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `lscr.io/linuxserver/bookstack:version-v26.09.3@sha256:5e44313f320a…` | 0 · 1 | — | — |
+| `lscr.io/linuxserver/bookstack:version-v26.09.3@sha256:5e44313f320a…` | 0 · 7 | — | — |
 | `mariadb:12.3.3` | — | — | 1 · 25 |
 
 <!-- findings:end -->

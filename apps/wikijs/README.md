@@ -125,7 +125,7 @@ of `volumes/data` at uid 1000.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `ghcr.io/requarks/wiki:3.6.0` | 5 · 125 | 0 · 18 | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

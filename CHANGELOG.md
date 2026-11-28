@@ -46,7 +46,7 @@ before an application move. In this order:
    second hostname goes into `PAPERLESS_ALLOWED_HOSTS`. Tika 3.4 refuses an Office
    file over 50 MiB; to keep larger ones, set `TIKA_MAX_ATTACHMENT_BYTES` in `.env`
    and run `docker compose up -d --force-recreate tika`.
-8. **Tymeslot 1.49.0.** Behind a CDN, set `TRUSTED_PROXIES` to its ranges.
+8. **Tymeslot 1.51.0.** Behind a CDN, set `TRUSTED_PROXIES` to its ranges.
    Payments (off by default) need the Stripe Connect settings of 1.43.
 9. **Immich v3.4.2.** Set `APP_TAG` and `REDIS_TAG`, pull and run `up -d`. The
    database stays on PostgreSQL 14 until it moves: first set `DB_TAG` to the 14.25
@@ -182,8 +182,9 @@ CrowdSec, dnsmasq, OnlyOffice and whoami have no new release.
   - Migrations 0028–0030 rebuild the tag tree. Documents, text and tags were there
     afterwards, and a new upload was consumed.
   - Gotenberg stays at 8.40.0, the last release of 8: Paperless does not support 9.
-- **Tymeslot `1.49.0`** (`apps/tymeslot`). 35 migrations ran on data and the user was
-  kept.
+- **Tymeslot `1.51.0`** (`apps/tymeslot`). From 1.41.0, 43 migrations ran on data
+  and the user was kept. 1.50 and 1.51 fix bookings and payments and change no
+  setting this stack uses.
 - **Hawser `0.2.54`** (`core/hawser`). Proxy environment variables and the managed
   `.env` removal.
 - **Dockhand sets `ORIGIN: https://${APP_TRAEFIK_HOST}`** (`core/dockhand`). The

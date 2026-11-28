@@ -155,7 +155,7 @@ the rest up. The migrator runs again and finds nothing to do.
 | `makeplane/plane-proxy:v1.5.0` | — | — | 0 · 1 |
 | `makeplane/plane-space:v1.5.0` | — | — | — |
 | `pgsty/silo:RELEASE.2026-11-12T00-00-00Z` | — | — | — |
-| `postgres:15.20-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:15.20-alpine` | 0 · 7 | — | 1 · 25 |
 | `rabbitmq:3.13.7-management-alpine` | 1 · 35 | — | — |
 | `valkey/valkey:7.2.16-alpine` | — | — | — |
 

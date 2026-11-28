@@ -136,7 +136,7 @@ cache.
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
 | `mariadb:12.3.3` | — | — | 1 · 25 |
-| `photoview/photoview:2.4.0` | — | — | 5 · 53 |
+| `photoview/photoview:2.4.0` | 0 · 1 | — | 5 · 53 |
 
 <!-- findings:end -->
 

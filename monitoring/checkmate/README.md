@@ -168,7 +168,7 @@ it; a gap in the checks is the outage you did not record, not data loss.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/bluewave-labs/checkmate:v3.13.1` | 0 · 1 | 3 · 22 | 1 · 25 |
+| `ghcr.io/bluewave-labs/checkmate:v3.13.1` | 0 · 2 | 3 · 22 | 1 · 25 |
 | `mongo:8.0.38` | — | 0 · 3 | 1 · 26 |
 
 <!-- findings:end -->

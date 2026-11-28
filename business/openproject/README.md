@@ -161,7 +161,7 @@ schema gets written over the restore.
 |---|---|---|---|
 | `memcached:1.6.45-alpine` | — | — | — |
 | `openproject/openproject:17.9.8-slim` | 0 · 16 | 1 · 4 | — |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 

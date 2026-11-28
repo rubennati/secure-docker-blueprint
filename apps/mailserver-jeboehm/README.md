@@ -212,7 +212,7 @@ start the stack.
 | `ghcr.io/jeboehm/mailserver-filter:8.1.2` | 0 · 2 | — | — |
 | `ghcr.io/jeboehm/mailserver-mda:8.1.2` | 0 · 54 | — | — |
 | `ghcr.io/jeboehm/mailserver-mta:8.1.2` | 0 · 38 | — | — |
-| `ghcr.io/jeboehm/mailserver-unbound:8.1.2` | 0 · 21 | — | — |
+| `ghcr.io/jeboehm/mailserver-unbound:8.1.2` | 0 · 27 | — | — |
 | `ghcr.io/jeboehm/mailserver-web:8.1.2` | — | 0 · 1 | — |
 | `mysql:9.7.4` | — | 1 · 8 | 1 · 25 |
 | `redis:8.10.3-alpine` | — | — | — |

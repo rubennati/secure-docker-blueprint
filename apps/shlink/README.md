@@ -156,9 +156,9 @@ the plain value exists nowhere else.
 
 | Image | Base system | Libraries | Programs |
 |---|---|---|---|
-| `ghcr.io/shlinkio/shlink-web-client:4.9.0` | 1 · 11 | — | — |
-| `ghcr.io/shlinkio/shlink:5.1.9` | 0 · 1 | — | 0 · 1 |
-| `postgres:18.7-alpine` | 0 · 1 | — | 1 · 25 |
+| `ghcr.io/shlinkio/shlink-web-client:4.9.0` | 1 · 17 | — | — |
+| `ghcr.io/shlinkio/shlink:5.1.9` | 0 · 7 | — | 0 · 1 |
+| `postgres:18.7-alpine` | 0 · 7 | — | 1 · 25 |
 
 <!-- findings:end -->
 
