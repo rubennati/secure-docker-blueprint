@@ -71,6 +71,19 @@
   https://github.com/Finsys/dockhand/releases/tag/v1.0.58,
   https://github.com/Finsys/dockhand/releases/tag/v1.0.59,
   https://github.com/Finsys/dockhand/security/advisories
+- Moved to `v1.0.60` on 2026-11-28 (released the same day). No breaking change, new
+  required variable or schema migration. New: re-pulling an image from the edit
+  dialog, Bitwarden `bws://` references, `EXTRA_STACK_ROOTS` for stack directories
+  outside `DATA_DIR` (optional, unset here), a scheduled build-cache prune. Fixed: a
+  stack recreate no longer restarts every container afterwards, concurrent Trivy
+  scans no longer fail on the database lock, and an offline Hawser host no longer
+  floods the log. Three HIGH advisories published on 2026-11-25 —
+  GHSA-v84w-wfwr-xv8p, GHSA-cqff-2v78-x7qx, GHSA-jx5f-24p2-3m39, each needing an
+  account with `settings:edit` — affect v1.0.58 and older; v1.0.59 already carried
+  the fix. From v1.0.59 with a user and authentication on: after the move the session
+  answered `authEnabled:true`, the API `401` without a login and `200` with it, a
+  login from another origin `403`, and the same after `down`/`up`.
+  https://github.com/Finsys/dockhand/releases/tag/v1.0.60
 
 ## Upgrade checklist
 

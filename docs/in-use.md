@@ -22,18 +22,18 @@ that they were read, and when.
 
 ## Stacks
 
-Checked on 2026-11-26 for the release after v0.9.10. *Version checked* is the pin
+Checked on 2026-11-28 for the release after v0.9.10. *Version checked* is the pin
 the check ended with.
 
 | Stack | Role | Criticality | Hosts | Version checked | New version | Security fix | Breaking change | Lab upgrade test |
 |---|---|---|---|---|---|---|---|---|
 | `core/traefik` | reverse proxy, TLS, access middlewares | very high | 4 | v3.8.0 | yes, from v3.7.20 | none new — 3.8.0 carries the fixes 3.7.20 brought | none for this configuration; checked against the 3.8 migration notes | yes — routing, access, headers and the CrowdSec plugin identical to 3.7.20 |
 | `core/crowdsec` | intrusion detection, bouncer for Traefik | very high | 2 | v1.8.2 | no | — | — | — |
-| `core/dockhand` | container management, with PostgreSQL and the socket proxy | very high | 1 | v1.0.59, PostgreSQL 16.16, socket proxy v0.5.0 | no | — | — | — |
+| `core/dockhand` | container management, with PostgreSQL and the socket proxy | very high | 1 | v1.0.60, PostgreSQL 16.16, socket proxy v0.5.0 | yes, from v1.0.59 | none new; three HIGH advisories of 2026-11-25 affect v1.0.58 and older | none stated | yes — user and authentication kept, API `401` without a login |
 | `core/hawser` | Dockhand agent on a managed host | very high | 3 | 0.2.54 | yes, from 0.2.53 | no | none stated | no — needs a Dockhand server; the release notes were read |
 | `core/dnsmasq` | split DNS for the VPN names | high | 1 | 2.93 | no | — | — | — |
 | `monitoring/gatus` | uptime checks | high | 1 | v5.38.0 | no | — | — | — |
-| `monitoring/ntfy` | push notifications | high | 1 | v2.38.2 | yes, from v2.38.1 | yes | small ones, listed in `UPSTREAM.md`; none for publishing with a token | yes — cached messages survive, publishing works |
+| `monitoring/ntfy` | push notifications | high | 1 | v2.38.3 | yes, from v2.38.1 | yes, in v2.38.2 and v2.38.3 | small ones, listed in `UPSTREAM.md`; none for publishing with a token | yes — cached messages survive, publishing works |
 | `apps/vaultwarden` | password manager, MariaDB | very high | 1 | 1.37.5, MariaDB 12.3.3 | no; MariaDB 12.3.3 rebuilt on Docker Hub | MariaDB 12.3.4 not on Docker Hub yet | — | — |
 | `apps/seafile` | file sync, MariaDB | very high | 2 | 13.0.30, SeaDoc 2.0.14, MariaDB 10.11.19 | yes, from 13.0.29 | yes | none | yes — library and file kept |
 | `apps/seafile-pro` | file sync, Professional Edition | very high | 1 | 13.0.30, ClamAV 1.5.5, SeaSearch 1.0.8 | yes | yes, Seafile and ClamAV | `app-internal` becomes internal: `down`, then `up -d` | yes — Seafile with the Community Edition image of the same release; ClamAV and the network on Pro |
