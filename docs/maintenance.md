@@ -143,9 +143,41 @@ is useful for significant evidence or incidents. Routine sessions need no log ro
 
 ---
 
+### Maintenance round
+
+Pins move in one round a month, not release by release. Upstream projects publish
+every week, some almost every day; following each one makes every week a release
+week and buries the change that matters among the ones that do not.
+
+- **Cut-off:** the first Monday of the month. A round takes the upstream releases
+  published by then that are at least seven days old, the same wait as
+  `minimumReleaseAge` in `renovate.json`. A release published later waits for the
+  next round.
+- **One branch, one pull request:** `maintenance/<YYYY-MM>`, one commit per stack so
+  a regression points at its stack, and one image scan at the end of the round
+  (Version Chain step 7) with its data in one commit.
+- **Lab runs** follow the criticality in [`in-use.md`](in-use.md#criticality); a
+  stack outside it needs its release notes read.
+- **Between rounds** `dev` takes fixes and documentation, grouped by topic. A new
+  upstream release is noted for the round, not applied.
+
+**Out of turn:** a pin moves at once, in a pull request of its own, when all three
+hold: the stack is in [`in-use.md`](in-use.md); the flaw is CRITICAL or HIGH and
+reachable in the configuration the stack ships; upstream has a release that fixes
+it. A flaw in a feature the example leaves off waits for the round. The timelines
+in [`SECURITY.md`](../SECURITY.md) hold for flaws in this repository itself.
+
+A round, or an out-of-turn fix, that changed something an operator would take ends
+in a patch tag (Release Chain). A month in which nothing relevant changed has no
+tag. A minor version marks a milestone of [`ROADMAP.md`](../ROADMAP.md) instead.
+
+---
+
 ### Version Chain
 
-**Trigger**: upstream image has a new release, or a security advisory appears.
+**Trigger**: the monthly maintenance round, or an out-of-turn security fix
+([Maintenance round](#maintenance-round)). Steps 1 to 6 run per stack; step 7 runs
+once, at the end of the round.
 
 | Step | File | Action |
 |---|---|---|
@@ -155,7 +187,7 @@ is useful for significant evidence or incidents. Routine sessions need no log ro
 | 4 | `<app>/.env.local.example` | Bump the same pin, where the local stack runs the same image. `check-structure.py` fails on a local pin that lags production (`local-pin-drift`) |
 | 5 | `<app>/UPSTREAM.md` | Update version reference, release notes and migration requirements; preserve `Last verified` unless a new host test establishes it |
 | 6 | `<app>/docker-compose.yml` | Check if any compose changes are needed (new envs, removed features, healthcheck changes) |
-| 7 | Image scan and upstream data | Run the image scan on the branch (`trivy.yml`, `workflow_dispatch`). Its `stack-status` artifact holds `upstream-status.json`: copy it to the repository root (`gh run download <run> -n stack-status`) and run `python3 scripts/ci/lifecycle-report.py --write`, which updates `LIFECYCLE.md` and the generated findings block under `## Open findings` in each stack README. A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — and the README gets the reason in a sentence below the generated block. `trivy-gate.py --prune` removes what the scan no longer finds |
+| 7 | Image scan and upstream data | Once per round, after the last pin: run the image scan on the round's branch (`trivy.yml`, `workflow_dispatch`). Its `stack-status` artifact holds `upstream-status.json`: copy it to the repository root (`gh run download <run> -n stack-status`) and run `python3 scripts/ci/lifecycle-report.py --write`, which updates `LIFECYCLE.md` and the generated findings block under `## Open findings` in each stack README. A CRITICAL finding the new pin still carries is fixed by the newest upstream release that removes it. Only where none exists does it go into `.trivy-baseline.json` as an exception for that image — the stacks that use it, why the pin cannot move, the risk — and the README gets the reason in a sentence below the generated block. `trivy-gate.py --prune` removes what the scan no longer finds |
 | 8 | `docs/bugfixes/` | Record significant incidents, recovery steps or reusable lessons; routine corrections need no incident file |
 | 9 | `CHANGELOG.md` | Version bump documented |
 
@@ -198,7 +230,10 @@ not an evaluation of this repository.
 
 ### Release Chain
 
-**Trigger**: before tagging a version (`vX.Y.Z`).
+**Trigger**: a maintenance round or an out-of-turn security fix has merged into
+`dev` and changed something an operator would take (patch, `vX.Y.Z`), or a
+milestone of `ROADMAP.md` has been reached (minor, `vX.Y.0`). The maintainer sets
+the tag.
 
 Run the full Consistency Chain first, then:
 
@@ -207,11 +242,11 @@ Run the full Consistency Chain first, then:
 | 1 | `CHANGELOG.md` | Move `[Unreleased]` to `[X.Y.Z]` heading; update comparison links |
 | 2 | `ROADMAP.md` | Remove shipped items from the open lists; shipped work is in `CHANGELOG.md` |
 | 3 | `README.md` | Bump version badge (`v0.X.Y-blue`) |
-| 4 | `upstream-status.json` | Run the image scan by `workflow_dispatch` on `dev`, copy `upstream-status.json` from its `stack-status` artifact to the repository root and run `python3 scripts/ci/lifecycle-report.py --write`. The release then carries the pins, upstream releases and findings as of its own date |
+| 4 | `upstream-status.json` | The data the round committed carries the pins, upstream releases and findings as of the round. A new scan by `workflow_dispatch` on `dev` (copy `upstream-status.json` from its `stack-status` artifact, run `python3 scripts/ci/lifecycle-report.py --write`) only when the tag comes more than a week after the round's scan |
 | 5 | `LIFECYCLE.md` | Read the stacks whose pin moved since their last test: is any likely broken by a dependency update? |
-| 6 | [`in-use.md`](in-use.md) | **Every stack in use checked for this release** — new version, security fix, breaking change, lab upgrade test — with the version checked and the date. No tag while a row is older than the release |
+| 6 | [`in-use.md`](in-use.md) | **Every stack in use checked as of the round's cut-off** — new version, security fix, breaking change, lab upgrade test — with the version checked and the date. A release published after the cut-off belongs to the next round, unless it is an out-of-turn security fix |
 | 7 | Secret scan | Run CI by `workflow_dispatch` on `dev`: gitleaks scans the whole history. A finding is removed, or listed by fingerprint in `.gitleaksignore` with its reason, before the tag |
-| 8 | GitHub | Minor versions only (`v0.X.0`): `gh release create vX.Y.0 --draft` — review, then publish. Patch tags (`vX.Y.Z`) are Git tags only — no GitHub Release needed. |
+| 8 | GitHub | Every tag gets a Release page: `gh release create vX.Y.Z --draft` with the tag's `CHANGELOG.md` section as its text — review, then publish |
 | 9 | `dev` | After the release pull request into `main` is merged, merge `main` back into `dev` through a pull request. `main` requires a pull request branch to be up to date with it, and without this the next release pull request from `dev` shows as out of date because of the previous release's merge commit |
 | 10 | `v1.0.0` only | **Both surfaces ready?** The repository *and* the operator site have to meet the criteria in [`ROADMAP.md`](../ROADMAP.md#v10--complete-and-hand-off-ready). The site being live does not count. If the site is unfinished, the tag waits — there is no partial 1.0. |
 

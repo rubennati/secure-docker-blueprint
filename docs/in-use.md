@@ -1,11 +1,12 @@
 # Stacks in use
 
 The stacks below run on real hosts. Their failures reach people, and their upgrades
-are the ones a release has to get right first. Every release checks each of them
-before the tag: is there a new upstream version, does it fix a security issue, does
-it break something, and did the upgrade run in a lab on data. The
-[Release Chain](maintenance.md#release-chain) does not tag while a row is older than
-the release.
+are the ones a release has to get right first. Each monthly
+[maintenance round](maintenance.md#maintenance-round) checks every one of them as of
+its cut-off: is there a new upstream version, does it fix a security issue, does it
+break something, and did the upgrade run in a lab on data. A release published after
+the cut-off waits for the next round, unless it fixes a flaw the round's out-of-turn
+rule covers.
 
 This page names roles and counts, never hosts. The facts per stack stay with their
 owners: the pin in `.env.example`, upgrade paths and breaking changes in

@@ -170,7 +170,9 @@ available.
 
 **main:**
 
-- Only receives merged pull requests from `dev`; direct pushes are rejected
+- Receives the release pull request from `dev`, and Dependabot's security pull
+  requests, which GitHub raises against the default branch only; direct pushes are
+  rejected
 - The eleven required checks passed against current
   `main` — the ten CI jobs plus Trivy's IaC config scan
 - Commit messages in English

@@ -50,7 +50,8 @@ If in doubt, report it privately anyway. Better safe than sorry.
 - **Fix or mitigation** timeline depends on severity:
   - Critical (e.g. secret leak, auth bypass): within 7 days
   - High: within 30 days
-  - Medium/Low: next regular release
+  - Medium/Low: the next monthly maintenance round
+    ([`docs/maintenance.md`](docs/maintenance.md#maintenance-round))
 
 ## Disclosure Policy
 
