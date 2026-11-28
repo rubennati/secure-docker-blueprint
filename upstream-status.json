@@ -2,7 +2,7 @@
   "stacks": {
     "apps/adminer": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -34,7 +34,7 @@
     },
     "apps/agentgateway": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -61,7 +61,7 @@
     },
     "apps/bookstack": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 32,
@@ -100,7 +100,7 @@
     },
     "apps/caldiy": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 269,
@@ -116,7 +116,7 @@
             ],
             "system": [
               2,
-              158
+              159
             ]
           },
           "postgres:18.7": {
@@ -153,7 +153,7 @@
     },
     "apps/calnode": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 53,
@@ -185,7 +185,7 @@
     },
     "apps/calrs": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -217,7 +217,7 @@
     },
     "apps/ciso-assistant": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 90,
@@ -267,7 +267,7 @@
     },
     "apps/collabora": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -294,7 +294,7 @@
     },
     "apps/dashy": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -321,7 +321,7 @@
     },
     "apps/defectdojo": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 52,
@@ -377,7 +377,7 @@
     },
     "apps/dependency-track": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 32,
@@ -417,10 +417,10 @@
     },
     "apps/dfir-iris": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 31,
-        "high": 1056,
+        "high": 1063,
         "images": {
           "ghcr.io/dfir-iris/iriswebapp_app:v2.4.29": {
             "libraries": [
@@ -439,7 +439,7 @@
             ],
             "system": [
               2,
-              28
+              35
             ]
           },
           "rabbitmq:3.13.7-management-alpine": {
@@ -471,7 +471,7 @@
     },
     "apps/dify": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 45,
         "high": 756,
@@ -483,7 +483,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           },
           "langgenius/dify-plugin-daemon:0.6.15-local": {
@@ -523,7 +523,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           },
           "postgres:15.20-alpine": {
@@ -566,7 +566,7 @@
     },
     "apps/docker-mailserver": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 22,
@@ -598,7 +598,7 @@
     },
     "apps/docling-serve": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 25,
@@ -630,7 +630,7 @@
     },
     "apps/easyappointments": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 5,
         "high": 142,
@@ -669,7 +669,7 @@
     },
     "apps/euro-office": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 5,
@@ -701,7 +701,7 @@
     },
     "apps/ghost": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 45,
@@ -753,7 +753,7 @@
     },
     "apps/greenmail": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 3,
@@ -785,17 +785,12 @@
     },
     "apps/heimdall": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
-        "high": 7,
+        "high": 0,
         "images": {
-          "lscr.io/linuxserver/heimdall:2.8.4": {
-            "system": [
-              0,
-              7
-            ]
-          }
+          "lscr.io/linuxserver/heimdall:2.8.4": {}
         },
         "unscanned": []
       },
@@ -803,12 +798,12 @@
       "images": [
         "lscr.io/linuxserver/heimdall:2.8.4"
       ],
-      "last_release": "2026-11-20",
+      "last_release": "2026-11-28",
       "newest": "2.8.4",
-      "newest_date": "2026-11-20",
+      "newest_date": "2026-11-28",
       "newest_date_source": "release",
       "pinned": "2.8.4",
-      "pinned_date": "2026-11-20",
+      "pinned_date": "2026-11-28",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
@@ -817,10 +812,10 @@
     },
     "apps/hemmelig": {
       "archived": true,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 7,
-        "high": 32,
+        "high": 33,
         "images": {
           "hemmeligapp/hemmelig:v7.6.1": {
             "libraries": [
@@ -829,7 +824,7 @@
             ],
             "system": [
               5,
-              14
+              15
             ]
           }
         },
@@ -853,7 +848,7 @@
     },
     "apps/heyform": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 14,
         "high": 144,
@@ -902,7 +897,7 @@
     },
     "apps/homarr": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -934,7 +929,7 @@
     },
     "apps/homepage": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 9,
@@ -966,7 +961,7 @@
     },
     "apps/httpbin": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
         "high": 29,
@@ -1002,7 +997,7 @@
     },
     "apps/immich": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 5,
         "high": 127,
@@ -1038,7 +1033,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           },
           "valkey/valkey:9.2.1": {
@@ -1071,7 +1066,7 @@
     },
     "apps/it-tools": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 27,
@@ -1103,7 +1098,7 @@
     },
     "apps/librephotos": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 43,
@@ -1164,7 +1159,7 @@
     },
     "apps/litellm": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -1189,8 +1184,8 @@
         "ghcr.io/berriai/litellm-non_root:v1.108.15@sha256:58f6d7c22857e2a755a3d3aee8d55d1662524a2a29b8035d58eafbbf45d88274"
       ],
       "last_release": "2026-11-27",
-      "newest": "v1.108.19",
-      "newest_date": "2026-11-26",
+      "newest": "v1.108.20",
+      "newest_date": "2026-11-27",
       "newest_date_source": "release",
       "pinned": "v1.108.15",
       "pinned_date": "2026-11-21",
@@ -1202,7 +1197,7 @@
     },
     "apps/lycheeorg": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 124,
@@ -1243,7 +1238,7 @@
     },
     "apps/mailpit": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -1270,7 +1265,7 @@
     },
     "apps/mailserver-jeboehm": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 101,
@@ -1343,7 +1338,7 @@
     },
     "apps/monicahq": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
         "high": 49,
@@ -1386,7 +1381,7 @@
     },
     "apps/n8n": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 22,
@@ -1422,7 +1417,7 @@
     },
     "apps/nextcloud": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 72,
@@ -1469,7 +1464,7 @@
     },
     "apps/nocodb": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -1496,7 +1491,7 @@
     },
     "apps/obot": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 39,
@@ -1541,7 +1536,7 @@
     },
     "apps/ollama": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -1577,7 +1572,7 @@
     },
     "apps/onlyoffice": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -1609,7 +1604,7 @@
     },
     "apps/open-webui": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 7,
         "high": 107,
@@ -1645,10 +1640,10 @@
     },
     "apps/opencanary": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 10,
-        "high": 275,
+        "high": 276,
         "images": {
           "thinkst/opencanary:0.9.10": {
             "libraries": [
@@ -1661,7 +1656,7 @@
             ],
             "system": [
               8,
-              253
+              254
             ]
           }
         },
@@ -1685,7 +1680,7 @@
     },
     "apps/opnform": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 39,
@@ -1744,7 +1739,7 @@
     },
     "apps/paperless-gpt": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -1780,10 +1775,10 @@
     },
     "apps/paperless-ngx": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 6,
-        "high": 313,
+        "high": 422,
         "images": {
           "apache/tika:3.4.0.0": {},
           "ghcr.io/paperless-ngx/paperless-ngx:3.5.1": {
@@ -1799,7 +1794,7 @@
           "gotenberg/gotenberg:8.40.0": {
             "system": [
               2,
-              221
+              330
             ]
           },
           "postgres:18.7": {
@@ -1838,7 +1833,7 @@
     },
     "apps/photoprism": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 6,
         "high": 129,
@@ -1877,10 +1872,10 @@
     },
     "apps/photoview": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 5,
-        "high": 54,
+        "high": 55,
         "images": {
           "mariadb:12.3.3": {
             "programs": [
@@ -1895,7 +1890,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -1920,7 +1915,7 @@
     },
     "apps/privatebin": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 6,
@@ -1952,7 +1947,7 @@
     },
     "apps/qdrant": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -1984,7 +1979,7 @@
     },
     "apps/seafile": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 41,
         "high": 736,
@@ -2067,10 +2062,10 @@
     },
     "apps/seafile-pro": {
       "archived": null,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 62,
-        "high": 1483,
+        "high": 1484,
         "images": {
           "clamav/clamav:1.5.5": {},
           "elasticsearch:8.19.25": {
@@ -2105,7 +2100,7 @@
             ],
             "system": [
               12,
-              757
+              758
             ]
           },
           "seafileltd/seafile-md-server:13.0.28": {
@@ -2183,7 +2178,7 @@
     },
     "apps/shlink": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 43,
@@ -2237,7 +2232,7 @@
     },
     "apps/stalwart": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 16,
@@ -2269,7 +2264,7 @@
     },
     "apps/threat-dragon": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 30,
@@ -2305,7 +2300,7 @@
     },
     "apps/tymeslot": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -2348,7 +2343,7 @@
     },
     "apps/unifi": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 12,
         "high": 56,
@@ -2391,7 +2386,7 @@
     },
     "apps/vaultwarden": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 88,
@@ -2430,7 +2425,7 @@
     },
     "apps/velociraptor": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -2462,7 +2457,7 @@
     },
     "apps/vllm": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 5,
         "high": 137,
@@ -2498,7 +2493,7 @@
     },
     "apps/whoami": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 16,
@@ -2530,7 +2525,7 @@
     },
     "apps/wikijs": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 6,
         "high": 175,
@@ -2577,7 +2572,7 @@
     },
     "apps/windmill": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 97,
@@ -2628,7 +2623,7 @@
     },
     "apps/wordpress": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 90,
@@ -2667,7 +2662,7 @@
     },
     "apps/yopass": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -2701,7 +2696,7 @@
     },
     "backup/borgmatic": {
       "archived": null,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -2724,7 +2719,7 @@
     },
     "backup/kopia": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 57,
@@ -2760,7 +2755,7 @@
     },
     "backup/rclone-web": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -2787,7 +2782,7 @@
     },
     "backup/urbackup": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
         "high": 33,
@@ -2819,7 +2814,7 @@
     },
     "business/akaunting": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
         "high": 182,
@@ -2858,15 +2853,19 @@
     },
     "business/chatwoot": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
-        "high": 27,
+        "high": 35,
         "images": {
           "chatwoot/chatwoot:v4.20.1": {
             "libraries": [
               0,
               1
+            ],
+            "system": [
+              0,
+              7
             ]
           },
           "pgvector/pgvector:0.8.7-pg16": {
@@ -2876,7 +2875,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           },
           "redis:8.10.3-alpine": {}
@@ -2889,9 +2888,9 @@
         "pgvector/pgvector:0.8.7-pg16",
         "redis:8.10.3-alpine"
       ],
-      "last_release": "2026-11-20",
-      "newest": "v4.20.1",
-      "newest_date": "2026-11-20",
+      "last_release": "2026-11-28",
+      "newest": "v4.20.2",
+      "newest_date": "2026-11-28",
       "newest_date_source": "release",
       "pinned": "v4.20.1",
       "pinned_date": "2026-11-20",
@@ -2899,11 +2898,11 @@
       "quiet": false,
       "reason": null,
       "repo": "chatwoot/chatwoot",
-      "status": "current"
+      "status": "behind"
     },
     "business/documenso": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 54,
@@ -2950,10 +2949,10 @@
     },
     "business/dolibarr": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
-        "high": 157,
+        "high": 158,
         "images": {
           "dolibarr/dolibarr:24.0.2": {
             "libraries": [
@@ -2962,7 +2961,7 @@
             ],
             "system": [
               2,
-              125
+              126
             ]
           },
           "mariadb:12.3.3": {
@@ -2993,10 +2992,10 @@
     },
     "business/erpnext": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 8,
-        "high": 315,
+        "high": 424,
         "images": {
           "frappe/erpnext:v16.60.0": {
             "libraries": [
@@ -3009,7 +3008,7 @@
             ],
             "system": [
               2,
-              205
+              314
             ]
           },
           "mariadb:11.8.9": {
@@ -3042,7 +3041,7 @@
     },
     "business/facturascripts": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 90,
@@ -3081,7 +3080,7 @@
     },
     "business/invoiceninja": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
         "high": 81,
@@ -3132,7 +3131,7 @@
     },
     "business/kimai": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 59,
@@ -3171,7 +3170,7 @@
     },
     "business/leantime": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 42,
@@ -3218,7 +3217,7 @@
     },
     "business/listmonk": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 60,
@@ -3264,8 +3263,8 @@
       "status": "current"
     },
     "business/matomo": {
-      "archived": false,
-      "checked": "2026-11-27",
+      "archived": null,
+      "checked": "2026-11-28",
       "findings": {
         "critical": 3,
         "high": 91,
@@ -3290,13 +3289,13 @@
         "mariadb:12.3.3",
         "matomo:5.14.2-apache"
       ],
-      "last_release": "2026-11-23",
+      "last_release": null,
       "newest": "6.0.0-apache",
-      "newest_date": "2026-11-23",
-      "newest_date_source": "release",
+      "newest_date": "2026-11-24",
+      "newest_date_source": "image",
       "pinned": "5.14.2-apache",
-      "pinned_date": "2026-10-22",
-      "pinned_date_source": "release",
+      "pinned_date": "2026-11-09",
+      "pinned_date_source": "image",
       "quiet": false,
       "reason": null,
       "repo": "matomo-org/matomo",
@@ -3304,7 +3303,7 @@
     },
     "business/openproject": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 52,
@@ -3353,10 +3352,10 @@
     },
     "business/opensign": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 35,
-        "high": 1176,
+        "high": 1177,
         "images": {
           "mongo:8.0.38": {
             "libraries": [
@@ -3375,7 +3374,7 @@
             ],
             "system": [
               30,
-              1108
+              1109
             ]
           },
           "opensign/opensignserver:main@sha256:49819bc883aa5b0053106f2d60d49334231c723cc37c01a304a9322e46bfc06f": {
@@ -3385,7 +3384,7 @@
             ],
             "system": [
               30,
-              1096
+              1097
             ]
           }
         },
@@ -3411,7 +3410,7 @@
     },
     "business/plane": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 128,
@@ -3429,7 +3428,7 @@
             ],
             "system": [
               0,
-              57
+              64
             ]
           },
           "makeplane/plane-frontend:v1.5.0": {
@@ -3499,7 +3498,7 @@
     },
     "business/plausible": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 58,
@@ -3544,7 +3543,7 @@
     },
     "business/solidinvoice": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -3576,7 +3575,7 @@
     },
     "business/twenty": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 72,
@@ -3625,7 +3624,7 @@
     },
     "business/vikunja": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 32,
@@ -3661,10 +3660,10 @@
     },
     "business/zammad": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
-        "high": 64,
+        "high": 60,
         "images": {
           "docker.elastic.co/elasticsearch/elasticsearch:9.5.6": {
             "libraries": [
@@ -3674,16 +3673,6 @@
             "system": [
               0,
               23
-            ]
-          },
-          "ghcr.io/zammad/zammad:7.2.3-0017": {
-            "libraries": [
-              0,
-              4
-            ],
-            "system": [
-              0,
-              15
             ]
           },
           "memcached:1.6.45": {
@@ -3704,7 +3693,9 @@
           },
           "redis:8.10.3-alpine": {}
         },
-        "unscanned": []
+        "unscanned": [
+          "ghcr.io/zammad/zammad:7.2.3-0017"
+        ]
       },
       "image": "ghcr.io/zammad/zammad:7.2.3-0017",
       "images": [
@@ -3728,12 +3719,17 @@
     },
     "core/acme-certs": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
-        "high": 0,
+        "high": 7,
         "images": {
-          "ghcr.io/rubennati/cert-ops-tool:0.3.0": {}
+          "ghcr.io/rubennati/cert-ops-tool:0.3.0": {
+            "system": [
+              0,
+              7
+            ]
+          }
         },
         "unscanned": []
       },
@@ -3755,7 +3751,7 @@
     },
     "core/authelia": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -3800,7 +3796,7 @@
     },
     "core/authentik": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 111,
@@ -3851,7 +3847,7 @@
     },
     "core/crowdsec": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 10,
@@ -3887,7 +3883,7 @@
     },
     "core/dnsmasq": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -3914,12 +3910,12 @@
     },
     "core/dockhand": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 39,
         "images": {
-          "fnsys/dockhand:v1.0.59": {},
+          "fnsys/dockhand:v1.0.60": {},
           "postgres:16.16-alpine": {
             "programs": [
               1,
@@ -3939,18 +3935,18 @@
         },
         "unscanned": []
       },
-      "image": "fnsys/dockhand:v1.0.59",
+      "image": "fnsys/dockhand:v1.0.60",
       "images": [
         "tecnativa/docker-socket-proxy:v0.5.0",
         "postgres:16.16-alpine",
-        "fnsys/dockhand:v1.0.59"
+        "fnsys/dockhand:v1.0.60"
       ],
-      "last_release": "2026-11-22",
-      "newest": "v1.0.59",
-      "newest_date": "2026-11-22",
+      "last_release": "2026-11-28",
+      "newest": "v1.0.60",
+      "newest_date": "2026-11-28",
       "newest_date_source": "release",
-      "pinned": "v1.0.59",
-      "pinned_date": "2026-11-22",
+      "pinned": "v1.0.60",
+      "pinned_date": "2026-11-28",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
@@ -3959,7 +3955,7 @@
     },
     "core/hawser": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -3991,7 +3987,7 @@
     },
     "core/headscale": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 4,
@@ -4027,7 +4023,7 @@
     },
     "core/host-watchdog": {
       "archived": null,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
@@ -4050,7 +4046,7 @@
     },
     "core/infisical": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 49,
@@ -4086,9 +4082,9 @@
         "redis:7.4.12-alpine",
         "infisical/infisical:v0.167.7"
       ],
-      "last_release": "2026-11-25",
-      "newest": "v0.167.16",
-      "newest_date": "2026-11-25",
+      "last_release": "2026-11-27",
+      "newest": "v0.167.17",
+      "newest_date": "2026-11-27",
       "newest_date_source": "release",
       "pinned": "v0.167.7",
       "pinned_date": "2026-11-08",
@@ -4100,7 +4096,7 @@
     },
     "core/jumpserver": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 5,
         "high": 154,
@@ -4140,7 +4136,7 @@
     },
     "core/keycloak": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 33,
@@ -4183,7 +4179,7 @@
     },
     "core/orion-belt": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 32,
@@ -4221,7 +4217,7 @@
     },
     "core/portainer": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4255,7 +4251,7 @@
     },
     "core/portainer-agent": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4287,7 +4283,7 @@
     },
     "core/shellhub": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 26,
@@ -4329,7 +4325,7 @@
     },
     "core/step-ca": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
         "high": 70,
@@ -4365,7 +4361,7 @@
     },
     "core/teleport": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 3,
@@ -4401,7 +4397,7 @@
     },
     "core/traefik": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4435,7 +4431,7 @@
     },
     "core/warpgate": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 1,
@@ -4467,7 +4463,7 @@
     },
     "core/zot": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 2,
@@ -4499,7 +4495,7 @@
     },
     "monitoring/beszel": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 8,
@@ -4545,7 +4541,7 @@
     },
     "monitoring/beszel-agent": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 8,
@@ -4584,10 +4580,10 @@
     },
     "monitoring/changedetection": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
-        "high": 7,
+        "high": 8,
         "images": {
           "ghcr.io/dgtlmoon/changedetection.io:0.70.2": {
             "libraries": [
@@ -4596,7 +4592,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -4620,10 +4616,10 @@
     },
     "monitoring/checkmate": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 4,
-        "high": 53,
+        "high": 54,
         "images": {
           "ghcr.io/bluewave-labs/checkmate:v3.13.1": {
             "libraries": [
@@ -4636,7 +4632,7 @@
             ],
             "system": [
               0,
-              2
+              3
             ]
           },
           "mongo:8.0.38": {
@@ -4671,7 +4667,7 @@
     },
     "monitoring/ciao": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 5,
         "high": 28,
@@ -4707,7 +4703,7 @@
     },
     "monitoring/gatus": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 5,
@@ -4739,7 +4735,7 @@
     },
     "monitoring/gotify": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 31,
@@ -4771,7 +4767,7 @@
     },
     "monitoring/grafana-prometheus": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 7,
@@ -4815,7 +4811,7 @@
     },
     "monitoring/healthchecks": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 2,
         "high": 69,
@@ -4851,7 +4847,7 @@
     },
     "monitoring/langfuse": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 1,
         "high": 29,
@@ -4907,34 +4903,34 @@
     },
     "monitoring/ntfy": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 0,
         "images": {
-          "binwiederhier/ntfy:v2.38.2": {}
+          "binwiederhier/ntfy:v2.38.3": {}
         },
         "unscanned": []
       },
-      "image": "binwiederhier/ntfy:v2.38.2",
+      "image": "binwiederhier/ntfy:v2.38.3",
       "images": [
-        "binwiederhier/ntfy:v2.38.2"
+        "binwiederhier/ntfy:v2.38.3"
       ],
       "last_release": "2026-11-27",
       "newest": "v2.38.3",
       "newest_date": "2026-11-27",
       "newest_date_source": "release",
-      "pinned": "v2.38.2",
-      "pinned_date": "2026-11-24",
+      "pinned": "v2.38.3",
+      "pinned_date": "2026-11-27",
       "pinned_date_source": "release",
       "quiet": false,
       "reason": null,
       "repo": "binwiederhier/ntfy",
-      "status": "behind"
+      "status": "current"
     },
     "monitoring/scrutiny": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 0,
         "high": 66,
@@ -4956,7 +4952,7 @@
             ],
             "system": [
               0,
-              1
+              2
             ]
           }
         },
@@ -4984,10 +4980,10 @@
     },
     "monitoring/uptime-kuma": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 8,
-        "high": 274,
+        "high": 383,
         "images": {
           "louislam/uptime-kuma:2.5.12": {
             "libraries": [
@@ -5000,7 +4996,7 @@
             ],
             "system": [
               2,
-              205
+              314
             ]
           }
         },
@@ -5024,7 +5020,7 @@
     },
     "monitoring/zabbix": {
       "archived": false,
-      "checked": "2026-11-27",
+      "checked": "2026-11-28",
       "findings": {
         "critical": 9,
         "high": 96,
